@@ -1,0 +1,5 @@
+{
+  "api": {
+    "host": "ws://api.globalping.net"
+  }
+}

@@ -1,0 +1,4 @@
+PING 123.21.43.124 (123.21.43.124): 56 data bytes
+
+--- 123.21.43.124 ping statistics ---
+3 packets transmitted, 0 packets received, 100% packet loss

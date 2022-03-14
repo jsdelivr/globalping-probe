@@ -1,0 +1,8 @@
+PING google.com (142.250.203.206): 56 data bytes
+64 bytes from 142.250.203.206: seq=0 ttl=37 time=7.995 ms
+64 bytes from 142.250.203.206: seq=1 ttl=37 time=15.171 ms
+64 bytes from 142.250.203.206: seq=2 ttl=37 time=10.673 ms
+
+--- google.com ping statistics ---
+3 packets transmitted, 3 packets received, 0% packet loss
+rtt min/avg/max = 7.995/11.279/15.171 ms

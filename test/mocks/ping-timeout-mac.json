@@ -1,0 +1,10 @@
+{
+  "testId": "test",
+  "measurementId": "measurement",
+  "result": {
+    "resolvedAddress": "172.13.23.43",
+    "times": [],
+    "loss": 100,
+    "rawOutput": "PING 172.13.23.43 (172.13.23.43): 56 data bytes\nRequest timeout for icmp_seq 0\nRequest timeout for icmp_seq 1\n\n--- 172.13.23.43 ping statistics ---\n3 packets transmitted, 0 packets received, 100.0% packet loss"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "testId": "test",
+  "measurementId": "measurement",
+  "result": {
+    "resolvedAddress": "172.217.20.174",
+    "times": [
+      {"ttl": 58, "time": 7.271},
+      {"ttl": 58, "time": 11.055},
+      {"ttl": 58, "time": 7.782}
+    ],
+    "min": 7.271,
+    "avg": 8.703,
+    "max": 11.055,
+    "loss": 0,
+    "rawOutput": "PING google.com (172.217.20.174): 56 data bytes\n64 bytes from 172.217.20.174: icmp_seq=0 ttl=58 time=7.271 ms\n64 bytes from 172.217.20.174: icmp_seq=1 ttl=58 time=11.055 ms\n64 bytes from 172.217.20.174: icmp_seq=2 ttl=58 time=7.782 ms\n\n--- google.com ping statistics ---\n3 packets transmitted, 3 packets received, 0.0% packet loss\nround-trip min/avg/max/stddev = 7.271/8.703/11.055/1.676 ms"
+  }
+}

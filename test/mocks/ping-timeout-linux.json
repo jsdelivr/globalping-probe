@@ -1,0 +1,10 @@
+{
+  "testId": "test",
+  "measurementId": "measurement",
+  "result": {
+    "resolvedAddress": "123.21.43.124",
+    "times": [],
+    "loss": 100,
+    "rawOutput": "PING 123.21.43.124 (123.21.43.124): 56 data bytes\n\n--- 123.21.43.124 ping statistics ---\n3 packets transmitted, 0 packets received, 100% packet loss"
+  }
+}
