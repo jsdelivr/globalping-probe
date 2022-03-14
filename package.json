@@ -48,20 +48,7 @@
         "error",
         "always"
       ],
-      "@typescript-eslint/class-literal-property-style": "off",
-      "@typescript-eslint/naming-convention": [
-        "error",
-        {
-          "selector": [
-            "objectLiteralProperty"
-          ],
-          "format": [
-            "strictCamelCase",
-            "snake_case",
-            "UPPER_CASE"
-          ]
-        }
-      ]
+      "@typescript-eslint/class-literal-property-style": "off"
     },
     "overrides": [
       {
