@@ -10,8 +10,8 @@ describe('trace command (live)', () => {
 	it('should run and parse trace - google.com', async () => {
 		const options = {
 			target: 'google.com',
-      port: 53,
-      protocol: 'UDP'
+			port: 53,
+			protocol: 'UDP',
 		};
 
 		const cmd = traceCmd;
