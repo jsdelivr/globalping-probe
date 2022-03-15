@@ -47,6 +47,11 @@ function connect() {
 		});
 }
 
-throng({worker: connect, count: physicalCpuCount}).catch(error => {
-	logger.error(error);
-});
+if (process.env['NODE_ENV'] === 'development') {
+	// Run multiple clients in dev mode for easier debugging
+	throng({worker: connect, count: physicalCpuCount}).catch(error => {
+		logger.error(error);
+	});
+} else {
+	connect();
+}

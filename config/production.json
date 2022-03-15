@@ -1,0 +1,5 @@
+{
+  "api": {
+    "host": "ws://globalping-api-prod.herokuapp.com"
+  }
+}
