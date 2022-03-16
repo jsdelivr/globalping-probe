@@ -2,16 +2,16 @@
   "testId": "test",
   "measurementId": "measurement",
   "result": {
-    "resolvedAddress": "142.250.203.206",
-    "min": 7.995,
-    "avg": 11.279,
-    "max": 15.171,
+    "resolvedAddress": "172.217.20.206",
+    "min": 7.948,
+    "avg": 8.018,
+    "max": 8.120,
     "loss": 0,
     "times": [
-      {"time": 7.995, "ttl": 37},
-      {"time": 15.171, "ttl": 37},
-      {"time": 10.673, "ttl": 37}
+      {"time": 7.99, "ttl": 37},
+      {"time": 8.12, "ttl": 37},
+      {"time": 7.95, "ttl": 37}
     ],
-    "rawOutput": "PING google.com (142.250.203.206): 56 data bytes\n64 bytes from 142.250.203.206: seq=0 ttl=37 time=7.995 ms\n64 bytes from 142.250.203.206: seq=1 ttl=37 time=15.171 ms\n64 bytes from 142.250.203.206: seq=2 ttl=37 time=10.673 ms\n\n--- google.com ping statistics ---\n3 packets transmitted, 3 packets received, 0% packet loss\nrtt min/avg/max = 7.995/11.279/15.171 ms"
+    "rawOutput": "PING google.com (172.217.20.206) 56(84) bytes of data.\n64 bytes from 172.217.20.206: icmp_seq=1 ttl=37 time=7.99 ms\n64 bytes from 172.217.20.206: icmp_seq=2 ttl=37 time=8.12 ms\n64 bytes from 172.217.20.206: icmp_seq=3 ttl=37 time=7.95 ms\n\n--- google.com ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 404ms\nrtt min/avg/max/mdev = 7.948/8.018/8.120/0.073 ms"
   }
 }
