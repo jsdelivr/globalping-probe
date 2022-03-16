@@ -2,7 +2,7 @@ import * as sinon from 'sinon';
 import {expect} from 'chai';
 import {Socket} from 'socket.io-client';
 import {getCmdMock, getCmdMockResult} from '../../utils.js';
-import {TracerouteCommand, traceCmd} from '../../../src/command/traceroute-command.js';
+import {TracerouteCommand} from '../../../src/command/traceroute-command.js';
 
 describe('trace command', () => {
 	const sandbox = sinon.createSandbox();
