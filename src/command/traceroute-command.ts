@@ -34,26 +34,20 @@ export const traceCmd = (options: TraceOptions): ExecaChildProcess => {
 		// Ipv4
 		'-4',
 		// Max ttl
-		'-m',
-		'20',
+		['-m', '20'],
 		// Max timeout
-		'-w',
-		'2',
+		['-w', '2'],
 		// Probe packets per hop
-		'-q',
-		'2',
+		['-q', '2'],
 		// Concurrent packets
-		'-N',
-		'20',
-		// Udp
-		options.protocol === 'UDP' ? '-U' : '',
+		['-N', '20'],
+		// Protocol
+		`--${options.protocol.toLowerCase()}`,
 		// Port
-		'-p',
-		`${options.port}`,
+		options.protocol === 'TCP' ? ['-p', `${options.port}`] : [],
 		// Target
-		'-I',
 		options.target,
-	];
+	].flat();
 
 	return execa('traceroute', args);
 };
