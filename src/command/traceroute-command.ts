@@ -1,6 +1,5 @@
 import Joi from 'joi';
 import type {Socket} from 'socket.io-client';
-import isIpPrivate from 'private-ip';
 import {execa, ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
@@ -96,17 +95,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 			};
 		}
 
-		// Imagine banning reduce. wtf
-		// eslint-disable-next-line unicorn/no-array-reduce
-		const hops = lines.slice(1).reduce((acc: ParsedLine[], l: string): ParsedLine[] => {
-			const parsed: ParsedLine | undefined = this.parseLine(l);
-
-			if (parsed && !isIpPrivate(parsed.resolvedAddress)) {
-				return [...acc, parsed];
-			}
-
-			return acc;
-		}, []);
+		const hops = lines.slice(1).map(l => this.parseLine(l));
 
 		return {
 			destination: header.resolvedAddress,
@@ -132,13 +121,9 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		const hostMatch = reHost.exec(line);
 		const rttList = Array.from(line.matchAll(reRtt), m => Number.parseFloat(m[1]!));
 
-		if (!hostMatch || rttList.length === 0) {
-			return;
-		}
-
 		return {
-			host: hostMatch[0]!,
-			resolvedAddress: hostMatch[2]!,
+			host: hostMatch?.[0] ?? '*',
+			resolvedAddress: hostMatch?.[2] ?? '*',
 			rtt: rttList,
 		};
 	}

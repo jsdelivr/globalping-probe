@@ -12,7 +12,6 @@
     "joi": "^17.6.0",
     "lodash": "^4.17.21",
     "physical-cpu-count": "^2.0.0",
-    "private-ip": "^2.3.3",
     "socket.io-client": "^4.4.1",
     "throng": "^5.0.0",
     "winston": "^3.6.0"
