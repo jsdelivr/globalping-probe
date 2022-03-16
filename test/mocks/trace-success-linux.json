@@ -2,45 +2,33 @@
   "testId": "test",
   "measurementId": "measurement",
   "result": {
-    "destination": "216.239.34.21",
+    "destination": "216.239.38.21",
     "hops": [
       {
         "host": "lutn-core-2a-xe-7114-0.network.virginmedia.net (62.252.67.181)",
-        "host2": "62.252.67.181",
-        "rtt": 19.648,
-        "rtt2": 19.959
+        "resolvedAddress": "62.252.67.181",
+        "rtt": [
+          27.688,
+          27.991
+        ]
       },
       {
         "host": "eislou2-ic-4-ae0-0.network.virginmedia.net (62.254.59.130)",
-        "host2": "62.254.59.130",
-        "rtt": 20.46,
-        "rtt2": 21.877
+        "resolvedAddress": "62.254.59.130",
+        "rtt": [
+          28.512,
+          28.192
+        ]
       },
       {
         "host": "142.250.160.116 (142.250.160.116)",
-        "host2": "142.250.160.116",
-        "rtt": 25.645,
-        "rtt2": 25.949
-      },
-      {
-        "host": "216.239.41.149 (216.239.41.149)",
-        "host2": "216.239.41.149",
-        "rtt": 26.955,
-        "rtt2": 27.198
-      },
-      {
-        "host": "142.250.215.125 (142.250.215.125)",
-        "host2": "142.250.215.125",
-        "rtt": 29.619,
-        "rtt2": 29.813
-      },
-      {
-        "host": "any-in-2215.1e100.net (216.239.34.21)",
-        "host2": "216.239.34.21",
-        "rtt": 27.599,
-        "rtt2": 27.855
+        "resolvedAddress": "142.250.160.116",
+        "rtt": [
+          28.629,
+          35.934
+        ]
       }
     ],
-    "rawOutput": "traceroute to hello.com (216.239.34.21), 20 hops max, 60 byte packets\n 1  192.168.0.1 (192.168.0.1)  2.340 ms  3.191 ms\n 2  * *\n 3  lutn-core-2a-xe-7114-0.network.virginmedia.net (62.252.67.181)  19.648 ms  19.959 ms\n 4  * *\n 5  eislou2-ic-4-ae0-0.network.virginmedia.net (62.254.59.130)  20.460 ms  21.877 ms\n 6  142.250.160.116 (142.250.160.116)  25.645 ms  25.949 ms\n 7  216.239.41.149 (216.239.41.149)  26.955 ms  27.198 ms\n 8  142.250.215.125 (142.250.215.125)  29.619 ms  29.813 ms\n 9  any-in-2215.1e100.net (216.239.34.21)  27.599 ms  27.855 ms\n"
+    "rawOutput": "traceroute to hello.com (216.239.38.21), 20 hops max, 60 byte packets\n 1  192.168.0.1 (192.168.0.1)  1.619 ms  2.465 ms\n 2  * *\n 3  lutn-core-2a-xe-7114-0.network.virginmedia.net (62.252.67.181)  27.688 ms  27.991 ms\n 4  * *\n 5  eislou2-ic-4-ae0-0.network.virginmedia.net (62.254.59.130)  28.512 ms  28.192 ms\n 6  142.250.160.116 (142.250.160.116)  28.629 ms  35.934 ms\n 7  * *\n 8  * *\n 9  * *\n10  * *\n11  * *\n12  * *\n13  * *\n14  * *\n15  * *\n16  * *\n17  * *\n18  * *\n19  * *\n20  * *"
   }
 }

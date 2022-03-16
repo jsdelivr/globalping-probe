@@ -5,8 +5,8 @@ import {execa, ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
-const reHeaderLine = new RegExp(/^traceroute to\s.*\s\((?<addr>.*)\)/);
-const reResultLine = new RegExp(/(?<id>\d+)\s+(?<host>(\S+)\s+\((?:((?:\d+\.){3}\d+)|([\da-fA-F:]))\))\s+(?<rtt>\d*(?:\.\d+)?)\s+ms\s+(?<rtt2>\d*(?:\.\d+)?)/);
+const reHost = new RegExp(/(\S+)\s+\((?:((?:\d+\.){3}\d+)|([\da-fA-F:]))\)/);
+const reRtt = new RegExp(/(\d+(?:\.?\d+)?)\s+ms(!\S*)?/g);
 
 type TraceOptions = {
 	type: string;
@@ -16,10 +16,9 @@ type TraceOptions = {
 };
 
 type ParsedLine = {
+	resolvedAddress: string;
 	host: string;
-	host2: string | undefined;
-	rtt: number;
-	rtt2: number;
+	rtt: number[];
 };
 
 const traceOptionsSchema = Joi.object<TraceOptions>({
@@ -67,7 +66,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 			socket.emit('probe:measurement:progress', {
 				testId,
 				measurementId,
-				result: {rawOutput: data.toString()},
+				result: {rawOutput: data.toString().trim()},
 			});
 		});
 
@@ -76,7 +75,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		socket.emit('probe:measurement:result', {
 			testId,
 			measurementId,
-			result: this.parse(result.stdout),
+			result: this.parse(result.stdout.trim()),
 		});
 	}
 
@@ -102,7 +101,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		const hops = lines.slice(1).reduce((acc: ParsedLine[], l: string): ParsedLine[] => {
 			const parsed: ParsedLine | undefined = this.parseLine(l);
 
-			if (parsed && !isIpPrivate(parsed.host2!)) {
+			if (parsed && !isIpPrivate(parsed.resolvedAddress)) {
 				return [...acc, parsed];
 			}
 
@@ -110,36 +109,37 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		}, []);
 
 		return {
-			destination: header.addr,
+			destination: header.resolvedAddress,
 			hops,
 			rawOutput,
 		};
 	}
 
 	private parseHeader(line: string) {
-		const output = reHeaderLine.exec(line);
+		const hostMatch = reHost.exec(line);
 
-		if (!output) {
+		if (!hostMatch || hostMatch.length < 3) {
 			return;
 		}
 
 		return {
-			addr: output?.groups?.['addr'],
+			host: hostMatch[0] ?? '',
+			resolvedAddress: hostMatch[2],
 		};
 	}
 
 	private parseLine(line: string): ParsedLine | undefined {
-		const output = reResultLine.exec(line);
+		const hostMatch = reHost.exec(line);
+		const rttList = Array.from(line.matchAll(reRtt), m => Number.parseFloat(m[1]!));
 
-		if (!output) {
+		if (!hostMatch || rttList.length === 0) {
 			return;
 		}
 
 		return {
-			host: output?.groups?.['host'] ?? '',
-			host2: output?.[4],
-			rtt: Number.parseFloat(output?.groups?.['rtt'] ?? ''),
-			rtt2: Number.parseFloat(output?.groups?.['rtt2'] ?? ''),
+			host: hostMatch[0]!,
+			resolvedAddress: hostMatch[2]!,
+			rtt: rttList,
 		};
 	}
 }
