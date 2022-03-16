@@ -122,7 +122,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		const rttList = Array.from(line.matchAll(reRtt), m => Number.parseFloat(m[1]!));
 
 		return {
-			host: hostMatch?.[0] ?? '*',
+			host: hostMatch?.[1] ?? '*',
 			resolvedAddress: hostMatch?.[2] ?? '*',
 			rtt: rttList,
 		};

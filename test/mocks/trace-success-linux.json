@@ -5,7 +5,7 @@
     "destination": "216.239.38.21",
     "hops": [
       {
-        "host": "192.168.0.1 (192.168.0.1)",
+        "host": "192.168.0.1",
         "resolvedAddress": "192.168.0.1",
         "rtt": [
           1.619,
@@ -18,7 +18,7 @@
         "rtt": []
       },
       {
-        "host": "lutn-core-2a-xe-7114-0.network.virginmedia.net (62.252.67.181)",
+        "host": "lutn-core-2a-xe-7114-0.network.virginmedia.net",
         "resolvedAddress": "62.252.67.181",
         "rtt": [
           27.688,
@@ -31,7 +31,7 @@
         "rtt": []
       },
       {
-        "host": "eislou2-ic-4-ae0-0.network.virginmedia.net (62.254.59.130)",
+        "host": "eislou2-ic-4-ae0-0.network.virginmedia.net",
         "resolvedAddress": "62.254.59.130",
         "rtt": [
           28.512,
@@ -39,7 +39,7 @@
         ]
       },
       {
-        "host": "142.250.160.116 (142.250.160.116)",
+        "host": "142.250.160.116",
         "resolvedAddress": "142.250.160.116",
         "rtt": [
           28.629,
