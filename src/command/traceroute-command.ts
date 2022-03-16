@@ -5,8 +5,8 @@ import {execa, ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
-const reHost = new RegExp(/(\S+)\s+\((?:((?:\d+\.){3}\d+)|([\da-fA-F:]))\)/);
-const reRtt = new RegExp(/(\d+(?:\.?\d+)?)\s+ms(!\S*)?/g);
+const reHost = /(\S+)\s+\((?:((?:\d+\.){3}\d+)|([\da-fA-F:]))\)/;
+const reRtt = /(\d+(?:\.?\d+)?)\s+ms(!\S*)?/g;
 
 type TraceOptions = {
 	type: string;
