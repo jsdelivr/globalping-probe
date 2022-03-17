@@ -1,4 +1,4 @@
-FROM node:16-alpine AS builder
+FROM node:16-bullseye-slim AS builder
 
 WORKDIR /app
 
@@ -8,14 +8,16 @@ COPY package.json package-lock.json tsconfig.json /app/
 
 RUN npm install && npm run build
 
-FROM node:16-alpine
+FROM node:16-bullseye-slim
 
 ARG node_env=production
 ENV NODE_ENV=$node_env
 
 WORKDIR /build
 
-RUN apk --no-cache add iputils util-linux
+RUN apt update && apt install -y iputils-ping traceroute \
+    && apt clean && apt autoremove -y \
+    && rm -rf /var/lib/{apt,dpkg,cache,log}/
 
 COPY --from=builder /app/dist /build/dist
 COPY --from=builder /app/config /build/config
