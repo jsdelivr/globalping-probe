@@ -1,0 +1,52 @@
+{
+  "testId": "test",
+  "measurementId": "measurement",
+  "result": {
+    "destination": "216.239.38.21",
+    "hops": [
+      {
+        "host": "192.168.0.1",
+        "resolvedAddress": "192.168.0.1",
+        "rtt": [
+          1.619,
+          2.465
+        ]
+      },
+      {
+        "host": "*",
+        "resolvedAddress": "*",
+        "rtt": []
+      },
+      {
+        "host": "lutn-core-2a-xe-7114-0.network.virginmedia.net",
+        "resolvedAddress": "62.252.67.181",
+        "rtt": [
+          27.688,
+          27.991
+        ]
+      },
+      {
+        "host": "*",
+        "resolvedAddress": "*",
+        "rtt": []
+      },
+      {
+        "host": "eislou2-ic-4-ae0-0.network.virginmedia.net",
+        "resolvedAddress": "62.254.59.130",
+        "rtt": [
+          28.512,
+          28.192
+        ]
+      },
+      {
+        "host": "142.250.160.116",
+        "resolvedAddress": "142.250.160.116",
+        "rtt": [
+          28.629,
+          35.934
+        ]
+      }
+    ],
+    "rawOutput": "traceroute to hello.com (216.239.38.21), 20 hops max, 60 byte packets\n 1  192.168.0.1 (192.168.0.1)  1.619 ms  2.465 ms\n 2  * *\n 3  lutn-core-2a-xe-7114-0.network.virginmedia.net (62.252.67.181)  27.688 ms  27.991 ms\n 4  * *\n 5  eislou2-ic-4-ae0-0.network.virginmedia.net (62.254.59.130)  28.512 ms  28.192 ms\n 6  142.250.160.116 (142.250.160.116)  28.629 ms  35.934 ms"
+  }
+}

@@ -18,16 +18,12 @@ const pingOptionsSchema = Joi.object<PingOptions>({
 
 export const pingCmd = (options: PingOptions): ExecaChildProcess => {
 	const args = [
-		'-c',
-		options.packets.toString(),
-		'-i',
-		'0.2',
+		['-c', options.packets.toString()],
+		['-i', '0.2'],
+		['-w', '3'],
 		'-n',
-		// Todo: -w flag is not cross-platform and should be -t on mac.
-		// '-w',
-		// '3',
 		options.target,
-	];
+	].flat();
 
 	return execa('ping', args);
 };
@@ -66,7 +62,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			return {rawOutput};
 		}
 
-		const header = /^PING\s.*\s\((?<addr>.*)\)/.exec(lines.shift()!);
+		const header = /^PING\s.*\s\((?<addr>.+?)\)/.exec(lines.shift()!);
 		if (!header) {
 			return {rawOutput};
 		}
