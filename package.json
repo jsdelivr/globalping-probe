@@ -1,9 +1,9 @@
 {
   "name": "runner",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "",
   "type": "module",
-  "main": "index.js",
+  "main": "dist/index.js",
   "author": "Artem Stoianov <stoianov.artem@gmail.com>",
   "license": "ISC",
   "dependencies": {

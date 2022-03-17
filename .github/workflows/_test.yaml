@@ -1,0 +1,21 @@
+name: Build and test
+
+on:
+  workflow_call: {}
+
+jobs:
+  test:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: 16.x
+      - name: install and build
+        run: npm ci && npm run build
+      - name: lint and test
+        run: |
+          npm run lint
+          npm run test:coverage
