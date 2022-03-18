@@ -30,8 +30,8 @@ const dnsOptionsSchema = Joi.object<DnsOptions>({
 });
 
 export const dnsCmd = async (options: DnsOptions): Promise<DnsQueryResult> => {
-	const protocolArg = options.query.protocol?.toLowerCase() === 'tcp' ? '+tcp' : '';
-	const resolverArg = options.query.resolver ? `@${options.query.resolver}` : '';
+	const protocolArg = options.query.protocol?.toLowerCase() === 'tcp' ? '+tcp' : [];
+	const resolverArg = options.query.resolver ? `@${options.query.resolver}` : [];
 
 	const args = [
 		options.target,
