@@ -23,7 +23,7 @@ const dnsOptionsSchema = Joi.object<DnsOptions>({
 	target: Joi.string(),
 	query: Joi.object({
 		type: Joi.string().valid(...allowedTypes).optional(),
-		address: Joi.string().optional(),
+		resolver: Joi.string().optional(),
 		protocol: Joi.string().valid().optional(),
 		port: Joi.number().optional(),
 	}),
@@ -31,10 +31,11 @@ const dnsOptionsSchema = Joi.object<DnsOptions>({
 
 export const dnsCmd = async (options: DnsOptions): Promise<DnsQueryResult> => {
 	const protocolArg = options.query.protocol?.toLowerCase() === 'tcp' ? '+tcp' : '';
+	const resolverArg = options.query.resolver ? `@${options.query.resolver}` : '';
 
 	const args = [
 		options.target,
-		`@${options.query.address ?? getDnsServers().pop()!}`,
+		resolverArg,
 		['-t', options.query.type ?? 'A'],
 		['-p', options.query.port ?? '53'],
 		'-4', '+time=1', '+tries=2',
