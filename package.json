@@ -8,6 +8,7 @@
   "license": "ISC",
   "dependencies": {
     "crypto-random-string": "^4.0.0",
+    "domain-info": "^0.1.2",
     "execa": "^6.1.0",
     "joi": "^17.6.0",
     "lodash": "^4.17.21",
