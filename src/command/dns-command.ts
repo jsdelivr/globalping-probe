@@ -38,7 +38,9 @@ export const dnsCmd = async (options: DnsOptions): Promise<DnsQueryResult> => {
 		resolverArg,
 		['-t', options.query.type],
 		['-p', options.query.port],
-		'-4', '+time=1', '+tries=2',
+		'-4',
+		'+time=1',
+		'+tries=2',
 		protocolArg,
 	].flat() as string[];
 
