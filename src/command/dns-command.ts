@@ -1,4 +1,3 @@
-import {getServers as getDnsServers} from 'node:dns';
 import Joi from 'joi';
 import type {Socket} from 'socket.io-client';
 import dig, {DnsQueryResult} from 'node-dig-dns';
