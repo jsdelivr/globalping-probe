@@ -16,15 +16,16 @@ type DnsOptions = {
 };
 
 const allowedTypes = ['A', 'AAAA', 'ANY', 'CNAME', 'DNSKEY', 'DS', 'MX', 'NS', 'NSEC', 'PTR', 'RRSIG', 'SOA', 'TXT', 'SRV'];
+const allowedProtocols = ['UDP', 'TCP'];
 
 const dnsOptionsSchema = Joi.object<DnsOptions>({
 	type: Joi.string().valid('dns'),
 	target: Joi.string(),
 	query: Joi.object({
-		type: Joi.string().valid(...allowedTypes).optional(),
+		type: Joi.string().valid(...allowedTypes).optional().default('A'),
 		resolver: Joi.string().optional(),
-		protocol: Joi.string().valid().optional(),
-		port: Joi.number().optional(),
+		protocol: Joi.string().valid(...allowedProtocols).optional().default('udp'),
+		port: Joi.number().optional().default('53'),
 	}),
 });
 
@@ -35,8 +36,8 @@ export const dnsCmd = async (options: DnsOptions): Promise<DnsQueryResult> => {
 	const args = [
 		options.target,
 		resolverArg,
-		['-t', options.query.type ?? 'A'],
-		['-p', options.query.port ?? '53'],
+		['-t', options.query.type],
+		['-p', options.query.port],
 		'-4', '+time=1', '+tries=2',
 		protocolArg,
 	].flat() as string[];
