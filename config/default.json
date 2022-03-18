@@ -1,5 +1,5 @@
 {
   "api": {
-    "host": "ws://api.globalping.net"
+    "host": "ws://api.globalping.io"
   }
 }
