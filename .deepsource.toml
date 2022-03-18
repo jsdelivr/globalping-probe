@@ -13,3 +13,8 @@ enabled = true
 [[analyzers]]
 name = "javascript"
 enabled = true
+
+  [analyzers.meta]
+  environment = ["nodejs", "mocha"]
+  module_system = "es-modules"
+  dialect = "typescript"
