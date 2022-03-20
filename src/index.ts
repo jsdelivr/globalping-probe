@@ -7,6 +7,7 @@ import type {CommandInterface, MeasurementRequest} from './types.js';
 import {scopedLogger} from './lib/logger.js';
 import {pingCmd, PingCommand} from './command/ping-command.js';
 import {traceCmd, TracerouteCommand} from './command/traceroute-command.js';
+import {dnsCmd, DnsCommand} from './command/dns-command.js';
 import {getConfValue} from './lib/config.js';
 
 const logger = scopedLogger('general');
@@ -14,6 +15,7 @@ const handlersMap = new Map<string, CommandInterface<any>>();
 
 handlersMap.set('ping', new PingCommand(pingCmd));
 handlersMap.set('traceroute', new TracerouteCommand(traceCmd));
+handlersMap.set('dns', new DnsCommand(dnsCmd));
 
 logger.info(`Start probe in a ${process.env['NODE_ENV'] ?? 'production'} mode`);
 

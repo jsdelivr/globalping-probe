@@ -11,6 +11,7 @@
     "execa": "^6.1.0",
     "joi": "^17.6.0",
     "lodash": "^4.17.21",
+    "node-dig-dns": "^0.3.2",
     "physical-cpu-count": "^2.0.0",
     "socket.io-client": "^4.4.1",
     "throng": "^5.0.0",
