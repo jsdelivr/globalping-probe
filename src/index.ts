@@ -3,7 +3,7 @@ import throng from 'throng';
 import {io} from 'socket.io-client';
 import cryptoRandomString from 'crypto-random-string';
 import physicalCpuCount from 'physical-cpu-count';
-import type {CommandInterface, MeasurementRequest, ProbeLocation} from './types.js';
+import type {CommandInterface, MeasurementRequest, WsApiError, ProbeLocation} from './types.js';
 import {scopedLogger} from './lib/logger.js';
 import {pingCmd, PingCommand} from './command/ping-command.js';
 import {traceCmd, TracerouteCommand} from './command/traceroute-command.js';
@@ -28,6 +28,19 @@ function connect() {
 		.on('connect', () => logger.debug('connection to API established'))
 		.on('disconnect', () => logger.debug('disconnected from API'))
 		.on('connect_error', error => logger.error('connection to API failed', error))
+		.on('api:error', (error: WsApiError) => {
+			logger.error('disconnected due to error:', error);
+			if (error.info.probe) {
+				const location = error.info.probe?.location;
+				logger.info(`attempted to connect from (${location.city}, ${location.country}, ${location.continent}) (lat: ${location.latitude} long: ${location.longitude})`);
+			}
+
+			if (error.info.code === 'ip_limit' && error.info.cause) {
+				const location = error.info.cause.probe?.location;
+
+				logger.info(`other connection: (${location.city}, ${location.country}, ${location.continent}) (lat: ${location.latitude} long: ${location.longitude})`);
+			}
+		})
 		.on('api:connect:location', (data: ProbeLocation) => {
 			logger.info(`connected from (${data.city}, ${data.country}, ${data.continent}) (lat: ${data.latitude} long: ${data.longitude})`);
 		})
