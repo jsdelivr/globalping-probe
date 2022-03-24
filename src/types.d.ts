@@ -11,3 +11,14 @@ type MeasurementRequest = {
 interface CommandInterface<OPT> {
 	run(socket: Socket, measurementId: string, testId: string, options: OPT): Promise<void>;
 }
+
+type ProbeLocation = {
+	continent: string;
+	region: string;
+	country: string;
+	city: string;
+	asn: string;
+	latitude: string;
+	longitude: string;
+	state: string | undefined;
+};

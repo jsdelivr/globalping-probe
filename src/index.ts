@@ -3,7 +3,7 @@ import throng from 'throng';
 import {io} from 'socket.io-client';
 import cryptoRandomString from 'crypto-random-string';
 import physicalCpuCount from 'physical-cpu-count';
-import type {CommandInterface, MeasurementRequest} from './types.js';
+import type {CommandInterface, MeasurementRequest, ProbeLocation} from './types.js';
 import {scopedLogger} from './lib/logger.js';
 import {pingCmd, PingCommand} from './command/ping-command.js';
 import {traceCmd, TracerouteCommand} from './command/traceroute-command.js';
@@ -28,6 +28,9 @@ function connect() {
 		.on('connect', () => logger.debug('connection to API established'))
 		.on('disconnect', () => logger.debug('disconnected from API'))
 		.on('connect_error', error => logger.error('connection to API failed', error))
+		.on('api:connect:location', (data: ProbeLocation) => {
+			logger.info(`connected from (${data.city}, ${data.country}, ${data.continent}) (lat: ${data.latitude} long: ${data.longitude})`);
+		})
 		.on('probe:measurement:request', (data: MeasurementRequest) => {
 			const {id: measurementId, measurement} = data;
 			const testId = cryptoRandomString({length: 16, type: 'alphanumeric'});
