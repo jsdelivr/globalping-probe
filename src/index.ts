@@ -37,8 +37,9 @@ function connect() {
 
 			if (error.info.code === 'ip_limit' && error.info.cause) {
 				const location = error.info.cause.probe?.location;
-
-				logger.info(`other connection: (${location.city}, ${location.country}, ${location.continent}) (lat: ${location.latitude} long: ${location.longitude})`);
+				if (location) {
+					logger.info(`other connection: (${location.city}, ${location.country}, ${location.continent}) (lat: ${location.latitude} long: ${location.longitude})`);
+				}
 			}
 		})
 		.on('api:connect:location', (data: ProbeLocation) => {
