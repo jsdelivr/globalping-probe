@@ -5,9 +5,9 @@ function run_probe() {
   return
 }
 
-response=$(curl -XGET "https://api.globalping.io/v1/updates")
-latestVersion=$(jq -r ".version" <<<"${response}")
-latestTarball=$(jq -r ".tarball" <<<"${response}")
+response=$(curl -XGET "https://api.github.com/repos/jsdelivr/globalping-probe/releases/latest")
+latestVersion=$(jq -r ".tag_name" <<<"${response}" | sed 's/v//')
+latestTarball=$(jq -r ".assets[] .browser_download_url" <<<"${response}")
 
 currentVersion=$(jq -r ".version" "package.json") || "foo"
 
