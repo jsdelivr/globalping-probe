@@ -30,6 +30,7 @@ type ProbeLocation = {
 type WsApiError = {
 	message: string;
 	info: {
+		socketId: string;
 		code?: string;
 		probe?: Probe;
 		cause?: {

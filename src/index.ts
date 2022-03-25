@@ -29,17 +29,15 @@ function connect() {
 		.on('disconnect', () => logger.debug('disconnected from API'))
 		.on('connect_error', error => logger.error('connection to API failed', error))
 		.on('api:error', (error: WsApiError) => {
-			logger.error('disconnected due to error:', error);
+			logger.error(`disconnected due to error (${error.info.socketId}):`, error);
+
+			if (error.info.code === 'ip_limit') {
+				logger.info('Only 1 connection per IP address is allowed. Please make sure you don\'t have another instance of the probe running.');
+			}
+
 			if (error.info.probe) {
 				const location = error.info.probe?.location;
 				logger.info(`attempted to connect from (${location.city}, ${location.country}, ${location.continent}) (lat: ${location.latitude} long: ${location.longitude})`);
-			}
-
-			if (error.info.code === 'ip_limit' && error.info.cause) {
-				const location = error.info.cause.probe?.location;
-				if (location) {
-					logger.info(`other connection: (${location.city}, ${location.country}, ${location.continent}) (lat: ${location.latitude} long: ${location.longitude})`);
-				}
 			}
 		})
 		.on('api:connect:location', (data: ProbeLocation) => {
