@@ -14,7 +14,7 @@ Once you connect you will become part of the global community that powers the [G
 
 ## Where to run
 
-You can run it on anything that can run a docker container. A VPS or server that have some available capacity, your home server or even a Raspberry Pi that you have lying around. There is nothing to configure, simply run the container.
+You can run it on anything that can run a docker container. Any kind of linux server hosted with a cloud provider, your home server or even a Raspberry Pi that you have lying around. There is nothing to configure, simply run the container.
 The only requirement is a stable internet connection.
 
 
@@ -26,14 +26,14 @@ The only requirement is a stable internet connection.
 
 ## Security
 
-- The probe doesn't open any ports or accept any incoming connections. It can only establish a connection with our API over a secure connection.
+- The probe doesn't open any ports or accept any incoming connections. It can only connect to our API over a secure connection.
 - We use regularly updated lists and databases of domains and IPs that are associated with malware or potentially dangerous content and completely ban them on the API level.
-- We rate-limit all users on the API level to avoid the abuse of network
+- We rate-limit all users on the API level to avoid the abuse of our network
 
 ## Scaling tests
 
 The amount of tests that your probe is able to process will scale according to the amount of available CPU cores and average CPU load over the past few minutes. Our code is very lightweight and shouldn't use too many of your resources, so in most cases we recommend running our probe as is. 
-But if you're worried you can use --cpuset-cpus="0-2" to limit the number of available cores.
+But if you're worried you can use this docker parameter `--cpuset-cpus="0-2"` to limit the number of available cores.
 
 ## Development
 
