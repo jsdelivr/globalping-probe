@@ -22,6 +22,9 @@ logger.info(`Start probe in a ${process.env['NODE_ENV'] ?? 'production'} mode`);
 function connect() {
 	const socket = io(`${getConfValue<string>('api.host')}/probes`, {
 		transports: ['websocket'],
+		query: {
+			version: process.env['npm_package_version'],
+		},
 	});
 
 	socket
