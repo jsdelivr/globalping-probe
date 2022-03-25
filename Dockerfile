@@ -26,4 +26,4 @@ COPY --from=builder /app/package.json /app/package-lock.json /build/
 
 RUN npm install --production
 
-CMD ["node", "./dist/index.js"]
+CMD ["npm", "start"]
