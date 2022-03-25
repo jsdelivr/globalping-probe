@@ -3,12 +3,14 @@ import throng from 'throng';
 import {io} from 'socket.io-client';
 import cryptoRandomString from 'crypto-random-string';
 import physicalCpuCount from 'physical-cpu-count';
-import type {CommandInterface, MeasurementRequest, WsApiError, ProbeLocation} from './types.js';
+import type {CommandInterface, MeasurementRequest} from './types.js';
 import {scopedLogger} from './lib/logger.js';
 import {pingCmd, PingCommand} from './command/ping-command.js';
 import {traceCmd, TracerouteCommand} from './command/traceroute-command.js';
 import {dnsCmd, DnsCommand} from './command/dns-command.js';
 import {getConfValue} from './lib/config.js';
+import {apiErrorHandler} from './helper/api-error-handler.js';
+import {apiConnectLocationHandler} from './helper/api-connect-handler.js';
 
 const logger = scopedLogger('general');
 const handlersMap = new Map<string, CommandInterface<any>>();
@@ -28,21 +30,8 @@ function connect() {
 		.on('connect', () => logger.debug('connection to API established'))
 		.on('disconnect', () => logger.debug('disconnected from API'))
 		.on('connect_error', error => logger.error('connection to API failed', error))
-		.on('api:error', (error: WsApiError) => {
-			logger.error(`disconnected due to error (${error.info.socketId}):`, error);
-
-			if (error.info.code === 'ip_limit') {
-				logger.info('Only 1 connection per IP address is allowed. Please make sure you don\'t have another instance of the probe running.');
-			}
-
-			if (error.info.probe) {
-				const location = error.info.probe?.location;
-				logger.info(`attempted to connect from (${location.city}, ${location.country}, ${location.continent}) (lat: ${location.latitude} long: ${location.longitude})`);
-			}
-		})
-		.on('api:connect:location', (data: ProbeLocation) => {
-			logger.info(`connected from (${data.city}, ${data.country}, ${data.continent}) (lat: ${data.latitude} long: ${data.longitude})`);
-		})
+		.on('api:error', apiErrorHandler)
+		.on('api:connect:location', apiConnectLocationHandler)
 		.on('probe:measurement:request', (data: MeasurementRequest) => {
 			const {id: measurementId, measurement} = data;
 			const testId = cryptoRandomString({length: 16, type: 'alphanumeric'});
