@@ -14,16 +14,18 @@ FROM node:16-bullseye-slim
 ARG node_env=production
 ENV NODE_ENV=$node_env
 
-WORKDIR /build
-
-RUN apt update && apt install -y iputils-ping traceroute \
+RUN apt update && apt install -y iputils-ping traceroute dnsutils curl jq tini \
     && apt clean && apt autoremove -y \
     && rm -rf /var/lib/{apt,dpkg,cache,log}/
 
-COPY --from=builder /app/dist /build/dist
-COPY --from=builder /app/config /build/config
-COPY --from=builder /app/package.json /app/package-lock.json /build/
+WORKDIR /app
+COPY --from=builder /app/dist /app/dist
+COPY --from=builder /app/config /app/config
+COPY --from=builder /app/package.json /app/package-lock.json /app/
+COPY bin/entrypoint.sh /entrypoint.sh
 
 RUN npm install --production
 
-CMD ["node", "./dist/index.js"]
+ENTRYPOINT ["/usr/bin/tini", "--"]
+
+CMD ["/entrypoint.sh"]
