@@ -8,4 +8,4 @@ on:
 
 jobs:
   test:
-    uses: ./.github/workflows/_test.yaml
+    uses: ./.github/workflows/_tests.yaml
