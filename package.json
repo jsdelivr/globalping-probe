@@ -9,6 +9,7 @@
   "dependencies": {
     "crypto-random-string": "^4.0.0",
     "execa": "^6.1.0",
+    "got": "^12.0.3",
     "joi": "^17.6.0",
     "lodash": "^4.17.21",
     "node-dig-dns": "^0.3.2",
@@ -52,7 +53,7 @@
   },
   "xo": {
     "rules": {
-      "import/extensions": "off",
+      "import/no-unassigned-import": "off",
       "node/prefer-global/buffer": [
         "error",
         "always"
