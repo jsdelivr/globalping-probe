@@ -1,5 +1,10 @@
 {
   "api": {
     "host": "ws://api.globalping.io"
+  },
+  "update": {
+    "releaseUrl": "https://api.github.com/repos/jsdelivr/globalping-probe/releases/latest",
+    "interval": 300,
+    "maxDeviation": 300
   }
 }

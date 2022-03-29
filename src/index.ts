@@ -9,6 +9,10 @@ import {pingCmd, PingCommand} from './command/ping-command.js';
 import {traceCmd, TracerouteCommand} from './command/traceroute-command.js';
 import {dnsCmd, DnsCommand} from './command/dns-command.js';
 import {getConfValue} from './lib/config.js';
+import {VERSION} from './constants.js';
+
+// Run self-update checks
+import './lib/updater.js';
 
 const logger = scopedLogger('general');
 const handlersMap = new Map<string, CommandInterface<any>>();
@@ -17,11 +21,14 @@ handlersMap.set('ping', new PingCommand(pingCmd));
 handlersMap.set('traceroute', new TracerouteCommand(traceCmd));
 handlersMap.set('dns', new DnsCommand(dnsCmd));
 
-logger.info(`Start probe in a ${process.env['NODE_ENV'] ?? 'production'} mode`);
+logger.info(`Start probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode`);
 
 function connect() {
 	const socket = io(`${getConfValue<string>('api.host')}/probes`, {
 		transports: ['websocket'],
+		query: {
+			version: VERSION,
+		},
 	});
 
 	socket

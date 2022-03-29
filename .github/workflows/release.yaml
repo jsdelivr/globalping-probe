@@ -1,43 +1,58 @@
-name: Release probe
+name: Release
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+  workflow_dispatch: {}
 
 jobs:
   test:
-    uses: ./.github/workflows/_test.yaml
+    uses: ./.github/workflows/_tests.yaml
 
-  publish:
+  release:
+    name: Release new version
+
     runs-on: ubuntu-latest
+    container: node:16-bullseye-slim
+
     needs: test
 
     permissions:
-      contents: read
-      packages: write
+      contents: write
+      issues: write
+      pull-requests: write
+
+    outputs:
+      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
+      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Install git :)
+        run: apt update && apt install -y git
 
-      - name: Log into registry
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v3
 
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v3
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: type=semver,pattern={{version}}
+      - name: Build
+        run: |
+          npm install
+          npm run build
 
-      - name: Build and push
-        uses: docker/build-push-action@v2
+      - name: Prune dev dependencies
+        run: npm install --only=prod
+
+      - name: Release
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v3
         with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          extra_plugins: |
+            @semantic-release/git
+            @semantic-release/exec
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    needs: release
+
+    if: needs.release.outputs.new_release_published == 'true'
+
+    uses: ./.github/workflows/_docker.yaml
+    with:
+      tag: ${{ needs.release.outputs.new_release_version }}
