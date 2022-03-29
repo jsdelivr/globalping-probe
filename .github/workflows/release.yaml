@@ -55,4 +55,4 @@ jobs:
 
     uses: ./.github/workflows/_docker.yaml
     with:
-      tag: ${{ needs.release.outputs.new_release_version }}
+      ref: v${{ needs.release.outputs.new_release_version }}
