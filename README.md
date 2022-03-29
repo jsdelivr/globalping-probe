@@ -6,7 +6,7 @@
 To join the Globalping probe network all you have to do is run our container.
 
 ```
-docker run -d --restart=always ghcr.io/jsdelivr/globalping-probe --name globalping-probe
+docker run -d --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
 ```
 
 Once you connect you will become part of the global community that powers the [Globalping Platform](https://github.com/jsdelivr/globalping)
