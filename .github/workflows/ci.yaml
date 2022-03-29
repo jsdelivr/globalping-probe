@@ -7,5 +7,10 @@ on:
     branches: [ master ]
 
 jobs:
-  test:
+  test-code:
     uses: ./.github/workflows/_tests.yaml
+  test-docker:
+    uses: ./.github/workflows/_docker.yaml
+    with:
+      ref: ${{ github.ref }}
+      publish: false
