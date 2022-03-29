@@ -26,6 +26,7 @@ if [ "$latestVersion" != "$currentVersion" ]; then
 
   rm -rf "/app"
   mv "/tmp/${loadedTarball}" "/app"
+  cd "/app" || exit
 
   rm -rf "/tmp/${loadedTarball}.tar.gz"
 
