@@ -60,12 +60,17 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 			throw new InvalidOptionsException('traceroute', error);
 		}
 
+		const outputArray: string[] = [];
+
 		const cmd = this.cmd(cmdOptions);
 		cmd.stdout?.on('data', (data: Buffer) => {
+			outputArray.push(data.toString());
 			socket.emit('probe:measurement:progress', {
 				testId,
 				measurementId,
-				result: {rawOutput: data.toString().trim()},
+				result: {
+					rawOutput: outputArray.join(''),
+				},
 			});
 		});
 

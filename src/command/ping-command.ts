@@ -38,12 +38,17 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			throw new InvalidOptionsException('ping', error);
 		}
 
+		const outputArray: string[] = [];
+
 		const cmd = this.cmd(cmdOptions);
 		cmd.stdout?.on('data', (data: Buffer) => {
+			outputArray.push(data.toString());
 			socket.emit('probe:measurement:progress', {
 				testId,
 				measurementId,
-				result: {rawOutput: data.toString()},
+				result: {
+					rawOutput: outputArray.join(''),
+				},
 			});
 		});
 
