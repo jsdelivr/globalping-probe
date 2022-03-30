@@ -17,6 +17,9 @@ Once you connect you will become part of the global community that powers the [G
 You can run it on anything that can run a docker container. Any kind of linux server hosted with a cloud provider, your home server or even a Raspberry Pi that you have lying around. There is nothing to configure, simply run the container.
 The only requirement is a stable internet connection.
 
+## Updating
+
+You don't need to worry about updates. Our probe will automatically update to the latest version as they become available. It will be pulled directly from GitHub and installed within the container. But we still recommend pulling a fresh version of the container itself as often as you can. 
 
 ## Limitations
 
