@@ -14,7 +14,7 @@ FROM node:16-bullseye-slim
 ARG node_env=production
 ENV NODE_ENV=$node_env
 
-RUN apt-get update && apt-get install -y iputils-ping traceroute dnsutils curl jq tini mtr curl \
+RUN apt-get update && apt-get install -y iputils-ping traceroute dnsutils jq tini mtr curl \
     && apt-get clean && apt autoremove -y \
     && rm -rf /var/lib/{apt,dpkg,cache,log}/
 
