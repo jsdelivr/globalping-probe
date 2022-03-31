@@ -9,6 +9,8 @@ declare module 'node-dig-dns' {
 
 	export type DnsQueryResult = {
 		answer: SingleDnsQueryResult[];
+		time: number;
+		server: string;
 	};
 
 	export function dig(args: string[]): Promise<DnsQueryResult>;
