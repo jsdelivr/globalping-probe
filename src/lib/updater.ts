@@ -30,4 +30,6 @@ const checkForUpdates = async () => {
 	process.exit();
 };
 
-setInterval(checkForUpdates, updateInterval * 1000);
+if (process.env['NODE_ENV'] !== 'development') {
+	setInterval(checkForUpdates, updateInterval * 1000);
+}
