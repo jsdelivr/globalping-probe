@@ -75,7 +75,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 			result = this.parse(cmdResult.stdout.trim());
 		} catch (error: unknown) {
 			result = {
-				rawOutput: (error as ExecaError).stderr.toString(),
+				rawOutput: (error as ExecaError).stderr?.toString() ?? '',
 			};
 		}
 

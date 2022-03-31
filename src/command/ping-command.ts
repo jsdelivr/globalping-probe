@@ -48,12 +48,13 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		});
 
 		let result = {};
+
 		try {
 			const cmdResult = await cmd;
 			result = this.parse(cmdResult.stdout);
 		} catch (error: unknown) {
 			result = {
-				rawOutput: (error as ExecaError).stderr.toString(),
+				rawOutput: (error as ExecaError).stderr?.toString() ?? '',
 			};
 		}
 
