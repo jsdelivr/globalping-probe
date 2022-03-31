@@ -59,13 +59,15 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 
 		const result = await this.cmd(cmdOptions);
 
+		const resolver = result.server.split('#')[0];
+
 		socket.emit('probe:measurement:result', {
 			testId,
 			measurementId,
 			result: {
 				answer: result.answer || [],
 				time: result.time,
-				server: result.server,
+				server: resolver,
 			},
 		});
 	}
