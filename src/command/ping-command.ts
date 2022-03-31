@@ -20,7 +20,7 @@ export const pingCmd = (options: PingOptions): ExecaChildProcess => {
 	const args = [
 		['-c', options.packets.toString()],
 		['-i', '0.2'],
-		['-w', '3'],
+		['-w', '15'],
 		'-n',
 		options.target,
 	].flat();
