@@ -56,3 +56,4 @@ jobs:
     uses: ./.github/workflows/_docker.yaml
     with:
       ref: v${{ needs.release.outputs.new_release_version }}
+      publish: true

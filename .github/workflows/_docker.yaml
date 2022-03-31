@@ -39,7 +39,7 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: ghcr.io/${{ github.repository }}
-          tags: type=semver,pattern={{version}},value=${{ inputs.tag }}
+          tags: type=semver,pattern={{version}},value=${{ inputs.ref }}
 
       - name: Build and push
         uses: docker/build-push-action@v2
