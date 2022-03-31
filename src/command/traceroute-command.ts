@@ -72,7 +72,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		let result = {};
 		try {
 			const cmdResult = await cmd;
-			result = this.parse(cmdResult.stdout);
+			result = this.parse(cmdResult.stdout.trim());
 		} catch (error: unknown) {
 			result = {
 				rawOutput: (error as ExecaError).stderr.toString(),
