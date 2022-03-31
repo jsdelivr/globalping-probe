@@ -62,7 +62,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		socket.emit('probe:measurement:result', {
 			testId,
 			measurementId,
-			result: result.answer,
+			result: result.answer || {},
 		});
 	}
 }
