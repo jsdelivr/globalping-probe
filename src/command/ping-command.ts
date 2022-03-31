@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import type {Socket} from 'socket.io-client';
-import {execa, ExecaChildProcess} from 'execa';
+import {execa, ExecaChildProcess, ExecaError} from 'execa';
 import type {CommandInterface} from '../types.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
@@ -47,12 +47,20 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			});
 		});
 
-		const result = await cmd;
+		let result = {};
+		try {
+			const cmdResult = await cmd;
+			result = this.parse(cmdResult.stdout);
+		} catch (error: unknown) {
+			result = {
+				rawOutput: (error as ExecaError).stderr.toString(),
+			};
+		}
 
 		socket.emit('probe:measurement:result', {
 			testId,
 			measurementId,
-			result: this.parse(result.stdout),
+			result,
 		});
 	}
 
