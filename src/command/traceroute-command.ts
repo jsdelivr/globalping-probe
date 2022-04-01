@@ -65,7 +65,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 			socket.emit('probe:measurement:progress', {
 				testId,
 				measurementId,
-				result: {rawOutput: data.toString().trim()},
+				result: {rawOutput: data.toString()},
 			});
 		});
 
