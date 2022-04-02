@@ -77,6 +77,7 @@ export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
 		'-4',
 		'+time=1',
 		'+tries=2',
+		'+nocookie',
 		protocolArg,
 	].flat() as string[];
 
