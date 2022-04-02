@@ -46,7 +46,7 @@
     "build": "tsc",
     "init:hooks": "husky install",
     "lint": "xo",
-    "lint:fix": "xo",
+    "lint:fix": "xo --fix",
     "clean": "rimraf coverage",
     "test": "mocha",
     "test:coverage": "npm run clean && c8 mocha"
