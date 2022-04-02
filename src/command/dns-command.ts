@@ -186,8 +186,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 				const sectionMatch = SECTION_REG_EXP.exec(line);
 
 				if (sectionMatch && sectionMatch.length >= 2) {
-					// @ts-expect-error TS is retarded
-					currentSection = sectionMatch[2].toLowerCase();
+					currentSection = String(sectionMatch[2]).toLowerCase();
 					sectionDetected = true;
 				}
 			}
