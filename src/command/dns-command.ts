@@ -75,7 +75,7 @@ export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
 		['-t', options.query.type],
 		['-p', options.query.port],
 		'-4',
-		'+time=1',
+		'+timeout=3',
 		'+tries=2',
 		'+nocookie',
 		protocolArg,
