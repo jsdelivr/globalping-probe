@@ -258,6 +258,10 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			return {priority: Number(values[4]), server: String(values[5])};
 		}
 
+		if (type === 'TXT') {
+			return String(values.slice(4).join(' '));
+		}
+
 		return String(values[values.length - 1]);
 	}
 }
