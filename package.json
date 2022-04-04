@@ -1,6 +1,6 @@
 {
   "name": "runner",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "",
   "type": "module",
   "main": "dist/index.js",
@@ -45,7 +45,7 @@
     "build": "tsc",
     "init:hooks": "husky install",
     "lint": "xo",
-    "lint:fix": "xo",
+    "lint:fix": "xo --fix",
     "clean": "rimraf coverage",
     "test": "mocha",
     "test:coverage": "npm run clean && c8 mocha"
