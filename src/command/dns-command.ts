@@ -1,11 +1,9 @@
 import Joi from 'joi';
 import type {Socket} from 'socket.io-client';
-import {execa, ExecaChildProcess, ExecaError} from 'execa';
+import {execa, ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
-import {scopedLogger} from '../lib/logger.js';
+import {isExecaError} from '../helper/execa-error-check.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
-
-const logger = scopedLogger('dns');
 
 type DnsOptions = {
 	type: 'dns';
@@ -118,17 +116,10 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 				answer, time, server, rawOutput,
 			};
 		} catch (error: unknown) {
-			if (error instanceof Error) {
-				// Swallow the error
-				logger.debug(error);
-				result = {
-					rawOutput: '',
-				};
-			} else {
-				result = {
-					rawOutput: (error as ExecaError).stderr?.toString() ?? '',
-				};
-			}
+			const output = isExecaError(error) ? error.stderr.toString() : '';
+			result = {
+				rawOutput: output,
+			};
 		}
 
 		socket.emit('probe:measurement:result', {
