@@ -156,10 +156,8 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			time: 0,
 		};
 
-		let currentSection = 'header';
-		for (const line_ of lines) {
-			const line = line_;
-
+		let section = 'header';
+		for (const line of lines) {
 			const time = this.getQueryTime(line);
 			if (time !== undefined) {
 				result.time = time;
@@ -170,32 +168,32 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 				result.server = serverMatch;
 			}
 
-			let sectionDetected = false;
+			let sectionChanged = false;
 			if (line.length === 0) {
-				currentSection = '';
+				section = '';
 			} else {
 				const sectionMatch = SECTION_REG_EXP.exec(line);
 
 				if (sectionMatch && sectionMatch.length >= 2) {
-					currentSection = String(sectionMatch[2]).toLowerCase();
-					sectionDetected = true;
+					section = String(sectionMatch[2]).toLowerCase();
+					sectionChanged = true;
 				}
 			}
 
-			if (!currentSection) {
+			if (!section) {
 				continue;
 			}
 
-			if (!result[currentSection]) {
-				result[currentSection] = [];
+			if (!result[section]) {
+				result[section] = [];
 			}
 
-			if (!sectionDetected && line) {
-				if (currentSection === 'header') {
-					result[currentSection].push(line);
+			if (!sectionChanged && line) {
+				if (section === 'header') {
+					result[section].push(line);
 				} else {
-					const sectionResult = this.parseSection(line.split(/\s+/g), currentSection);
-					(result[currentSection] as DnsSection[]).push(sectionResult);
+					const sectionResult = this.parseSection(line.split(/\s+/g), section);
+					(result[section] as DnsSection[]).push(sectionResult);
 				}
 			}
 		}
@@ -213,7 +211,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			type: values[3],
 			ttl: values[1],
 			class: values[2],
-			value: this.parseType(values),
+			value: this.parseValue(values),
 		};
 	}
 
@@ -237,7 +235,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		return String(result[1]);
 	}
 
-	private parseType(values: string[]): DnsValueType {
+	private parseValue(values: string[]): DnsValueType {
 		const type = String(values[3]).toUpperCase();
 
 		if (type === 'SOA') {
