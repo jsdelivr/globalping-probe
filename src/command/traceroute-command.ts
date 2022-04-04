@@ -1,7 +1,8 @@
 import Joi from 'joi';
 import type {Socket} from 'socket.io-client';
-import {execa, ExecaChildProcess, ExecaError} from 'execa';
+import {execa, ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
+import {isExecaError} from '../helper/execa-error-check.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
 const reHost = /(\S+)\s+\((?:((?:\d+\.){3}\d+)|([\da-fA-F:]))\)/;
@@ -74,8 +75,9 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 			const cmdResult = await cmd;
 			result = this.parse(cmdResult.stdout.trim());
 		} catch (error: unknown) {
+			const output = isExecaError(error) ? error.stderr.toString() : '';
 			result = {
-				rawOutput: (error as ExecaError).stderr?.toString() ?? '',
+				rawOutput: output,
 			};
 		}
 
