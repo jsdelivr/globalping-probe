@@ -27,6 +27,7 @@ You don't need to worry about updates. Our probe will automatically update to th
 
 - You can run only 1 probe per IP address
 - We will disconnect probes that we can't reliably resolve to a physical location
+- We block probes from IPs associated with annonymous proxies, Tor and VPN services.
 
 
 ## Security
