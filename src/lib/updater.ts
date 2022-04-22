@@ -26,8 +26,7 @@ const checkForUpdates = async () => {
 		currentVersion: VERSION,
 	});
 
-	/* eslint-disable-next-line unicorn/no-process-exit */
-	process.exit();
+	process.kill(process.pid, 'SIGTERM');
 };
 
 if (process.env['NODE_ENV'] !== 'development') {
