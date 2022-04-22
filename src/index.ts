@@ -40,7 +40,11 @@ function connect() {
 	});
 
 	socket
-		.on('connect', () => logger.debug('connection to API established'))
+		.on('connect', () => {
+			worker.active = true;
+			socket.emit('probe:status:ready', {});
+			logger.debug('connection to API established');
+		})
 		.on('disconnect', () => logger.debug('disconnected from API'))
 		.on('connect_error', error => logger.error('connection to API failed', error))
 		.on('api:error', apiErrorHandler)
@@ -76,6 +80,8 @@ function connect() {
 	// eslint-disable-next-line node/prefer-global/process
 	process.on('SIGTERM', () => {
 		worker.active = false;
+		socket.emit('probe:status:not_ready', {});
+
 		logger.debug('SIGTERM received');
 
 		const closeInterval = setInterval(() => {
