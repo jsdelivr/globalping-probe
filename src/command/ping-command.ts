@@ -19,6 +19,7 @@ const pingOptionsSchema = Joi.object<PingOptions>({
 
 export const pingCmd = (options: PingOptions): ExecaChildProcess => {
 	const args = [
+		'-4',
 		['-c', options.packets.toString()],
 		['-i', '0.2'],
 		['-w', '15'],
