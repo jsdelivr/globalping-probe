@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import isIpPrivate from 'private-ip';
 import type {Socket} from 'socket.io-client';
 import {execa, ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
@@ -73,7 +74,14 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		let result = {};
 		try {
 			const cmdResult = await cmd;
-			result = this.parse(cmdResult.stdout.trim());
+			const parseResult = this.parse(cmdResult.stdout.trim());
+			result = parseResult;
+
+			if (isIpPrivate(parseResult.destination ?? '')) {
+				result = {
+					rawOutput: 'Private IP ranges are not allowed',
+				};
+			}
 		} catch (error: unknown) {
 			const output = isExecaError(error) ? error.stderr.toString() : '';
 			result = {
@@ -88,7 +96,11 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		});
 	}
 
-	private parse(rawOutput: string) {
+	private parse(rawOutput: string): {
+		rawOutput: string;
+		destination?: string;
+		hops?: ParsedLine[];
+	} {
 		const lines = rawOutput.split('\n');
 
 		if (lines.length === 0) {
@@ -108,7 +120,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		const hops = lines.slice(1).map(l => this.parseLine(l));
 
 		return {
-			destination: header.resolvedAddress,
+			destination: String(header.resolvedAddress),
 			hops,
 			rawOutput,
 		};
@@ -127,7 +139,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		};
 	}
 
-	private parseLine(line: string): ParsedLine | undefined {
+	private parseLine(line: string): ParsedLine {
 		const hostMatch = reHost.exec(line);
 		const rttList = Array.from(line.matchAll(reRtt), m => Number.parseFloat(m[1]!));
 
