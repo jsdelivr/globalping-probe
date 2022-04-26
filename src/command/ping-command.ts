@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import isIpPrivate from 'private-ip';
 import type {Socket} from 'socket.io-client';
 import {execa, ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
@@ -53,7 +54,14 @@ export class PingCommand implements CommandInterface<PingOptions> {
 
 		try {
 			const cmdResult = await cmd;
-			result = this.parse(cmdResult.stdout);
+			const parseResult = this.parse(cmdResult.stdout);
+			result = parseResult;
+
+			if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
+				result = {
+					rawOutput: 'Private IP ranges are not allowed',
+				};
+			}
 		} catch (error: unknown) {
 			const output = isExecaError(error) ? error.stderr.toString() : '';
 			result = {
@@ -68,7 +76,14 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		});
 	}
 
-	private parse(rawOutput: string) {
+	private parse(rawOutput: string): {
+		rawOutput: string;
+		resolvedAddress?: string;
+		times?: Array<{ttl: number; time: number}>;
+		min?: number;
+		max?: number;
+		avg?: number;
+	} {
 		const lines = rawOutput.split('\n');
 		if (lines.length === 0) {
 			return {rawOutput};
@@ -79,7 +94,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			return {rawOutput};
 		}
 
-		const resolvedAddress = header?.groups?.['addr'];
+		const resolvedAddress = String(header?.groups?.['addr']);
 		const statsLines = [];
 
 		let line;
