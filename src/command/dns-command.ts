@@ -12,7 +12,7 @@ type DnsOptions = {
 	type: 'dns';
 	target: string;
 	query: {
-		type?: string[];
+		type?: string;
 		resolver?: string;
 		protocol?: string;
 		port?: number;

@@ -15,6 +15,7 @@ describe('dns command', () => {
 	it('should parse trace - dns-success-linux', async () => {
 		const testCase = 'dns-success-linux';
 		const options = {
+			type: 'dns' as const,
 			target: 'google.com',
 			query: {
 				type: 'TXT',
@@ -37,6 +38,7 @@ describe('dns command', () => {
 	it('should return ExecaError - dns-success-linux', async () => {
 		const testCase = 'dns-resolver-error-linux';
 		const options = {
+			type: 'dns' as const,
 			target: 'google.com',
 			query: {
 				type: 'TXT',
