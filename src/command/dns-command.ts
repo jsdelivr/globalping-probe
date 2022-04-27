@@ -6,7 +6,9 @@ import {isExecaError} from '../helper/execa-error-check.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
 import ClassicDigParser from './handlers/dig/classic.js';
-import type {DnsParseResponse} from './handlers/dig/classic.js';
+import type {DnsParseResponse as DnsParseResponseClassic} from './handlers/dig/classic.js';
+import TraceDigParser from './handlers/dig/trace.js';
+import type {DnsParseResponse as DnsParseResponseTrace} from './handlers/dig/trace.js';
 
 type DnsOptions = {
 	type: 'dns';
@@ -84,10 +86,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 				throw parsedResult;
 			}
 
-			const {answer, time, server, rawOutput} = parsedResult;
-			result = {
-				answer, time, server, rawOutput,
-			};
+			result = parsedResult;
 		} catch (error: unknown) {
 			const output = isExecaError(error) ? error.stderr.toString() : '';
 			result = {
@@ -102,11 +101,11 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		});
 	}
 
-	private parse(rawOutput: string, trace: boolean): Error | DnsParseResponse {
+	private parse(rawOutput: string, trace: boolean): Error | DnsParseResponseClassic | DnsParseResponseTrace {
 		if (!trace) {
 			return ClassicDigParser.parse(rawOutput);
 		}
 
-		throw new Error('unknown');
+		return TraceDigParser.parse(rawOutput);
 	}
 }

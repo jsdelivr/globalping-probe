@@ -11,6 +11,15 @@ export type DnsSection = Record<string, unknown> | {
 	value: DnsValueType;
 };
 
+export type DnsParseLoopResponse = {
+	[key: string]: any;
+	question?: any[];
+	header?: any[];
+	answer: DnsSection[];
+	time: number;
+	server: string;
+};
+
 /* eslint-disable @typescript-eslint/naming-convention */
 export const SECTION_REG_EXP = /(;; )(\S+)( SECTION:)/g;
 export const NEW_LINE_REG_EXP = /\r?\n/;

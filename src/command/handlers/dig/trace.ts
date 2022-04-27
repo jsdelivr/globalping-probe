@@ -2,15 +2,8 @@ import {
 	NEW_LINE_REG_EXP,
 	SharedDigParser,
 	DnsSection,
+	DnsParseLoopResponse,
 } from './shared.js';
-
-export type DnsParseLoopResponse = {
-	[key: string]: any;
-	question?: any[];
-	answer: DnsSection[];
-	time: number;
-	server: string;
-};
 
 export type DnsParseResponse = {
 	result: DnsParseLoopResponse[];

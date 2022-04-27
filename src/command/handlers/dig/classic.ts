@@ -3,16 +3,8 @@ import {
 	NEW_LINE_REG_EXP,
 	SharedDigParser,
 	DnsSection,
+	DnsParseLoopResponse,
 } from './shared.js';
-
-export type DnsParseLoopResponse = {
-	[key: string]: any;
-	question?: any[];
-	header: any[];
-	answer: any[];
-	time: number;
-	server: string;
-};
 
 export type DnsParseResponse = DnsParseLoopResponse & {
 	rawOutput: string;
@@ -86,7 +78,7 @@ export const ClassicDigParser = {
 
 			if (!sectionChanged && line) {
 				if (section === 'header') {
-					result[section].push(line);
+					result[section]!.push(line);
 				} else {
 					const sectionResult = ClassicDigParser.parseSection(line.split(/\s+/g), section);
 					(result[section] as DnsSection[]).push(sectionResult);
@@ -94,7 +86,11 @@ export const ClassicDigParser = {
 			}
 		}
 
-		return result;
+		return {
+			answer: result.answer,
+			server: result.server,
+			time: result.time,
+		};
 	},
 
 	parseSection(values: string[], section: string): DnsSection {
