@@ -29,6 +29,8 @@ logger.info(`Start probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'p
 function connect() {
 	const socket = io(`${getConfValue<string>('api.host')}/probes`, {
 		transports: ['websocket'],
+		reconnectionDelay: 100,
+		reconnectionDelayMax: 500,
 		query: {
 			version: VERSION,
 		},
