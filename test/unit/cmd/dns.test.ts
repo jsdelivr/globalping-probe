@@ -12,7 +12,30 @@ describe('dns command', () => {
 		sandbox.reset();
 	});
 
-	it('should parse trace - dns-success-linux', async () => {
+	it('should parse trace - dns-trace-success', async () => {
+		const testCase = 'dns-trace-success';
+		const options = {
+			type: 'dns' as const,
+			target: 'cdn.jsdelivr.net',
+			query: {
+				trace: true,
+			},
+		};
+
+		const rawOutput = getCmdMock(testCase);
+		const expectedResult = getCmdMockResult(testCase);
+
+		const mockCmd = Promise.resolve({stdout: rawOutput});
+
+		const dns = new DnsCommand((): any => mockCmd);
+		await dns.run(mockSocket as any, 'measurement', 'test', options);
+
+		expect(mockSocket.emit.calledOnce).to.be.true;
+		expect(mockSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+		expect(mockSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
+	});
+
+	it('should parse dns - dns-success-linux', async () => {
 		const testCase = 'dns-success-linux';
 		const options = {
 			type: 'dns' as const,
