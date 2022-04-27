@@ -1,3 +1,9 @@
+import {
+	SECTION_REG_EXP,
+	NEW_LINE_REG_EXP,
+	SharedDigParser,
+	DnsSection,
+} from './shared.js';
 
 export type DnsParseLoopResponse = {
 	[key: string]: any;
@@ -12,22 +18,7 @@ export type DnsParseResponse = DnsParseLoopResponse & {
 	rawOutput: string;
 };
 
-type DnsValueType = string | {
-	priority: number;
-	server: string;
-};
-
-type DnsSection = Record<string, unknown> | {
-	domain: string;
-	type: string;
-	ttl: number;
-	class: string;
-	value: DnsValueType;
-};
-
 /* eslint-disable @typescript-eslint/naming-convention */
-const SECTION_REG_EXP = /(;; )(\S+)( SECTION:)/g;
-const NEW_LINE_REG_EXP = /\r?\n/;
 const QUERY_TIME_REG_EXP = /Query\s+time:\s+(\d+)/g;
 const RESOLVER_REG_EXP = /SERVER:.*\((.*?)\)/g;
 /* eslint-enable @typescript-eslint/naming-convention */
@@ -111,13 +102,7 @@ export const ClassicDigParser = {
 			return {};
 		}
 
-		return {
-			domain: values[0],
-			type: values[3],
-			ttl: values[1],
-			class: values[2],
-			value: ClassicDigParser.parseValue(values),
-		};
+		return SharedDigParser.parseSection(values);
 	},
 
 	getQueryTime(line: string): number | undefined {
@@ -138,24 +123,6 @@ export const ClassicDigParser = {
 		}
 
 		return String(result[1]);
-	},
-
-	parseValue(values: string[]): DnsValueType {
-		const type = String(values[3]).toUpperCase();
-
-		if (type === 'SOA') {
-			return String(values.slice(4)).replace(/,/g, ' ');
-		}
-
-		if (type === 'MX') {
-			return {priority: Number(values[4]), server: String(values[5])};
-		}
-
-		if (type === 'TXT') {
-			return String(values.slice(4).join(' '));
-		}
-
-		return String(values[values.length - 1]);
 	},
 };
 
