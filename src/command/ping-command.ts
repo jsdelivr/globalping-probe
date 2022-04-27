@@ -41,8 +41,18 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			throw new InvalidOptionsException('ping', error);
 		}
 
+		const pStdout: string[] = [];
+		let isResultPrivate = false;
+
 		const cmd = this.cmd(cmdOptions);
 		cmd.stdout?.on('data', (data: Buffer) => {
+			pStdout.push(data.toString());
+			const isValid = this.validatePartialResult(pStdout.join(''), cmd);
+
+			if (!isValid) {
+				isResultPrivate = !isValid;
+			}
+
 			socket.emit('probe:measurement:progress', {
 				testId,
 				measurementId,
@@ -58,9 +68,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			result = parseResult;
 
 			if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
-				result = {
-					rawOutput: 'Private IP ranges are not allowed',
-				};
+				isResultPrivate = true;
 			}
 		} catch (error: unknown) {
 			const output = isExecaError(error) ? error.stderr.toString() : '';
@@ -69,11 +77,28 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			};
 		}
 
+		if (isResultPrivate) {
+			result = {
+				rawOutput: 'Private IP ranges are not allowed',
+			};
+		}
+
 		socket.emit('probe:measurement:result', {
 			testId,
 			measurementId,
 			result,
 		});
+	}
+
+	private validatePartialResult(rawOutput: string, cmd: ExecaChildProcess): boolean {
+		const parseResult = this.parse(rawOutput);
+
+		if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
+			cmd.kill('SIGKILL');
+			return false;
+		}
+
+		return true;
 	}
 
 	private parse(rawOutput: string): {
