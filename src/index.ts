@@ -36,7 +36,10 @@ function connect() {
 
 	socket
 		.on('connect', () => logger.debug('connection to API established'))
-		.on('disconnect', () => logger.debug('disconnected from API'))
+		.on('disconnect', (reason: string): void => {
+			logger.debug(`disconnected from API. (${reason})`);
+			socket.connect();
+		})
 		.on('connect_error', error => logger.error('connection to API failed', error))
 		.on('api:error', apiErrorHandler)
 		.on('api:connect:location', apiConnectLocationHandler)
