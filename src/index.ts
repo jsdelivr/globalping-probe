@@ -40,7 +40,13 @@ function connect() {
 			logger.debug(`disconnected from API. (${reason})`);
 			socket.connect();
 		})
-		.on('connect_error', error => logger.error('connection to API failed', error))
+		.on('connect_error', error => {
+			logger.error('connection to API failed', error);
+
+			if (!error.message.startsWith('invalid probe version')) {
+				socket.connect();
+			}
+		})
 		.on('api:error', apiErrorHandler)
 		.on('api:connect:location', apiConnectLocationHandler)
 		.on('probe:measurement:request', (data: MeasurementRequest) => {
