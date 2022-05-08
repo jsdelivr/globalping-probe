@@ -69,7 +69,6 @@ function connect() {
 				try {
 					await handler.run(socket, measurementId, testId, measurement);
 					worker.jobs.delete(measurementId);
-					console.log('sas:');
 				} catch (error: unknown) {
 					// Todo: maybe we should notify api as well
 					logger.error('failed to run the measurement.', error);
