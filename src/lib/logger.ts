@@ -1,4 +1,4 @@
-import * as process from 'node:process';
+import process from 'node:process';
 import * as winston from 'winston';
 
 const logger = winston.createLogger({

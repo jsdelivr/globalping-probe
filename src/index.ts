@@ -1,4 +1,4 @@
-import * as processTS from 'node:process';
+import process from 'node:process';
 import throng from 'throng';
 import {io} from 'socket.io-client';
 import cryptoRandomString from 'crypto-random-string';
@@ -24,7 +24,7 @@ handlersMap.set('ping', new PingCommand(pingCmd));
 handlersMap.set('traceroute', new TracerouteCommand(traceCmd));
 handlersMap.set('dns', new DnsCommand(dnsCmd));
 
-logger.info(`Start probe version ${VERSION} in a ${processTS.env['NODE_ENV'] ?? 'production'} mode`);
+logger.info(`Start probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode`);
 
 function connect() {
 	const worker = {
@@ -76,7 +76,6 @@ function connect() {
 			});
 		});
 
-	// eslint-disable-next-line node/prefer-global/process
 	process.on('SIGTERM', () => {
 		worker.active = false;
 		socket.emit('probe:status:not_ready', {});
@@ -88,14 +87,13 @@ function connect() {
 				clearInterval(closeInterval);
 
 				logger.debug('closing process');
-				// eslint-disable-next-line node/prefer-global/process
 				process.exit(0);
 			}
 		}, 100);
 	});
 }
 
-if (processTS.env['NODE_ENV'] === 'development') {
+if (process.env['NODE_ENV'] === 'development') {
 	// Run multiple clients in dev mode for easier debugging
 	throng({worker: connect, count: physicalCpuCount})
 		.catch(error => {
