@@ -8,8 +8,8 @@
     "maxDeviation": 300
   },
   "uptime": {
-    "interval": 1,
-    "maxDeviation": 300,
-    "maxUptime": 43200
+    "interval": 300,
+    "maxDeviation": 86400,
+    "maxUptime": 604800
   }
 }
