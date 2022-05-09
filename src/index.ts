@@ -17,6 +17,9 @@ import {VERSION} from './constants.js';
 // Run self-update checks
 import './lib/updater.js';
 
+// Run scheduled restart
+import './lib/restart.js';
+
 const logger = scopedLogger('general');
 const handlersMap = new Map<string, CommandInterface<any>>();
 
@@ -34,6 +37,8 @@ function connect() {
 
 	const socket = io(`${getConfValue<string>('api.host')}/probes`, {
 		transports: ['websocket'],
+		reconnectionDelay: 100,
+		reconnectionDelayMax: 500,
 		query: {
 			version: VERSION,
 		},
@@ -45,8 +50,18 @@ function connect() {
 			socket.emit('probe:status:ready', {});
 			logger.debug('connection to API established');
 		})
-		.on('disconnect', () => logger.debug('disconnected from API'))
-		.on('connect_error', error => logger.error('connection to API failed', error))
+		.on('connect', () => logger.debug('connection to API established'))
+		.on('disconnect', (reason: string): void => {
+			logger.debug(`disconnected from API. (${reason})`);
+			socket.connect();
+		})
+		.on('connect_error', error => {
+			logger.error('connection to API failed', error);
+
+			if (!error.message.startsWith('invalid probe version')) {
+				socket.connect();
+			}
+		})
 		.on('api:error', apiErrorHandler)
 		.on('api:connect:location', apiConnectLocationHandler)
 		.on('probe:measurement:request', (data: MeasurementRequest) => {

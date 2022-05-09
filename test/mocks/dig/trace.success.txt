@@ -1,0 +1,50 @@
+; <<>> DiG 9.18.1-1ubuntu1-Ubuntu <<>> +trace +nocookie +tries +timeout cdn.jsdelivr.net
+;; global options: +cmd
+.			6593	IN	NS	j.root-servers.net.
+.			6593	IN	NS	c.root-servers.net.
+.			6593	IN	NS	g.root-servers.net.
+.			6593	IN	NS	b.root-servers.net.
+.			6593	IN	NS	i.root-servers.net.
+.			6593	IN	NS	a.root-servers.net.
+.			6593	IN	NS	e.root-servers.net.
+.			6593	IN	NS	l.root-servers.net.
+.			6593	IN	NS	k.root-servers.net.
+.			6593	IN	NS	f.root-servers.net.
+.			6593	IN	NS	m.root-servers.net.
+.			6593	IN	NS	d.root-servers.net.
+.			6593	IN	NS	h.root-servers.net.
+;; Received 811 bytes from 127.0.0.53#53(127.0.0.53) in 4 ms
+
+net.			172800	IN	NS	a.gtld-servers.net.
+net.			172800	IN	NS	b.gtld-servers.net.
+net.			172800	IN	NS	c.gtld-servers.net.
+net.			172800	IN	NS	d.gtld-servers.net.
+net.			172800	IN	NS	e.gtld-servers.net.
+net.			172800	IN	NS	f.gtld-servers.net.
+net.			172800	IN	NS	g.gtld-servers.net.
+net.			172800	IN	NS	h.gtld-servers.net.
+net.			172800	IN	NS	i.gtld-servers.net.
+net.			172800	IN	NS	j.gtld-servers.net.
+net.			172800	IN	NS	k.gtld-servers.net.
+net.			172800	IN	NS	l.gtld-servers.net.
+net.			172800	IN	NS	m.gtld-servers.net.
+net.			86400	IN	DS	35886 8 2 7862B27F5F516EBE19680444D4CE5E762981931842C465F00236401D 8BD973EE
+net.			86400	IN	RRSIG	DS 8 1 86400 20220509170000 20220426160000 47671 . IbbmgURsOFU02lEF33VZIt90+xd+DSAy6n+LowQlVMbxAxB6BsF5nNi1 n0Xsfixgxk06JOsQOLeMnTSX6xGZ5baCHa8pWGlS2CZ3wpmWt9Fg5Y/r Vqpneq9sBXuvcyLZ4OOzxqY8Xvqnj5EBqx2wegOxqOzbw4I2MLPeFWS4 hRvHcodnVkAHaWbDWLi3olY+8nIdWMLRdMxA1VkzliQn0MOPNn6mhKeG HTh3uOo7FSm+adbefRhC6X8QDoSFQ6VKYhd3mVJ7HGJ2JsvpVsJlG5Ff WNBztAw7W5Tg9aIVxPwfl3tNvlkpyvDqgurJLXVqmB7F+t3f3+8QKDMb nStNJg==
+;; Received 1173 bytes from 199.7.91.13#53(d.root-servers.net) in 24 ms
+
+jsdelivr.net.		172800	IN	NS	dns1.p03.nsone.net.
+jsdelivr.net.		172800	IN	NS	dns2.p03.nsone.net.
+jsdelivr.net.		172800	IN	NS	dns3.p03.nsone.net.
+jsdelivr.net.		172800	IN	NS	dns4.p03.nsone.net.
+jsdelivr.net.		172800	IN	NS	gns1.cloudns.net.
+jsdelivr.net.		172800	IN	NS	gns2.cloudns.net.
+jsdelivr.net.		172800	IN	NS	gns3.cloudns.net.
+jsdelivr.net.		172800	IN	NS	gns4.cloudns.net.
+A1RT98BS5QGC9NFI51S9HCI47ULJG6JH.net. 86400 IN NSEC3 1 1 0 - A1RTLNPGULOGN7B9A62SHJE1U3TTP8DR NS SOA RRSIG DNSKEY NSEC3PARAM
+A1RT98BS5QGC9NFI51S9HCI47ULJG6JH.net. 86400 IN RRSIG NSEC3 8 2 86400 20220503055829 20220426044829 45728 net. kqtegTsTwSJ9OJ/4UpoKnOzaSfaEaSxd03SERi2nhwhL1Dd/xjXF+Oy+ gB2NxI8IHBdT0Za1PadKRYefjjI+phvYB2Z2s7LqLE5iLju+2R6mVMQu TfkTO8GJWxBDMcXdcX2cjTxSan7y8m4kbzeGvqFHwiWtodDnT2lFQBvg QKqFhOv3D/NZtRua5mWeuy78rB3MIZQmGQ7rwapaz4h4eg==
+GBMGFDMMHIENHS2RNSDAQ541H88GB5IO.net. 86400 IN NSEC3 1 1 0 - GBMKRB78QIII3C3NIFGFSK27G1IBHMM0 NS DS RRSIG
+GBMGFDMMHIENHS2RNSDAQ541H88GB5IO.net. 86400 IN RRSIG NSEC3 8 2 86400 20220430055643 20220423044643 45728 net. JIFFMnHeaG97gcZYao5JGWkTJ4zGKDAKrfLOi9KrKVmBroFmnjfOytBo NgTxIl17GlLW2kaq1doKHpDHUu8y4u/56OdJmeBgL+OYqGbQjmICztpK dU+p9eoXUPLMkDFTqrwFhN1dm51Q9sle4MiDHMeLHBrs76jlpBcR+PQn NO9LoUolBGhvxHSQfhwCyAi0slPURsAkC4DBUS1WrpipCQ==
+;; Received 1116 bytes from 192.26.92.30#53(c.gtld-servers.net) in 32 ms
+
+cdn.jsdelivr.net.	900	IN	CNAME	jsdelivr.map.fastly.net.
+;; Received 79 bytes from 185.136.98.122#53(gns3.cloudns.net) in 28 ms
