@@ -17,6 +17,9 @@ import {VERSION} from './constants.js';
 // Run self-update checks
 import './lib/updater.js';
 
+// Run scheduled restart
+import './lib/restart.js';
+
 const logger = scopedLogger('general');
 const handlersMap = new Map<string, CommandInterface<any>>();
 

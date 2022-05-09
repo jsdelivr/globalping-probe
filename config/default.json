@@ -6,5 +6,10 @@
     "releaseUrl": "https://api.github.com/repos/jsdelivr/globalping-probe/releases/latest",
     "interval": 300,
     "maxDeviation": 300
+  },
+  "uptime": {
+    "interval": 300,
+    "maxDeviation": 86400,
+    "maxUptime": 604800
   }
 }
