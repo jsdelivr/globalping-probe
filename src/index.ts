@@ -23,6 +23,11 @@ import './lib/restart.js';
 const logger = scopedLogger('general');
 const handlersMap = new Map<string, CommandInterface<any>>();
 
+const fatalConnectErrors = [
+	'failed to collect probe metadata',
+	'invalid probe version',
+];
+
 handlersMap.set('ping', new PingCommand(pingCmd));
 handlersMap.set('traceroute', new TracerouteCommand(traceCmd));
 handlersMap.set('dns', new DnsCommand(dnsCmd));
@@ -60,7 +65,9 @@ function connect() {
 		.on('connect_error', error => {
 			logger.error('connection to API failed', error);
 
-			if (!error.message.startsWith('invalid probe version')) {
+			const isFatalError = fatalConnectErrors.some(fatalError => error.message.startsWith(fatalError));
+
+			if (!isFatalError) {
 				socket.connect();
 			}
 		})
