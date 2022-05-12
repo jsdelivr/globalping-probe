@@ -55,7 +55,6 @@ function connect() {
 			socket.emit('probe:status:ready', {});
 			logger.debug('connection to API established');
 		})
-		.on('connect', () => logger.debug('connection to API established'))
 		.on('disconnect', (reason: string): void => {
 			logger.debug(`disconnected from API. (${reason})`);
 			if (reason === 'io server disconnect') {
