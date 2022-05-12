@@ -1,0 +1,18 @@
+; <<>> DiG 9.16.1-Ubuntu <<>> gitlab.test.com -t A -p 53 -4 +timeout=3 +tries=2 +nocookie
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 21105
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 65494
+;; QUESTION SECTION:
+;gitlab.test.com.		IN	A
+
+;; ANSWER SECTION:
+gitlab.test.com.	0	IN	A	192.168.0.77
+
+;; Query time: 0 msec
+;; SERVER: 127.0.0.53#53(127.0.0.53)
+;; WHEN: Thu May 12 08:15:15 BST 2022
+;; MSG SIZE  rcvd: 64
