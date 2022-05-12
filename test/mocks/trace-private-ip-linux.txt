@@ -1,0 +1,7 @@
+ traceroute to hello.com (192.168.0.10), 20 hops max, 60 byte packets
+ 1  192.168.0.1 (192.168.0.1)  1.619 ms  2.465 ms
+ 2  * *
+ 3  lutn-core-2a-xe-7114-0.network.virginmedia.net (62.252.67.181)  27.688 ms  27.991 ms
+ 4  * *
+ 5  eislou2-ic-4-ae0-0.network.virginmedia.net (62.254.59.130)  28.512 ms  28.192 ms
+ 6  142.250.160.116 (142.250.160.116)  28.629 ms  35.934 ms

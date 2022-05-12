@@ -13,7 +13,7 @@ describe('trace command', () => {
 	});
 
 	describe('mock', () => {
-		const testCases = ['trace-success-linux'];
+		const testCases = ['trace-success-linux', 'trace-private-ip-linux'];
 
 		for (const testCase of testCases) {
 			it(`should run and parse trace - ${testCase}`, async () => {
