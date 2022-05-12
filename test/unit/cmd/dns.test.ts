@@ -58,7 +58,7 @@ describe('dns command', () => {
 		expect(mockSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
 	});
 
-	it('should return ExecaError - dns-success-linux', async () => {
+	it('should return ExecaError - dns-resolver-error-linux', async () => {
 		const testCase = 'dns-resolver-error-linux';
 		const options = {
 			type: 'dns' as const,
