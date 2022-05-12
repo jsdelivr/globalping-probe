@@ -105,4 +105,28 @@ describe('dns command', () => {
 		expect(mockSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
 		expect(mockSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
 	});
+
+	it('should return private IP error - dns-trace-resolved-private-ip-error-linux', async () => {
+		const testCase = 'dns-trace-resolved-private-ip-error-linux';
+		const options = {
+			type: 'dns' as const,
+			target: 'test.com',
+			query: {
+				type: 'A',
+				trace: true,
+			},
+		};
+
+		const rawOutput = getCmdMock(testCase);
+		const expectedResult = getCmdMockResult(testCase);
+
+		const mockCmd = Promise.resolve({stdout: rawOutput});
+
+		const dns = new DnsCommand((): any => mockCmd);
+		await dns.run(mockSocket as any, 'measurement', 'test', options);
+
+		expect(mockSocket.emit.calledOnce).to.be.true;
+		expect(mockSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+		expect(mockSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
+	});
 });
