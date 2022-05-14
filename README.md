@@ -48,8 +48,19 @@ If you can host our probes in multiple global regions, espesially locations we d
 
 To get started or if you have any questions make sure to get in contact with us dak@prospectone.io
 
-## Development
+## Hardware Probes
 
-1. Clone repository
-2. `npm install && npm run build`
-3. `NODE_ENV=development node dist/index.js`
+All GitHub Sponsors that contribute $20+ per month are eligible to receive a hardware probe to install in your home or office. 
+
+Installing our hardware probe simplifies the whole process and removes the need of having a computer running 24/7. 
+Just connect the probe to your switch or router via an ethernet cable and you are done!
+
+The package includes everything you need to get started:
+- An ARM based mini computer in a metal housing
+- Quality power supply
+- SD Card with OS and probe container pre-installed
+- Ethernet patch cable 
+
+Learn more about it on our website!
+
+[Hardware probe firmware](https://github.com/jsdelivr/globalping-hwprobe)
