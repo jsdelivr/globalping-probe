@@ -27,7 +27,7 @@ export const buildResolver = (resolverAddr: string | undefined, family: IpFamily
 	return resolve;
 };
 
-export const dnsLookup = (resolverAddr: string | undefined, resolverFn?: ResolverType) => ((
+export const dnsLookup = (resolverAddr: string | undefined, resolverFn?: ResolverType): never => ((
 	hostname: string,
 	options: Options,
 	callback: (
