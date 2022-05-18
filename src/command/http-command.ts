@@ -110,7 +110,9 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			respond();
 		});
 
-		stream.on('end', () => respond())
+		stream.on('end', () => {
+			respond();
+		});
 
 		const respond = () => {
 			const rawOutput = options.query.method === 'head'
