@@ -6,10 +6,16 @@ type Options = {
 	family: IpFamily;
 };
 type ErrnoException = NodeJS.ErrnoException;
+export type ResolverCallbackType = (
+// eslint-disable-next-line @typescript-eslint/ban-types
+	error: Error | null,
+	result: string[] | RecordWithTtl[],
+) => void;
+export type ResolverType = (hostname: string, options: {ttl: boolean}, cb: ResolverCallbackType) => void;
 
 const isRecordWithTtl = (record: unknown): record is RecordWithTtl => Boolean((record as RecordWithTtl).ttl);
 
-export const dnsLookup = (resolverAddr: string | undefined) => ((
+export const dnsLookup = (resolverAddr: string | undefined, resolverFn?: ResolverType) => ((
 	hostname: string,
 	options: Options,
 	callback: (
@@ -19,19 +25,8 @@ export const dnsLookup = (resolverAddr: string | undefined) => ((
 		family: IpFamily
 	) => void,
 ): void => {
-	const resolver = new Resolver();
-
-	if (resolverAddr) {
-		resolver.setServers([resolverAddr]);
-	}
-
-	const resolve = options.family === 6 ? resolver.resolve6.bind(resolver) : resolver.resolve4.bind(resolver);
-
-	resolve(hostname, {ttl: false}, (
-		// eslint-disable-next-line @typescript-eslint/ban-types
-		error: Error | null,
-		result: string[] | RecordWithTtl[],
-	) => {
+	const resolver = resolverFn || buildResolver(resolverAddr, options.family);
+	resolver(hostname, {ttl: false}, (error, result) => {
 		if (error) {
 			callback(error, undefined, 4 as IpFamily);
 			return;
@@ -47,3 +42,15 @@ export const dnsLookup = (resolverAddr: string | undefined) => ((
 		callback(error, validIps[0], 4 as IpFamily);
 	});
 }) as never;
+
+export const buildResolver = (resolverAddr: string | undefined, family: IpFamily): ResolverType => {
+	const resolver = new Resolver();
+
+	if (resolverAddr) {
+		resolver.setServers([resolverAddr]);
+	}
+
+	const resolve = family === 6 ? resolver.resolve6.bind(resolver) : resolver.resolve4.bind(resolver);
+
+	return resolve;
+};
