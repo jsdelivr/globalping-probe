@@ -45,7 +45,7 @@ export const httpCmd = (options: HttpOptions): Request => {
 		method: options.query.method as HTTPAlias,
 		followRedirect: false,
 		cache: false,
-		dnsLookup,
+		dnsLookup: dnsLookup(options.query.resolver),
 		http2: options.query.protocol === 'http2',
 		timeout: {response: 10_000},
 		https: {rejectUnauthorized: false},
