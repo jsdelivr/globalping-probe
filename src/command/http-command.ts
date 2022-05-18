@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import _ from 'lodash';
-import got, {Response, Request, HTTPAlias, Progress} from 'got';
+import got, {Response, Request, HTTPAlias, Progress, DnsLookupIpVersion} from 'got';
 import type {Socket} from 'socket.io-client';
 import type {CommandInterface} from '../types.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
@@ -46,6 +46,7 @@ export const httpCmd = (options: HttpOptions): Request => {
 		followRedirect: false,
 		cache: false,
 		dnsLookup: dnsLookup(options.query.resolver),
+		dnsLookupIpVersion: 4 as DnsLookupIpVersion,
 		http2: options.query.protocol === 'http2',
 		timeout: {response: 10_000},
 		https: {rejectUnauthorized: false},

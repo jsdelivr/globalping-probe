@@ -11,7 +11,7 @@ const isRecordWithTtl = (record: unknown): record is RecordWithTtl => Boolean((r
 
 export const dnsLookup = (resolverAddr: string | undefined) => ((
 	hostname: string,
-	_options: Options,
+	options: Options,
 	callback: (
 	// eslint-disable-next-line @typescript-eslint/ban-types
 		error: ErrnoException | null,
@@ -25,7 +25,9 @@ export const dnsLookup = (resolverAddr: string | undefined) => ((
 		resolver.setServers([resolverAddr]);
 	}
 
-	resolver.resolve4(hostname, {ttl: false}, (
+	const resolve = options.family === 6 ? resolver.resolve6.bind(resolver) : resolver.resolve4.bind(resolver);
+
+	resolve(hostname, {ttl: false}, (
 		// eslint-disable-next-line @typescript-eslint/ban-types
 		error: Error | null,
 		result: string[] | RecordWithTtl[],
