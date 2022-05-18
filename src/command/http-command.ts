@@ -40,10 +40,8 @@ export const httpCmd = (options: HttpOptions): Request => {
 	const port = options.query.port ?? options.query.protocol === 'http' ? 80 : 443;
 	const url = `${protocolPrefix}://${options.target}:${port}${options.query.path}`;
 
-	const method = options.query.method || 'HEAD';
-
 	const options_ = {
-		method: method as HTTPAlias,
+		method: options.query.method as HTTPAlias,
 		followRedirect: false,
 		cache: false,
 		http2: options.query.protocol === 'http2',
