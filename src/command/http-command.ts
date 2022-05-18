@@ -73,8 +73,6 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			throw new InvalidOptionsException('http', error);
 		}
 
-		const stream = this.cmd(cmdOptions);
-
 		const result = {
 			error: '',
 			headers: {},
@@ -82,6 +80,23 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			rawBody: '',
 			statusCode: 0,
 		};
+
+		const respond = () => {
+			const rawOutput = options.query.method === 'head'
+				? `status ${result.statusCode}\n` + result.rawHeaders
+				: result.rawBody;
+
+			socket.emit('probe:measurement:result', {
+				testId,
+				measurementId,
+				result: {
+					...result,
+					rawOutput: result.error || rawOutput,
+				},
+			});
+		};
+
+		const stream = this.cmd(cmdOptions);
 
 		stream.on('downloadProgress', (progress: Progress) => {
 			if (progress.transferred > 10_000 && progress.percent !== 1) {
@@ -114,19 +129,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			respond();
 		});
 
-		const respond = () => {
-			const rawOutput = options.query.method === 'head'
-				? `status ${result.statusCode}\n` + result.rawHeaders
-				: result.rawBody;
-
-			socket.emit('probe:measurement:result', {
-				testId,
-				measurementId,
-				result: {
-					...result,
-					rawOutput: result.error || rawOutput,
-				},
-			});
-		};
+		// eslint-disable-next-line unicorn/no-useless-promise-resolve-reject
+		return Promise.resolve();
 	}
 }
