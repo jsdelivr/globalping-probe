@@ -4,6 +4,7 @@ import got, {Response, Request, HTTPAlias, Progress} from 'got';
 import type {Socket} from 'socket.io-client';
 import type {CommandInterface} from '../types.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
+import {dnsLookup} from './handlers/http/dns-resolver.js';
 
 type HttpOptions = {
 	type: 'http';
@@ -44,6 +45,7 @@ export const httpCmd = (options: HttpOptions): Request => {
 		method: options.query.method as HTTPAlias,
 		followRedirect: false,
 		cache: false,
+		dnsLookup,
 		http2: options.query.protocol === 'http2',
 		timeout: {response: 10_000},
 		https: {rejectUnauthorized: false},
@@ -74,6 +76,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		const stream = this.cmd(cmdOptions);
 
 		const result = {
+			error: '',
 			headers: {},
 			rawHeaders: '',
 			rawBody: '',
@@ -102,6 +105,11 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			result.statusCode = resp.statusCode;
 		});
 
+		stream.on('error', (error_: Error) => {
+			result.error = error_.message;
+			response();
+		});
+
 		stream.on('end', () => {
 			response();
 		});
@@ -116,7 +124,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				measurementId,
 				result: {
 					...result,
-					rawOutput,
+					rawOutput: result.error || rawOutput,
 				},
 			});
 		};
