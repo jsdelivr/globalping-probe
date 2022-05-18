@@ -107,14 +107,12 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 		stream.on('error', (error_: Error) => {
 			result.error = error_.message;
-			response();
+			respond();
 		});
 
-		stream.on('end', () => {
-			response();
-		});
+		stream.on('end', () => respond())
 
-		const response = () => {
+		const respond = () => {
 			const rawOutput = options.query.method === 'head'
 				? `status ${result.statusCode}\n` + result.rawHeaders
 				: result.rawBody;
