@@ -15,34 +15,6 @@ export type ResolverType = (hostname: string, options: {ttl: boolean}, cb: Resol
 
 const isRecordWithTtl = (record: unknown): record is RecordWithTtl => Boolean((record as RecordWithTtl).ttl);
 
-export const dnsLookup = (resolverAddr: string | undefined, resolverFn?: ResolverType) => ((
-	hostname: string,
-	options: Options,
-	callback: (
-	// eslint-disable-next-line @typescript-eslint/ban-types
-		error: ErrnoException | null,
-		address: string | undefined,
-		family: IpFamily
-	) => void,
-): void => {
-	const resolver = resolverFn || buildResolver(resolverAddr, options.family);
-	resolver(hostname, {ttl: false}, (error, result) => {
-		if (error) {
-			callback(error, undefined, 4 as IpFamily);
-			return;
-		}
-
-		const validIps = result.map(r => isRecordWithTtl(r) ? r.address : r).filter(record => !isIpPrivate(record));
-
-		if (validIps.length === 0) {
-			callback(new Error(`ENODATA ${hostname}`), undefined, 4 as IpFamily);
-			return;
-		}
-
-		callback(error, validIps[0], 4 as IpFamily);
-	});
-}) as never;
-
 export const buildResolver = (resolverAddr: string | undefined, family: IpFamily): ResolverType => {
 	const resolver = new Resolver();
 
@@ -54,3 +26,31 @@ export const buildResolver = (resolverAddr: string | undefined, family: IpFamily
 
 	return resolve;
 };
+
+export const dnsLookup = (resolverAddr: string | undefined, resolverFn?: ResolverType) => ((
+	hostname: string,
+	options: Options,
+	callback: (
+	// eslint-disable-next-line @typescript-eslint/ban-types
+		error: ErrnoException | null,
+		address: string | undefined,
+		family: IpFamily
+	) => void,
+): void => {
+	const resolver = resolverFn ?? buildResolver(resolverAddr, options.family);
+	resolver(hostname, {ttl: false}, (error, result) => {
+		if (error) {
+			callback(error, undefined, 4 as IpFamily);
+			return;
+		}
+
+		const validIps = result.map(r => isRecordWithTtl(r) ? r.address : r).filter(r => !isIpPrivate(r));
+
+		if (validIps.length === 0) {
+			callback(new Error(`ENODATA ${hostname}`), undefined, 4 as IpFamily);
+			return;
+		}
+
+		callback(error, validIps[0], 4 as IpFamily);
+	});
+}) as never;
