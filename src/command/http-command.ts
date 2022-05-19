@@ -100,7 +100,13 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		const stream = this.cmd(cmdOptions);
 
 		stream.on('downloadProgress', (progress: Progress) => {
-			if (progress.transferred > 10_000 && progress.percent !== 1) {
+			const {downloadLimit} = stream.options.context;
+
+			if (!downloadLimit) {
+				return;
+			}
+
+			if (progress.transferred > Number(downloadLimit) && progress.percent !== 1) {
 				stream.destroy(new Error('Exceeded the download.'));
 			}
 		});
