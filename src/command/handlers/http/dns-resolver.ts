@@ -11,7 +11,8 @@ export type ResolverCallbackType = (
 	error: Error | null,
 	result: string[] | RecordWithTtl[],
 ) => void;
-export type ResolverType = (hostname: string, options: {ttl: boolean}, cb: ResolverCallbackType) => void;
+export type ResolverOptionsType = {ttl: boolean};
+export type ResolverType = (hostname: string, options: ResolverOptionsType, cb: ResolverCallbackType) => void;
 
 const isRecordWithTtl = (record: unknown): record is RecordWithTtl => Boolean((record as RecordWithTtl).ttl);
 
