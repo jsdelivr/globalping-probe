@@ -4,19 +4,19 @@ import got, {Response, Request, HTTPAlias, Progress, DnsLookupIpVersion} from 'g
 import type {Socket} from 'socket.io-client';
 import type {CommandInterface} from '../types.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
-import {dnsLookup} from './handlers/http/dns-resolver.js';
+import {dnsLookup, ResolverType} from './handlers/http/dns-resolver.js';
 
-type HttpOptions = {
-	type: 'http';
+export type HttpOptions = {
+	type: string;
 	target: string;
 	query: {
-		resolver: string;
+		resolver?: string;
 		method: string;
-		host: string;
+		host?: string;
 		protocol: string;
 		path: string;
-		port: number;
-		headers: Record<string, string>;
+		port?: number;
+		headers?: Record<string, string>;
 	};
 };
 
@@ -91,7 +91,10 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				testId,
 				measurementId,
 				result: {
-					...result,
+					headers: result.headers,
+					rawHeaders: result.rawHeaders,
+					rawBody: result.rawBody,
+					statusCode: result.statusCode,
 					rawOutput: result.error || rawOutput,
 				},
 			});
