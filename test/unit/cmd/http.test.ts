@@ -3,7 +3,7 @@ import type {Request} from 'got';
 import * as sinon from 'sinon';
 import {expect} from 'chai';
 import {Socket} from 'socket.io-client';
-import {HttpCommand, HttpOptions} from '../../../src/command/http-command.js';
+import {HttpCommand} from '../../../src/command/http-command.js';
 
 describe('http command', () => {
 	const sandbox = sinon.createSandbox();
@@ -48,7 +48,7 @@ describe('http command', () => {
 		};
 
 		const stream = new PassThrough();
-		const httpCmd = (_options: HttpOptions): Request => stream as never;
+		const httpCmd = (): Request => stream as never;
 
 		const http = new HttpCommand(httpCmd);
 		await http.run(mockedSocket as any, 'measurement', 'test', options);
@@ -101,7 +101,7 @@ describe('http command', () => {
 		};
 
 		const stream = new PassThrough();
-		const httpCmd = (_options: HttpOptions): Request => stream as never;
+		const httpCmd = (): Request => stream as never;
 
 		const http = new HttpCommand(httpCmd);
 		await http.run(mockedSocket as any, 'measurement', 'test', options);
@@ -141,7 +141,7 @@ describe('http command', () => {
 		};
 
 		const stream = new PassThrough();
-		const httpCmd = (_options: HttpOptions): Request => stream as never;
+		const httpCmd = (): Request => stream as never;
 
 		const http = new HttpCommand(httpCmd);
 		await http.run(mockedSocket as any, 'measurement', 'test', options);
