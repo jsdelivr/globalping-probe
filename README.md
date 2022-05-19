@@ -21,7 +21,17 @@ The only requirement is a stable internet connection.
 
 ## Updating
 
-You don't need to worry about updates. Our probe will automatically update to the latest version as they become available. It will be pulled directly from GitHub and installed within the container. Pulling a fresh version of the container on a regular basis is recommended but completely optional.
+You don't need to worry about updates. Our probe will automatically update to the latest version as they become available. It will be pulled directly from GitHub and installed within the container. The container itself won't get updated, only the code it's running. 
+Pulling a fresh version of the container on a regular basis is recommended but completely optional.
+
+To update the container all you have to do is
+
+```
+docker pull ghcr.io/jsdelivr/globalping-probe
+docker stop globalping-probe
+docker rm globalping-probe
+docker run -d --network host --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
+```
 
 ## Limitations
 
