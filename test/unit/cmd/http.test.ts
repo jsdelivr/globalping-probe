@@ -125,6 +125,58 @@ describe('http command', () => {
 		expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
 	});
 
+	it('should filter out :status header (HTTP/2 - rawHeader)', async () => {
+		const options = {
+			type: 'http',
+			target: 'google.com',
+			query: {
+				method: 'head',
+				protocol: 'http',
+				path: '/',
+			},
+		};
+
+		const events = {
+			response: {
+				statusCode: 200,
+				timings: {
+					start: 0,
+					response: 10,
+				},
+				httpVersion: '2',
+				headers: {test: 'abc'},
+				rawHeaders: [':status', 200, 'test', 'abc'],
+			},
+		};
+
+		const expectedResult = {
+			measurementId: 'measurement',
+			result: {
+				headers: {
+					test: 'abc',
+				},
+				responseTime: 10,
+				rawHeaders: ':status: 200\ntest: abc',
+				rawBody: '',
+				rawOutput: 'HTTP/2 200\ntest: abc',
+				statusCode: 200,
+			},
+			testId: 'test',
+		};
+
+		const stream = new PassThrough();
+		const httpCmd = (): Request => stream as never;
+
+		const http = new HttpCommand(httpCmd);
+		await http.run(mockedSocket as any, 'measurement', 'test', options);
+
+		stream.emit('response', events.response);
+		stream.emit('end');
+
+		expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
+		expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
+	});
+
 	it('should emit error', async () => {
 		const options = {
 			type: 'http',

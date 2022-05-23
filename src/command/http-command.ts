@@ -78,6 +78,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			error: '',
 			headers: {},
 			rawHeaders: '',
+			curlHeaders: '',
 			rawBody: '',
 			statusCode: 0,
 			httpVersion: '',
@@ -86,7 +87,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 		const respond = () => {
 			const rawOutput = options.query.method === 'head'
-				? `HTTP/${result.httpVersion} ${result.statusCode}\n` + result.rawHeaders
+				? `HTTP/${result.httpVersion} ${result.statusCode}\n` + result.curlHeaders
 				: result.rawBody;
 
 			socket.emit('probe:measurement:result', {
@@ -128,8 +129,12 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		});
 
 		stream.on('response', (resp: Response) => {
-			result.rawHeaders = _.chunk(resp.rawHeaders, 2).map((g: string[]) => `${g[0]!}: ${g[1]!}`).join('\n');
+			// Headers
+			const rawHeaders = _.chunk(resp.rawHeaders, 2).map((g: string[]) => `${g[0]!}: ${g[1]!}`);
+			result.rawHeaders = rawHeaders.join('\n');
+			result.curlHeaders = rawHeaders.filter((r: string) => !r.startsWith(':status:')).join('\n');
 			result.headers = resp.headers;
+
 			result.statusCode = resp.statusCode;
 			result.responseTime = Number(resp.timings?.response) - Number(resp.timings?.start);
 			result.httpVersion = resp.httpVersion;
