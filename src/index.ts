@@ -26,6 +26,7 @@ const handlersMap = new Map<string, CommandInterface<any>>();
 const fatalConnectErrors = [
 	'failed to collect probe metadata',
 	'invalid probe version',
+	'vpn detected',
 ];
 
 handlersMap.set('ping', new PingCommand(pingCmd));
