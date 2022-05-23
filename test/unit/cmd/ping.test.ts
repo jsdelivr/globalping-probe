@@ -8,7 +8,7 @@ describe('ping command executor', () => {
 	const sandbox = sinon.createSandbox();
 	const mockedSocket = sandbox.createStubInstance(Socket);
 
-	const testCases = ['ping-success-linux', 'ping-timeout-linux', 'ping-success-mac', 'ping-timeout-mac'];
+	const testCases = ['ping-success-linux', 'ping-timeout-linux', 'ping-success-mac', 'ping-timeout-mac', 'ping-private-ip-linux'];
 
 	beforeEach(() => {
 		sandbox.reset();

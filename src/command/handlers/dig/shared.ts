@@ -20,6 +20,8 @@ export type DnsParseLoopResponse = {
 	server: string;
 };
 
+export const isDnsSection = (output: any): output is DnsSection => typeof (output as DnsSection) !== 'undefined';
+
 /* eslint-disable @typescript-eslint/naming-convention */
 export const SECTION_REG_EXP = /(;; )(\S+)( SECTION:)/g;
 export const NEW_LINE_REG_EXP = /\r?\n/;

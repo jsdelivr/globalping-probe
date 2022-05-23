@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import isIpPrivate from 'private-ip';
 import type {Socket} from 'socket.io-client';
 import {execa, ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
@@ -9,6 +10,8 @@ import ClassicDigParser from './handlers/dig/classic.js';
 import type {DnsParseResponse as DnsParseResponseClassic} from './handlers/dig/classic.js';
 import TraceDigParser from './handlers/dig/trace.js';
 import type {DnsParseResponse as DnsParseResponseTrace} from './handlers/dig/trace.js';
+import {isDnsSection} from './handlers/dig/shared.js';
+import type {DnsParseLoopResponse} from './handlers/dig/shared.js';
 
 type DnsOptions = {
 	type: 'dns';
@@ -21,6 +24,8 @@ type DnsOptions = {
 		trace?: boolean;
 	};
 };
+
+const isTrace = (output: any): output is DnsParseResponseTrace => Array.isArray((output as DnsParseResponseTrace).result);
 
 const allowedTypes = ['A', 'AAAA', 'ANY', 'CNAME', 'DNSKEY', 'DS', 'MX', 'NS', 'NSEC', 'PTR', 'RRSIG', 'SOA', 'TXT', 'SRV'];
 const allowedProtocols = ['UDP', 'TCP'];
@@ -68,8 +73,18 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			throw new InvalidOptionsException('dns', error);
 		}
 
+		const pStdout: string[] = [];
+		let isResultPrivate = false;
+
 		const cmd = this.cmd(cmdOptions);
 		cmd.stdout?.on('data', (data: Buffer) => {
+			pStdout.push(data.toString());
+			const isValid = this.validatePartialResult(pStdout.join(''), cmd, Boolean(options.query.trace));
+
+			if (!isValid) {
+				isResultPrivate = !isValid;
+			}
+
 			socket.emit('probe:measurement:progress', {
 				testId,
 				measurementId,
@@ -87,6 +102,8 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 				throw parsedResult;
 			}
 
+			isResultPrivate = this.hasResultPrivateIp(parsedResult);
+
 			result = parsedResult;
 		} catch (error: unknown) {
 			const output = isExecaError(error) ? error.stderr.toString() : '';
@@ -95,11 +112,51 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			};
 		}
 
+		if (isResultPrivate) {
+			result = {
+				rawOutput: 'Private IP ranges are not allowed',
+			};
+		}
+
 		socket.emit('probe:measurement:result', {
 			testId,
 			measurementId,
 			result,
 		});
+	}
+
+	private validatePartialResult(rawOutput: string, cmd: ExecaChildProcess, trace: boolean): boolean {
+		const parseResult = this.parse(rawOutput, trace);
+
+		if (parseResult instanceof Error) {
+			return false;
+		}
+
+		if (this.hasResultPrivateIp(parseResult)) {
+			cmd.kill('SIGKILL');
+			return false;
+		}
+
+		return true;
+	}
+
+	private hasResultPrivateIp(result: DnsParseResponseClassic | DnsParseResponseTrace): boolean {
+		let privateResults = [];
+
+		if (isTrace(result)) {
+			privateResults = result.result
+				.flatMap((result: DnsParseLoopResponse) => result.answer)
+				.filter((answer: unknown) => isDnsSection(answer) ? isIpPrivate(answer.value as string) : false);
+		} else {
+			privateResults = result.answer
+				.filter((answer: unknown) => isDnsSection(answer) ? isIpPrivate(answer.value as string) : false);
+		}
+
+		if (privateResults.length > 0) {
+			return true;
+		}
+
+		return false;
 	}
 
 	private parse(rawOutput: string, trace: boolean): Error | DnsParseResponseClassic | DnsParseResponseTrace {

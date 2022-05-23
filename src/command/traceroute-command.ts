@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import isIpPrivate from 'private-ip';
 import type {Socket} from 'socket.io-client';
 import {execa, ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
@@ -61,8 +62,18 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 			throw new InvalidOptionsException('traceroute', error);
 		}
 
+		const pStdout: string[] = [];
+		let isResultPrivate = false;
+
 		const cmd = this.cmd(cmdOptions);
 		cmd.stdout?.on('data', (data: Buffer) => {
+			pStdout.push(data.toString());
+			const isValid = this.validatePartialResult(pStdout.join(''), cmd);
+
+			if (!isValid) {
+				isResultPrivate = !isValid;
+			}
+
 			socket.emit('probe:measurement:progress', {
 				testId,
 				measurementId,
@@ -73,11 +84,22 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		let result = {};
 		try {
 			const cmdResult = await cmd;
-			result = this.parse(cmdResult.stdout.trim());
+			const parseResult = this.parse(cmdResult.stdout.trim());
+			result = parseResult;
+
+			if (isIpPrivate(parseResult.destination ?? '')) {
+				isResultPrivate = true;
+			}
 		} catch (error: unknown) {
 			const output = isExecaError(error) ? error.stderr.toString() : '';
 			result = {
 				rawOutput: output,
+			};
+		}
+
+		if (isResultPrivate) {
+			result = {
+				rawOutput: 'Private IP ranges are not allowed',
 			};
 		}
 
@@ -88,7 +110,22 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		});
 	}
 
-	private parse(rawOutput: string) {
+	private validatePartialResult(rawOutput: string, cmd: ExecaChildProcess): boolean {
+		const parseResult = this.parse(rawOutput);
+
+		if (isIpPrivate(parseResult.destination ?? '')) {
+			cmd.kill('SIGKILL');
+			return false;
+		}
+
+		return true;
+	}
+
+	private parse(rawOutput: string): {
+		rawOutput: string;
+		destination?: string;
+		hops?: ParsedLine[];
+	} {
 		const lines = rawOutput.split('\n');
 
 		if (lines.length === 0) {
@@ -108,7 +145,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		const hops = lines.slice(1).map(l => this.parseLine(l));
 
 		return {
-			destination: header.resolvedAddress,
+			destination: String(header.resolvedAddress),
 			hops,
 			rawOutput,
 		};
@@ -127,7 +164,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		};
 	}
 
-	private parseLine(line: string): ParsedLine | undefined {
+	private parseLine(line: string): ParsedLine {
 		const hostMatch = reHost.exec(line);
 		const rttList = Array.from(line.matchAll(reRtt), m => Number.parseFloat(m[1]!));
 
