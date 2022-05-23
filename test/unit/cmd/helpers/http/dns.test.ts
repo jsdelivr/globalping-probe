@@ -21,7 +21,7 @@ describe('http helper', () => {
 			const resolver = buildResolver(data.ipList);
 			const lookup = promisify(dnsLookup(undefined, resolver));
 
-			let response: unknown | string;
+			let response: unknown;
 
 			try {
 				response = await lookup(data.hostname, data.options) as string;
@@ -44,7 +44,7 @@ describe('http helper', () => {
 			const resolver = buildResolver(data.ipList);
 			const lookup = promisify(dnsLookup(undefined, resolver));
 
-			let response: unknown | string;
+			let response: unknown;
 
 			try {
 				response = await lookup(data.hostname, data.options) as string;

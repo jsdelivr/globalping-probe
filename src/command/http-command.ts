@@ -80,11 +80,13 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			rawHeaders: '',
 			rawBody: '',
 			statusCode: 0,
+			httpVersion: '',
+			responseTime: 0,
 		};
 
 		const respond = () => {
 			const rawOutput = options.query.method === 'head'
-				? `status ${result.statusCode}\n` + result.rawHeaders
+				? `HTTP/${result.httpVersion} ${result.statusCode}\n` + result.rawHeaders
 				: result.rawBody;
 
 			socket.emit('probe:measurement:result', {
@@ -95,6 +97,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 					rawHeaders: result.rawHeaders,
 					rawBody: result.rawBody,
 					statusCode: result.statusCode,
+					responseTime: result.responseTime,
 					rawOutput: result.error || rawOutput,
 				},
 			});
@@ -128,6 +131,8 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			result.rawHeaders = _.chunk(resp.rawHeaders, 2).map((g: string[]) => `${g[0]!}: ${g[1]!}`).join('\n');
 			result.headers = resp.headers;
 			result.statusCode = resp.statusCode;
+			result.responseTime = Number(resp.timings?.response) - Number(resp.timings?.start);
+			result.httpVersion = resp.httpVersion;
 		});
 
 		stream.on('error', (error_: Error) => {

@@ -27,6 +27,11 @@ describe('http command', () => {
 		const events = {
 			response: {
 				statusCode: 200,
+				httpVersion: '1.1',
+				timings: {
+					start: 0,
+					response: 10,
+				},
 				headers: {test: 'abc'},
 				rawHeaders: ['test', 'abc'],
 			},
@@ -39,6 +44,7 @@ describe('http command', () => {
 				headers: {
 					test: 'abc',
 				},
+				responseTime: 10,
 				rawHeaders: 'test: abc',
 				rawBody: 'abcdefghi',
 				rawOutput: 'abcdefghi',
@@ -81,6 +87,11 @@ describe('http command', () => {
 		const events = {
 			response: {
 				statusCode: 200,
+				timings: {
+					start: 0,
+					response: 10,
+				},
+				httpVersion: '1.1',
 				headers: {test: 'abc'},
 				rawHeaders: ['test', 'abc'],
 			},
@@ -92,9 +103,10 @@ describe('http command', () => {
 				headers: {
 					test: 'abc',
 				},
+				responseTime: 10,
 				rawHeaders: 'test: abc',
 				rawBody: '',
-				rawOutput: 'status 200\ntest: abc',
+				rawOutput: 'HTTP/1.1 200\ntest: abc',
 				statusCode: 200,
 			},
 			testId: 'test',
@@ -134,6 +146,7 @@ describe('http command', () => {
 				headers: {},
 				rawHeaders: '',
 				rawBody: '',
+				responseTime: 0,
 				rawOutput: 'ENODATA google.com',
 				statusCode: 0,
 			},
