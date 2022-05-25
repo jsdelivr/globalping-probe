@@ -19,17 +19,21 @@ type HopTimesType = {
 };
 
 type HopStatsType = {
-	min?: number;
-	max?: number;
-	avg?: number;
-	total?: number;
-	loss?: number;
+	min: number;
+	max: number;
+	avg: number;
+	total: number;
+	drop: number;
+	stDev: number;
+	jMin: number;
+	jMax: number;
+	jAvg: number;
 };
 
 type HopType = {
 	host?: string;
 	resolvedHost?: string;
-	stats?: HopStatsType;
+	stats: HopStatsType;
 	times: HopTimesType[];
 };
 
@@ -37,6 +41,21 @@ type ResultType = {
 	hops: HopType[];
 	rawOutput: string;
 };
+
+const getInitialHopState = () => ({
+	stats: {
+		min: 0,
+		max: 0,
+		avg: 0,
+		total: 0,
+		drop: 0,
+		stDev: 0,
+		jMin: 0,
+		jMax: 0,
+		jAvg: 0,
+	},
+	times: [],
+});
 
 const mtrOptionsSchema = Joi.object<MtrOptions>({
 	type: Joi.string().valid('mtr'),
@@ -127,7 +146,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			}
 
 			const entry: HopType = {
-				times: [],
+				...getInitialHopState(),
 				...hops[Number(index)],
 			};
 
@@ -190,7 +209,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 	}
 
 	static hopStatsParse(hop: HopType, finalCount?: boolean): HopStatsType {
-		const stats: HopStatsType = {};
+		const stats: HopStatsType = {...getInitialHopState().stats};
 
 		if (hop.times.length === 0) {
 			return stats;
@@ -202,7 +221,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		stats.max = Math.max(...timesArray);
 		stats.avg = timesArray.reduce((a, b) => a + b, 0) / timesArray.length;
 		stats.total = hop.times.length;
-		stats.loss = 0;
+		stats.drop = 0;
 
 		for (let i = 0; i < hop.times.length; i++) {
 			const rtt = hop.times[i];
@@ -212,9 +231,26 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			}
 
 			if (!rtt?.time) {
-				stats.loss++;
+				stats.drop++;
 			}
 		}
+
+		stats.stDev = Math.sqrt(timesArray.map(x => (x - stats.avg) ** 2).reduce((a, b) => a + b, 0) / timesArray.length);
+
+		// Jitter
+		const jitterArray = [];
+
+		let jI = 0;
+		while (jI < timesArray.length) {
+			const diff = Math.abs((timesArray[jI] ?? 0) - (timesArray[jI + 1] ?? 0));
+			jitterArray.push(diff);
+
+			jI += 2;
+		}
+
+		stats.jMin = Math.min(...jitterArray);
+		stats.jMax = Math.max(...jitterArray);
+		stats.jAvg = jitterArray.reduce((a, b) => a + b, 0) / jitterArray.length;
 
 		return stats;
 	}
