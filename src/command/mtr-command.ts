@@ -135,7 +135,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 	}
 
 	static outputBuilder(hops: HopType[]): string {
-		let rawOutput = '';
+		let rawOutput = 'Host - Loss% Drop Rcv Avg stDev jAvg\n';
 
 		for (const [i, hop] of hops.entries()) {
 			if (!hop) {
