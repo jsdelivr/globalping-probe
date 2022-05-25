@@ -106,13 +106,13 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 		cmd.stdout?.on('data', (data: Buffer) => {
 			result.hops = MtrCommand.partialHopsParse(result.hops, data.toString());
+			result.rawOutput = MtrCommand.outputBuilder(result.hops);
 
 			socket.emit('probe:measurement:progress', {
 				testId,
 				measurementId,
 				result: {
 					...result,
-					rawOutput: '',
 				},
 			});
 		});
@@ -120,6 +120,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		try {
 			const cmdResult = await cmd;
 			result.hops = MtrCommand.partialHopsParse([], cmdResult.stdout, true);
+			result.rawOutput = MtrCommand.outputBuilder(result.hops);
 		} catch (error: unknown) {
 			const output = isExecaError(error) ? error.stderr.toString() : '';
 
@@ -131,6 +132,35 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			measurementId,
 			result,
 		});
+	}
+
+	static outputBuilder(hops: HopType[]): string {
+		let rawOutput = '';
+
+		for (const [i, hop] of hops.entries()) {
+			if (!hop) {
+				continue;
+			}
+
+			const hostname = hop.host ? `${hop.host} (${hop.resolvedHost ?? ''})` : '(waiting for reply)';
+			const loss = ((hop.stats.drop / hop.stats.total) * 100).toFixed(1);
+			const rcv = hop.stats.total - hop.stats.drop;
+			const avg = hop.stats.avg.toFixed(1);
+			const stDev = hop.stats.stDev.toFixed(1);
+			const jAvg = hop.stats.jAvg.toFixed(1);
+
+			let sHop = `${i + 1}. ${hostname} `;
+
+			if (hop.host) {
+				sHop += `${loss}% ${hop.stats.drop} ${rcv} ${avg} ${stDev} ${jAvg}`;
+			}
+
+			sHop += '\n';
+
+			rawOutput += sHop;
+		}
+
+		return rawOutput;
 	}
 
 	static partialHopsParse(currentHops: HopType[], data: string, isFinalResult?: boolean): HopType[] {
