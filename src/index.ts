@@ -11,6 +11,7 @@ import {apiConnectLocationHandler} from './helper/api-connect-handler.js';
 import {dnsCmd, DnsCommand} from './command/dns-command.js';
 import {pingCmd, PingCommand} from './command/ping-command.js';
 import {traceCmd, TracerouteCommand} from './command/traceroute-command.js';
+import {mtrCmd, MtrCommand} from './command/mtr-command.js';
 
 import {VERSION} from './constants.js';
 
@@ -31,6 +32,7 @@ const fatalConnectErrors = [
 
 handlersMap.set('ping', new PingCommand(pingCmd));
 handlersMap.set('traceroute', new TracerouteCommand(traceCmd));
+handlersMap.set('mtr', new MtrCommand(mtrCmd));
 handlersMap.set('dns', new DnsCommand(dnsCmd));
 
 logger.info(`Start probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode`);
