@@ -18,16 +18,18 @@ type HopTimesType = {
 	time?: number;
 };
 
+type HopStatsType = {
+	min?: number;
+	max?: number;
+	avg?: number;
+	total?: number;
+	loss?: number;
+};
+
 type HopType = {
 	host?: string;
 	resolvedHost?: string;
-	stats?: {
-		min?: number;
-		max?: number;
-		avg?: number;
-		total?: number;
-		loss?: number;
-	};
+	stats?: HopStatsType;
 	times: HopTimesType[];
 };
 
@@ -84,7 +86,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		};
 
 		cmd.stdout?.on('data', (data: Buffer) => {
-			result.hops = MtrCommand.partialHopsParse(result.hops, data);
+			result.hops = MtrCommand.partialHopsParse(result.hops, data.toString());
 
 			socket.emit('probe:measurement:progress', {
 				testId,
@@ -97,7 +99,8 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		});
 
 		try {
-			await cmd;
+			const cmdResult = await cmd;
+			result.hops = MtrCommand.partialHopsParse([], cmdResult.stdout, true);
 		} catch (error: unknown) {
 			const output = isExecaError(error) ? error.stderr.toString() : '';
 
@@ -111,8 +114,8 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		});
 	}
 
-	static partialHopsParse(currentHops: HopType[], data: Buffer): HopType[] {
-		const sData = data.toString().split('\n');
+	static partialHopsParse(currentHops: HopType[], data: string, isFinalResult?: boolean): HopType[] {
+		const sData = data.split('\n');
 
 		const hops = [...currentHops];
 
@@ -178,9 +181,41 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 					break;
 			}
 
+			entry.stats = MtrCommand.hopStatsParse(entry, isFinalResult);
+
 			hops[Number(index)] = entry;
 		}
 
 		return hops;
+	}
+
+	static hopStatsParse(hop: HopType, finalCount?: boolean): HopStatsType {
+		const stats: HopStatsType = {};
+
+		if (hop.times.length === 0) {
+			return stats;
+		}
+
+		const timesArray = hop.times.filter(t => t.time).map(t => t.time) as number[];
+
+		stats.min = Math.min(...timesArray);
+		stats.max = Math.max(...timesArray);
+		stats.avg = timesArray.reduce((a, b) => a + b, 0) / timesArray.length;
+		stats.total = hop.times.length;
+		stats.loss = 0;
+
+		for (let i = 0; i < hop.times.length; i++) {
+			const rtt = hop.times[i];
+
+			if (i === (hop.times.length - 1) && !finalCount) {
+				continue;
+			}
+
+			if (!rtt?.time) {
+				stats.loss++;
+			}
+		}
+
+		return stats;
 	}
 }
