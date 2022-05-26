@@ -201,7 +201,7 @@ export const MtrParser = {
 			}
 		}
 
-		stats.stDev = parseFloat((Math.sqrt(timesArray.map(x => (x - stats.avg) ** 2).reduce((a, b) => a + b, 0) / timesArray.length)).toFixed(1));
+		stats.stDev = Number.parseFloat((Math.sqrt(timesArray.map(x => (x - stats.avg) ** 2).reduce((a, b) => a + b, 0) / timesArray.length)).toFixed(1));
 
 		// Jitter
 		const jitterArray = [];
@@ -216,7 +216,7 @@ export const MtrParser = {
 
 		stats.jMin = Math.min(...jitterArray);
 		stats.jMax = Math.max(...jitterArray);
-		stats.jAvg = parseFloat((jitterArray.reduce((a, b) => a + b, 0) / jitterArray.length).toFixed(1));
+		stats.jAvg = Number.parseFloat((jitterArray.reduce((a, b) => a + b, 0) / jitterArray.length).toFixed(1));
 
 		return stats;
 	},
