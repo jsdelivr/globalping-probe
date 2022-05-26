@@ -26,6 +26,8 @@ const mtrOptionsSchema = Joi.object<MtrOptions>({
 	port: Joi.number(),
 });
 
+export const getResultInitState = () => ({hops: [], rawOutput: ''});
+
 export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
 	const protocolArg = options.protocol === 'icmp' ? null : options.protocol;
 	const packetsArg = String(options.packets);
@@ -60,6 +62,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		}
 
 		const cmd = this.cmd(cmdOptions);
+		let isResultPrivate = false;
 		const result: ResultType = {
 			hops: [],
 			rawOutput: '',
@@ -68,6 +71,12 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		cmd.stdout?.on('data', async (data: Buffer) => {
 			result.hops = await this.hopsParse(result.hops, data.toString());
 			result.rawOutput = MtrParser.outputBuilder(result.hops);
+
+			const isValid = this.validateResult(result.hops, cmd);
+
+			if (!isValid) {
+				isResultPrivate = !isValid;
+			}
 
 			socket.emit('probe:measurement:progress', {
 				testId,
@@ -86,17 +95,16 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			result.rawOutput = output;
 		}
 
+		if (isResultPrivate) {
+			result.hops = [];
+			result.rawOutput = 'Private IP ranges are not allowed';
+		}
+
 		socket.emit('probe:measurement:result', {
 			testId,
 			measurementId,
 			result,
 		});
-	}
-
-	async lookupAsn(addr: string): Promise<string | undefined> {
-		const result = await dns.promises.resolve(`${addr}.origin.asn.cymru.com`, 'TXT');
-
-		return result.flat()[0];
 	}
 
 	async hopsParse(hops: HopType[], data: string): Promise<HopType[]> {
@@ -113,5 +121,32 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		}
 
 		return nHops;
+	}
+
+	async lookupAsn(addr: string): Promise<string | undefined> {
+		const result = await dns.promises.resolve(`${addr}.origin.asn.cymru.com`, 'TXT');
+
+		return result.flat()[0];
+	}
+
+	private hasResultPrivateIp(hops: HopType[]): boolean {
+		const privateResults = hops.filter((hop: HopType) => isIpPrivate(hop.host!));
+
+		if (privateResults.length > 0) {
+			return true;
+		}
+
+		return false;
+	}
+
+	private validateResult(hops: HopType[], cmd: ExecaChildProcess): boolean {
+		const hasPrivateIp = this.hasResultPrivateIp(hops.slice(1)); // First hop is always gateway
+
+		if (hasPrivateIp) {
+			cmd.kill('SIGKILL');
+			return false;
+		}
+
+		return true;
 	}
 }
