@@ -28,14 +28,17 @@ export const MtrParser = {
 				continue;
 			}
 
-			const hostname = hop.host ? `${hop.host} (${hop.resolvedHost ?? ''})` : '(waiting for reply)';
+			const asn = hop.asn ? `AS${hop.asn}` : 'AS???';
+
+			const hostname = hop.host ? `${asn} ${hop.host} (${hop.resolvedHost ?? ''})` : '(waiting for reply)';
+			const hostnameWithSpacing = `${hostname}${Array.from({length: 65 - hostname.length}).fill(' ').join('')}`;
 			const loss = ((hop.stats.drop / hop.stats.total) * 100).toFixed(1);
 			const rcv = hop.stats.total - hop.stats.drop;
 			const avg = hop.stats.avg.toFixed(1);
 			const stDev = hop.stats.stDev.toFixed(1);
 			const jAvg = hop.stats.jAvg.toFixed(1);
 
-			let sHop = `${i + 1}. ${hostname} `;
+			let sHop = `${i + 1}. ${hostnameWithSpacing} `;
 
 			if (hop.host) {
 				sHop += `${loss}% ${hop.stats.drop} ${rcv} ${avg} ${stDev} ${jAvg}`;

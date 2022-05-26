@@ -16,6 +16,7 @@ export type HopStatsType = {
 };
 
 export type HopType = {
+	asn?: string;
 	host?: string;
 	resolvedHost?: string;
 	stats: HopStatsType;

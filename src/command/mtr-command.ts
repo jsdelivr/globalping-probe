@@ -1,3 +1,4 @@
+import dns from 'node:dns';
 import Joi from 'joi';
 import type {Socket} from 'socket.io-client';
 import {execa, ExecaChildProcess} from 'execa';
@@ -5,7 +6,7 @@ import type {CommandInterface} from '../types.js';
 import {isExecaError} from '../helper/execa-error-check.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
-import type {ResultType} from './handlers/mtr/types.js';
+import type {HopType, ResultType} from './handlers/mtr/types.js';
 import MtrParser from './handlers/mtr/parser.js';
 
 type MtrOptions = {
@@ -63,8 +64,8 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			rawOutput: '',
 		};
 
-		cmd.stdout?.on('data', (data: Buffer) => {
-			result.hops = MtrParser.hopsParse(result.hops, data.toString());
+		cmd.stdout?.on('data', async (data: Buffer) => {
+			result.hops = await this.hopsParse(result.hops, data.toString());
 			result.rawOutput = MtrParser.outputBuilder(result.hops);
 
 			socket.emit('probe:measurement:progress', {
@@ -77,9 +78,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		});
 
 		try {
-			const cmdResult = await cmd;
-			result.hops = MtrParser.hopsParse([], cmdResult.stdout, true);
-			result.rawOutput = MtrParser.outputBuilder(result.hops);
+			await cmd;
 		} catch (error: unknown) {
 			const output = isExecaError(error) ? error.stderr.toString() : '';
 
@@ -91,5 +90,27 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			measurementId,
 			result,
 		});
+	}
+
+	async lookupAsn(addr: string): Promise<string | undefined> {
+		const result = await dns.promises.resolve(`${addr}.origin.asn.cymru.com`, 'TXT');
+
+		return result.flat()[0];
+	}
+
+	async hopsParse(hops: HopType[], data: string): Promise<HopType[]> {
+		const nHops = MtrParser.hopsParse(hops, data.toString());
+		const dnsResult = await Promise.allSettled(nHops.map(async h => h.host && !h.asn ? this.lookupAsn(h.host) : Promise.reject()));
+
+		for (const [index, result] of dnsResult.entries()) {
+			if (result.status === 'rejected' || !result.value) {
+				continue;
+			}
+
+			const sDns = result.value.split('|');
+			nHops[index]!.asn = sDns[0]!.trim();
+		}
+
+		return nHops;
 	}
 }
