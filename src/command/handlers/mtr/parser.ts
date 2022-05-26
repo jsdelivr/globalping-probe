@@ -18,38 +18,85 @@ const getInitialHopState = () => ({
 	times: [],
 });
 
+const getSpacing = (length: number): string => Array.from({length}).fill(' ').join('');
+const withSpacing = (string_: string | number, dSpacing: number, left = false): string => {
+	const sSpacing = getSpacing(dSpacing - String(string_).length);
+
+	if (left) {
+		return `${sSpacing}${string_}`;
+	}
+
+	return `${string_}${sSpacing}`;
+};
+
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const MtrParser = {
 	outputBuilder(hops: HopType[]): string {
-		let rawOutput = 'Host - Loss% Drop Rcv Avg stDev jAvg\n';
+		const rawOutput = [];
+
+		const spacings = {
+			index: String(hops.length).length,
+			asn: 2 + Math.max(...hops.map(h => String(h?.asn ?? '').length)),
+			hostname: (3
+        + Math.max(...hops.map(h => String(h?.host ?? '').length))
+        + Math.max(...hops.map(h => String(h?.resolvedHost ?? '').length))
+			),
+			loss: 6,
+			drop: Math.max(4, ...hops.map(h => String(h?.stats?.drop ?? '').length)),
+			avg: Math.max(...hops.map(h => String(h?.stats?.avg ?? '').length)),
+			rcv: 2 + Math.max(...hops.map(h => String(h?.stats?.drop ?? '').length)),
+			stDev: 6,
+			jAvg: 5,
+		};
+
+		const header = [
+			withSpacing('Host', (spacings.index + spacings.asn + spacings.hostname + 4)),
+			withSpacing('Loss%', spacings.loss, true),
+			withSpacing('Drop', spacings.drop, true),
+			withSpacing('Rcv', spacings.rcv, true),
+			withSpacing('Avg', spacings.avg, true),
+			withSpacing('StDev', spacings.stDev, true),
+			withSpacing('Javg', spacings.jAvg, true),
+			'\n',
+		];
+
+		rawOutput.push(header.join(' '));
 
 		for (const [i, hop] of hops.entries()) {
 			if (!hop) {
 				continue;
 			}
 
-			const asn = hop.asn ? `AS${hop.asn}` : 'AS???';
+			// Index
+			const sIndex = withSpacing(String(i + 1), spacings.index, true);
 
-			const hostname = hop.host ? `${asn} ${hop.host} (${hop.resolvedHost ?? ''})` : '(waiting for reply)';
-			const hostnameWithSpacing = `${hostname}${Array.from({length: 65 - hostname.length}).fill(' ').join('')}`;
-			const loss = ((hop.stats.drop / hop.stats.total) * 100).toFixed(1);
-			const rcv = hop.stats.total - hop.stats.drop;
-			const avg = hop.stats.avg.toFixed(1);
-			const stDev = hop.stats.stDev.toFixed(1);
-			const jAvg = hop.stats.jAvg.toFixed(1);
+			// Asn
+			const sAsn = withSpacing((hop.asn ? `AS${hop.asn}` : 'AS???'), spacings.asn);
 
-			let sHop = `${i + 1}. ${hostnameWithSpacing} `;
+			// Hostname
+			const sHostnameAlias = i === 0 ? '_gateway' : hop.resolvedHost ?? hop.host;
+			const sHostname = withSpacing((hop.host ? `${sHostnameAlias ?? ''} (${hop.host ?? ''})` : '(waiting for reply)'), spacings.hostname);
+
+			// Stats
+			const loss = withSpacing(((hop.stats.drop / hop.stats.total) * 100).toFixed(1), spacings.loss, true);
+			const drop = withSpacing(hop.stats.drop, spacings.drop, true);
+			const rcv = withSpacing((hop.stats.total - hop.stats.drop), spacings.rcv, true);
+			const avg = withSpacing(hop.stats.avg.toFixed(1), spacings.avg, true);
+			const stDev = withSpacing(hop.stats.stDev.toFixed(1), spacings.stDev, true);
+			const jAvg = withSpacing(hop.stats.jAvg.toFixed(1), spacings.jAvg, true);
+
+			let line = `${sIndex}. ${sAsn} ${sHostname} `;
 
 			if (hop.host) {
-				sHop += `${loss}% ${hop.stats.drop} ${rcv} ${avg} ${stDev} ${jAvg}`;
+				line += `${loss}% ${drop} ${rcv} ${avg} ${stDev} ${jAvg}`;
 			}
 
-			sHop += '\n';
+			line += '\n';
 
-			rawOutput += sHop;
+			rawOutput.push(line);
 		}
 
-		return rawOutput;
+		return rawOutput.join('');
 	},
 
 	hopsParse(currentHops: HopType[], data: string, isFinalResult?: boolean): HopType[] {
@@ -138,7 +185,7 @@ export const MtrParser = {
 
 		stats.min = Math.min(...timesArray);
 		stats.max = Math.max(...timesArray);
-		stats.avg = timesArray.reduce((a, b) => a + b, 0) / timesArray.length;
+		stats.avg = Number.parseFloat((timesArray.reduce((a, b) => a + b, 0) / timesArray.length).toFixed(1));
 		stats.total = hop.times.length;
 		stats.drop = 0;
 
@@ -154,7 +201,7 @@ export const MtrParser = {
 			}
 		}
 
-		stats.stDev = Math.sqrt(timesArray.map(x => (x - stats.avg) ** 2).reduce((a, b) => a + b, 0) / timesArray.length);
+		stats.stDev = parseFloat((Math.sqrt(timesArray.map(x => (x - stats.avg) ** 2).reduce((a, b) => a + b, 0) / timesArray.length)).toFixed(1));
 
 		// Jitter
 		const jitterArray = [];
@@ -169,7 +216,7 @@ export const MtrParser = {
 
 		stats.jMin = Math.min(...jitterArray);
 		stats.jMax = Math.max(...jitterArray);
-		stats.jAvg = jitterArray.reduce((a, b) => a + b, 0) / jitterArray.length;
+		stats.jAvg = parseFloat((jitterArray.reduce((a, b) => a + b, 0) / jitterArray.length).toFixed(1));
 
 		return stats;
 	},

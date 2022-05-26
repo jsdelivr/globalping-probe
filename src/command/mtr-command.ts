@@ -1,4 +1,5 @@
 import dns from 'node:dns';
+import isIpPrivate from 'private-ip';
 import Joi from 'joi';
 import type {Socket} from 'socket.io-client';
 import {execa, ExecaChildProcess} from 'execa';
@@ -100,7 +101,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 	async hopsParse(hops: HopType[], data: string): Promise<HopType[]> {
 		const nHops = MtrParser.hopsParse(hops, data.toString());
-		const dnsResult = await Promise.allSettled(nHops.map(async h => h.host && !h.asn ? this.lookupAsn(h.host) : Promise.reject()));
+		const dnsResult = await Promise.allSettled(nHops.map(async h => h.host && !h.asn && !isIpPrivate(h.host) ? this.lookupAsn(h.host) : Promise.reject()));
 
 		for (const [index, result] of dnsResult.entries()) {
 			if (result.status === 'rejected' || !result.value) {
