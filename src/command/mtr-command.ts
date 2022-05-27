@@ -18,6 +18,8 @@ type MtrOptions = {
 	packets: number;
 };
 
+type DnsResolver = (addr: string, rrtype: string) => Promise<string[]>;
+
 const mtrOptionsSchema = Joi.object<MtrOptions>({
 	type: Joi.string().valid('mtr'),
 	target: Joi.string(),
@@ -52,7 +54,7 @@ export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
 };
 
 export class MtrCommand implements CommandInterface<MtrOptions> {
-	constructor(private readonly cmd: typeof mtrCmd) {}
+	constructor(private readonly cmd: typeof mtrCmd, readonly dnsResolver: DnsResolver = dns.promises.resolve) {}
 
 	async run(socket: Socket, measurementId: string, testId: string, options: unknown): Promise<void> {
 		const {value: cmdOptions, error} = mtrOptionsSchema.validate(options);
@@ -124,13 +126,13 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 	}
 
 	async lookupAsn(addr: string): Promise<string | undefined> {
-		const result = await dns.promises.resolve(`${addr}.origin.asn.cymru.com`, 'TXT');
+		const result = await this.dnsResolver(`${addr}.origin.asn.cymru.com`, 'TXT');
 
 		return result.flat()[0];
 	}
 
 	private hasResultPrivateIp(hops: HopType[]): boolean {
-		const privateResults = hops.filter((hop: HopType) => isIpPrivate(hop.host!));
+		const privateResults = hops.filter((hop: HopType) => isIpPrivate(hop.host ?? ''));
 
 		if (privateResults.length > 0) {
 			return true;
