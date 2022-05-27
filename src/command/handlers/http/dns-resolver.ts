@@ -1,4 +1,4 @@
-import {Resolver, RecordWithTtl} from 'node:dns';
+import dns, {RecordWithTtl} from 'node:dns';
 import isIpPrivate from 'private-ip';
 
 type IpFamily = 4 | 6;
@@ -6,18 +6,13 @@ type Options = {
 	family: IpFamily;
 };
 type ErrnoException = NodeJS.ErrnoException;
-export type ResolverCallbackType = (
-// eslint-disable-next-line @typescript-eslint/ban-types
-	error: Error | null,
-	result: string[] | RecordWithTtl[],
-) => void;
 export type ResolverOptionsType = {ttl: boolean};
-export type ResolverType = (hostname: string, options: ResolverOptionsType, cb: ResolverCallbackType) => void;
+export type ResolverType = (hostname: string, options: ResolverOptionsType) => Promise<string[]>;
 
 const isRecordWithTtl = (record: unknown): record is RecordWithTtl => Boolean((record as RecordWithTtl).ttl);
 
 export const buildResolver = (resolverAddr: string | undefined, family: IpFamily): ResolverType => {
-	const resolver = new Resolver();
+	const resolver = new dns.promises.Resolver();
 
 	if (resolverAddr) {
 		resolver.setServers([resolverAddr]);
@@ -28,30 +23,44 @@ export const buildResolver = (resolverAddr: string | undefined, family: IpFamily
 	return resolve;
 };
 
-export const dnsLookup = (resolverAddr: string | undefined, resolverFn?: ResolverType): never => ((
+export const dnsLookup = (resolverAddr: string | undefined, resolverFn?: ResolverType) => async (
 	hostname: string,
 	options: Options,
-	callback: (
-	// eslint-disable-next-line @typescript-eslint/ban-types
-		error: ErrnoException | null,
-		address: string | undefined,
-		family: IpFamily
-	) => void,
-): void => {
+): Promise<Error | ErrnoException | [string, number]> => {
 	const resolver = resolverFn ?? buildResolver(resolverAddr, options.family);
-	resolver(hostname, {ttl: false}, (error, result) => {
-		if (error) {
-			callback(error, undefined, 4 as IpFamily);
-			return;
-		}
+
+	try {
+		const result = await resolver(hostname, {ttl: false});
 
 		const validIps = result.map(r => isRecordWithTtl(r) ? r.address : r).filter(r => !isIpPrivate(r));
 
 		if (validIps.length === 0) {
-			callback(new Error(`ENODATA ${hostname}`), undefined, 4 as IpFamily);
+			throw new Error(`ENODATA ${hostname}`);
+		}
+
+		return [validIps[0]!, options.family];
+	} catch (error: unknown) {
+		throw error as ErrnoException;
+	}
+};
+
+export const callbackify = (
+	fn: (..._args: never[]) => Promise<any>,
+) => (async (...args: unknown[]) => {
+	const cb = args[args.length - 1] as (error: Error | undefined, result?: string | undefined, family?: number | undefined) => void;
+	const pArgs = args.slice(0, -1) as never[];
+
+	try {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const result = await fn(...pArgs);
+
+		if (Array.isArray(result)) {
+			cb(undefined, ...result);
 			return;
 		}
 
-		callback(error, validIps[0], 4 as IpFamily);
-	});
-}) as never;
+		cb(undefined, result);
+	} catch (error: unknown) {
+		cb(error as Error);
+	}
+}) as (...args: unknown[]) => never;
