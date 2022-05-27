@@ -43,24 +43,3 @@ export const dnsLookup = (resolverAddr: string | undefined, resolverFn?: Resolve
 		throw error as ErrnoException;
 	}
 };
-
-export const callbackify = (
-	fn: (..._args: never[]) => Promise<any>,
-) => (async (...args: unknown[]) => {
-	const cb = args[args.length - 1] as (error: Error | undefined, result?: string | undefined, family?: number | undefined) => void;
-	const pArgs = args.slice(0, -1) as never[];
-
-	try {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const result = await fn(...pArgs);
-
-		if (Array.isArray(result)) {
-			cb(undefined, ...result);
-			return;
-		}
-
-		cb(undefined, result);
-	} catch (error: unknown) {
-		cb(error as Error);
-	}
-}) as (...args: unknown[]) => never;

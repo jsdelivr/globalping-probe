@@ -3,8 +3,9 @@ import _ from 'lodash';
 import got, {Response, Request, HTTPAlias, Progress, DnsLookupIpVersion} from 'got';
 import type {Socket} from 'socket.io-client';
 import type {CommandInterface} from '../types.js';
+import {callbackify} from '../lib/util.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
-import {dnsLookup, ResolverType, callbackify} from './handlers/http/dns-resolver.js';
+import {dnsLookup, ResolverType} from './handlers/http/dns-resolver.js';
 
 export type HttpOptions = {
 	type: string;
@@ -40,7 +41,7 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 	const protocolPrefix = options.query.protocol === 'http' ? 'http' : 'https';
 	const port = options.query.port ?? options.query.protocol === 'http' ? 80 : 443;
 	const url = `${protocolPrefix}://${options.target}:${port}${options.query.path}`;
-	const dnsResolver = callbackify(dnsLookup(options.query.resolver, resolverFn)) as never;
+	const dnsResolver = callbackify(dnsLookup(options.query.resolver, resolverFn), true);
 
 	const options_ = {
 		method: options.query.method as HTTPAlias,

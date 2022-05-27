@@ -1,5 +1,6 @@
 import {expect} from 'chai';
-import {dnsLookup, callbackify} from '../../../../../src/command/handlers/http/dns-resolver.js';
+import {callbackify} from '../../../../../src/lib/util.js';
+import {dnsLookup} from '../../../../../src/command/handlers/http/dns-resolver.js';
 import type {ResolverType, ResolverOptionsType} from '../../../../../src/command/handlers/http/dns-resolver.js';
 
 export const buildResolver = (ipList: string[]): ResolverType => async (_hostname: string, _options: ResolverOptionsType): Promise<string[]> => ipList;
@@ -60,7 +61,7 @@ describe('http helper', () => {
 			expect(response).to.deep.equal(['1.1.1.1', 4]);
 		});
 
-		it('should pass - callbackify', () => {
+		it('should pass - callbackify', done => {
 			const data = {
 				ipList: ['192.168.0.1', '1.1.1.1'],
 				hostname: 'abc.com',
@@ -70,14 +71,15 @@ describe('http helper', () => {
 			};
 
 			const resolver = buildResolver(data.ipList);
-			const lookup = callbackify(dnsLookup(undefined, resolver));
+			const lookup = callbackify(dnsLookup(undefined, resolver), true);
 
 			lookup(
 				data.hostname,
 				data.options,
 				(_error: undefined, result: string, family: number) => {
-					expect(result).to.equal('1.1.1.1');
+					expect(result).to.deep.equal('1.1.1.1');
 					expect(family).to.equal(4);
+					done();
 				},
 			);
 		});
