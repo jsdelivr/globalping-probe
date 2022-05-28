@@ -1,3 +1,4 @@
+import type {TLSSocket} from 'node:tls';
 import Joi from 'joi';
 import _ from 'lodash';
 import got, {Response, Request, HTTPAlias, Progress, DnsLookupIpVersion} from 'got';
@@ -66,6 +67,8 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 	return got.stream(url, options_);
 };
 
+const isTlsSocket = (socket: any): socket is TLSSocket => Boolean(socket.getPeerCertificate);
+
 export class HttpCommand implements CommandInterface<HttpOptions> {
 	constructor(private readonly cmd: typeof httpCmd) {}
 
@@ -77,6 +80,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		}
 
 		const result = {
+			tls: {},
 			error: '',
 			headers: {},
 			rawHeaders: '',
@@ -101,6 +105,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 					rawBody: result.rawBody,
 					statusCode: result.statusCode,
 					responseTime: result.responseTime,
+					tls: result.tls,
 					rawOutput: result.error || rawOutput,
 				},
 			});
@@ -140,6 +145,22 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			result.statusCode = resp.statusCode;
 			result.responseTime = Number(resp.timings?.response) - Number(resp.timings?.start);
 			result.httpVersion = resp.httpVersion;
+
+			const socket = resp.socket;
+			if (isTlsSocket(socket)) {
+				const cert = socket.getPeerCertificate();
+				result.tls = {
+					authorized: socket.authorized,
+					...(socket.authorizationError ? {error: socket.authorizationError} : {}),
+					createdAt: cert.valid_from,
+					expireAt: cert.valid_to,
+					issuer: {...cert.issuer},
+					subject: {
+						...cert.subject,
+						alt: cert.subjectaltname,
+					},
+				};
+			}
 		});
 
 		stream.on('error', (error_: Error) => {
