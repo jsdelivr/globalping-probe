@@ -88,14 +88,14 @@ function connect() {
 			const {id: measurementId, measurement} = data;
 			const testId = cryptoRandomString({length: 16, type: 'alphanumeric'});
 
-			worker.jobs.set(measurementId, Date.now());
-
 			logger.debug(`${measurement.type} request ${data.id} received`, data);
 			socket.emit('probe:measurement:ack', {id: testId, measurementId}, async () => {
 				const handler = handlersMap.get(measurement.type);
 				if (!handler) {
 					return;
 				}
+
+				worker.jobs.set(measurementId, Date.now());
 
 				try {
 					await handler.run(socket, measurementId, testId, measurement);
