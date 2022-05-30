@@ -103,6 +103,7 @@ function connect() {
 				} catch (error: unknown) {
 					// Todo: maybe we should notify api as well
 					logger.error('failed to run the measurement.', error);
+					worker.jobs.delete(measurementId);
 				}
 			});
 		});
