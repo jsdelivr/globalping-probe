@@ -37,8 +37,15 @@ logger.info(`Start probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'p
 
 function connect() {
 	const worker = {
-		jobs: new Map<string, number>(),
 		active: false,
+		jobs: new Map<string, number>(),
+		jobsInterval: setInterval(() => {
+			for (const [key, value] of worker.jobs) {
+				if (Date.now() >= (value + 30_000)) {
+					worker.jobs.delete(key);
+				}
+			}
+		}, 10_000),
 	};
 
 	const socket = io(`${getConfValue<string>('api.host')}/probes`, {
@@ -109,6 +116,7 @@ function connect() {
 		const closeInterval = setInterval(() => {
 			if (worker.jobs.size === 0) {
 				clearInterval(closeInterval);
+				clearInterval(worker.jobsInterval);
 
 				logger.debug('closing process');
 				process.exit(0);
