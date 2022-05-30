@@ -109,20 +109,30 @@ function connect() {
 		});
 
 	process.on('SIGTERM', () => {
+		logger.debug('SIGTERM received');
+
 		worker.active = false;
 		socket.emit('probe:status:not_ready', {});
 
-		logger.debug('SIGTERM received');
+		const closeTimeout = setTimeout(() => {
+			logger.debug('SIGTERM timeout. Force close.');
+			forceCloseProcess();
+		}, 60_000);
 
 		const closeInterval = setInterval(() => {
 			if (worker.jobs.size === 0) {
-				clearInterval(closeInterval);
-				clearInterval(worker.jobsInterval);
-
-				logger.debug('closing process');
-				process.exit(0);
+				clearTimeout(closeTimeout);
+				forceCloseProcess();
 			}
 		}, 100);
+
+		const forceCloseProcess = () => {
+			clearInterval(closeInterval);
+			clearInterval(worker.jobsInterval);
+
+			logger.debug('closing process');
+			process.exit(0);
+		};
 	});
 }
 
