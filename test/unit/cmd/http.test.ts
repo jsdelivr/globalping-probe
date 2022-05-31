@@ -325,6 +325,7 @@ describe('http command', () => {
 
 		const events = {
 			response: {
+				socket: {},
 				timings: {
 					phases: {
 						download: 10,

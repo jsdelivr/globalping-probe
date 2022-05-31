@@ -1,4 +1,4 @@
-import type {TLSSocket} from 'node:tls';
+import {TLSSocket} from 'node:tls';
 import Joi from 'joi';
 import _ from 'lodash';
 import got, {Response, Request, HTTPAlias, Progress, DnsLookupIpVersion} from 'got';
@@ -67,7 +67,7 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 	return got.stream(url, options_);
 };
 
-const isTlsSocket = (socket: any): socket is TLSSocket => Boolean(socket.getPeerCertificate);
+const isTlsSocket = (socket: unknown): socket is TLSSocket => socket instanceof TLSSocket;
 
 export class HttpCommand implements CommandInterface<HttpOptions> {
 	constructor(private readonly cmd: typeof httpCmd) {}
@@ -143,7 +143,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 		stream.on('response', (resp: Response) => {
 			// Headers
-			const rawHeaders = _.chunk(resp.rawHeaders, 2).map((g: string[]) => `${g[0]!}: ${g[1]!}`);
+			const rawHeaders = _.chunk(resp.rawHeaders, 2).map((g: string[]) => `${String(g[0])}: ${String(g[1])}`);
 			result.rawHeaders = rawHeaders.join('\n');
 			result.curlHeaders = rawHeaders.filter((r: string) => !r.startsWith(':status:')).join('\n');
 			result.headers = resp.headers;
