@@ -88,10 +88,16 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			rawBody: '',
 			statusCode: 0,
 			httpVersion: '',
-			responseTime: 0,
+			timings: {},
 		};
 
 		const respond = () => {
+			result.timings = {
+				...result.timings,
+				total: stream.response?.timings.phases.total,
+				download: stream.response?.timings.phases.download,
+			};
+
 			const rawOutput = options.query.method === 'head'
 				? `HTTP/${result.httpVersion} ${result.statusCode}\n` + result.curlHeaders
 				: result.rawBody;
@@ -104,7 +110,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 					rawHeaders: result.rawHeaders,
 					rawBody: result.rawBody,
 					statusCode: result.statusCode,
-					responseTime: result.responseTime,
+					timings: result.timings,
 					tls: result.tls,
 					rawOutput: result.error || rawOutput,
 				},
@@ -143,8 +149,14 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			result.headers = resp.headers;
 
 			result.statusCode = resp.statusCode;
-			result.responseTime = Number(resp.timings?.response) - Number(resp.timings?.start);
 			result.httpVersion = resp.httpVersion;
+
+			result.timings = {
+				firstByte: resp.timings.phases.firstByte,
+				dns: resp.timings.phases.dns,
+				response: Number(resp.timings?.response) - Number(resp.timings?.start),
+				connect: Number(resp.timings?.connect) - Number(resp.timings?.start),
+			};
 
 			const socket = resp.socket;
 			if (isTlsSocket(socket)) {
@@ -163,8 +175,8 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			}
 		});
 
-		stream.on('error', (error_: Error) => {
-			result.error = error_.message;
+		stream.on('error', (error: Error) => {
+			result.error = error.message;
 			respond();
 		});
 
