@@ -1,4 +1,4 @@
-import {TLSSocket} from 'node:tls';
+import type {TLSSocket} from 'node:tls';
 import Joi from 'joi';
 import _ from 'lodash';
 import got, {Response, Request, HTTPAlias, Progress, DnsLookupIpVersion} from 'got';
@@ -67,7 +67,7 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 	return got.stream(url, options_);
 };
 
-const isTlsSocket = (socket: unknown): socket is TLSSocket => socket instanceof TLSSocket;
+const isTlsSocket = (socket: unknown): socket is TLSSocket => 'getPeerCertificate' in (socket as {getPeerCertificate?: unknown});
 
 export class HttpCommand implements CommandInterface<HttpOptions> {
 	constructor(private readonly cmd: typeof httpCmd) {}
