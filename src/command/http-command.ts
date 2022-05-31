@@ -79,6 +79,8 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			throw new InvalidOptionsException('http', error);
 		}
 
+		const stream = this.cmd(cmdOptions);
+
 		const result = {
 			tls: {},
 			error: '',
@@ -116,8 +118,6 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				},
 			});
 		};
-
-		const stream = this.cmd(cmdOptions);
 
 		stream.on('downloadProgress', (progress: Progress) => {
 			const {downloadLimit} = stream.options.context;
