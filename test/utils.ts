@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 export const getCmdMock = (name: string): string => readFileSync(path.resolve(`./test/mocks/${name}.txt`)).toString();
 export const getCmdMockResult = (name: string): unknown => JSON.parse(readFileSync(path.resolve(`./test/mocks/${name}.json`)).toString());
 
-// a helper for execa return.
+// A helper for execa return.
 // stolen from https://github.com/sindresorhus/execa/blob/main/lib/promise.js
 type Descriptor = {
 	value: () => unknown;
