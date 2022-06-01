@@ -35,7 +35,7 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 		protocol: Joi.string().valid(...allowedHttpProtocols).insensitive().default('https'),
 		port: Joi.number(),
 		headers: Joi.object().default({}),
-	}),
+	}).required(),
 });
 
 export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Request => {
