@@ -72,6 +72,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 
 			if (!isValid) {
 				isResultPrivate = !isValid;
+				return;
 			}
 
 			socket.emit('probe:measurement:progress', {
