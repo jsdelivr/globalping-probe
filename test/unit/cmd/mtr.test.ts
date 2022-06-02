@@ -29,7 +29,7 @@ describe('mtr command executor', () => {
 		const rawOutputLines = rawOutput.split('\n');
 
 		const stream = new PassThrough();
-		const promise = new Promise((resolve, _reject) => {
+		const promise = new Promise(resolve => {
 			for (const [i, line] of rawOutputLines.entries()) {
 				setTimeout(() => stream.emit('data', Buffer.from(line), i));
 			}

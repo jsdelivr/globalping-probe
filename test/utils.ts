@@ -25,7 +25,7 @@ type ArgPromise = Promise<unknown> | (() => Promise<unknown>);
 type ArgObject = Record<string, unknown>;
 
 // The return value is a mixin of `childProcess` and `Promise`
-export const execaPromise = (object: ArgObject, promise: ArgPromise) => {
+export const execaPromise = (object: ArgObject, promise: ArgPromise): ArgObject => {
 	for (const [property, descriptor] of descriptors) {
 		if (!property || typeof property !== 'string' || !descriptor || typeof descriptor !== 'object') {
 			continue;
