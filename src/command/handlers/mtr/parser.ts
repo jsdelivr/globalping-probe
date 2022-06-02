@@ -183,10 +183,14 @@ export const MtrParser = {
 
 		const timesArray = hop.times.filter(t => t.time).map(t => t.time) as number[];
 
-		stats.min = Math.min(...timesArray);
-		stats.max = Math.max(...timesArray);
-		stats.avg = Number.parseFloat((timesArray.reduce((a, b) => a + b, 0) / timesArray.length).toFixed(1));
-		stats.total = hop.times.length;
+		if (timesArray.length > 0) {
+			stats.min = Math.min(...timesArray);
+			stats.max = Math.max(...timesArray);
+			stats.avg = Number.parseFloat((timesArray.reduce((a, b) => a + b, 0) / timesArray.length).toFixed(1));
+			stats.total = hop.times.length;
+			stats.stDev = Number.parseFloat((Math.sqrt(timesArray.map(x => (x - stats.avg) ** 2).reduce((a, b) => a + b, 0) / timesArray.length)).toFixed(1));
+		}
+
 		stats.drop = 0;
 
 		for (let i = 0; i < hop.times.length; i++) {
@@ -201,8 +205,6 @@ export const MtrParser = {
 			}
 		}
 
-		stats.stDev = Number.parseFloat((Math.sqrt(timesArray.map(x => (x - stats.avg) ** 2).reduce((a, b) => a + b, 0) / timesArray.length)).toFixed(1));
-
 		// Jitter
 		const jitterArray = [];
 
@@ -214,13 +216,14 @@ export const MtrParser = {
 			jI += 2;
 		}
 
-		stats.jMin = Math.min(...jitterArray);
-		stats.jMax = Math.max(...jitterArray);
-		stats.jAvg = Number.parseFloat((jitterArray.reduce((a, b) => a + b, 0) / jitterArray.length).toFixed(1));
+		if (jitterArray.length > 0) {
+			stats.jMin = Math.min(...jitterArray);
+			stats.jMax = Math.max(...jitterArray);
+			stats.jAvg = Number.parseFloat((jitterArray.reduce((a, b) => a + b, 0) / jitterArray.length).toFixed(1));
+		}
 
 		return stats;
 	},
-
 };
 
 export default MtrParser;
