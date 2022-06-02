@@ -113,7 +113,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 	async hopsParse(hops: HopType[], data: string): Promise<HopType[]> {
 		const nHops = MtrParser.hopsParse(hops, data.toString());
-		const dnsResult = await Promise.allSettled(nHops.map(async h => h.host && !h.asn && !isIpPrivate(h.host) ? this.lookupAsn(h.host) : Promise.reject()));
+		const dnsResult = await Promise.allSettled(nHops.map(async h => h?.host && !h?.asn && !isIpPrivate(h?.host) ? this.lookupAsn(h?.host) : Promise.reject()));
 
 		for (const [index, result] of dnsResult.entries()) {
 			if (result.status === 'rejected' || !result.value) {
@@ -134,7 +134,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 	}
 
 	private hasResultPrivateIp(hops: HopType[]): boolean {
-		const privateResults = hops.filter((hop: HopType) => isIpPrivate(hop.host ?? ''));
+		const privateResults = hops.filter((hop: HopType) => isIpPrivate(hop?.host ?? ''));
 
 		if (privateResults.length > 0) {
 			return true;
