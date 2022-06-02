@@ -6,6 +6,7 @@ import {getCmdMock, getCmdMockResult} from '../../../../utils.js';
 type MockResult = {
 	result: {
 		hops: HopType[];
+		rawOutput: string;
 	};
 };
 
@@ -31,6 +32,16 @@ describe('mtr parser helper', () => {
 			const parsedOutput = MtrParser.hopsParse([], rawOutput, true);
 
 			expect(parsedOutput).to.deep.equal(expectedResult);
+		});
+	});
+
+	describe('outputBuilder', () => {
+		it('should transform obj into MTR-styled response', () => {
+			const testCase = 'mtr-success-raw-helper-final';
+			const data = (getCmdMockResult(testCase) as MockResult).result;
+			const output = MtrParser.outputBuilder(data.hops);
+
+			expect(output).to.deep.equal(data.rawOutput);
 		});
 	});
 });
