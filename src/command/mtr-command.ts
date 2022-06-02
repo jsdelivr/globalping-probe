@@ -78,11 +78,13 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 			if (!isValid) {
 				isResultPrivate = !isValid;
+				return;
 			}
 
 			socket.emit('probe:measurement:progress', {
 				testId,
 				measurementId,
+				overwrite: true,
 				result: {
 					...result,
 				},
