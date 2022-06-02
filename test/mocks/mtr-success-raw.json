@@ -35,15 +35,15 @@
           {
               "stats":
               {
-                  "min": null,
-                  "max": null,
-                  "avg": null,
-                  "total": 3,
+                  "min": 0,
+                  "max": 0,
+                  "avg": 0,
+                  "total": 0,
                   "drop": 2,
-                  "stDev": null,
-                  "jMin": null,
-                  "jMax": null,
-                  "jAvg": null
+                  "stDev": 0,
+                  "jMin": 0,
+                  "jMax": 0,
+                  "jAvg": 0
               },
               "times":
               [
@@ -93,15 +93,15 @@
           {
               "stats":
               {
-                  "min": null,
-                  "max": null,
-                  "avg": null,
-                  "total": 3,
+                  "min": 0,
+                  "max": 0,
+                  "avg": 0,
+                  "total": 0,
                   "drop": 2,
-                  "stDev": null,
-                  "jMin": null,
-                  "jMax": null,
-                  "jAvg": null
+                  "stDev": 0,
+                  "jMin": 0,
+                  "jMax": 0,
+                  "jAvg": 0
               },
               "times":
               [

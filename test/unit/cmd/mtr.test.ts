@@ -7,8 +7,6 @@ import {MtrCommand} from '../../../src/command/mtr-command.js';
 
 const dnsResolver = async (_addr: string, _type: string) => ['123 | abc | abc'];
 
-type Result = {result: {rawOutput: string}};
-
 describe('mtr command executor', () => {
 	const sandbox = sinon.createSandbox();
 	const mockedSocket = sandbox.createStubInstance(Socket);
@@ -47,6 +45,6 @@ describe('mtr command executor', () => {
 
 		expect(mockedSocket.emit.args.length).to.equal(rawOutputLines.length + 1); // Progress + result
 		expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
-		expect((mockedSocket.emit.lastCall.args[1] as Result).result.rawOutput).to.deep.equal((expectedResult as Result).result.rawOutput);
+		expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
 	});
 });
