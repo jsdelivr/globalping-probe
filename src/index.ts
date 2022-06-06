@@ -58,6 +58,11 @@ function connect() {
 	});
 
 	socket
+		.on('probe:sigkill', () => {
+			logger.debug('probe:sigkill requested. Killing the probe.');
+			/* eslint-disable-next-line unicorn/no-process-exit */
+			process.exit();
+		})
 		.on('connect', () => {
 			worker.active = true;
 			socket.emit('probe:status:ready', {});
