@@ -57,18 +57,20 @@ function connect() {
 			logger.debug('connection to API established');
 		})
 		.on('disconnect', (reason: string): void => {
-			logger.debug(`disconnected from API. (${reason})`);
+			logger.debug(`disconnected from API: (${reason})`);
 			if (reason === 'io server disconnect') {
 				socket.connect();
 			}
 		})
 		.on('connect_error', error => {
-			logger.error('connection to API failed', error);
+			logger.error('connection to API failed:', error);
 
 			const isFatalError = fatalConnectErrors.some(fatalError => error.message.startsWith(fatalError));
 
-			if (!isFatalError) {
-				socket.connect();
+			if (isFatalError) {
+				// At that stage socket.connected=false already,
+				// but we want to stop reconnections for fatal errors
+				socket.disconnect();
 			}
 		})
 		.on('api:error', apiErrorHandler)
