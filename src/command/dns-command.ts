@@ -83,6 +83,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 
 			if (!isValid) {
 				isResultPrivate = !isValid;
+				return;
 			}
 
 			socket.emit('probe:measurement:progress', {

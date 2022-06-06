@@ -51,6 +51,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 
 			if (!isValid) {
 				isResultPrivate = !isValid;
+				return;
 			}
 
 			socket.emit('probe:measurement:progress', {
