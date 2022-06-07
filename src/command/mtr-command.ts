@@ -93,9 +93,10 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 		try {
 			await cmd;
+			result.hops = await this.hopsParse(result.hops, '', true);
+			result.rawOutput = MtrParser.outputBuilder(result.hops);
 		} catch (error: unknown) {
 			const output = isExecaError(error) ? error.stderr.toString() : '';
-
 			result.rawOutput = output;
 		}
 
@@ -111,8 +112,8 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		});
 	}
 
-	async hopsParse(hops: HopType[], data: string): Promise<HopType[]> {
-		const nHops = MtrParser.hopsParse(hops, data.toString());
+	async hopsParse(hops: HopType[], data: string, isFinalResult: boolean = false): Promise<HopType[]> {
+		const nHops = MtrParser.hopsParse(hops, data.toString(), isFinalResult);
 		const dnsResult = await Promise.allSettled(nHops.map(async h => h?.host && !h?.asn && !isIpPrivate(h?.host) ? this.lookupAsn(h?.host) : Promise.reject()));
 
 		for (const [index, result] of dnsResult.entries()) {
