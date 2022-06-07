@@ -176,7 +176,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		});
 
 		stream.on('error', (error: Error & {code: string}) => {
-			// Skip error mapping on download limit. Allow the full downloaded be returned.
+			// Skip error mapping on download limit
 			if (error.message !== 'Exceeded the download.') {
 				result.error = `${error.message} - ${error.code}`;
 			}
