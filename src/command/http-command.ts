@@ -67,7 +67,7 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 	return got.stream(url, options_);
 };
 
-const isTlsSocket = (socket: unknown): socket is TLSSocket => 'getPeerCertificate' in (socket as {getPeerCertificate?: unknown});
+const isTlsSocket = (socket: unknown): socket is TLSSocket => Boolean((socket as {getPeerCertificate?: unknown}).getPeerCertificate);
 
 export class HttpCommand implements CommandInterface<HttpOptions> {
 	constructor(private readonly cmd: typeof httpCmd) {}
@@ -158,12 +158,12 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				tcp: resp.timings.phases.tcp,
 			};
 
-			const socket = resp.socket;
-			if (isTlsSocket(socket)) {
-				const cert = socket.getPeerCertificate();
+			const rSocket = resp.socket;
+			if (isTlsSocket(rSocket)) {
+				const cert = rSocket.getPeerCertificate();
 				result.tls = {
-					authorized: socket.authorized,
-					...(socket.authorizationError ? {error: socket.authorizationError} : {}),
+					authorized: rSocket.authorized,
+					...(rSocket.authorizationError ? {error: rSocket.authorizationError} : {}),
 					createdAt: cert.valid_from,
 					expireAt: cert.valid_to,
 					issuer: {...cert.issuer},
