@@ -112,7 +112,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		});
 	}
 
-	async hopsParse(hops: HopType[], data: string, isFinalResult: boolean = false): Promise<HopType[]> {
+	async hopsParse(hops: HopType[], data: string, isFinalResult = false): Promise<HopType[]> {
 		const nHops = MtrParser.hopsParse(hops, data.toString(), isFinalResult);
 		const dnsResult = await Promise.allSettled(nHops.map(async h => h?.host && !h?.asn && !isIpPrivate(h?.host) ? this.lookupAsn(h?.host) : Promise.reject()));
 
