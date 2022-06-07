@@ -154,8 +154,8 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			result.timings = {
 				firstByte: resp.timings.phases.firstByte,
 				dns: resp.timings.phases.dns,
-				response: Number(resp.timings?.response) - Number(resp.timings?.start),
-				connect: Number(resp.timings?.connect) - Number(resp.timings?.start),
+				tls: resp.timings.phases.tls,
+				tcp: resp.timings.phases.tcp,
 			};
 
 			const socket = resp.socket;
