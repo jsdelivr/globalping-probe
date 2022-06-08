@@ -4,6 +4,7 @@ import * as sinon from 'sinon';
 import {expect} from 'chai';
 import {Socket} from 'socket.io-client';
 import {HttpCommand} from '../../../src/command/http-command.js';
+import type {Timings} from '../../../src/command/http-command.js';
 
 type StreamCert = {
 	valid_from: number;
@@ -20,10 +21,7 @@ type StreamCert = {
 };
 
 type StreamResponse = {
-	timings: {
-		[k: string]: number | Record<string, number>;
-		phases?: Record<string, number>;
-	};
+	timings: Timings;
 	socket: {
 		authorized?: boolean;
 		authorizationError?: string;
@@ -43,6 +41,7 @@ class HttpError extends Error {
 
 class Stream {
 	response: StreamResponse | undefined;
+	timings: Timings | undefined;
 	stream: PassThrough;
 
 	constructor(
@@ -50,6 +49,7 @@ class Stream {
 	) {
 		this.stream = new PassThrough();
 		this.response = response;
+		this.timings = response?.timings;
 	}
 
 	on(key: string, fn: (..._args: any[]) => void) {

@@ -22,6 +22,11 @@ export type HttpOptions = {
 	};
 };
 
+export type Timings = {
+	[k: string]: number | Record<string, unknown>;
+	phases: Record<string, number>;
+};
+
 const allowedHttpProtocols = ['http', 'https', 'http2'];
 const allowedHttpMethods = ['get', 'head'];
 export const httpOptionsSchema = Joi.object<HttpOptions>({
@@ -94,10 +99,15 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		};
 
 		const respond = () => {
+			const timings = (stream.timings ?? {}) as Timings;
+			if (!timings['end']) {
+				timings['end'] = Date.now();
+			}
+
 			result.timings = {
 				...result.timings,
-				total: stream.response?.timings.phases.total,
-				download: stream.response?.timings.phases.download,
+				total: timings.phases['total'] ?? Number(timings['end']) - Number(timings['start']),
+				download: timings.phases['download'] ?? Number(timings['end']) - Number(timings['response']),
 			};
 
 			const rawOutput = options.query.method === 'head'
