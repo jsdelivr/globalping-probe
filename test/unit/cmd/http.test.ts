@@ -4,6 +4,7 @@ import * as sinon from 'sinon';
 import {expect} from 'chai';
 import {Socket} from 'socket.io-client';
 import {HttpCommand} from '../../../src/command/http-command.js';
+import type {Timings} from '../../../src/command/http-command.js';
 
 type StreamCert = {
 	valid_from: number;
@@ -20,10 +21,7 @@ type StreamCert = {
 };
 
 type StreamResponse = {
-	timings: {
-		[k: string]: number | Record<string, number>;
-		phases?: Record<string, number>;
-	};
+	timings: Timings;
 	socket: {
 		authorized?: boolean;
 		authorizationError?: string;
@@ -32,8 +30,18 @@ type StreamResponse = {
 	};
 };
 
+class HttpError extends Error {
+	code: string;
+
+	constructor(message: string, code: string) {
+		super(message);
+		this.code = code;
+	}
+}
+
 class Stream {
 	response: StreamResponse | undefined;
+	timings: Timings | undefined;
 	stream: PassThrough;
 
 	constructor(
@@ -41,6 +49,7 @@ class Stream {
 	) {
 		this.stream = new PassThrough();
 		this.response = response;
+		this.timings = response?.timings;
 	}
 
 	on(key: string, fn: (..._args: any[]) => void) {
@@ -78,9 +87,9 @@ describe('http command', () => {
 				httpVersion: '1.1',
 				timings: {
 					start: 0,
-					connect: 1,
-					response: 11,
 					phases: {
+						tls: 2,
+						tcp: 2,
 						dns: 5,
 						download: 10,
 						total: 11,
@@ -105,8 +114,8 @@ describe('http command', () => {
 				},
 				timings: {
 					dns: 5,
-					connect: 1,
-					response: 11,
+					tls: 2,
+					tcp: 2,
 					download: 10,
 					firstByte: 1,
 					total: 11,
@@ -157,12 +166,12 @@ describe('http command', () => {
 				statusCode: 200,
 				timings: {
 					start: 0,
-					response: 200,
-					connect: 100,
 					phases: {
 						download: 10,
 						total: 11,
 						dns: 5,
+						tls: 5,
+						tcp: 2,
 						firstByte: 1,
 					},
 				},
@@ -183,10 +192,10 @@ describe('http command', () => {
 					test: 'abc',
 				},
 				timings: {
-					connect: 100,
-					response: 200,
 					dns: 5,
 					total: 11,
+					tls: 5,
+					tcp: 2,
 					firstByte: 1,
 					download: 10,
 				},
@@ -246,11 +255,11 @@ describe('http command', () => {
 				statusCode: 200,
 				timings: {
 					start: 0,
-					response: 200,
-					connect: 100,
 					phases: {
 						download: 10,
 						total: 11,
+						tls: 2,
+						tcp: 2,
 						dns: 5,
 						firstByte: 1,
 					},
@@ -272,8 +281,8 @@ describe('http command', () => {
 					test: 'abc',
 				},
 				timings: {
-					connect: 100,
-					response: 200,
+					tls: 2,
+					tcp: 2,
 					total: 11,
 					dns: 5,
 					firstByte: 1,
@@ -333,7 +342,7 @@ describe('http command', () => {
 					},
 				},
 			},
-			error: new Error('ENODATA google.com'),
+			error: new HttpError('ENODATA google.com', 'abc'),
 		};
 
 		const response = {
@@ -351,7 +360,7 @@ describe('http command', () => {
 					total: 11,
 				},
 				tls: {},
-				rawOutput: 'ENODATA google.com',
+				rawOutput: 'ENODATA google.com - abc',
 				statusCode: 0,
 			},
 			testId: 'test',

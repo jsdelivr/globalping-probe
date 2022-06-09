@@ -22,6 +22,11 @@ export type HttpOptions = {
 	};
 };
 
+export type Timings = {
+	[k: string]: number | Record<string, unknown>;
+	phases: Record<string, number>;
+};
+
 const allowedHttpProtocols = ['http', 'https', 'http2'];
 const allowedHttpMethods = ['get', 'head'];
 export const httpOptionsSchema = Joi.object<HttpOptions>({
@@ -67,7 +72,7 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 	return got.stream(url, options_);
 };
 
-const isTlsSocket = (socket: unknown): socket is TLSSocket => 'getPeerCertificate' in (socket as {getPeerCertificate?: unknown});
+const isTlsSocket = (socket: unknown): socket is TLSSocket => Boolean((socket as {getPeerCertificate?: unknown}).getPeerCertificate);
 
 export class HttpCommand implements CommandInterface<HttpOptions> {
 	constructor(private readonly cmd: typeof httpCmd) {}
@@ -94,10 +99,15 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		};
 
 		const respond = () => {
+			const timings = (stream.timings ?? {}) as Timings;
+			if (!timings['end']) {
+				timings['end'] = Date.now();
+			}
+
 			result.timings = {
 				...result.timings,
-				total: stream.response?.timings.phases.total,
-				download: stream.response?.timings.phases.download,
+				total: timings.phases['total'] ?? Number(timings['end']) - Number(timings['start']),
+				download: timings.phases['download'] ?? Number(timings['end']) - Number(timings['response']),
 			};
 
 			const rawOutput = options.query.method === 'head'
@@ -154,16 +164,16 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			result.timings = {
 				firstByte: resp.timings.phases.firstByte,
 				dns: resp.timings.phases.dns,
-				response: Number(resp.timings?.response) - Number(resp.timings?.start),
-				connect: Number(resp.timings?.connect) - Number(resp.timings?.start),
+				tls: resp.timings.phases.tls,
+				tcp: resp.timings.phases.tcp,
 			};
 
-			const socket = resp.socket;
-			if (isTlsSocket(socket)) {
-				const cert = socket.getPeerCertificate();
+			const rSocket = resp.socket;
+			if (isTlsSocket(rSocket)) {
+				const cert = rSocket.getPeerCertificate();
 				result.tls = {
-					authorized: socket.authorized,
-					...(socket.authorizationError ? {error: socket.authorizationError} : {}),
+					authorized: rSocket.authorized,
+					...(rSocket.authorizationError ? {error: rSocket.authorizationError} : {}),
 					createdAt: cert.valid_from,
 					expireAt: cert.valid_to,
 					issuer: {...cert.issuer},
@@ -175,8 +185,12 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			}
 		});
 
-		stream.on('error', (error: Error) => {
-			result.error = error.message;
+		stream.on('error', (error: Error & {code: string}) => {
+			// Skip error mapping on download limit
+			if (error.message !== 'Exceeded the download.') {
+				result.error = `${error.message} - ${error.code}`;
+			}
+
 			respond();
 		});
 
