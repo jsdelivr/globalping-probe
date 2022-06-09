@@ -37,12 +37,28 @@ export const TraceDigParser = {
 	},
 
 	parseLoop(lines: string[]): DnsParseLoopResponse[] {
-		const groups = [];
+		const groups: Array<{
+			answer: DnsSection[];
+			time: number;
+			server: string;
+		}> = [];
+
+		const pushNewHop = () => {
+			groups.push({
+				answer: [],
+				time: 0,
+				server: '',
+			});
+		};
+
+		pushNewHop();
 
 		for (let i = 0; i < lines.length - 1; i++) {
-			const line = lines[lines.length - 1 - i];
+			const groupIndex = groups.length - 1;
+			const line = lines[i];
 
 			if (!line) {
+				pushNewHop();
 				continue;
 			}
 
@@ -50,22 +66,17 @@ export const TraceDigParser = {
 				const resolver = RESOLVER_REG_EXP.exec(line);
 				const queryTime = QUERY_TIME_REG_EXP.exec(line);
 
-				groups.push({
-					time: queryTime ? Number(queryTime[1]) : 0,
-					server: resolver ? String(resolver[1]) : '',
-					answer: [] as DnsSection[],
-				});
+				groups[groupIndex]!.time = queryTime ? Number(queryTime[1]) : 0;
+				groups[groupIndex]!.server = resolver ? String(resolver[1]) : '';
 
 				continue;
 			}
-
-			const groupIndex = groups.length - 1;
 
 			const answer = SharedDigParser.parseSection(line.split(/\s+/g));
 			groups[groupIndex]!.answer.push(answer);
 		}
 
-		return groups.reverse().map(item => ({...item, answer: item.answer.reverse()}));
+		return groups.map(item => ({...item, answer: item.answer}));
 	},
 };
 
