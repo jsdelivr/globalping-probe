@@ -28,7 +28,7 @@ export const pingCmd = (options: PingOptions): ExecaChildProcess => {
 		options.target,
 	].flat();
 
-	return execa('ping', args);
+	return execa('unbuffer', ['ping', ...args]);
 };
 
 export class PingCommand implements CommandInterface<PingOptions> {
