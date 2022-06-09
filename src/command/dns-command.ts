@@ -60,7 +60,7 @@ export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
 		protocolArg,
 	].flat() as string[];
 
-	return execa('dig', args);
+	return execa('unbuffer', ['dig', ...args]);
 };
 
 export class DnsCommand implements CommandInterface<DnsOptions> {
