@@ -3,6 +3,10 @@ import type {
 	HopType,
 } from './types.js';
 
+/* eslint-disable @typescript-eslint/naming-convention */
+export const NEW_LINE_REG_EXP = /\r?\n/;
+/* eslint-enable @typescript-eslint/naming-convention */
+
 const getInitialHopState = () => ({
 	stats: {
 		min: 0,
@@ -100,7 +104,7 @@ export const MtrParser = {
 	},
 
 	hopsParse(currentHops: HopType[], data: string, isFinalResult?: boolean): HopType[] {
-		const sData = data.split('\n');
+		const sData = data.split(NEW_LINE_REG_EXP);
 
 		const hops = [...currentHops];
 
