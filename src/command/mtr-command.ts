@@ -50,7 +50,9 @@ export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
 		options.target,
 	].flat();
 
-	return execa('mtr', args);
+	const cmd = ['mtr', ...args].join(' ');
+
+	return execa('script', ['-q', '-c', cmd, '/dev/null']);
 };
 
 export class MtrCommand implements CommandInterface<MtrOptions> {
