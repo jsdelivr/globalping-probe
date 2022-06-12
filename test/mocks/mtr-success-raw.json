@@ -1,0 +1,337 @@
+{
+    "testId": "test",
+    "measurementId": "measurement",
+    "result": {
+      "hops":
+      [
+          {
+              "stats":
+              {
+                  "min": 3.734,
+                  "max": 3.734,
+                  "avg": 3.7,
+                  "total": 3,
+                  "drop": 1,
+                  "stDev": 0,
+                  "jMin": 3.734,
+                  "jMax": 3.734,
+                  "jAvg": 3.7
+              },
+              "times":
+              [
+                  {
+                      "seq": "33000",
+                      "time": 3.734
+                  },
+                  {
+                      "seq": "33011"
+                  },
+                  {
+                      "seq": "33021"
+                  }
+              ],
+              "host": "192.168.0.1"
+          },
+          {
+              "stats":
+              {
+                  "min": 0,
+                  "max": 0,
+                  "avg": 0,
+                  "total": 0,
+                  "drop": 2,
+                  "stDev": 0,
+                  "jMin": 0,
+                  "jMax": 0,
+                  "jAvg": 0
+              },
+              "times":
+              [
+                  {
+                      "seq": "33001"
+                  },
+                  {
+                      "seq": "33012"
+                  },
+                  {
+                      "seq": "33022"
+                  }
+              ]
+          },
+          {
+              "stats":
+              {
+                  "min": 10.111,
+                  "max": 12.102,
+                  "avg": 11,
+                  "total": 3,
+                  "drop": 0,
+                  "stDev": 0.8,
+                  "jMin": 1.9909999999999997,
+                  "jMax": 10.933,
+                  "jAvg": 6.5
+              },
+              "times":
+              [
+                  {
+                      "seq": "33002",
+                      "time": 12.102
+                  },
+                  {
+                      "seq": "33013",
+                      "time": 10.111
+                  },
+                  {
+                      "seq": "33023",
+                      "time": 10.933
+                  }
+              ],
+              "host": "62.252.67.181",
+              "asn": "123",
+              "resolvedHost": "lutn-core-2a-xe-7114-0.network.virginmedia.net"
+          },
+          {
+              "stats":
+              {
+                  "min": 0,
+                  "max": 0,
+                  "avg": 0,
+                  "total": 0,
+                  "drop": 2,
+                  "stDev": 0,
+                  "jMin": 0,
+                  "jMax": 0,
+                  "jAvg": 0
+              },
+              "times":
+              [
+                  {
+                      "seq": "33003"
+                  },
+                  {
+                      "seq": "33014"
+                  },
+                  {
+                      "seq": "33024"
+                  }
+              ]
+          },
+          {
+              "stats":
+              {
+                  "min": 11.758,
+                  "max": 19.959,
+                  "avg": 14.9,
+                  "total": 3,
+                  "drop": 0,
+                  "stDev": 3.6,
+                  "jMin": 8.201,
+                  "jMax": 12.855,
+                  "jAvg": 10.5
+              },
+              "times":
+              [
+                  {
+                      "seq": "33004",
+                      "time": 19.959
+                  },
+                  {
+                      "seq": "33015",
+                      "time": 11.758
+                  },
+                  {
+                      "seq": "33025",
+                      "time": 12.855
+                  }
+              ],
+              "host": "62.253.175.34",
+              "asn": "123",
+              "resolvedHost": "tele-ic-7-ae2-0.network.virginmedia.net"
+          },
+          {
+              "stats":
+              {
+                  "min": 10.649,
+                  "max": 13.611,
+                  "avg": 12.4,
+                  "total": 3,
+                  "drop": 0,
+                  "stDev": 1.3,
+                  "jMin": 0.7900000000000009,
+                  "jMax": 10.649,
+                  "jAvg": 5.7
+              },
+              "times":
+              [
+                  {
+                      "seq": "33005",
+                      "time": 12.821
+                  },
+                  {
+                      "seq": "33016",
+                      "time": 13.611
+                  },
+                  {
+                      "seq": "33026",
+                      "time": 10.649
+                  }
+              ],
+              "host": "80.255.14.105",
+              "asn": "123",
+              "resolvedHost": "ae15-0.lon10.core-backbone.com"
+          },
+          {
+              "stats":
+              {
+                  "min": 28.409,
+                  "max": 28.627,
+                  "avg": 28.5,
+                  "total": 3,
+                  "drop": 0,
+                  "stDev": 0.1,
+                  "jMin": 0.05699999999999861,
+                  "jMax": 28.409,
+                  "jAvg": 14.2
+              },
+              "times":
+              [
+                  {
+                      "seq": "33006",
+                      "time": 28.627
+                  },
+                  {
+                      "seq": "33017",
+                      "time": 28.57
+                  },
+                  {
+                      "seq": "33027",
+                      "time": 28.409
+                  }
+              ],
+              "host": "81.95.15.118",
+              "asn": "123",
+              "resolvedHost": "ae1-2053.prg10.core-backbone.com"
+          },
+          {
+              "stats":
+              {
+                  "min": 33.42,
+                  "max": 37.643,
+                  "avg": 34.9,
+                  "total": 3,
+                  "drop": 0,
+                  "stDev": 2,
+                  "jMin": 4.052,
+                  "jMax": 33.42,
+                  "jAvg": 18.7
+              },
+              "times":
+              [
+                  {
+                      "seq": "33007",
+                      "time": 33.591
+                  },
+                  {
+                      "seq": "33018",
+                      "time": 37.643
+                  },
+                  {
+                      "seq": "33028",
+                      "time": 33.42
+                  }
+              ],
+              "host": "5.56.17.18",
+              "asn": "123",
+              "resolvedHost": "core-backbone.cdn77.com"
+          },
+          {
+              "stats":
+              {
+                  "min": 28.426,
+                  "max": 29.334,
+                  "avg": 28.7,
+                  "total": 3,
+                  "drop": 0,
+                  "stDev": 0.4,
+                  "jMin": 0.8520000000000003,
+                  "jMax": 28.426,
+                  "jAvg": 14.6
+              },
+              "times":
+              [
+                  {
+                      "seq": "33008",
+                      "time": 28.482
+                  },
+                  {
+                      "seq": "33019",
+                      "time": 29.334
+                  },
+                  {
+                      "seq": "33029",
+                      "time": 28.426
+                  }
+              ],
+              "host": "138.199.0.157",
+              "asn": "123",
+              "resolvedHost": "vl246.prg-ttc2-cdn77-dist-1.cdn77.com"
+          },
+          {
+              "stats":
+              {
+                  "min": 28.557,
+                  "max": 36.344,
+                  "avg": 32.1,
+                  "total": 3,
+                  "drop": 0,
+                  "stDev": 3.2,
+                  "jMin": 7.787000000000003,
+                  "jMax": 31.345,
+                  "jAvg": 19.6
+              },
+              "times":
+              [
+                  {
+                      "seq": "33009",
+                      "time": 28.557
+                  },
+                  {
+                      "seq": "33020",
+                      "time": 36.344
+                  },
+                  {
+                      "seq": "33030",
+                      "time": 31.345
+                  }
+              ],
+              "host": "185.180.14.250",
+              "asn": "123",
+              "resolvedHost": "edge-595.bunnyinfra.net"
+          },
+          {
+              "stats":
+              {
+                  "min": 29.687,
+                  "max": 29.687,
+                  "avg": 29.7,
+                  "total": 1,
+                  "drop": 0,
+                  "stDev": 0,
+                  "jMin": 29.687,
+                  "jMax": 29.687,
+                  "jAvg": 29.7
+              },
+              "times":
+              [
+                  {
+                      "seq": "33010",
+                      "time": 29.687
+                  }
+              ],
+              "host": "185.180.14.250",
+              "asn": "123"
+          }
+      ],
+      "rawOutput": "Host                                                                        Loss% Drop Rcv  Avg  StDev  Javg \n 1. AS??? _gateway (192.168.0.1)                                            33.3%    1   2  3.7    0.0   3.7\n 2. AS??? (waiting for reply)                                             \n 3. AS123 lutn-core-2a-xe-7114-0.network.virginmedia.net (62.252.67.181)     0.0%    0   3 11.0    0.8   6.5\n 4. AS??? (waiting for reply)                                             \n 5. AS123 tele-ic-7-ae2-0.network.virginmedia.net (62.253.175.34)            0.0%    0   3 14.9    3.6  10.5\n 6. AS123 ae15-0.lon10.core-backbone.com (80.255.14.105)                     0.0%    0   3 12.4    1.3   5.7\n 7. AS123 ae1-2053.prg10.core-backbone.com (81.95.15.118)                    0.0%    0   3 28.5    0.1  14.2\n 8. AS123 core-backbone.cdn77.com (5.56.17.18)                               0.0%    0   3 34.9    2.0  18.7\n 9. AS123 vl246.prg-ttc2-cdn77-dist-1.cdn77.com (138.199.0.157)              0.0%    0   3 28.7    0.4  14.6\n10. AS123 edge-595.bunnyinfra.net (185.180.14.250)                           0.0%    0   3 32.1    3.2  19.6\n11. AS123 185.180.14.250 (185.180.14.250)                                    0.0%    0   1 29.7    0.0  29.7\n"
+  }
+}
