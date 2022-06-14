@@ -13,6 +13,7 @@ const getInitialHopState = () => ({
 		max: 0,
 		avg: 0,
 		total: 0,
+		rcv: 0,
 		drop: 0,
 		stDev: 0,
 		jMin: 0,
@@ -84,7 +85,7 @@ export const MtrParser = {
 			// Stats
 			const loss = withSpacing(((hop.stats.drop / hop.stats.total) * 100).toFixed(1), spacings.loss, true);
 			const drop = withSpacing(hop.stats.drop, spacings.drop, true);
-			const rcv = withSpacing((hop.stats.total - hop.stats.drop), spacings.rcv, true);
+			const rcv = withSpacing((hop.stats.rcv), spacings.rcv, true);
 			const avg = withSpacing(hop.stats.avg.toFixed(1), spacings.avg, true);
 			const stDev = withSpacing(hop.stats.stDev.toFixed(1), spacings.stDev, true);
 			const jAvg = withSpacing(hop.stats.jAvg.toFixed(1), spacings.jAvg, true);
@@ -195,6 +196,7 @@ export const MtrParser = {
 			stats.stDev = Number.parseFloat((Math.sqrt(timesArray.map(x => (x - stats.avg) ** 2).reduce((a, b) => a + b, 0) / timesArray.length)).toFixed(1));
 		}
 
+		stats.rcv = 0;
 		stats.drop = 0;
 
 		for (let i = 0; i < hop.times.length; i++) {
@@ -204,7 +206,9 @@ export const MtrParser = {
 				continue;
 			}
 
-			if (!rtt?.time) {
+			if (rtt?.time) {
+				stats.rcv++;
+			} else {
 				stats.drop++;
 			}
 		}
@@ -221,8 +225,8 @@ export const MtrParser = {
 		}
 
 		if (jitterArray.length > 0) {
-			stats.jMin = Math.min(...jitterArray);
-			stats.jMax = Math.max(...jitterArray);
+			stats.jMin = Number.parseFloat(Math.min(...jitterArray).toFixed(1));
+			stats.jMax = Number.parseFloat(Math.max(...jitterArray).toFixed(1));
 			stats.jAvg = Number.parseFloat((jitterArray.reduce((a, b) => a + b, 0) / jitterArray.length).toFixed(1));
 		}
 
