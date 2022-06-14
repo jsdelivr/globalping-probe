@@ -14,7 +14,7 @@ describe('mtr parser helper', () => {
 	describe('hopsParse', () => {
 		it('should transform raw inputs (progress)', () => {
 			const testCase = 'mtr-success-raw-helper-progress';
-			const expectedResult = (getCmdMockResult(testCase) as MockResult).result.hops;
+			const expectedResult = (getCmdMockResult(testCase) as MockResult);
 
 			const rawOutput = getCmdMock(testCase);
 
