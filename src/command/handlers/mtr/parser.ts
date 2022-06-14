@@ -146,8 +146,9 @@ export const MtrParser = {
 
 				case 'x': {
 					const [seq] = value;
+					const timeEntry = entry.times.find(t => t.seq === seq);
 
-					if (!seq) {
+					if (!seq || timeEntry) {
 						break;
 					}
 

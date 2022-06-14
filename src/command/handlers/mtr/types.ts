@@ -26,5 +26,6 @@ export type HopType = {
 
 export type ResultType = {
 	hops: HopType[];
+	data: string[];
 	rawOutput: string;
 };

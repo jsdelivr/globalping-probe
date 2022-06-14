@@ -8,7 +8,7 @@ import {isExecaError} from '../helper/execa-error-check.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
 import type {HopType, ResultType} from './handlers/mtr/types.js';
-import MtrParser from './handlers/mtr/parser.js';
+import MtrParser, {NEW_LINE_REG_EXP} from './handlers/mtr/parser.js';
 
 type MtrOptions = {
 	type: string;
@@ -69,17 +69,14 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		let isResultPrivate = false;
 		const result: ResultType = {
 			hops: [],
+			data: [],
 			rawOutput: '',
 		};
 
-		cmd.stdout?.on('data', async (data: Buffer) => {
-			result.hops = await this.hopsParse(result.hops, data.toString());
-			result.rawOutput = MtrParser.outputBuilder(result.hops);
+		const emitProgress = () => {
+			isResultPrivate = !this.validateResult(result.hops, cmd);
 
-			const isValid = this.validateResult(result.hops, cmd);
-
-			if (!isValid) {
-				isResultPrivate = !isValid;
+			if (isResultPrivate) {
 				return;
 			}
 
@@ -88,15 +85,33 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 				measurementId,
 				overwrite: true,
 				result: {
-					...result,
+					hops: result.hops,
+					rawOutput: result.rawOutput,
 				},
 			});
+		};
+
+		cmd.stdout?.on('data', async (data: Buffer) => {
+			for (const line of data.toString().split(NEW_LINE_REG_EXP)) {
+				if (!line) {
+					continue;
+				}
+
+				result.data.push(line);
+			}
+
+			const [hops, rawOutput] = await this.parseResult(result.hops, result.data, false);
+			result.hops = hops;
+			result.rawOutput = rawOutput;
+
+			emitProgress();
 		});
 
 		try {
 			await cmd;
-			result.hops = await this.hopsParse(result.hops, '', true);
-			result.rawOutput = MtrParser.outputBuilder(result.hops);
+			const [hops, rawOutput] = await this.parseResult(result.hops, result.data, true);
+			result.hops = hops;
+			result.rawOutput = rawOutput;
 		} catch (error: unknown) {
 			const output = isExecaError(error) ? error.stderr.toString() : '';
 			result.rawOutput = output;
@@ -110,28 +125,68 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		socket.emit('probe:measurement:result', {
 			testId,
 			measurementId,
-			result,
+			result: {
+				hops: result.hops,
+				rawOutput: result.rawOutput,
+				data: result.data,
+			},
 		});
 	}
 
-	async hopsParse(hops: HopType[], data: string, isFinalResult = false): Promise<HopType[]> {
-		const nHops = MtrParser.hopsParse(hops, data.toString(), isFinalResult);
-		const dnsResult = await Promise.allSettled(nHops.map(async h => h?.host && !h?.asn && !isIpPrivate(h?.host) ? this.lookupAsn(h?.host) : Promise.reject()));
+	async parseResult(hops: HopType[], data: string[], isFinalResult = false): Promise<[HopType[], string]> {
+		let nHops = this.parseData(hops, data.join('\n'), isFinalResult);
+		const asnList = await this.queryAsn(nHops);
+		nHops = this.populateAsn(nHops, asnList);
+		const rawOutput = MtrParser.outputBuilder(nHops);
+
+		return [nHops, rawOutput];
+	}
+
+	parseData(hops: HopType[], data: string, isFinalResult?: boolean): HopType[] {
+		return MtrParser.hopsParse(hops, data.toString(), isFinalResult);
+	}
+
+	populateAsn(hops: HopType[], asnList: string[][]): HopType[] {
+		return hops.map((hop: HopType) => {
+			const asn = asnList.find((a: string[]) => hop.host ? a.includes(hop.host) : false);
+
+			if (!asn) {
+				return hop;
+			}
+
+			return {
+				...hop,
+				asn: String(asn?.[1]),
+			};
+		});
+	}
+
+	async queryAsn(hops: HopType[]): Promise<string[][]> {
+		const dnsResult = await Promise.allSettled(hops.map(async h => (
+			!h?.asn && h?.host && !isIpPrivate(h?.host)
+				? this.lookupAsn(h?.host)
+				: Promise.reject()
+		)));
+
+		const asnList = [];
 
 		for (const [index, result] of dnsResult.entries()) {
-			if (result.status === 'rejected' || !result.value) {
+			const host = hops[index]?.host;
+
+			if (!host || result.status === 'rejected' || !result.value) {
 				continue;
 			}
 
 			const sDns = result.value.split('|');
-			nHops[index]!.asn = sDns[0]!.trim();
+			asnList.push([host, sDns[0]!.trim() ?? '']);
 		}
 
-		return nHops;
+		return asnList;
 	}
 
 	async lookupAsn(addr: string): Promise<string | undefined> {
-		const result = await this.dnsResolver(`${addr}.origin.asn.cymru.com`, 'TXT');
+		const reversedAddr = addr.split('.').reverse().join('.');
+		const result = await this.dnsResolver(`${reversedAddr}.origin.asn.cymru.com`, 'TXT');
 
 		return result.flat()[0];
 	}
