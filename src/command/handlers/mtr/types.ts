@@ -8,6 +8,7 @@ export type HopStatsType = {
 	max: number;
 	avg: number;
 	total: number;
+	rcv: number;
 	drop: number;
 	stDev: number;
 	jMin: number;
@@ -25,5 +26,6 @@ export type HopType = {
 
 export type ResultType = {
 	hops: HopType[];
+	data: string[];
 	rawOutput: string;
 };

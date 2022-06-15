@@ -13,6 +13,7 @@ const getInitialHopState = () => ({
 		max: 0,
 		avg: 0,
 		total: 0,
+		rcv: 0,
 		drop: 0,
 		stDev: 0,
 		jMin: 0,
@@ -33,6 +34,14 @@ const withSpacing = (string_: string | number, dSpacing: number, left = false): 
 	return `${string_}${sSpacing}`;
 };
 
+const roundNumber = (value: number): number => {
+	if (!Number.isFinite(value)) {
+		return 0;
+	}
+
+	return Number.parseFloat(value.toFixed(1));
+};
+
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const MtrParser = {
 	outputBuilder(hops: HopType[]): string {
@@ -40,15 +49,15 @@ export const MtrParser = {
 
 		const spacings = {
 			index: String(hops.length).length,
-			asn: 2 + Math.max(...hops.map(h => String(h?.asn ?? '').length)),
+			asn: 2 + Math.max(...hops.map(h => String(h?.asn ?? 0).length)),
 			hostname: (3
-        + Math.max(...hops.map(h => String(h?.host ?? '').length))
-        + Math.max(...hops.map(h => String(h?.resolvedHost ?? '').length))
+        + Math.max(...hops.map(h => String(h?.host ?? 0).length))
+        + Math.max(...hops.map(h => String(h?.resolvedHost ?? 0).length))
 			),
 			loss: 6,
-			drop: Math.max(4, ...hops.map(h => String(h?.stats?.drop ?? '').length)),
-			avg: Math.max(...hops.map(h => String(h?.stats?.avg ?? '').length)),
-			rcv: 2 + Math.max(...hops.map(h => String(h?.stats?.drop ?? '').length)),
+			drop: Math.max(4, ...hops.map(h => String(h?.stats?.drop ?? 0).length)),
+			avg: Math.max(...hops.map(h => String(h?.stats?.avg ?? 0).length)),
+			rcv: 2 + Math.max(...hops.map(h => String(h?.stats?.drop ?? 0).length)),
 			stDev: 6,
 			jAvg: 5,
 		};
@@ -84,7 +93,7 @@ export const MtrParser = {
 			// Stats
 			const loss = withSpacing(((hop.stats.drop / hop.stats.total) * 100).toFixed(1), spacings.loss, true);
 			const drop = withSpacing(hop.stats.drop, spacings.drop, true);
-			const rcv = withSpacing((hop.stats.total - hop.stats.drop), spacings.rcv, true);
+			const rcv = withSpacing((hop.stats.rcv), spacings.rcv, true);
 			const avg = withSpacing(hop.stats.avg.toFixed(1), spacings.avg, true);
 			const stDev = withSpacing(hop.stats.stDev.toFixed(1), spacings.stDev, true);
 			const jAvg = withSpacing(hop.stats.jAvg.toFixed(1), spacings.jAvg, true);
@@ -145,8 +154,9 @@ export const MtrParser = {
 
 				case 'x': {
 					const [seq] = value;
+					const timeEntry = entry.times.find(t => t.seq === seq);
 
-					if (!seq) {
+					if (!seq || timeEntry) {
 						break;
 					}
 
@@ -190,11 +200,12 @@ export const MtrParser = {
 		if (timesArray.length > 0) {
 			stats.min = Math.min(...timesArray);
 			stats.max = Math.max(...timesArray);
-			stats.avg = Number.parseFloat((timesArray.reduce((a, b) => a + b, 0) / timesArray.length).toFixed(1));
+			stats.avg = roundNumber(timesArray.reduce((a, b) => a + b, 0) / timesArray.length);
 			stats.total = hop.times.length;
-			stats.stDev = Number.parseFloat((Math.sqrt(timesArray.map(x => (x - stats.avg) ** 2).reduce((a, b) => a + b, 0) / timesArray.length)).toFixed(1));
+			stats.stDev = roundNumber(Math.sqrt(timesArray.map(x => (x - stats.avg) ** 2).reduce((a, b) => a + b, 0) / timesArray.length));
 		}
 
+		stats.rcv = 0;
 		stats.drop = 0;
 
 		for (let i = 0; i < hop.times.length; i++) {
@@ -204,7 +215,9 @@ export const MtrParser = {
 				continue;
 			}
 
-			if (!rtt?.time) {
+			if (rtt?.time) {
+				stats.rcv++;
+			} else {
 				stats.drop++;
 			}
 		}
@@ -221,9 +234,9 @@ export const MtrParser = {
 		}
 
 		if (jitterArray.length > 0) {
-			stats.jMin = Math.min(...jitterArray);
-			stats.jMax = Math.max(...jitterArray);
-			stats.jAvg = Number.parseFloat((jitterArray.reduce((a, b) => a + b, 0) / jitterArray.length).toFixed(1));
+			stats.jMin = roundNumber(Math.min(...jitterArray));
+			stats.jMax = roundNumber(Math.max(...jitterArray));
+			stats.jAvg = roundNumber(jitterArray.reduce((a, b) => a + b, 0) / jitterArray.length);
 		}
 
 		return stats;
