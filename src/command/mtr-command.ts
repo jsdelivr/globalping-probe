@@ -18,7 +18,7 @@ type MtrOptions = {
 	packets: number;
 };
 
-type DnsResolver = (addr: string, rrtype: string) => Promise<string[]>;
+type DnsResolver = (addr: string, rrtype?: string) => Promise<string[]>;
 
 const mtrOptionsSchema = Joi.object<MtrOptions>({
 	type: Joi.string().valid('mtr'),
@@ -28,7 +28,7 @@ const mtrOptionsSchema = Joi.object<MtrOptions>({
 	port: Joi.number(),
 });
 
-export const getResultInitState = () => ({hops: [], rawOutput: ''});
+export const getResultInitState = () => ({hops: [], rawOutput: '', data: []});
 
 export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
 	const protocolArg = options.protocol === 'icmp' ? null : options.protocol;
@@ -58,40 +58,22 @@ export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
 export class MtrCommand implements CommandInterface<MtrOptions> {
 	constructor(private readonly cmd: typeof mtrCmd, readonly dnsResolver: DnsResolver = dns.promises.resolve) {}
 
-	async run(socket: Socket, measurementId: string, testId: string, options: unknown): Promise<void> {
+	async run(socket: Socket, measurementId: string, testId: string, options: MtrOptions): Promise<void> {
 		const {value: cmdOptions, error} = mtrOptionsSchema.validate(options);
 
 		if (error) {
 			throw new InvalidOptionsException('mtr', error);
 		}
 
-		const cmd = this.cmd(cmdOptions);
 		let isResultPrivate = false;
-		const result: ResultType = {
-			hops: [],
-			data: [],
-			rawOutput: '',
-		};
+		const cmd = this.cmd(cmdOptions);
+		const result: ResultType = getResultInitState();
 
-		const emitProgress = () => {
-			isResultPrivate = !this.validateResult(result.hops, cmd);
-
+		cmd.stdout?.on('data', async (data: Buffer) => {
 			if (isResultPrivate) {
 				return;
 			}
 
-			socket.emit('probe:measurement:progress', {
-				testId,
-				measurementId,
-				overwrite: true,
-				result: {
-					hops: result.hops,
-					rawOutput: result.rawOutput,
-				},
-			});
-		};
-
-		cmd.stdout?.on('data', async (data: Buffer) => {
 			for (const line of data.toString().split(NEW_LINE_REG_EXP)) {
 				if (!line) {
 					continue;
@@ -104,21 +86,36 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			result.hops = hops;
 			result.rawOutput = rawOutput;
 
-			emitProgress();
+			socket.emit('probe:measurement:progress', {
+				testId,
+				measurementId,
+				overwrite: true,
+				result: {
+					hops: result.hops,
+					rawOutput: result.rawOutput,
+				},
+			});
 		});
 
 		try {
+			await this.checkForPrivateDest(options.target);
+
 			await cmd;
 			const [hops, rawOutput] = await this.parseResult(result.hops, result.data, true);
 			result.hops = hops;
 			result.rawOutput = rawOutput;
 		} catch (error: unknown) {
+			if (error instanceof Error && error.message === 'private destination') {
+				isResultPrivate = true;
+			}
+
 			const output = isExecaError(error) ? error.stderr.toString() : '';
 			result.rawOutput = output;
 		}
 
 		if (isResultPrivate) {
 			result.hops = [];
+			result.data = [];
 			result.rawOutput = 'Private IP ranges are not allowed';
 		}
 
@@ -191,24 +188,11 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		return result.flat()[0];
 	}
 
-	private hasResultPrivateIp(hops: HopType[]): boolean {
-		const privateResults = hops.filter((hop: HopType) => isIpPrivate(hop?.host ?? ''));
+	private async checkForPrivateDest(target: string): Promise<void> {
+		const [ipAddress] = await this.dnsResolver(target);
 
-		if (privateResults.length > 0) {
-			return true;
+		if (isIpPrivate(String(ipAddress))) {
+			throw new Error('private destination');
 		}
-
-		return false;
-	}
-
-	private validateResult(hops: HopType[], cmd: ExecaChildProcess): boolean {
-		const hasPrivateIp = this.hasResultPrivateIp(hops.slice(1)); // First hop is always gateway
-
-		if (hasPrivateIp) {
-			cmd.kill('SIGKILL');
-			return false;
-		}
-
-		return true;
 	}
 }
