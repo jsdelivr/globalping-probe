@@ -10,7 +10,7 @@ import {InvalidOptionsException} from './exception/invalid-options-exception.js'
 import type {HopType, ResultType} from './handlers/mtr/types.js';
 import MtrParser, {NEW_LINE_REG_EXP} from './handlers/mtr/parser.js';
 
-type MtrOptions = {
+export type MtrOptions = {
 	type: string;
 	target: string;
 	protocol: string;
