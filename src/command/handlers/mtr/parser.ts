@@ -76,7 +76,7 @@ export const MtrParser = {
 		rawOutput.push(header.join(' '));
 
 		for (const [i, hop] of hops.entries()) {
-			if (!hop) {
+			if (!hop || hop.duplicate) {
 				continue;
 			}
 
@@ -132,12 +132,14 @@ export const MtrParser = {
 			switch (action) {
 				case 'h': {
 					const [host] = value;
+					const previousHostMatch = hops.find((h: HopType, hIndex: number) => h.host === host && hIndex < Number(index));
 
 					if (!host) {
 						break;
 					}
 
 					entry.host = host;
+					entry.duplicate = Boolean(previousHostMatch);
 					break;
 				}
 
@@ -149,6 +151,14 @@ export const MtrParser = {
 					}
 
 					entry.resolvedHost = host;
+					for (const [hIndex, hop] of hops.entries()) {
+						if (hop.host !== entry.host || (hop.resolvedHost && hop.resolvedHost !== hop.host)) {
+							continue;
+						}
+
+						(hops[hIndex]!).resolvedHost = host;
+					}
+
 					break;
 				}
 

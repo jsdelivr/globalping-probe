@@ -22,6 +22,7 @@ export type HopType = {
 	resolvedHost?: string;
 	stats: HopStatsType;
 	times: HopTimesType[];
+	duplicate?: boolean;
 };
 
 export type ResultType = {
