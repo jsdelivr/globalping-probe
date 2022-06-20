@@ -151,6 +151,14 @@ export const MtrParser = {
 					}
 
 					entry.resolvedHost = host;
+					for (const [hIndex, hop] of hops.entries()) {
+						if (hop.host !== entry.host || (hop.resolvedHost && hop.resolvedHost !== hop.host)) {
+							continue;
+						}
+
+						(hops[hIndex]!).resolvedHost = host;
+					}
+
 					break;
 				}
 
