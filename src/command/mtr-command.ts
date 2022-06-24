@@ -43,7 +43,7 @@ export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
 		'--show-ips',
 		['--interval', '0.5'],
 		['--gracetime', '3'],
-		['--max-ttl', '20'],
+		['--max-ttl', '30'],
 		['--timeout', '15'],
 		protocolArg ? `--${protocolArg}` : [],
 		['-c', packetsArg],
