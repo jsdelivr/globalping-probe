@@ -75,11 +75,24 @@ export const MtrParser = {
 
 		rawOutput.push(header.join(' '));
 
+		const filteredHops: HopType[] = [];
+
 		for (const [i, hop] of hops.entries()) {
 			if (!hop || hop.duplicate) {
 				continue;
 			}
 
+			if (!hop.host) {
+				const isEmptyUntilEnd = hops.slice(i - 1).every(h => !h.host || h.duplicate);
+				if (hops[i - 1]?.duplicate || isEmptyUntilEnd) {
+					continue;
+				}
+			}
+
+			filteredHops.push(hop);
+		}
+
+		for (const [i, hop] of filteredHops.entries()) {
 			// Index
 			const sIndex = withSpacing(String(i + 1), spacings.index, true);
 
@@ -112,7 +125,7 @@ export const MtrParser = {
 		return rawOutput.join('');
 	},
 
-	hopsParse(currentHops: HopType[], data: string, isFinalResult?: boolean): HopType[] {
+	rawParse(currentHops: HopType[], data: string, isFinalResult?: boolean): HopType[] {
 		const sData = data.split(NEW_LINE_REG_EXP);
 
 		const hops = [...currentHops];

@@ -141,7 +141,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 	}
 
 	parseData(hops: HopType[], data: string, isFinalResult?: boolean): HopType[] {
-		return MtrParser.hopsParse(hops, data.toString(), isFinalResult);
+		return MtrParser.rawParse(hops, data.toString(), isFinalResult);
 	}
 
 	populateAsn(hops: HopType[], asnList: string[][]): HopType[] {

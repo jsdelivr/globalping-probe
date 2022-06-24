@@ -11,14 +11,14 @@ type MockResult = {
 };
 
 describe('mtr parser helper', () => {
-	describe('hopsParse', () => {
+	describe('rawParse', () => {
 		it('should transform raw inputs (progress)', () => {
 			const testCase = 'mtr-success-raw-helper-progress';
 			const expectedResult = (getCmdMockResult(testCase) as MockResult);
 
 			const rawOutput = getCmdMock(testCase);
 
-			const parsedOutput = MtrParser.hopsParse([], rawOutput, false);
+			const parsedOutput = MtrParser.rawParse([], rawOutput, false);
 
 			expect(parsedOutput).to.deep.equal(expectedResult);
 		});
@@ -29,7 +29,7 @@ describe('mtr parser helper', () => {
 
 			const rawOutput = getCmdMock(testCase);
 
-			const parsedOutput = MtrParser.hopsParse([], rawOutput, true);
+			const parsedOutput = MtrParser.rawParse([], rawOutput, true);
 
 			expect(parsedOutput).to.deep.equal(expectedResult);
 		});
