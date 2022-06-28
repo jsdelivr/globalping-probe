@@ -64,6 +64,7 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 			host: options.query.host ?? options.target,
 		},
 		setHost: false,
+		throwHttpErrors: false,
 		context: {
 			downloadLimit: 10_000,
 		},
