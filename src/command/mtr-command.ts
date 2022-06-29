@@ -1,3 +1,4 @@
+import process from 'node:process';
 import dns from 'node:dns';
 import {isIP} from 'is-ip';
 import isIpPrivate from 'private-ip';
@@ -38,7 +39,7 @@ export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
 	const args = [
 		// Ipv4
 		'-4',
-		['--interval', '0.5'],
+		['--interval', process.env['NODE_ENV'] === 'development' ? '1' : '0.5'],
 		['--gracetime', '3'],
 		['--max-ttl', '30'],
 		['--timeout', '15'],
