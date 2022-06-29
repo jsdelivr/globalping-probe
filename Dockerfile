@@ -21,7 +21,7 @@ COPY --from=builder /app/config /app/config
 COPY --from=builder /app/package.json /app/package-lock.json /app/
 COPY bin/entrypoint.sh /entrypoint.sh
 
-RUN apt-get update -y && apt-get install --no-install-recommends -y expect ca-certificates iputils-ping traceroute dnsutils jq tini mtr curl \
+RUN apt-get update -y && apt-get install --no-install-recommends -y ca-certificates iputils-ping traceroute dnsutils jq tini mtr curl \
     && apt-get clean && apt-get autoremove -y \
     && rm -rf /var/lib/{apt,dpkg,cache,log}/* \
     && rm -rf /usr/share/{icons,X11,doc}/* \
