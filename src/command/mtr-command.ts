@@ -38,9 +38,6 @@ export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
 	const args = [
 		// Ipv4
 		'-4',
-		['-o', 'LDRAVM'],
-		'--aslookup',
-		'--show-ips',
 		['--interval', '0.5'],
 		['--gracetime', '3'],
 		['--max-ttl', '30'],
