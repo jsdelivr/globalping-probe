@@ -28,9 +28,7 @@ export const pingCmd = (options: PingOptions): ExecaChildProcess => {
 		options.target,
 	].flat();
 
-	const cmd = ['ping', ...args].join(' ');
-
-	return execa('script', ['-q', '-c', cmd, '/dev/null']);
+	return execa('unbuffer', ['ping', ...args]);
 };
 
 export class PingCommand implements CommandInterface<PingOptions> {
@@ -74,7 +72,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 				isResultPrivate = true;
 			}
 		} catch (error: unknown) {
-			const output = isExecaError(error) ? error.stderr.toString() : '';
+			const output = isExecaError(error) ? error.stdout.toString() : '';
 			result = {
 				rawOutput: output,
 			};

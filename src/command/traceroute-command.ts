@@ -49,9 +49,7 @@ export const traceCmd = (options: TraceOptions): ExecaChildProcess => {
 		options.target,
 	].flat();
 
-	const cmd = ['traceroute', ...args].join(' ');
-
-	return execa('script', ['-q', '-c', cmd, '/dev/null']);
+	return execa('unbuffer', ['traceroute', ...args]);
 };
 
 export class TracerouteCommand implements CommandInterface<TraceOptions> {
@@ -94,7 +92,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 				isResultPrivate = true;
 			}
 		} catch (error: unknown) {
-			const output = isExecaError(error) ? error.stderr.toString() : '';
+			const output = isExecaError(error) ? error.stdout.toString() : '';
 			result = {
 				rawOutput: output,
 			};

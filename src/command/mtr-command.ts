@@ -51,9 +51,7 @@ export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
 		options.target,
 	].flat();
 
-	const cmd = ['mtr', ...args].join(' ');
-
-	return execa('script', ['-q', '-c', cmd, '/dev/null']);
+	return execa('unbuffer', ['mtr', ...args]);
 };
 
 export class MtrCommand implements CommandInterface<MtrOptions> {
@@ -110,7 +108,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 				isResultPrivate = true;
 			}
 
-			const output = isExecaError(error) ? error.stderr.toString() : '';
+			const output = isExecaError(error) ? error.stdout.toString() : '';
 			result.rawOutput = output;
 		}
 
