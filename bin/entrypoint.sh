@@ -2,28 +2,6 @@
 
 update-ca-certificates
 
-# temp code that installs unbuffer without the need to pull the container again
-# remove this code in about 3-4 months when all probes should have the container pulled
-ARCHLOCAL=$(dpkg --print-architecture)
-
-if [[ ! -f "/usr/bin/unbuffer" ]]; then
-
-curl -O http://ftp.nl.debian.org/debian/pool/main/e/expect/tcl-expect_5.45.4-2+b1_${ARCHLOCAL}.deb
-dpkg --extract tcl-expect_5.45.4-2+b1_${ARCHLOCAL}.deb /
-
-curl -O http://ftp.nl.debian.org/debian/pool/main/t/tcl8.6/libtcl8.6_8.6.11+dfsg-1_${ARCHLOCAL}.deb
-dpkg --extract libtcl8.6_8.6.11+dfsg-1_${ARCHLOCAL}.deb /
-
-curl -O http://ftp.nl.debian.org/debian/pool/main/t/tcl8.6/tcl8.6_8.6.11+dfsg-1_${ARCHLOCAL}.deb
-dpkg --extract tcl8.6_8.6.11+dfsg-1_${ARCHLOCAL}.deb /
-
-curl -O http://ftp.nl.debian.org/debian/pool/main/e/expect/expect_5.45.4-2+b1_${ARCHLOCAL}.deb
-dpkg --extract expect_5.45.4-2+b1_${ARCHLOCAL}.deb /
-
-fi
-# end temp code
-
-
 function run_probe() {
   node /app/dist/index.js
   return
