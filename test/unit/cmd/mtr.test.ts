@@ -67,7 +67,7 @@ describe('mtr command executor', () => {
 		};
 
 		const expectedResult = getCmdMockResult(testCase);
-		const mockCmd = execaPromise({stdout: new PassThrough()}, Promise.resolve());
+		const mockCmd = execaPromise({stdout: new PassThrough(), kill: () => null}, Promise.resolve());
 
 		const mtr = new MtrCommand((): any => mockCmd, dnsResolver(true));
 		await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
