@@ -56,7 +56,7 @@
   "xo": {
     "rules": {
       "import/no-unassigned-import": "off",
-      "node/prefer-global/buffer": [
+      "n/prefer-global/buffer": [
         "error",
         "always"
       ],
