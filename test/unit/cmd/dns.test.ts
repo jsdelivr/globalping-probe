@@ -73,7 +73,7 @@ describe('dns command', () => {
 		const expectedResult = getCmdMockResult(testCase);
 
 		// eslint-disable-next-line prefer-promise-reject-errors
-		const mockCmd = Promise.reject({stderr: rawOutput});
+		const mockCmd = Promise.reject({stdout: rawOutput, stderr: ''});
 
 		const dns = new DnsCommand((): any => mockCmd);
 		await dns.run(mockSocket as any, 'measurement', 'test', options);

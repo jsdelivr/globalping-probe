@@ -51,9 +51,7 @@ export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
 		options.target,
 	].flat();
 
-	const cmd = ['mtr', ...args].join(' ');
-
-	return execa('script', ['-q', '-c', cmd, '/dev/null']);
+	return execa('unbuffer', ['mtr', ...args]);
 };
 
 export class MtrCommand implements CommandInterface<MtrOptions> {
@@ -66,12 +64,12 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			throw new InvalidOptionsException('mtr', error);
 		}
 
-		let isResultPrivate = false;
 		const cmd = this.cmd(cmdOptions);
 		const result: ResultType = getResultInitState();
 
 		cmd.stdout?.on('data', async (data: Buffer) => {
-			if (isResultPrivate) {
+			if (data.toString().startsWith('mtr:')) {
+				cmd.stderr?.emit('error', data);
 				return;
 			}
 
@@ -106,18 +104,20 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			result.hops = hops;
 			result.rawOutput = rawOutput;
 		} catch (error: unknown) {
-			if (error instanceof Error && error.message === 'private destination') {
-				isResultPrivate = true;
+			if (isExecaError(error)) {
+				result.rawOutput = error.stdout.toString();
+			} else {
+				cmd.kill('SIGKILL');
+
+				if (error instanceof Error) {
+					result.hops = [];
+					result.data = [];
+
+					if (error.message === 'private destination') {
+						result.rawOutput = 'Private IP ranges are not allowed';
+					}
+				}
 			}
-
-			const output = isExecaError(error) ? error.stderr.toString() : '';
-			result.rawOutput = output;
-		}
-
-		if (isResultPrivate) {
-			result.hops = [];
-			result.data = [];
-			result.rawOutput = 'Private IP ranges are not allowed';
 		}
 
 		socket.emit('probe:measurement:result', {
@@ -198,7 +198,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			return;
 		}
 
-		const [ipAddress] = await this.dnsResolver(target);
+		const [ipAddress] = await this.dnsResolver(target).catch(() => []);
 
 		if (isIpPrivate(String(ipAddress))) {
 			throw new Error('private destination');
