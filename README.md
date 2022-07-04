@@ -58,7 +58,7 @@ If you can host our probes in multiple global regions, espesially locations we d
 
 To get started or if you have any questions make sure to get in contact with us dak@prospectone.io
 
-## Hardware Probes
+## Hardware Probes - TODO
 
 All GitHub Sponsors that contribute $20+ per month are eligible to receive a hardware probe to install in your home or office. 
 
