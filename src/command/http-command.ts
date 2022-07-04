@@ -69,7 +69,10 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 		dnsLookup: dnsResolver,
 		dnsLookupIpVersion: 4 as DnsLookupIpVersion,
 		http2: options.query.protocol === 'http2',
-		timeout: {response: 10_000},
+		timeout: {
+			request: 10_000,
+			response: 10_000,
+		},
 		https: {rejectUnauthorized: false},
 		headers: {
 			...options.query.headers,
