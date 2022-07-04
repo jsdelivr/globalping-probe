@@ -27,6 +27,18 @@ export type Timings = {
 	phases: Record<string, number>;
 };
 
+const getInitialResult = () => ({
+	tls: {},
+	error: '',
+	headers: {},
+	rawHeaders: '',
+	curlHeaders: '',
+	rawBody: '',
+	statusCode: 0,
+	httpVersion: '',
+	timings: {},
+});
+
 const allowedHttpProtocols = ['http', 'https', 'http2'];
 const allowedHttpMethods = ['get', 'head'];
 export const httpOptionsSchema = Joi.object<HttpOptions>({
@@ -46,7 +58,8 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Request => {
 	const protocolPrefix = options.query.protocol === 'http' ? 'http' : 'https';
 	const port = options.query.port ?? options.query.protocol === 'http' ? 80 : 443;
-	const url = `${protocolPrefix}://${options.target}:${port}${options.query.path}`;
+	const path = options.query.path.startsWith('/') ? options.query.path : `/${options.query.path}`;
+	const url = `${protocolPrefix}://${options.target}:${port}${path}`;
 	const dnsResolver = callbackify(dnsLookup(options.query.resolver, resolverFn), true);
 
 	const options_ = {
@@ -64,6 +77,7 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 			host: options.query.host ?? options.target,
 		},
 		setHost: false,
+		throwHttpErrors: false,
 		context: {
 			downloadLimit: 10_000,
 		},
@@ -86,19 +100,9 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 		const stream = this.cmd(cmdOptions);
 
-		const result = {
-			tls: {},
-			error: '',
-			headers: {},
-			rawHeaders: '',
-			curlHeaders: '',
-			rawBody: '',
-			statusCode: 0,
-			httpVersion: '',
-			timings: {},
-		};
+		let result = getInitialResult();
 
-		const respond = () => {
+		const respond = (resolve: () => void) => {
 			const timings = (stream.timings ?? {}) as Timings;
 			if (!timings['end']) {
 				timings['end'] = Date.now();
@@ -127,9 +131,28 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 					rawOutput: result.error || rawOutput,
 				},
 			});
+
+			resolve();
 		};
 
-		stream.on('downloadProgress', (progress: Progress) => {
+		const onData = (data: Buffer) => {
+			result.rawBody += data.toString();
+
+			socket.emit('probe:measurement:progress', {
+				testId,
+				measurementId,
+				result: {rawOutput: data.toString()},
+			});
+		};
+
+		const onResponse = (resp: Response) => {
+			result = {
+				...result,
+				...this.parseResponse(resp),
+			};
+		};
+
+		const onDownloadProgress = (progress: Progress) => {
 			const {downloadLimit} = stream.options.context;
 
 			if (!downloadLimit) {
@@ -139,66 +162,69 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			if (progress.transferred > Number(downloadLimit) && progress.percent !== 1) {
 				stream.destroy(new Error('Exceeded the download.'));
 			}
-		});
+		};
 
-		stream.on('data', (data: Buffer) => {
-			result.rawBody += data.toString();
+		const pStream = new Promise((resolve, _reject) => {
+			const onResolve = () => {
+				resolve(null);
+			};
 
-			socket.emit('probe:measurement:progress', {
-				testId,
-				measurementId,
-				result: {rawOutput: data.toString()},
+			stream.on('downloadProgress', onDownloadProgress);
+			stream.on('data', onData);
+			stream.on('response', onResponse);
+
+			stream.on('error', (error: Error & {code: string}) => {
+				// Skip error mapping on download limit
+				if (error.message !== 'Exceeded the download.') {
+					result.error = `${error.message} - ${error.code}`;
+				}
+
+				respond(onResolve);
+			});
+
+			stream.on('end', () => {
+				respond(onResolve);
 			});
 		});
 
-		stream.on('response', (resp: Response) => {
-			// Headers
-			const rawHeaders = _.chunk(resp.rawHeaders, 2).map((g: string[]) => `${String(g[0])}: ${String(g[1])}`);
-			result.rawHeaders = rawHeaders.join('\n');
-			result.curlHeaders = rawHeaders.filter((r: string) => !r.startsWith(':status:')).join('\n');
-			result.headers = resp.headers;
+		await pStream;
+	}
 
-			result.statusCode = resp.statusCode;
-			result.httpVersion = resp.httpVersion;
+	private parseResponse(resp: Response) {
+		const result = getInitialResult();
 
-			result.timings = {
-				firstByte: resp.timings.phases.firstByte,
-				dns: resp.timings.phases.dns,
-				tls: resp.timings.phases.tls,
-				tcp: resp.timings.phases.tcp,
+		// Headers
+		const rawHeaders = _.chunk(resp.rawHeaders, 2).map((g: string[]) => `${String(g[0])}: ${String(g[1])}`);
+		result.rawHeaders = rawHeaders.join('\n');
+		result.curlHeaders = rawHeaders.filter((r: string) => !r.startsWith(':status:')).join('\n');
+		result.headers = resp.headers;
+
+		result.statusCode = resp.statusCode;
+		result.httpVersion = resp.httpVersion;
+
+		result.timings = {
+			firstByte: resp.timings.phases.firstByte,
+			dns: resp.timings.phases.dns,
+			tls: resp.timings.phases.tls,
+			tcp: resp.timings.phases.tcp,
+		};
+
+		const rSocket = resp.socket;
+		if (isTlsSocket(rSocket)) {
+			const cert = rSocket.getPeerCertificate();
+			result.tls = {
+				authorized: rSocket.authorized,
+				...(rSocket.authorizationError ? {error: rSocket.authorizationError} : {}),
+				createdAt: cert.valid_from,
+				expireAt: cert.valid_to,
+				issuer: {...cert.issuer},
+				subject: {
+					...cert.subject,
+					alt: cert.subjectaltname,
+				},
 			};
+		}
 
-			const rSocket = resp.socket;
-			if (isTlsSocket(rSocket)) {
-				const cert = rSocket.getPeerCertificate();
-				result.tls = {
-					authorized: rSocket.authorized,
-					...(rSocket.authorizationError ? {error: rSocket.authorizationError} : {}),
-					createdAt: cert.valid_from,
-					expireAt: cert.valid_to,
-					issuer: {...cert.issuer},
-					subject: {
-						...cert.subject,
-						alt: cert.subjectaltname,
-					},
-				};
-			}
-		});
-
-		stream.on('error', (error: Error & {code: string}) => {
-			// Skip error mapping on download limit
-			if (error.message !== 'Exceeded the download.') {
-				result.error = `${error.message} - ${error.code}`;
-			}
-
-			respond();
-		});
-
-		stream.on('end', () => {
-			respond();
-		});
-
-		// eslint-disable-next-line unicorn/no-useless-promise-resolve-reject
-		return Promise.resolve();
+		return result;
 	}
 }
