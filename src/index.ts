@@ -4,6 +4,7 @@ import {io} from 'socket.io-client';
 import cryptoRandomString from 'crypto-random-string';
 import physicalCpuCount from 'physical-cpu-count';
 import type {CommandInterface, MeasurementRequest} from './types.js';
+import {loadAll as loadAllDeps} from './lib/dependencies.js';
 import {scopedLogger} from './lib/logger.js';
 import {getConfValue} from './lib/config.js';
 import {apiErrorHandler} from './helper/api-error-handler.js';
@@ -21,6 +22,8 @@ import './lib/updater.js';
 
 // Run scheduled restart
 import './lib/restart.js';
+
+await loadAllDeps();
 
 const logger = scopedLogger('general');
 const handlersMap = new Map<string, CommandInterface<any>>();
@@ -69,7 +72,6 @@ function connect() {
 		})
 		.on('connect', () => {
 			worker.active = true;
-			socket.emit('probe:status:ready', {});
 			logger.debug('connection to API established');
 		})
 		.on('disconnect', (reason: string): void => {
@@ -90,7 +92,7 @@ function connect() {
 			}
 		})
 		.on('api:error', apiErrorHandler)
-		.on('api:connect:location', apiConnectLocationHandler)
+		.on('api:connect:location', apiConnectLocationHandler(socket))
 		.on('probe:measurement:request', (data: MeasurementRequest) => {
 			if (!worker.active) {
 				return;
