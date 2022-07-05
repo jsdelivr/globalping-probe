@@ -11,3 +11,14 @@ export const loadAll = async () => {
 export const loadUnbuffer = async () => {
 	await execa(path.join(appDir, 'sh', 'unbuffer.sh'));
 };
+
+export const hasRequired = async () => isUnbufferAvailable();
+
+export const isUnbufferAvailable = async () => {
+	try {
+		await execa('which', ['unbuffer']);
+		return true;
+	} catch {
+		return false;
+	}
+};

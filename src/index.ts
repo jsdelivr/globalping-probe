@@ -72,7 +72,6 @@ function connect() {
 		})
 		.on('connect', () => {
 			worker.active = true;
-			socket.emit('probe:status:ready', {});
 			logger.debug('connection to API established');
 		})
 		.on('disconnect', (reason: string): void => {
@@ -93,7 +92,7 @@ function connect() {
 			}
 		})
 		.on('api:error', apiErrorHandler)
-		.on('api:connect:location', apiConnectLocationHandler)
+		.on('api:connect:location', apiConnectLocationHandler(socket))
 		.on('probe:measurement:request', (data: MeasurementRequest) => {
 			if (!worker.active) {
 				return;
