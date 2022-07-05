@@ -45,7 +45,8 @@
     "xo": "^0.50.0"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run copy:sh",
+    "copy:sh": "cp -r ./src/sh ./dist/sh",
     "init:hooks": "husky install",
     "lint": "xo",
     "lint:fix": "xo --fix",
