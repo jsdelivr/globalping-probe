@@ -9,7 +9,6 @@ export const apiConnectLocationHandler = (socket: Socket) => async (data: ProbeL
 	logger.info(`connected from (${data.city}, ${data.country}, ${data.continent}) (lat: ${data.latitude} long: ${data.longitude})`);
 
 	if (await hasRequiredDeps()) {
-		console.log('yup its all here');
 		socket.emit('probe:status:ready', {});
 	} else {
 		socket.emit('probe:status:not_ready', {});
