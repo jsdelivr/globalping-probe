@@ -16,8 +16,9 @@ const updateInterval = updateConfig.interval + _.random(0, updateConfig.maxDevia
 const checkForUpdates = async () => {
 	const releaseInfo = await got(updateConfig.releaseUrl, {timeout: {request: 15_000}}).json<ReleaseInfo>();
 	const latestVersion = releaseInfo.tag_name.replace(/^v/, '');
+	const isUpdateAvailable = latestVersion.localeCompare(VERSION, undefined, {numeric: true, sensitivity: 'base'}) > 0;
 
-	if (latestVersion === VERSION) {
+	if (!isUpdateAvailable) {
 		return;
 	}
 
