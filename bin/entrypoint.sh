@@ -18,7 +18,9 @@ currentVersion=$(jq -r ".version" "/app/package.json")
 echo "Current version $currentVersion"
 echo "Latest version $latestVersion"
 
-if [ "$latestVersion" != "$currentVersion" ]; then
+isUpdateAvailable=$(echo "$latestVersion $currentVersion" | node -e "s = require('fs').readFileSync(0, 'utf-8').trim().split(' '); o = s[0].localeCompare(s[1]) < 1; process.exit(+o)" && echo 1);
+
+if [ "$isUpdateAvailable" == "1" ]; then
   loadedTarball="globalping-probe-${latestVersion}"
 
   echo "Start self-update process"
