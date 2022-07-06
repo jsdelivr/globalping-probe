@@ -12,9 +12,13 @@ export const loadUnbuffer = async () => {
 	await execa(path.join(appDir, 'sh', 'unbuffer.sh'));
 };
 
-export const hasRequired = async () => isUnbufferAvailable();
+export const hasRequired = async (): Promise<boolean> => {
+	const bufferBool = await isUnbufferAvailable();
 
-export const isUnbufferAvailable = async () => {
+	return bufferBool;
+};
+
+export const isUnbufferAvailable = async (): Promise<boolean> => {
 	try {
 		await execa('which', ['unbuffer']);
 		return true;
