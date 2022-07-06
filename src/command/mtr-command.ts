@@ -46,6 +46,7 @@ export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
 		protocolArg ? `--${protocolArg}` : [],
 		['-c', packetsArg],
 		['--raw'],
+		['-P', `${options.port}`],
 		options.target,
 	].flat();
 
