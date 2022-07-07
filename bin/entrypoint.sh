@@ -18,21 +18,23 @@ currentVersion=$(jq -r ".version" "/app/package.json")
 echo "Current version $currentVersion"
 echo "Latest version $latestVersion"
 
-if [ "$latestVersion" != "$currentVersion" ]; then
-  loadedTarball="globalping-probe-${latestVersion}"
+if [ "$(printf '%s\n' "$latestVersion" "$currentVersion" | sort -V | head -n1)" != "$latestVersion" ]; then
+  if [ "$latestVersion" != "$currentVersion" ]; then
+    loadedTarball="globalping-probe-${latestVersion}"
 
-  echo "Start self-update process"
+    echo "Start self-update process"
 
-  curl -Ls -XGET "${latestBundle}" -o "/tmp/${loadedTarball}.tar.gz"
-  tar -xzf "/tmp/${loadedTarball}.tar.gz" --one-top-level="/tmp/${loadedTarball}"
+    curl -Ls -XGET "${latestBundle}" -o "/tmp/${loadedTarball}.tar.gz"
+    tar -xzf "/tmp/${loadedTarball}.tar.gz" --one-top-level="/tmp/${loadedTarball}"
 
-  rm -rf "/app"
-  mv "/tmp/${loadedTarball}" "/app"
-  cd "/app" || exit
+    rm -rf "/app"
+    mv "/tmp/${loadedTarball}" "/app"
+    cd "/app" || exit
 
-  rm -rf "/tmp/${loadedTarball}.tar.gz"
+    rm -rf "/tmp/${loadedTarball}.tar.gz"
 
-  echo "Self-update finished"
+    echo "Self-update finished"
+  fi
 fi
 
 run_probe
