@@ -12,7 +12,7 @@ describe('dig trace helper', () => {
 			const parsedOutput = TraceDigParser.parse(rawOutput);
 
 			expect(parsedOutput).to.not.be.instanceof(Error);
-			expect((parsedOutput as DnsParseResponse).result.length).to.equal(4);
+			expect((parsedOutput as DnsParseResponse).hops.length).to.equal(4);
 		});
 	});
 });

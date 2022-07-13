@@ -4,7 +4,7 @@ export type DnsValueType = string | {
 };
 
 export type DnsSection = Record<string, unknown> | {
-	domain: string;
+	name: string;
 	type: string;
 	ttl: number;
 	class: string;
@@ -16,8 +16,8 @@ export type DnsParseLoopResponse = {
 	question?: any[];
 	header?: any[];
 	answer: DnsSection[];
-	time: number;
-	server: string;
+	timings: {total: number};
+	resolver: string;
 };
 
 export const isDnsSection = (output: any): output is DnsSection => typeof (output as DnsSection) !== 'undefined';
@@ -31,9 +31,9 @@ export const NEW_LINE_REG_EXP = /\r?\n/;
 export const SharedDigParser = {
 	parseSection(values: string[]): DnsSection {
 		return {
-			domain: values[0],
+			name: values[0],
 			type: values[3],
-			ttl: values[1],
+			ttl: Number(values[1] ?? ''),
 			class: values[2],
 			value: SharedDigParser.parseValue(values),
 		};
