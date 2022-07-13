@@ -105,10 +105,12 @@ export class PingCommand implements CommandInterface<PingOptions> {
 	private parse(rawOutput: string): {
 		rawOutput: string;
 		resolvedAddress?: string;
-		times?: Array<{ttl: number; time: number}>;
-		min?: number;
-		max?: number;
-		avg?: number;
+		timings?: Array<{ttl: number; rtt: number}>;
+		stats?: {
+			min?: number;
+			max?: number;
+			avg?: number;
+		};
 	} {
 		const lines = rawOutput.split('\n');
 		if (lines.length === 0) {
@@ -135,7 +137,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 
 		const summary = this.parseSummary(lines.splice(1));
 
-		return {resolvedAddress, times: statsLines, ...summary, rawOutput};
+		return {resolvedAddress, timings: statsLines, ...summary, rawOutput};
 	}
 
 	private parseStatsLine(line: string) {
@@ -147,27 +149,27 @@ export class PingCommand implements CommandInterface<PingOptions> {
 
 		return {
 			ttl: Number.parseInt(parsed.groups['ttl'] ?? '-1', 10),
-			time: Number.parseFloat(parsed.groups['time'] ?? '-1'),
+			rtt: Number.parseFloat(parsed.groups['time'] ?? '-1'),
 		};
 	}
 
 	private parseSummary(lines: string[]) {
 		const [packets, rtt] = lines;
-		const result: Record<string, any> = {};
+		const stats: Record<string, any> = {};
 
 		if (rtt) {
 			const rttMatch = /^(?:round-trip|rtt)\s.*\s=\s(?<min>\d*(?:\.\d+)?)\/(?<avg>\d*(?:\.\d+)?)\/(?<max>\d*(?:\.\d+)?)?/.exec(rtt);
 
-			result['min'] = Number.parseFloat(rttMatch?.groups?.['min'] ?? '');
-			result['avg'] = Number.parseFloat(rttMatch?.groups?.['avg'] ?? '');
-			result['max'] = Number.parseFloat(rttMatch?.groups?.['max'] ?? '');
+			stats['min'] = Number.parseFloat(rttMatch?.groups?.['min'] ?? '');
+			stats['avg'] = Number.parseFloat(rttMatch?.groups?.['avg'] ?? '');
+			stats['max'] = Number.parseFloat(rttMatch?.groups?.['max'] ?? '');
 		}
 
 		if (packets) {
 			const packetsMatch = /(?<loss>\d*(?:\.\d+)?)%\spacket\sloss/.exec(packets);
-			result['loss'] = Number.parseFloat(packetsMatch?.groups?.['loss'] ?? '-1');
+			stats['loss'] = Number.parseFloat(packetsMatch?.groups?.['loss'] ?? '-1');
 		}
 
-		return result;
+		return {stats};
 	}
 }
