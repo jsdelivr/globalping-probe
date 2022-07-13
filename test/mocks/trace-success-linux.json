@@ -2,48 +2,48 @@
   "testId": "test",
   "measurementId": "measurement",
   "result": {
-    "destination": "216.239.38.21",
+    "resolvedAddress": "216.239.38.21",
     "hops": [
       {
-        "host": "192.168.0.1",
+        "resolvedHostname": "192.168.0.1",
         "resolvedAddress": "192.168.0.1",
-        "rtt": [
-          1.619,
-          2.465
+        "timings": [
+          { "rtt": 1.619 },
+          { "rtt": 2.465 }
         ]
       },
       {
-        "host": "*",
+        "resolvedHostname": "*",
         "resolvedAddress": "*",
-        "rtt": []
+        "timings": []
       },
       {
-        "host": "lutn-core-2a-xe-7114-0.network.virginmedia.net",
+        "resolvedHostname": "lutn-core-2a-xe-7114-0.network.virginmedia.net",
         "resolvedAddress": "62.252.67.181",
-        "rtt": [
-          27.688,
-          27.991
+        "timings": [
+          { "rtt": 27.688 },
+          { "rtt": 27.991 }
         ]
       },
       {
-        "host": "*",
+        "resolvedHostname": "*",
         "resolvedAddress": "*",
-        "rtt": []
+        "timings": []
       },
       {
-        "host": "eislou2-ic-4-ae0-0.network.virginmedia.net",
+        "resolvedHostname": "eislou2-ic-4-ae0-0.network.virginmedia.net",
         "resolvedAddress": "62.254.59.130",
-        "rtt": [
-          28.512,
-          28.192
+        "timings": [
+          { "rtt": 28.512 },
+          { "rtt": 28.192 }
         ]
       },
       {
-        "host": "142.250.160.116",
+        "resolvedHostname": "142.250.160.116",
         "resolvedAddress": "142.250.160.116",
-        "rtt": [
-          28.629,
-          35.934
+        "timings": [
+          { "rtt": 28.629 },
+          { "rtt": 35.934 }
         ]
       }
     ],

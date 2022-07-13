@@ -18,8 +18,8 @@ type TraceOptions = {
 
 type ParsedLine = {
 	resolvedAddress: string;
-	host: string;
-	rtt: number[];
+	resolvedHostname: string;
+	timings: Array<{rtt: number}>;
 };
 
 const traceOptionsSchema = Joi.object<TraceOptions>({
@@ -88,7 +88,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 			const parseResult = this.parse(cmdResult.stdout.trim());
 			result = parseResult;
 
-			if (isIpPrivate(parseResult.destination ?? '')) {
+			if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
 				isResultPrivate = true;
 			}
 		} catch (error: unknown) {
@@ -114,7 +114,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 	private validatePartialResult(rawOutput: string, cmd: ExecaChildProcess): boolean {
 		const parseResult = this.parse(rawOutput);
 
-		if (isIpPrivate(parseResult.destination ?? '')) {
+		if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
 			cmd.kill('SIGKILL');
 			return false;
 		}
@@ -124,7 +124,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 
 	private parse(rawOutput: string): {
 		rawOutput: string;
-		destination?: string;
+		resolvedAddress?: string;
 		hops?: ParsedLine[];
 	} {
 		const lines = rawOutput.split('\n');
@@ -146,7 +146,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		const hops = lines.slice(1).map(l => this.parseLine(l));
 
 		return {
-			destination: String(header.resolvedAddress),
+			resolvedAddress: String(header.resolvedAddress),
 			hops,
 			rawOutput,
 		};
@@ -170,9 +170,9 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		const rttList = Array.from(line.matchAll(reRtt), m => Number.parseFloat(m[1]!));
 
 		return {
-			host: hostMatch?.[1] ?? '*',
+			resolvedHostname: hostMatch?.[1] ?? '*',
 			resolvedAddress: hostMatch?.[2] ?? '*',
-			rtt: rttList,
+			timings: rttList.map(rtt => ({rtt})),
 		};
 	}
 }
