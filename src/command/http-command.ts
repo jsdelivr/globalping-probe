@@ -222,8 +222,10 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			result.tls = {
 				authorized: rSocket.authorized,
 				...(rSocket.authorizationError ? {error: rSocket.authorizationError} : {}),
-				createdAt: (new Date(cert.valid_from)).toISOString(),
-				expireAt: (new Date(cert.valid_to)).toISOString(),
+				...(cert.valid_from && cert.valid_to ? {
+					createdAt: (new Date(cert.valid_from)).toISOString(),
+					expireAt: (new Date(cert.valid_to)).toISOString(),
+				} : {}),
 				issuer: {...cert.issuer},
 				subject: {
 					...cert.subject,
