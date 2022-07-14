@@ -1,6 +1,7 @@
 export type HopTimesType = {
-	seq: string;
-	time?: number;
+	seq?: string;
+	// eslint-disable-next-line @typescript-eslint/ban-types
+	rtt: number | null;
 };
 
 export type HopStatsType = {
@@ -17,15 +18,17 @@ export type HopStatsType = {
 };
 
 export type HopType = {
-	asn?: string;
-	host?: string;
-	resolvedHost?: string;
+	asn: number[];
+	resolvedAddress?: string;
+	resolvedHostname?: string;
 	stats: HopStatsType;
-	times: HopTimesType[];
+	timings: HopTimesType[];
 	duplicate?: boolean;
 };
 
 export type ResultType = {
+	resolvedAddress?: string;
+	resolvedHostname?: string;
 	hops: HopType[];
 	data: string[];
 	rawOutput: string;

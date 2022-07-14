@@ -20,7 +20,8 @@ const getInitialHopState = () => ({
 		jMax: 0,
 		jAvg: 0,
 	},
-	times: [],
+	asn: [],
+	timings: [],
 });
 
 const getSpacing = (length: number): string => Array.from({length}).fill(' ').join('');
@@ -49,10 +50,10 @@ export const MtrParser = {
 
 		const spacings = {
 			index: String(hops.length).length,
-			asn: 2 + Math.max(...hops.map(h => String(h?.asn ?? 0).length)),
+			asn: 2 + Math.max(...hops.map(h => String(h?.asn.join(' ') ?? 0).length)),
 			hostname: (3
-        + Math.max(...hops.map(h => String(h?.host ?? 0).length))
-        + Math.max(...hops.map(h => String(h?.resolvedHost ?? 0).length))
+        + Math.max(...hops.map(h => String(h?.resolvedAddress ?? 0).length))
+        + Math.max(...hops.map(h => String(h?.resolvedHostname ?? 0).length))
 			),
 			loss: 6,
 			drop: Math.max(4, ...hops.map(h => String(h?.stats?.drop ?? 0).length)),
@@ -82,8 +83,8 @@ export const MtrParser = {
 				continue;
 			}
 
-			if (!hop.host) {
-				const isEmptyUntilEnd = hops.slice(i - 1).every(h => !h.host || h.duplicate);
+			if (!hop.resolvedAddress) {
+				const isEmptyUntilEnd = hops.slice(i - 1).every(h => !h.resolvedAddress || h.duplicate);
 				if (hops[i - 1]?.duplicate || isEmptyUntilEnd) {
 					continue;
 				}
@@ -97,11 +98,11 @@ export const MtrParser = {
 			const sIndex = withSpacing(String(i + 1), spacings.index, true);
 
 			// Asn
-			const sAsn = withSpacing((hop.asn ? `AS${hop.asn}` : 'AS???'), spacings.asn);
+			const sAsn = withSpacing((hop.asn.length > 0 ? `AS${hop.asn.join(' ')}` : 'AS???'), spacings.asn);
 
 			// Hostname
-			const sHostnameAlias = i === 0 ? '_gateway' : hop.resolvedHost ?? hop.host;
-			const sHostname = withSpacing((hop.host ? `${sHostnameAlias ?? ''} (${hop.host ?? ''})` : '(waiting for reply)'), spacings.hostname);
+			const sHostnameAlias = i === 0 ? '_gateway' : hop.resolvedHostname ?? hop.resolvedAddress;
+			const sHostname = withSpacing((hop.resolvedAddress ? `${sHostnameAlias ?? ''} (${hop.resolvedAddress ?? ''})` : '(waiting for reply)'), spacings.hostname);
 
 			// Stats
 			const loss = withSpacing(((hop.stats.drop / hop.stats.total) * 100).toFixed(1), spacings.loss, true);
@@ -113,7 +114,7 @@ export const MtrParser = {
 
 			let line = `${sIndex}. ${sAsn} ${sHostname} `;
 
-			if (hop.host) {
+			if (hop.resolvedAddress) {
 				line += `${loss}% ${drop} ${rcv} ${avg} ${stDev} ${jAvg}`;
 			}
 
@@ -144,32 +145,32 @@ export const MtrParser = {
 
 			switch (action) {
 				case 'h': {
-					const [host] = value;
-					const previousHostMatch = hops.find((h: HopType, hIndex: number) => h.host === host && hIndex < Number(index));
+					const [resolvedAddress] = value;
+					const previousHostMatch = hops.find((h: HopType, hIndex: number) => h.resolvedAddress === resolvedAddress && hIndex < Number(index));
 
-					if (!host) {
+					if (!resolvedAddress) {
 						break;
 					}
 
-					entry.host = host;
+					entry.resolvedAddress = resolvedAddress;
 					entry.duplicate = Boolean(previousHostMatch);
 					break;
 				}
 
 				case 'd': {
-					const [host] = value;
+					const [resolvedAddress] = value;
 
-					if (!host) {
+					if (!resolvedAddress) {
 						break;
 					}
 
-					entry.resolvedHost = host;
+					entry.resolvedHostname = resolvedAddress;
 					for (const [hIndex, hop] of hops.entries()) {
-						if (hop.host !== entry.host || (hop.resolvedHost && hop.resolvedHost !== hop.host)) {
+						if (hop.resolvedAddress !== entry.resolvedAddress || (hop.resolvedHostname && hop.resolvedHostname !== hop.resolvedAddress)) {
 							continue;
 						}
 
-						(hops[hIndex]!).resolvedHost = host;
+						(hops[hIndex]!).resolvedHostname = resolvedAddress;
 					}
 
 					break;
@@ -177,25 +178,25 @@ export const MtrParser = {
 
 				case 'x': {
 					const [seq] = value;
-					const timeEntry = entry.times.find(t => t.seq === seq);
+					const timeEntry = entry.timings.find(t => t.seq === seq);
 
 					if (!seq || timeEntry) {
 						break;
 					}
 
-					entry.times.push({seq});
+					entry.timings.push({seq, rtt: null});
 					break;
 				}
 
 				case 'p': {
-					const [time, seq] = value;
+					const [rtt, seq] = value;
 
-					const timesArray = entry.times.map(t => t.seq === seq
-						? {...t, time: Number(time) / 1000}
+					const timesArray = entry.timings.map(t => t.seq === seq
+						? {...t, rtt: Number(rtt) / 1000}
 						: t,
 					);
 
-					entry.times = timesArray ?? [];
+					entry.timings = timesArray ?? [];
 					break;
 				}
 
@@ -204,8 +205,17 @@ export const MtrParser = {
 			}
 
 			entry.stats = MtrParser.hopStatsParse(entry, isFinalResult);
-
 			hops[Number(index)] = entry;
+		}
+
+		return isFinalResult ? MtrParser.hopFinalParse(hops) : hops;
+	},
+
+	hopFinalParse(hops: HopType[]): HopType[] {
+		for (const hop of hops) {
+			for (const t of hop.timings) {
+				delete t.seq;
+			}
 		}
 
 		return hops;
@@ -214,31 +224,31 @@ export const MtrParser = {
 	hopStatsParse(hop: HopType, finalCount?: boolean): HopStatsType {
 		const stats: HopStatsType = {...getInitialHopState().stats};
 
-		if (hop.times.length === 0) {
+		if (hop.timings.length === 0) {
 			return stats;
 		}
 
-		const timesArray = hop.times.filter(t => t.time).map(t => t.time) as number[];
+		const timesArray = hop.timings.filter(t => t.rtt).map(t => t.rtt) as number[];
 
 		if (timesArray.length > 0) {
 			stats.min = Math.min(...timesArray);
 			stats.max = Math.max(...timesArray);
 			stats.avg = roundNumber(timesArray.reduce((a, b) => a + b, 0) / timesArray.length);
-			stats.total = hop.times.length;
+			stats.total = hop.timings.length;
 			stats.stDev = roundNumber(Math.sqrt(timesArray.map(x => (x - stats.avg) ** 2).reduce((a, b) => a + b, 0) / timesArray.length));
 		}
 
 		stats.rcv = 0;
 		stats.drop = 0;
 
-		for (let i = 0; i < hop.times.length; i++) {
-			const rtt = hop.times[i];
+		for (let i = 0; i < hop.timings.length; i++) {
+			const rtt = hop.timings[i];
 
-			if (i === (hop.times.length - 1) && !finalCount) {
+			if (i === (hop.timings.length - 1) && !finalCount) {
 				continue;
 			}
 
-			if (rtt?.time) {
+			if (rtt?.rtt) {
 				stats.rcv++;
 			} else {
 				stats.drop++;
