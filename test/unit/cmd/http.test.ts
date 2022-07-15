@@ -382,7 +382,7 @@ describe('http command', () => {
 					tls: {
 						authorized: true,
 						createdAt: (new Date(cert.valid_from)).toISOString(),
-						expireAt: (new Date(cert.valid_from)).toISOString(),
+						expiresAt: (new Date(cert.valid_from)).toISOString(),
 						issuer: {
 							...cert.issuer,
 						},
