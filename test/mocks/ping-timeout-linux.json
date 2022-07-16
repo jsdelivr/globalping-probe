@@ -3,6 +3,7 @@
   "measurementId": "measurement",
   "result": {
     "resolvedAddress": "123.21.43.124",
+    "resolvedHostname": "",
     "timings": [],
     "stats": {
       "loss": 100

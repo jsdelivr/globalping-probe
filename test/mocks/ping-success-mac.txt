@@ -1,7 +1,7 @@
 PING google.com (172.217.20.174): 56 data bytes
-64 bytes from 172.217.20.174: icmp_seq=0 ttl=58 time=7.271 ms
-64 bytes from 172.217.20.174: icmp_seq=1 ttl=58 time=11.055 ms
-64 bytes from 172.217.20.174: icmp_seq=2 ttl=58 time=7.782 ms
+64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.174): icmp_seq=0 ttl=58 time=7.271 ms
+64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.174): icmp_seq=1 ttl=58 time=11.055 ms
+64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.174): icmp_seq=2 ttl=58 time=7.782 ms
 
 --- google.com ping statistics ---
 3 packets transmitted, 3 packets received, 0.0% packet loss
