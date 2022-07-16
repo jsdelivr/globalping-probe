@@ -39,7 +39,7 @@ export const ClassicDigParser = {
 	parseLoop(lines: string[]): DnsParseLoopResponse {
 		const result: DnsParseLoopResponse = {
 			header: [],
-			answer: [],
+			answers: [],
 			resolver: '',
 			timings: {total: 0},
 		};
@@ -79,15 +79,15 @@ export const ClassicDigParser = {
 			if (!sectionChanged && line) {
 				if (section === 'header') {
 					result[section]!.push(line);
-				} else {
+				} else if (section === 'answer') {
 					const sectionResult = ClassicDigParser.parseSection(line.split(/\s+/g), section);
-					(result[section] as DnsSection[]).push(sectionResult);
+					(result.answers).push(sectionResult);
 				}
 			}
 		}
 
 		return {
-			answer: result.answer,
+			answers: result.answers,
 			resolver: result.resolver,
 			timings: result.timings,
 		};

@@ -6,7 +6,7 @@
         "hops":
         [
             {
-                "answer":
+                "answers":
                 [
                     {
                         "name": ".",
@@ -104,7 +104,7 @@
                 "resolver": "127.0.0.53"
             },
             {
-                "answer":
+                "answers":
                 [
                     {
                         "name": "net.",
@@ -216,7 +216,7 @@
                 "resolver": "d.root-servers.net"
             },
             {
-                "answer":
+                "answers":
                 [
                     {
                         "name": "jsdelivr.net.",
@@ -307,7 +307,7 @@
                 "resolver": "c.gtld-servers.net"
             },
             {
-                "answer":
+                "answers":
                 [
                     {
                         "name": "cdn.jsdelivr.net.",

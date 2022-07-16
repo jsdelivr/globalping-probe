@@ -38,14 +38,14 @@ export const TraceDigParser = {
 
 	parseLoop(lines: string[]): DnsParseLoopResponse[] {
 		const groups: Array<{
-			answer: DnsSection[];
+			answers: DnsSection[];
 			timings: {total: number};
 			resolver: string;
 		}> = [];
 
 		const pushNewHop = () => {
 			groups.push({
-				answer: [],
+				answers: [],
 				timings: {total: 0},
 				resolver: '',
 			});
@@ -73,10 +73,12 @@ export const TraceDigParser = {
 			}
 
 			const answer = SharedDigParser.parseSection(line.split(/\s+/g));
-			groups[groupIndex]!.answer.push(answer);
+			groups[groupIndex]!.answers.push(answer);
 		}
 
-		return groups.map(item => ({...item, answer: item.answer}));
+		return groups.map(item => ({
+			...item, answers: item.answers,
+		}));
 	},
 };
 

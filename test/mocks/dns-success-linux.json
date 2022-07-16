@@ -2,7 +2,7 @@
   "testId": "test",
   "measurementId": "measurement",
   "result": {
-		"answer": [
+		"answers": [
 			{
 				"name": "google.com.",
 				"type": "TXT",

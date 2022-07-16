@@ -146,10 +146,10 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 
 		if (isTrace(result)) {
 			privateResults = result.hops
-				.flatMap((result: DnsParseLoopResponse) => result.answer)
+				.flatMap((result: DnsParseLoopResponse) => result.answers)
 				.filter((answer: unknown) => isDnsSection(answer) ? isIpPrivate(answer.value as string) : false);
 		} else {
-			privateResults = result.answer
+			privateResults = result.answers
 				.filter((answer: unknown) => isDnsSection(answer) ? isIpPrivate(answer.value as string) : false);
 		}
 
