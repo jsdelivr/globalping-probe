@@ -3,6 +3,7 @@
   "measurementId": "measurement",
   "result": {
     "resolvedAddress": "216.239.38.21",
+    "resolvedHostname": "142.250.160.116",
     "hops": [
       {
         "resolvedHostname": "192.168.0.1",

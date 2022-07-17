@@ -125,6 +125,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 	private parse(rawOutput: string): {
 		rawOutput: string;
 		resolvedAddress?: string;
+		resolvedHostname?: string;
 		hops?: ParsedLine[];
 	} {
 		const lines = rawOutput.split('\n');
@@ -144,9 +145,11 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		}
 
 		const hops = lines.slice(1).map(l => this.parseLine(l));
+		const hostname = hops[hops.length - 1]?.resolvedHostname;
 
 		return {
 			resolvedAddress: String(header.resolvedAddress),
+			resolvedHostname: String(hostname),
 			hops,
 			rawOutput,
 		};
