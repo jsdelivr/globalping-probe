@@ -2,6 +2,8 @@
     "testId": "test",
     "measurementId": "measurement",
     "result": {
+        "resolvedAddress": "142.250.179.238",
+        "resolvedHostname": "lhr25s31-in-f14.1e100.net",
         "hops":
         [
             {
@@ -18,22 +20,18 @@
                     "jMax": 2.3,
                     "jAvg": 2.3
                 },
-                "times":
+                "timings":
                 [
                     {
-                        "seq": "33000",
-                        "time": 2.27
+                        "rtt": 2.27
                     },
-                    {
-                        "seq": "33010"
-                    },
-                    {
-                        "seq": "33019"
-                    }
+                    {"rtt": null},
+                    {"rtt": null}
                 ],
-                "host": "192.168.0.1",
+                "asn": [],
+                "resolvedAddress": "192.168.0.1",
                 "duplicate": false,
-                "resolvedHost": "192.168.0.1"
+                "resolvedHostname": "192.168.0.1"
             },
             {
                 "stats":
@@ -49,18 +47,13 @@
                     "jMax": 0,
                     "jAvg": 0
                 },
-                "times":
+                "timings":
                 [
-                    {
-                        "seq": "33001"
-                    },
-                    {
-                        "seq": "33011"
-                    },
-                    {
-                        "seq": "33020"
-                    }
-                ]
+                    {"rtt": null},
+                    {"rtt": null},
+                    {"rtt": null}
+                ],
+                "asn": []
             },
             {
                 "stats":
@@ -76,25 +69,22 @@
                     "jMax": 11.3,
                     "jAvg": 6.2
                 },
-                "times":
+                "timings":
                 [
                     {
-                        "seq": "33002",
-                        "time": 10.394
+                        "rtt": 10.394
                     },
                     {
-                        "seq": "33012",
-                        "time": 9.222
+                        "rtt": 9.222
                     },
                     {
-                        "seq": "33021",
-                        "time": 11.276
+                        "rtt": 11.276
                     }
                 ],
-                "host": "62.252.67.181",
+                "resolvedAddress": "62.252.67.181",
                 "duplicate": false,
-                "resolvedHost": "62.252.67.181",
-                "asn": "123"
+                "resolvedHostname": "62.252.67.181",
+                "asn": [123]
             },
             {
                 "stats":
@@ -110,18 +100,13 @@
                     "jMax": 0,
                     "jAvg": 0
                 },
-                "times":
+                "timings":
                 [
-                    {
-                        "seq": "33003"
-                    },
-                    {
-                        "seq": "33013"
-                    },
-                    {
-                        "seq": "33022"
-                    }
-                ]
+                    {"rtt": null},
+                    {"rtt": null},
+                    {"rtt": null}
+                ],
+                "asn": []
             },
             {
                 "stats":
@@ -137,25 +122,22 @@
                     "jMax": 11.6,
                     "jAvg": 6.5
                 },
-                "times":
+                "timings":
                 [
                     {
-                        "seq": "33004",
-                        "time": 12.049
+                        "rtt": 12.049
                     },
                     {
-                        "seq": "33014",
-                        "time": 10.779
+                        "rtt": 10.779
                     },
                     {
-                        "seq": "33023",
-                        "time": 11.638
+                        "rtt": 11.638
                     }
                 ],
-                "host": "62.254.59.130",
+                "asn": [123],
+                "resolvedAddress": "62.254.59.130",
                 "duplicate": false,
-                "resolvedHost": "62.254.59.130",
-                "asn": "123"
+                "resolvedHostname": "62.254.59.130"
             },
             {
                 "stats":
@@ -171,25 +153,22 @@
                     "jMax": 11.4,
                     "jAvg": 6
                 },
-                "times":
+                "timings":
                 [
                     {
-                        "seq": "33005",
-                        "time": 10.949
+                        "rtt": 10.949
                     },
                     {
-                        "seq": "33015",
-                        "time": 11.595
+                        "rtt": 11.595
                     },
                     {
-                        "seq": "33024",
-                        "time": 11.393
+                        "rtt": 11.393
                     }
                 ],
-                "host": "142.250.160.116",
+                "asn": [123],
+                "resolvedAddress": "142.250.160.116",
                 "duplicate": false,
-                "resolvedHost": "142.250.160.116",
-                "asn": "123"
+                "resolvedHostname": "142.250.160.116"
             },
             {
                 "stats":
@@ -205,25 +184,22 @@
                     "jMax": 15.1,
                     "jAvg": 8
                 },
-                "times":
+                "timings":
                 [
                     {
-                        "seq": "33006",
-                        "time": 15.835
+                        "rtt": 15.835
                     },
                     {
-                        "seq": "33016",
-                        "time": 16.612
+                        "rtt": 16.612
                     },
                     {
-                        "seq": "33025",
-                        "time": 15.144
+                        "rtt": 15.144
                     }
                 ],
-                "host": "216.239.41.193",
+                "asn": [123],
+                "resolvedAddress": "216.239.41.193",
                 "duplicate": false,
-                "resolvedHost": "216.239.41.193",
-                "asn": "123"
+                "resolvedHostname": "216.239.41.193"
             },
             {
                 "stats":
@@ -239,25 +215,22 @@
                     "jMax": 12.9,
                     "jAvg": 8.2
                 },
-                "times":
+                "timings":
                 [
                     {
-                        "seq": "33007",
-                        "time": 15.666
+                        "rtt": 15.666
                     },
                     {
-                        "seq": "33017",
-                        "time": 12.228
+                        "rtt": 12.228
                     },
                     {
-                        "seq": "33026",
-                        "time": 12.872
+                        "rtt": 12.872
                     }
                 ],
-                "host": "142.251.54.27",
+                "asn": [123],
+                "resolvedAddress": "142.251.54.27",
                 "duplicate": false,
-                "resolvedHost": "142.251.54.27",
-                "asn": "123"
+                "resolvedHostname": "142.251.54.27"
             },
             {
                 "stats":
@@ -273,25 +246,22 @@
                     "jMax": 11.2,
                     "jAvg": 6.4
                 },
-                "times":
+                "timings":
                 [
                     {
-                        "seq": "33008",
-                        "time": 11.767
+                        "rtt": 11.767
                     },
                     {
-                        "seq": "33018",
-                        "time": 10.092
+                        "rtt": 10.092
                     },
                     {
-                        "seq": "33027",
-                        "time": 11.215
+                        "rtt": 11.215
                     }
                 ],
-                "host": "142.250.179.238",
+                "asn": [123],
+                "resolvedAddress": "142.250.179.238",
                 "duplicate": false,
-                "resolvedHost": "lhr25s31-in-f14.1e100.net",
-                "asn": "123"
+                "resolvedHostname": "lhr25s31-in-f14.1e100.net"
             },
             {
                 "stats":
@@ -307,17 +277,16 @@
                     "jMax": 11.4,
                     "jAvg": 11.4
                 },
-                "times":
+                "timings":
                 [
                     {
-                        "seq": "33009",
-                        "time": 11.352
+                        "rtt": 11.352
                     }
                 ],
-                "host": "142.250.179.238",
+                "asn": [123],
+                "resolvedAddress": "142.250.179.238",
                 "duplicate": true,
-                "resolvedHost": "lhr25s31-in-f14.1e100.net",
-                "asn": "123"
+                "resolvedHostname": "lhr25s31-in-f14.1e100.net"
             }
         ],
         "rawOutput": "Host                                                    Loss% Drop Rcv  Avg  StDev  Javg \n 1. AS??? _gateway (192.168.0.1)                        66.7%    2   1  2.3    0.0   2.3\n 2. AS??? (waiting for reply)                         \n 3. AS123 62.252.67.181 (62.252.67.181)                  0.0%    0   3 10.3    0.8   6.2\n 4. AS??? (waiting for reply)                         \n 5. AS123 62.254.59.130 (62.254.59.130)                  0.0%    0   3 11.5    0.5   6.5\n 6. AS123 142.250.160.116 (142.250.160.116)              0.0%    0   3 11.3    0.3   6.0\n 7. AS123 216.239.41.193 (216.239.41.193)                0.0%    0   3 15.9    0.6   8.0\n 8. AS123 142.251.54.27 (142.251.54.27)                  0.0%    0   3 13.6    1.5   8.2\n 9. AS123 lhr25s31-in-f14.1e100.net (142.250.179.238)    0.0%    0   3 11.0    0.7   6.4\n",

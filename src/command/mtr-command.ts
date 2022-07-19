@@ -100,6 +100,11 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 			await cmd;
 			const [hops, rawOutput] = await this.parseResult(result.hops, result.data, true);
+			const lastHop = [...hops].reverse().find(h => h.resolvedAddress && !h.duplicate);
+
+			result.resolvedAddress = String(lastHop?.resolvedAddress);
+			result.resolvedHostname = String(lastHop?.resolvedHostname);
+
 			result.hops = hops;
 			result.rawOutput = rawOutput;
 		} catch (error: unknown) {
@@ -123,6 +128,8 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			testId,
 			measurementId,
 			result: {
+				resolvedAddress: result.resolvedAddress ?? '',
+				resolvedHostname: result.resolvedHostname ?? '',
 				hops: result.hops,
 				rawOutput: result.rawOutput,
 				data: result.data,
@@ -145,37 +152,39 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 	populateAsn(hops: HopType[], asnList: string[][]): HopType[] {
 		return hops.map((hop: HopType) => {
-			const asn = asnList.find((a: string[]) => hop.host ? a.includes(hop.host) : false);
+			const asn = asnList.find((a: string[]) => hop.resolvedAddress ? a.includes(hop.resolvedAddress) : false);
 
 			if (!asn) {
 				return hop;
 			}
 
+			const asnArray = String(asn?.[1]).split(' ').map(Number);
+
 			return {
 				...hop,
-				asn: String(asn?.[1]),
+				asn: asnArray,
 			};
 		});
 	}
 
 	async queryAsn(hops: HopType[]): Promise<string[][]> {
 		const dnsResult = await Promise.allSettled(hops.map(async h => (
-			!h?.asn && h?.host && !isIpPrivate(h?.host)
-				? this.lookupAsn(h?.host)
+			h?.asn.length < 1 && h?.resolvedAddress && !isIpPrivate(h?.resolvedAddress)
+				? this.lookupAsn(h?.resolvedAddress)
 				: Promise.reject()
 		)));
 
 		const asnList = [];
 
 		for (const [index, result] of dnsResult.entries()) {
-			const host = hops[index]?.host;
+			const resolvedAddress = hops[index]?.resolvedAddress;
 
-			if (!host || result.status === 'rejected' || !result.value) {
+			if (!resolvedAddress || result.status === 'rejected' || !result.value) {
 				continue;
 			}
 
 			const sDns = result.value.split('|');
-			asnList.push([host, sDns[0]!.trim() ?? '']);
+			asnList.push([resolvedAddress, sDns[0]!.trim() ?? '']);
 		}
 
 		return asnList;

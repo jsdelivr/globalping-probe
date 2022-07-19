@@ -25,7 +25,7 @@ type DnsOptions = {
 	};
 };
 
-const isTrace = (output: any): output is DnsParseResponseTrace => Array.isArray((output as DnsParseResponseTrace).result);
+const isTrace = (output: any): output is DnsParseResponseTrace => Array.isArray((output as DnsParseResponseTrace).hops);
 
 const allowedTypes = ['A', 'AAAA', 'ANY', 'CNAME', 'DNSKEY', 'DS', 'MX', 'NS', 'NSEC', 'PTR', 'RRSIG', 'SOA', 'TXT', 'SRV'];
 const allowedProtocols = ['UDP', 'TCP'];
@@ -145,11 +145,11 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		let privateResults = [];
 
 		if (isTrace(result)) {
-			privateResults = result.result
-				.flatMap((result: DnsParseLoopResponse) => result.answer)
+			privateResults = result.hops
+				.flatMap((result: DnsParseLoopResponse) => result.answers)
 				.filter((answer: unknown) => isDnsSection(answer) ? isIpPrivate(answer.value as string) : false);
 		} else {
-			privateResults = result.answer
+			privateResults = result.answers
 				.filter((answer: unknown) => isDnsSection(answer) ? isIpPrivate(answer.value as string) : false);
 		}
 

@@ -6,7 +6,7 @@ import {
 } from './shared.js';
 
 export type DnsParseResponse = {
-	result: DnsParseLoopResponse[];
+	hops: DnsParseLoopResponse[];
 	rawOutput: string;
 };
 
@@ -31,23 +31,23 @@ export const TraceDigParser = {
 		}
 
 		return {
-			result: TraceDigParser.parseLoop(lines.slice(2)),
+			hops: TraceDigParser.parseLoop(lines.slice(2)),
 			rawOutput,
 		};
 	},
 
 	parseLoop(lines: string[]): DnsParseLoopResponse[] {
 		const groups: Array<{
-			answer: DnsSection[];
-			time: number;
-			server: string;
+			answers: DnsSection[];
+			timings: {total: number};
+			resolver: string;
 		}> = [];
 
 		const pushNewHop = () => {
 			groups.push({
-				answer: [],
-				time: 0,
-				server: '',
+				answers: [],
+				timings: {total: 0},
+				resolver: '',
 			});
 		};
 
@@ -66,17 +66,19 @@ export const TraceDigParser = {
 				const resolver = RESOLVER_REG_EXP.exec(line);
 				const queryTime = QUERY_TIME_REG_EXP.exec(line);
 
-				groups[groupIndex]!.time = queryTime ? Number(queryTime[1]) : 0;
-				groups[groupIndex]!.server = resolver ? String(resolver[1]) : '';
+				groups[groupIndex]!.timings.total = queryTime ? Number(queryTime[1]) : 0;
+				groups[groupIndex]!.resolver = resolver ? String(resolver[1]) : '';
 
 				continue;
 			}
 
 			const answer = SharedDigParser.parseSection(line.split(/\s+/g));
-			groups[groupIndex]!.answer.push(answer);
+			groups[groupIndex]!.answers.push(answer);
 		}
 
-		return groups.map(item => ({...item, answer: item.answer}));
+		return groups.map(item => ({
+			...item, answers: item.answers,
+		}));
 	},
 };
 

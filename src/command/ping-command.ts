@@ -18,13 +18,31 @@ const pingOptionsSchema = Joi.object<PingOptions>({
 	packets: Joi.number().min(1).max(16).default(3),
 });
 
+type PingStats = {
+	min?: number;
+	max?: number;
+	avg?: number;
+};
+
+type PingTimings = {
+	ttl: number;
+	rtt: number;
+};
+
+type PingParseOutput = {
+	rawOutput: string;
+	resolvedHostname?: string;
+	resolvedAddress?: string;
+	timings?: PingTimings[];
+	stats?: PingStats;
+};
+
 export const pingCmd = (options: PingOptions): ExecaChildProcess => {
 	const args = [
 		'-4',
 		['-c', options.packets.toString()],
 		['-i', '0.2'],
 		['-w', '15'],
-		'-n',
 		options.target,
 	].flat();
 
@@ -102,44 +120,36 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		return true;
 	}
 
-	private parse(rawOutput: string): {
-		rawOutput: string;
-		resolvedAddress?: string;
-		times?: Array<{ttl: number; time: number}>;
-		min?: number;
-		max?: number;
-		avg?: number;
-	} {
+	private parse(rawOutput: string): PingParseOutput {
 		const lines = rawOutput.split('\n');
+
 		if (lines.length === 0) {
 			return {rawOutput};
 		}
 
-		const header = /^PING\s.*\s\((?<addr>.+?)\)/.exec(lines.shift()!);
+		const header = /^PING\s(?<host>.*?)\s\((?<addr>.+?)\)/.exec(lines[0] ?? '');
 		if (!header) {
 			return {rawOutput};
 		}
 
 		const resolvedAddress = String(header?.groups?.['addr']);
-		const statsLines = [];
+		const timeLines = lines.slice(1).map(l => this.parseStatsLine(l)).filter(Boolean) as PingTimings[];
 
-		let line;
-		while ((line = lines.shift())) {
-			const stats = this.parseStatsLine(line);
-			if (!stats) {
-				continue;
-			}
+		const resolvedHostname = (/(?<=from\s).*?(?=\s)/.exec((lines[1] ?? '')))?.[0];
+		const summaryHeaderIndex = lines.findIndex(l => /^---\s(.*)\sstatistics ---/.test(l));
+		const summary = this.parseSummary(lines.slice(summaryHeaderIndex + 1));
 
-			statsLines.push(stats);
-		}
-
-		const summary = this.parseSummary(lines.splice(1));
-
-		return {resolvedAddress, times: statsLines, ...summary, rawOutput};
+		return {
+			resolvedAddress,
+			resolvedHostname: resolvedHostname ?? '',
+			timings: timeLines,
+			stats: summary,
+			rawOutput,
+		};
 	}
 
-	private parseStatsLine(line: string) {
-		const parsed = /^\d+ bytes from .*: (?:icmp_)?seq=\d+ ttl=(?<ttl>\d+) time=(?<time>\d*(?:\.\d+)?) ms/.exec(line);
+	private parseStatsLine(line: string): PingTimings | undefined {
+		const parsed = /^\d+ bytes from (?<host>.*) .*: (?:icmp_)?seq=\d+ ttl=(?<ttl>\d+) time=(?<time>\d*(?:\.\d+)?) ms/.exec(line);
 
 		if (!parsed || !parsed.groups) {
 			return;
@@ -147,27 +157,27 @@ export class PingCommand implements CommandInterface<PingOptions> {
 
 		return {
 			ttl: Number.parseInt(parsed.groups['ttl'] ?? '-1', 10),
-			time: Number.parseFloat(parsed.groups['time'] ?? '-1'),
+			rtt: Number.parseFloat(parsed.groups['time'] ?? '-1'),
 		};
 	}
 
-	private parseSummary(lines: string[]) {
+	private parseSummary(lines: string[]): PingStats {
 		const [packets, rtt] = lines;
-		const result: Record<string, any> = {};
+		const stats: Record<string, any> = {};
 
 		if (rtt) {
 			const rttMatch = /^(?:round-trip|rtt)\s.*\s=\s(?<min>\d*(?:\.\d+)?)\/(?<avg>\d*(?:\.\d+)?)\/(?<max>\d*(?:\.\d+)?)?/.exec(rtt);
 
-			result['min'] = Number.parseFloat(rttMatch?.groups?.['min'] ?? '');
-			result['avg'] = Number.parseFloat(rttMatch?.groups?.['avg'] ?? '');
-			result['max'] = Number.parseFloat(rttMatch?.groups?.['max'] ?? '');
+			stats['min'] = Number.parseFloat(rttMatch?.groups?.['min'] ?? '');
+			stats['avg'] = Number.parseFloat(rttMatch?.groups?.['avg'] ?? '');
+			stats['max'] = Number.parseFloat(rttMatch?.groups?.['max'] ?? '');
 		}
 
 		if (packets) {
 			const packetsMatch = /(?<loss>\d*(?:\.\d+)?)%\spacket\sloss/.exec(packets);
-			result['loss'] = Number.parseFloat(packetsMatch?.groups?.['loss'] ?? '-1');
+			stats['loss'] = Number.parseFloat(packetsMatch?.groups?.['loss'] ?? '-1');
 		}
 
-		return result;
+		return stats;
 	}
 }

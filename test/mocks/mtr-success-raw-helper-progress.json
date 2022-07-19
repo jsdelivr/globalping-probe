@@ -13,20 +13,23 @@
             "jMax": 3.7,
             "jAvg": 3.7
         },
-        "times":
+        "timings":
         [
             {
                 "seq": "33000",
-                "time": 3.734
+                "rtt": 3.734
             },
             {
-                "seq": "33011"
+                "seq": "33011",
+                "rtt": null
             },
             {
-                "seq": "33021"
+                "seq": "33021",
+                "rtt": null
             }
         ],
-        "host": "192.168.0.1",
+        "asn": [],
+        "resolvedAddress": "192.168.0.1",
         "duplicate": false
     },
     {
@@ -43,18 +46,22 @@
             "jMax": 0,
             "jAvg": 0
         },
-        "times":
+        "timings":
         [
             {
-                "seq": "33001"
+                "seq": "33001",
+                "rtt": null
             },
             {
-                "seq": "33012"
+                "seq": "33012",
+                "rtt": null
             },
             {
-                "seq": "33022"
+                "seq": "33022",
+                "rtt": null
             }
-        ]
+        ],
+        "asn": []
     },
     {
         "stats":
@@ -70,24 +77,25 @@
             "jMax": 10.9,
             "jAvg": 6.5
         },
-        "times":
+        "timings":
         [
             {
                 "seq": "33002",
-                "time": 12.102
+                "rtt": 12.102
             },
             {
                 "seq": "33013",
-                "time": 10.111
+                "rtt": 10.111
             },
             {
                 "seq": "33023",
-                "time": 10.933
+                "rtt": 10.933
             }
         ],
-        "host": "62.252.67.181",
+        "asn": [],
+        "resolvedAddress": "62.252.67.181",
         "duplicate": false,
-        "resolvedHost": "lutn-core-2a-xe-7114-0.network.virginmedia.net"
+        "resolvedHostname": "lutn-core-2a-xe-7114-0.network.virginmedia.net"
     },
     {
         "stats":
@@ -103,18 +111,22 @@
             "jMax": 0,
             "jAvg": 0
         },
-        "times":
+        "timings":
         [
             {
-                "seq": "33003"
+                "seq": "33003",
+                "rtt": null
             },
             {
-                "seq": "33014"
+                "seq": "33014",
+                "rtt": null
             },
             {
-                "seq": "33024"
+                "seq": "33024",
+                "rtt": null
             }
-        ]
+        ],
+        "asn": []
     },
     {
         "stats":
@@ -130,24 +142,25 @@
             "jMax": 12.9,
             "jAvg": 10.5
         },
-        "times":
+        "timings":
         [
             {
                 "seq": "33004",
-                "time": 19.959
+                "rtt": 19.959
             },
             {
                 "seq": "33015",
-                "time": 11.758
+                "rtt": 11.758
             },
             {
                 "seq": "33025",
-                "time": 12.855
+                "rtt": 12.855
             }
         ],
-        "host": "62.253.175.34",
+        "asn": [],
+        "resolvedAddress": "62.253.175.34",
         "duplicate": false,
-        "resolvedHost": "tele-ic-7-ae2-0.network.virginmedia.net"
+        "resolvedHostname": "tele-ic-7-ae2-0.network.virginmedia.net"
     },
     {
         "stats":
@@ -163,24 +176,25 @@
             "jMax": 10.6,
             "jAvg": 5.7
         },
-        "times":
+        "timings":
         [
             {
                 "seq": "33005",
-                "time": 12.821
+                "rtt": 12.821
             },
             {
                 "seq": "33016",
-                "time": 13.611
+                "rtt": 13.611
             },
             {
                 "seq": "33026",
-                "time": 10.649
+                "rtt": 10.649
             }
         ],
-        "host": "80.255.14.105",
+        "asn": [],
+        "resolvedAddress": "80.255.14.105",
         "duplicate": false,
-        "resolvedHost": "ae15-0.lon10.core-backbone.com"
+        "resolvedHostname": "ae15-0.lon10.core-backbone.com"
     },
     {
         "stats":
@@ -196,24 +210,25 @@
             "jMax": 28.4,
             "jAvg": 14.2
         },
-        "times":
+        "timings":
         [
             {
                 "seq": "33006",
-                "time": 28.627
+                "rtt": 28.627
             },
             {
                 "seq": "33017",
-                "time": 28.57
+                "rtt": 28.57
             },
             {
                 "seq": "33027",
-                "time": 28.409
+                "rtt": 28.409
             }
         ],
-        "host": "81.95.15.118",
+        "asn": [],
+        "resolvedAddress": "81.95.15.118",
         "duplicate": false,
-        "resolvedHost": "ae1-2053.prg10.core-backbone.com"
+        "resolvedHostname": "ae1-2053.prg10.core-backbone.com"
     },
     {
         "stats":
@@ -229,24 +244,25 @@
             "jMax": 33.4,
             "jAvg": 18.7
         },
-        "times":
+        "timings":
         [
             {
                 "seq": "33007",
-                "time": 33.591
+                "rtt": 33.591
             },
             {
                 "seq": "33018",
-                "time": 37.643
+                "rtt": 37.643
             },
             {
                 "seq": "33028",
-                "time": 33.42
+                "rtt": 33.42
             }
         ],
-        "host": "5.56.17.18",
+        "asn": [],
+        "resolvedAddress": "5.56.17.18",
         "duplicate": false,
-        "resolvedHost": "core-backbone.cdn77.com"
+        "resolvedHostname": "core-backbone.cdn77.com"
     },
     {
         "stats":
@@ -262,24 +278,25 @@
             "jMax": 28.4,
             "jAvg": 14.6
         },
-        "times":
+        "timings":
         [
             {
                 "seq": "33008",
-                "time": 28.482
+                "rtt": 28.482
             },
             {
                 "seq": "33019",
-                "time": 29.334
+                "rtt": 29.334
             },
             {
                 "seq": "33029",
-                "time": 28.426
+                "rtt": 28.426
             }
         ],
-        "host": "138.199.0.157",
+        "asn": [],
+        "resolvedAddress": "138.199.0.157",
         "duplicate": false,
-        "resolvedHost": "vl246.prg-ttc2-cdn77-dist-1.cdn77.com"
+        "resolvedHostname": "vl246.prg-ttc2-cdn77-dist-1.cdn77.com"
     },
     {
         "stats":
@@ -295,24 +312,25 @@
             "jMax": 31.3,
             "jAvg": 19.6
         },
-        "times":
+        "timings":
         [
             {
                 "seq": "33009",
-                "time": 28.557
+                "rtt": 28.557
             },
             {
                 "seq": "33020",
-                "time": 36.344
+                "rtt": 36.344
             },
             {
                 "seq": "33030",
-                "time": 31.345
+                "rtt": 31.345
             }
         ],
-        "host": "185.180.14.250",
+        "asn": [],
+        "resolvedAddress": "185.180.14.250",
         "duplicate": false,
-        "resolvedHost": "edge-595.bunnyinfra.net"
+        "resolvedHostname": "edge-595.bunnyinfra.net"
     },
     {
         "stats":
@@ -328,15 +346,16 @@
             "jMax": 29.7,
             "jAvg": 29.7
         },
-        "times":
+        "timings":
         [
             {
                 "seq": "33010",
-                "time": 29.687
+                "rtt": 29.687
             }
         ],
-        "host": "185.180.14.250",
-        "resolvedHost": "edge-595.bunnyinfra.net",
+        "asn": [],
+        "resolvedAddress": "185.180.14.250",
+        "resolvedHostname": "edge-595.bunnyinfra.net",
         "duplicate": true
     }
 ]

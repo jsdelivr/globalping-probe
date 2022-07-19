@@ -39,21 +39,21 @@ export const ClassicDigParser = {
 	parseLoop(lines: string[]): DnsParseLoopResponse {
 		const result: DnsParseLoopResponse = {
 			header: [],
-			answer: [],
-			server: '',
-			time: 0,
+			answers: [],
+			resolver: '',
+			timings: {total: 0},
 		};
 
 		let section = 'header';
 		for (const line of lines) {
 			const time = ClassicDigParser.getQueryTime(line);
 			if (time !== undefined) {
-				result.time = time;
+				result.timings.total = time;
 			}
 
 			const serverMatch = ClassicDigParser.getResolverServer(line);
 			if (serverMatch) {
-				result.server = serverMatch;
+				result.resolver = serverMatch;
 			}
 
 			let sectionChanged = false;
@@ -79,17 +79,17 @@ export const ClassicDigParser = {
 			if (!sectionChanged && line) {
 				if (section === 'header') {
 					result[section]!.push(line);
-				} else {
+				} else if (section === 'answer') {
 					const sectionResult = ClassicDigParser.parseSection(line.split(/\s+/g), section);
-					(result[section] as DnsSection[]).push(sectionResult);
+					(result.answers).push(sectionResult);
 				}
 			}
 		}
 
 		return {
-			answer: result.answer,
-			server: result.server,
-			time: result.time,
+			answers: result.answers,
+			resolver: result.resolver,
+			timings: result.timings,
 		};
 	},
 

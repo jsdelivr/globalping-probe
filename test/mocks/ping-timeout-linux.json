@@ -3,8 +3,11 @@
   "measurementId": "measurement",
   "result": {
     "resolvedAddress": "123.21.43.124",
-    "times": [],
-    "loss": 100,
+    "resolvedHostname": "",
+    "timings": [],
+    "stats": {
+      "loss": 100
+    },
     "rawOutput": "PING 123.21.43.124 (123.21.43.124) 56(84) bytes of data.\n\n--- 123.21.43.124 ping statistics ---\n15 packets transmitted, 0 received, 100% packet loss, time 2909ms"
   }
 }

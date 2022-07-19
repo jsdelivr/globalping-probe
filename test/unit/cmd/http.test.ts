@@ -11,8 +11,8 @@ import {
 import type {Timings} from '../../../src/command/http-command.js';
 
 type StreamCert = {
-	valid_from: number;
-	valid_to: number;
+	valid_from: number | string;
+	valid_to: number | string;
 	issuer: {
 		[k: string]: string;
 		CN: string;
@@ -47,13 +47,16 @@ class Stream {
 	response: StreamResponse | undefined;
 	timings: Timings | undefined;
 	stream: PassThrough;
+	ip: string;
 
 	constructor(
 		response: StreamResponse,
+		ip: string,
 	) {
 		this.stream = new PassThrough();
 		this.response = response;
 		this.timings = response?.timings;
+		this.ip = ip;
 	}
 
 	on(key: string, fn: (..._args: any[]) => void) {
@@ -190,6 +193,7 @@ describe('http command', () => {
 			const expectedResult = {
 				measurementId: 'measurement',
 				result: {
+					resolvedAddress: '1.1.1.1',
 					headers: {
 						test: 'abc',
 					},
@@ -210,7 +214,7 @@ describe('http command', () => {
 				testId: 'test',
 			};
 
-			const stream = new Stream(response);
+			const stream = new Stream(response, '1.1.1.1');
 			const mockHttpCmd = (): Request => stream as never;
 
 			const http = new HttpCommand(mockHttpCmd);
@@ -271,6 +275,7 @@ describe('http command', () => {
 			const expectedResult = {
 				measurementId: 'measurement',
 				result: {
+					resolvedAddress: '1.1.1.1',
 					headers: {
 						test: 'abc',
 					},
@@ -291,7 +296,7 @@ describe('http command', () => {
 				testId: 'test',
 			};
 
-			const stream = new Stream(response);
+			const stream = new Stream(response, '1.1.1.1');
 			const mockHttpCmd = (): Request => stream as never;
 
 			const http = new HttpCommand(mockHttpCmd);
@@ -319,8 +324,8 @@ describe('http command', () => {
 
 			/* eslint-disable @typescript-eslint/naming-convention */
 			const cert = {
-				valid_from: 100,
-				valid_to: 200,
+				valid_from: (new Date(1_657_802_359_042)).toUTCString(),
+				valid_to: (new Date(1_657_802_359_042)).toUTCString(),
 				issuer: {
 					CN: 'abc ltd',
 				},
@@ -362,6 +367,7 @@ describe('http command', () => {
 			const expectedResult = {
 				measurementId: 'measurement',
 				result: {
+					resolvedAddress: '1.1.1.1',
 					headers: {
 						test: 'abc',
 					},
@@ -375,8 +381,8 @@ describe('http command', () => {
 					},
 					tls: {
 						authorized: true,
-						createdAt: 100,
-						expireAt: 200,
+						createdAt: (new Date(cert.valid_from)).toISOString(),
+						expiresAt: (new Date(cert.valid_from)).toISOString(),
 						issuer: {
 							...cert.issuer,
 						},
@@ -393,7 +399,7 @@ describe('http command', () => {
 				testId: 'test',
 			};
 
-			const stream = new Stream(response);
+			const stream = new Stream(response, '1.1.1.1');
 			const mockHttpCmd = (): Request => stream as never;
 
 			const http = new HttpCommand(mockHttpCmd);
@@ -439,6 +445,7 @@ describe('http command', () => {
 			const expectedResult = {
 				measurementId: 'measurement',
 				result: {
+					resolvedAddress: '',
 					headers: {},
 					rawHeaders: '',
 					rawBody: '',
@@ -453,7 +460,7 @@ describe('http command', () => {
 				testId: 'test',
 			};
 
-			const stream = new Stream(response);
+			const stream = new Stream(response, '');
 
 			const mockHttpCmd = (): Request => stream as never;
 

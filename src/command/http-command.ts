@@ -28,6 +28,7 @@ export type Timings = {
 };
 
 const getInitialResult = () => ({
+	resolvedAddress: '',
 	tls: {},
 	error: '',
 	headers: {},
@@ -106,6 +107,8 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		let result = getInitialResult();
 
 		const respond = (resolve: () => void) => {
+			result.resolvedAddress = stream.ip ?? '';
+
 			const timings = (stream.timings ?? {}) as Timings;
 			if (!timings['end']) {
 				timings['end'] = Date.now();
@@ -125,6 +128,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				testId,
 				measurementId,
 				result: {
+					resolvedAddress: result.resolvedAddress,
 					headers: result.headers,
 					rawHeaders: result.rawHeaders,
 					rawBody: result.rawBody,
@@ -218,8 +222,10 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			result.tls = {
 				authorized: rSocket.authorized,
 				...(rSocket.authorizationError ? {error: rSocket.authorizationError} : {}),
-				createdAt: cert.valid_from,
-				expireAt: cert.valid_to,
+				...(cert.valid_from && cert.valid_to ? {
+					createdAt: (new Date(cert.valid_from)).toISOString(),
+					expiresAt: (new Date(cert.valid_to)).toISOString(),
+				} : {}),
 				issuer: {...cert.issuer},
 				subject: {
 					...cert.subject,
