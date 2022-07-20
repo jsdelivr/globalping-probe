@@ -1,4 +1,8 @@
 import type {TLSSocket} from 'node:tls';
+import type {Socket as NetSocket} from 'node:net';
+import http from 'node:http';
+import https from 'node:https';
+import http2 from 'http2-wrapper';
 import Joi from 'joi';
 import _ from 'lodash';
 import got, {Response, Request, HTTPAlias, Progress, DnsLookupIpVersion} from 'got';
@@ -20,6 +24,22 @@ export type HttpOptions = {
 		port?: number;
 		headers?: Record<string, string>;
 	};
+};
+
+type Cert = {
+	authorized: boolean;
+	authorizationError?: Error;
+	valid_to: string;
+	valid_from: string;
+	issuer: {
+		C: string;
+		O: string;
+		CN: string;
+	};
+	subject: {
+		CN: string;
+	};
+	subjectaltname: string;
 };
 
 export type Timings = {
@@ -85,6 +105,11 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 		context: {
 			downloadLimit: 10_000,
 		},
+		agent: {
+			http: http.globalAgent,
+			https: new https.Agent({maxCachedSessions: 0}),
+			http2: new http2.Agent({maxCachedTlsSessions: 1}),
+		},
 	};
 
 	return got.stream(url, options_);
@@ -105,6 +130,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		const stream = this.cmd(cmdOptions);
 
 		let result = getInitialResult();
+		let cert: Cert | undefined;
 
 		const respond = (resolve: () => void) => {
 			result.resolvedAddress = stream.ip ?? '';
@@ -142,6 +168,21 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			resolve();
 		};
 
+		const captureCert = (socket: TLSSocket): Cert | undefined => ({
+			...socket.getPeerCertificate(),
+			authorized: socket.authorized,
+			authorizationError: socket.authorizationError,
+		});
+
+		// HTTPS cert is not guaranteed to be available after this point
+		const onSocket = (socket: NetSocket | TLSSocket) => {
+			if (isTlsSocket(socket)) {
+				socket.on('secureConnect', () => {
+					cert = captureCert(socket);
+				});
+			}
+		};
+
 		const onData = (data: Buffer) => {
 			result.rawBody += data.toString();
 
@@ -153,9 +194,14 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		};
 
 		const onResponse = (resp: Response) => {
+			// HTTP2 cert only available in the final response
+			if (!cert && isTlsSocket(resp.socket)) {
+				cert = captureCert(resp.socket);
+			}
+
 			result = {
 				...result,
-				...this.parseResponse(resp),
+				...this.parseResponse(resp, cert),
 			};
 		};
 
@@ -179,6 +225,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			stream.on('downloadProgress', onDownloadProgress);
 			stream.on('data', onData);
 			stream.on('response', onResponse);
+			stream.on('socket', onSocket);
 
 			stream.on('error', (error: Error & {code: string}) => {
 				// Skip error mapping on download limit
@@ -197,7 +244,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		await pStream;
 	}
 
-	private parseResponse(resp: Response) {
+	private parseResponse(resp: Response, cert: Cert | undefined) {
 		const result = getInitialResult();
 
 		// Headers
@@ -216,12 +263,10 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			tcp: resp.timings.phases.tcp,
 		};
 
-		const rSocket = resp.socket;
-		if (isTlsSocket(rSocket)) {
-			const cert = rSocket.getPeerCertificate();
+		if (cert) {
 			result.tls = {
-				authorized: rSocket.authorized,
-				...(rSocket.authorizationError ? {error: rSocket.authorizationError} : {}),
+				authorized: cert.authorized,
+				...(cert.authorizationError ? {error: cert.authorizationError} : {}),
 				...(cert.valid_from && cert.valid_to ? {
 					createdAt: (new Date(cert.valid_from)).toISOString(),
 					expiresAt: (new Date(cert.valid_to)).toISOString(),
