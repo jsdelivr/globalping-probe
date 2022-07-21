@@ -2,6 +2,7 @@ import type {Socket} from 'socket.io-client';
 import {scopedLogger} from '../lib/logger.js';
 import type {ProbeLocation} from '../types.js';
 import {hasRequired as hasRequiredDeps} from '../lib/dependencies.js';
+import {getDnsServers} from '../lib/dns.js';
 
 const logger = scopedLogger('api:connect');
 
@@ -13,4 +14,7 @@ export const apiConnectLocationHandler = (socket: Socket) => async (data: ProbeL
 	} else {
 		socket.emit('probe:status:not_ready', {});
 	}
+
+	const dnsList = getDnsServers();
+	socket.emit('probe:dns:update', {list: dnsList});
 };

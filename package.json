@@ -19,6 +19,7 @@
     "private-ip": "^2.3.3",
     "socket.io-client": "^4.5.1",
     "throng": "^5.0.0",
+    "validator": "^13.7.0",
     "winston": "^3.8.1"
   },
   "devDependencies": {
@@ -35,6 +36,7 @@
     "@types/physical-cpu-count": "^2.0.0",
     "@types/sinon": "^10.0.12",
     "@types/throng": "^5.0.4",
+    "@types/validator": "^13.7.4",
     "c8": "^7.11.3",
     "chai": "^4.3.6",
     "husky": "^8.0.1",
