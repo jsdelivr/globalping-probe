@@ -45,7 +45,7 @@ describe('dns lib', () => {
 
 			expect(servers.length).to.equal(2);
 			expect(servers).to.deep.equal([
-				'local',
+				'private',
 				'1.1.1.1',
 			]);
 		});

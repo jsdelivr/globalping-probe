@@ -14,6 +14,6 @@ export const getDnsServers = (getServers: () => string[] = dns.getServers): stri
 	// Hide private ips
 		.map((addr: string) => {
 			const ip = addr.replace(/:\d{1,5}$/, '');
-			return isIpPrivate(ip) ? 'local' : addr;
+			return isIpPrivate(ip) ? 'private' : addr;
 		});
 };
