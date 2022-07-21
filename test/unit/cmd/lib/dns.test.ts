@@ -49,5 +49,20 @@ describe('dns lib', () => {
 				'1.1.1.1',
 			]);
 		});
+
+		it('should mask private ip with port', () => {
+			const input = [
+				'192.168.0.53:53',
+				'1.1.1.1',
+			];
+
+			const servers = getDnsServers(client(input));
+
+			expect(servers.length).to.equal(2);
+			expect(servers).to.deep.equal([
+				'private',
+				'1.1.1.1',
+			]);
+		});
 	});
 });
