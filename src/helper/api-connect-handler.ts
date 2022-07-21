@@ -16,5 +16,5 @@ export const apiConnectLocationHandler = (socket: Socket) => async (data: ProbeL
 	}
 
 	const dnsList = getDnsServers();
-	socket.emit('probe:dns:update', {list: dnsList});
+	socket.emit('probe:dns:update', dnsList);
 };
