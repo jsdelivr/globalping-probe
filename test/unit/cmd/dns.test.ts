@@ -17,9 +17,8 @@ describe('dns command', () => {
 		const options = {
 			type: 'dns' as const,
 			target: 'cdn.jsdelivr.net',
-			query: {
-				trace: true,
-			},
+			trace: true,
+			query: {},
 		};
 
 		const rawOutput = getCmdMock(testCase);
@@ -63,9 +62,9 @@ describe('dns command', () => {
 		const options = {
 			type: 'dns' as const,
 			target: 'google.com',
+			resolver: 'sdsa',
 			query: {
 				type: 'TXT',
-				resolver: 'sdsa',
 			},
 		};
 
@@ -111,9 +110,9 @@ describe('dns command', () => {
 		const options = {
 			type: 'dns' as const,
 			target: 'test.com',
+			trace: true,
 			query: {
 				type: 'A',
-				trace: true,
 			},
 		};
 
