@@ -106,8 +106,8 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 			downloadLimit: 10_000,
 		},
 		agent: {
-			http: http.globalAgent,
-			https: new https.Agent({maxCachedSessions: 0}),
+			http: new http.Agent({keepAlive: false}),
+			https: new https.Agent({maxCachedSessions: 0, keepAlive: false}),
 			http2: new http2.Agent({maxCachedTlsSessions: 1}),
 		},
 	};
