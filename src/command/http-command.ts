@@ -15,13 +15,13 @@ import {dnsLookup, ResolverType} from './handlers/http/dns-resolver.js';
 export type HttpOptions = {
 	type: string;
 	target: string;
+	resolver?: string;
+	protocol: string;
+	port?: number;
 	query: {
-		resolver?: string;
 		method: string;
 		host?: string;
-		protocol: string;
 		path: string;
-		port?: number;
 		headers?: Record<string, string>;
 	};
 };
@@ -65,23 +65,23 @@ const allowedHttpMethods = ['get', 'head'];
 export const httpOptionsSchema = Joi.object<HttpOptions>({
 	type: Joi.string().valid('http').insensitive().required(),
 	target: Joi.alternatives().try(Joi.string().ip(), Joi.string().domain()).required(),
+	resolver: Joi.string().ip(),
+	protocol: Joi.string().valid(...allowedHttpProtocols).insensitive().default('https'),
+	port: Joi.number(),
 	query: Joi.object({
 		method: Joi.string().valid(...allowedHttpMethods).insensitive().default('head'),
-		resolver: Joi.string().ip(),
 		host: Joi.string().domain(),
 		path: Joi.string().optional().default('/'),
-		protocol: Joi.string().valid(...allowedHttpProtocols).insensitive().default('https'),
-		port: Joi.number(),
 		headers: Joi.object().default({}),
 	}).required(),
 });
 
 export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Request => {
-	const protocolPrefix = options.query.protocol === 'http' ? 'http' : 'https';
-	const port = options.query.port ?? options.query.protocol === 'http' ? 80 : 443;
+	const protocolPrefix = options.protocol === 'http' ? 'http' : 'https';
+	const port = options.port ?? options.protocol === 'http' ? 80 : 443;
 	const path = options.query.path.startsWith('/') ? options.query.path : `/${options.query.path}`;
 	const url = `${protocolPrefix}://${options.target}:${port}${path}`;
-	const dnsResolver = callbackify(dnsLookup(options.query.resolver, resolverFn), true);
+	const dnsResolver = callbackify(dnsLookup(options.resolver, resolverFn), true);
 
 	const options_ = {
 		method: options.query.method as HTTPAlias,
@@ -89,7 +89,7 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 		cache: false,
 		dnsLookup: dnsResolver,
 		dnsLookupIpVersion: 4 as DnsLookupIpVersion,
-		http2: options.query.protocol === 'http2',
+		http2: options.protocol === 'http2',
 		timeout: {
 			request: 10_000,
 			response: 10_000,
