@@ -89,9 +89,10 @@ describe('http command', () => {
 				type: 'http',
 				target: 'google.com',
 				protocol: 'http',
-				query: {
+				request: {
 					method: 'get',
 					path: '/400',
+					query: '',
 				},
 			};
 
@@ -123,9 +124,10 @@ describe('http command', () => {
 				type: 'http',
 				target: 'google.com',
 				protocol: 'http',
-				query: {
+				request: {
 					method: 'get',
 					path: '400',
+					query: '',
 				},
 			};
 
@@ -158,9 +160,10 @@ describe('http command', () => {
 				type: 'http',
 				target: 'google.com',
 				protocol: 'http',
-				query: {
+				request: {
 					method: 'get',
 					path: '/',
+					query: '',
 				},
 			};
 
@@ -241,9 +244,10 @@ describe('http command', () => {
 				type: 'http',
 				target: 'google.com',
 				protocol: 'http',
-				query: {
+				request: {
 					method: 'head',
 					path: '/',
+					query: '',
 				},
 			};
 
@@ -316,9 +320,10 @@ describe('http command', () => {
 				type: 'http',
 				target: 'google.com',
 				protocol: 'http',
-				query: {
+				request: {
 					method: 'head',
 					path: '/',
+					query: '',
 				},
 			};
 
@@ -419,9 +424,10 @@ describe('http command', () => {
 				type: 'http',
 				target: 'google.com',
 				protocol: 'http',
-				query: {
+				request: {
 					method: 'get',
 					path: '/',
+					query: '',
 				},
 			};
 

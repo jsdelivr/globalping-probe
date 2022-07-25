@@ -18,7 +18,7 @@ export type HttpOptions = {
 	resolver?: string;
 	protocol: string;
 	port?: number;
-	query: {
+	request: {
 		method: string;
 		host?: string;
 		path: string;
@@ -69,7 +69,7 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 	resolver: Joi.string().ip(),
 	protocol: Joi.string().valid(...allowedHttpProtocols).insensitive().default('https'),
 	port: Joi.number(),
-	query: Joi.object({
+	request: Joi.object({
 		method: Joi.string().valid(...allowedHttpMethods).insensitive().default('head'),
 		host: Joi.string().domain(),
 		path: Joi.string().optional().default('/'),
@@ -81,14 +81,14 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Request => {
 	const protocolPrefix = options.protocol === 'http' ? 'http' : 'https';
 	const port = options.port ?? options.protocol === 'http' ? 80 : 443;
-	const path = `/${options.query.path}`.replace(/^\/\//, '/');
-	const query = options.query.query.length > 0 ? `?${options.query.query}`.replace(/^\?\?/, '?') : '';
+	const path = `/${options.request.path}`.replace(/^\/\//, '/');
+	const query = options.request.query.length > 0 ? `?${options.request.query}`.replace(/^\?\?/, '?') : '';
 	const url = `${protocolPrefix}://${options.target}:${port}${path}${query}`;
 
 	const dnsResolver = callbackify(dnsLookup(options.resolver, resolverFn), true);
 
 	const options_ = {
-		method: options.query.method as HTTPAlias,
+		method: options.request.method as HTTPAlias,
 		followRedirect: false,
 		cache: false,
 		dnsLookup: dnsResolver,
@@ -100,9 +100,9 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 		},
 		https: {rejectUnauthorized: false},
 		headers: {
-			...options.query.headers,
+			...options.request.headers,
 			'User-Agent': 'globalping probe (https://github.com/jsdelivr/globalping)',
-			host: options.query.host ?? options.target,
+			host: options.request.host ?? options.target,
 		},
 		setHost: false,
 		throwHttpErrors: false,
@@ -150,7 +150,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				download: timings.phases['download'] ?? Number(timings['end']) - Number(timings['response']),
 			};
 
-			const rawOutput = options.query.method === 'head'
+			const rawOutput = options.request.method === 'head'
 				? `HTTP/${result.httpVersion} ${result.statusCode}\n` + result.curlHeaders
 				: result.rawBody;
 
