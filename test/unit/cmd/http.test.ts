@@ -264,6 +264,47 @@ describe('http command', () => {
 				test: 'abc',
 			});
 
+		nock('http://google.com')
+			.get('/200?abc=def')
+			.times(1)
+			.reply(200, '200 Ok', {
+				test: 'abc',
+			});
+
+		it('should respond with 200 (query string match)', async () => {
+			const options = {
+				type: 'http',
+				target: 'google.com',
+				protocol: 'http',
+				request: {
+					method: 'get',
+					path: '/200',
+					query: 'abc=def',
+				},
+			};
+
+			const expectedResult = {
+				measurementId: 'measurement',
+				result: {
+					headers: {
+						test: 'abc',
+					},
+					rawHeaders: 'test: abc',
+					rawBody: '200 Ok',
+					rawOutput: '200 Ok',
+					statusCode: 200,
+				},
+				testId: 'test',
+			};
+
+			const http = new HttpCommand(httpCmd);
+			await http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
+			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
+		});
 		it('should respond with 400', async () => {
 			const options = {
 				type: 'http',
