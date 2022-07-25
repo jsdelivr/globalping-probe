@@ -20,7 +20,7 @@ type DnsOptions = {
 	port?: number;
 	resolver?: string;
 	trace?: boolean;
-	query: {
+	request: {
 		type?: string;
 	};
 };
@@ -37,7 +37,7 @@ const dnsOptionsSchema = Joi.object<DnsOptions>({
 	protocol: Joi.string().valid(...allowedProtocols).optional().default('udp'),
 	port: Joi.number().optional().default('53'),
 	trace: Joi.boolean().optional(),
-	query: Joi.object({
+	request: Joi.object({
 		type: Joi.string().valid(...allowedTypes).optional().default('A'),
 	}),
 });
@@ -50,7 +50,7 @@ export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
 	const args = [
 		options.target,
 		resolverArg,
-		['-t', options.query.type],
+		['-t', options.request.type],
 		['-p', options.port],
 		'-4',
 		'+timeout=3',
