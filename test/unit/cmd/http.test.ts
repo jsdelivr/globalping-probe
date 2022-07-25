@@ -7,6 +7,7 @@ import {Socket} from 'socket.io-client';
 import {
 	HttpCommand,
 	httpCmd,
+	urlBuilder,
 } from '../../../src/command/http-command.js';
 import type {Timings} from '../../../src/command/http-command.js';
 
@@ -74,6 +75,185 @@ describe('http command', () => {
 
 	beforeEach(() => {
 		sandbox.reset();
+	});
+
+	describe('url builder', () => {
+		describe('prefix', () => {
+			it('should set http:// prefix (HTTP)', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'http',
+					request: {
+						method: 'get',
+						path: '/',
+						query: '',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('http://google.com:80/');
+			});
+
+			it('should set https:// prefix (HTTPS)', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'https',
+					request: {
+						method: 'get',
+						path: '/',
+						query: '',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('https://google.com:443/');
+			});
+
+			it('should set https:// prefix (HTTP2)', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'http2',
+					request: {
+						method: 'get',
+						path: '/',
+						query: '',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('https://google.com:443/');
+			});
+		});
+
+		describe('port', () => {
+			it('should set custom port', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'http',
+					port: 1212,
+					request: {
+						method: 'get',
+						path: '/',
+						query: '',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('http://google.com:1212/');
+			});
+
+			it('should set default HTTP port', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'http',
+					request: {
+						method: 'get',
+						path: '/',
+						query: '',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('http://google.com:80/');
+			});
+			it('should set default HTTPS port', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'https',
+					request: {
+						method: 'get',
+						path: '/',
+						query: '',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('https://google.com:443/');
+			});
+		});
+
+		describe('path', () => {
+			it('should prefix pathname with (/) sign', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'http',
+					request: {
+						method: 'get',
+						path: 'abc',
+						query: '',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('http://google.com:80/abc');
+			});
+
+			it('should append pathname at the end of url (prevent double /)', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'http',
+					request: {
+						method: 'get',
+						path: '/abc',
+						query: '',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('http://google.com:80/abc');
+			});
+		});
+		describe('query', () => {
+			it('should prefix query with (?) sign', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'http',
+					request: {
+						method: 'get',
+						path: '/',
+						query: 'abc=def',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('http://google.com:80/?abc=def');
+			});
+
+			it('should append query at the end of url (prevent double ?)', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'http',
+					request: {
+						method: 'get',
+						path: '/',
+						query: '?abc=def',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('http://google.com:80/?abc=def');
+			});
+		});
 	});
 
 	describe('with httCmd', () => {

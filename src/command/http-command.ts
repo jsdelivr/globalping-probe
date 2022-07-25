@@ -78,13 +78,18 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 	}).required(),
 });
 
-export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Request => {
+export const urlBuilder = (options: HttpOptions): string => {
 	const protocolPrefix = options.protocol === 'http' ? 'http' : 'https';
-	const port = options.port ?? options.protocol === 'http' ? 80 : 443;
+	const port = options.port ? options.port : (options.protocol === 'http' ? 80 : 443);
 	const path = `/${options.request.path}`.replace(/^\/\//, '/');
 	const query = options.request.query.length > 0 ? `?${options.request.query}`.replace(/^\?\?/, '?') : '';
 	const url = `${protocolPrefix}://${options.target}:${port}${path}${query}`;
 
+	return url;
+};
+
+export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Request => {
+	const url = urlBuilder(options);
 	const dnsResolver = callbackify(dnsLookup(options.resolver, resolverFn), true);
 
 	const options_ = {
