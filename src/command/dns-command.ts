@@ -16,12 +16,12 @@ import type {DnsParseLoopResponse} from './handlers/dig/shared.js';
 type DnsOptions = {
 	type: 'dns';
 	target: string;
+	protocol?: string;
+	port?: number;
+	resolver?: string;
+	trace?: boolean;
 	query: {
 		type?: string;
-		resolver?: string;
-		protocol?: string;
-		port?: number;
-		trace?: boolean;
 	};
 };
 
@@ -33,25 +33,25 @@ const allowedProtocols = ['UDP', 'TCP'];
 const dnsOptionsSchema = Joi.object<DnsOptions>({
 	type: Joi.string().valid('dns'),
 	target: Joi.string(),
+	resolver: Joi.string().optional(),
+	protocol: Joi.string().valid(...allowedProtocols).optional().default('udp'),
+	port: Joi.number().optional().default('53'),
+	trace: Joi.boolean().optional(),
 	query: Joi.object({
 		type: Joi.string().valid(...allowedTypes).optional().default('A'),
-		resolver: Joi.string().optional(),
-		protocol: Joi.string().valid(...allowedProtocols).optional().default('udp'),
-		port: Joi.number().optional().default('53'),
-		trace: Joi.boolean().optional(),
 	}),
 });
 
 export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
-	const protocolArg = options.query.protocol?.toLowerCase() === 'tcp' ? '+tcp' : [];
-	const resolverArg = options.query.resolver ? `@${options.query.resolver}` : [];
-	const traceArg = options.query.trace ? '+trace' : [];
+	const protocolArg = options.protocol?.toLowerCase() === 'tcp' ? '+tcp' : [];
+	const resolverArg = options.resolver ? `@${options.resolver}` : [];
+	const traceArg = options.trace ? '+trace' : [];
 
 	const args = [
 		options.target,
 		resolverArg,
 		['-t', options.query.type],
-		['-p', options.query.port],
+		['-p', options.port],
 		'-4',
 		'+timeout=3',
 		'+tries=2',
@@ -79,7 +79,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		const cmd = this.cmd(cmdOptions);
 		cmd.stdout?.on('data', (data: Buffer) => {
 			pStdout.push(data.toString());
-			const isValid = this.validatePartialResult(pStdout.join(''), cmd, Boolean(options.query.trace));
+			const isValid = this.validatePartialResult(pStdout.join(''), cmd, Boolean(options.trace));
 
 			if (!isValid) {
 				isResultPrivate = !isValid;
@@ -97,7 +97,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 
 		try {
 			const cmdResult = await cmd;
-			const parsedResult = this.parse(cmdResult.stdout, Boolean(options.query.trace));
+			const parsedResult = this.parse(cmdResult.stdout, Boolean(options.trace));
 
 			if (parsedResult instanceof Error) {
 				throw parsedResult;
