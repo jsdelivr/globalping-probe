@@ -155,9 +155,9 @@ describe('http command', () => {
 			const options = {
 				type: 'http',
 				target: 'google.com',
+				protocol: 'http',
 				query: {
 					method: 'get',
-					protocol: 'http',
 					path: '/400',
 				},
 			};
