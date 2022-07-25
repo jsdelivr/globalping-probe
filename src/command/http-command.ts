@@ -22,6 +22,7 @@ export type HttpOptions = {
 		method: string;
 		host?: string;
 		path: string;
+		query: string;
 		headers?: Record<string, string>;
 	};
 };
@@ -72,6 +73,7 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 		method: Joi.string().valid(...allowedHttpMethods).insensitive().default('head'),
 		host: Joi.string().domain(),
 		path: Joi.string().optional().default('/'),
+		query: Joi.string().allow('').optional().default(''),
 		headers: Joi.object().default({}),
 	}).required(),
 });
@@ -79,8 +81,10 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Request => {
 	const protocolPrefix = options.protocol === 'http' ? 'http' : 'https';
 	const port = options.port ?? options.protocol === 'http' ? 80 : 443;
-	const path = options.query.path.startsWith('/') ? options.query.path : `/${options.query.path}`;
-	const url = `${protocolPrefix}://${options.target}:${port}${path}`;
+	const path = `/${options.query.path}`.replace(/^\/\//, '/');
+	const query = options.query.query.length > 0 ? `?${options.query.query}`.replace(/^\?\?/, '?') : '';
+	const url = `${protocolPrefix}://${options.target}:${port}${path}${query}`;
+
 	const dnsResolver = callbackify(dnsLookup(options.resolver, resolverFn), true);
 
 	const options_ = {
