@@ -106,8 +106,11 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 			downloadLimit: 10_000,
 		},
 		agent: {
-			http: http.globalAgent,
-			https: new https.Agent({maxCachedSessions: 0}),
+			// Ensure Connection: closed header is used - https://nodejs.org/api/http.html#new-agentoptions
+			// eslint-disable-next-line unicorn/prefer-number-properties
+			http: new http.Agent({keepAlive: false, maxSockets: Infinity}),
+			// eslint-disable-next-line unicorn/prefer-number-properties
+			https: new https.Agent({maxCachedSessions: 0, keepAlive: false, maxSockets: Infinity}),
 			http2: new http2.Agent({maxCachedTlsSessions: 1}),
 		},
 	};
