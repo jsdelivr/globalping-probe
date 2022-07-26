@@ -379,9 +379,10 @@ describe('http command', () => {
 				type: 'http',
 				target: 'google.com',
 				protocol: 'http',
-				query: {
+				request: {
 					method: 'get',
 					path: '/400',
+					query: '',
 				},
 			};
 
