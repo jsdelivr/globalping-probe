@@ -30,7 +30,6 @@ const handlersMap = new Map<string, CommandInterface<any>>();
 
 const fatalConnectErrors = [
 	'failed to collect probe metadata',
-	'invalid probe version',
 	'vpn detected',
 ];
 
@@ -89,6 +88,12 @@ function connect() {
 				// At that stage socket.connected=false already,
 				// but we want to stop reconnections for fatal errors
 				socket.disconnect();
+			}
+
+			if (error.message.startsWith('invalid probe version')) {
+				logger.debug('Detected outdated probe. Restarting.');
+				/* eslint-disable-next-line unicorn/no-process-exit */
+				process.exit();
 			}
 		})
 		.on('api:error', apiErrorHandler)
