@@ -18,10 +18,11 @@ export type HttpOptions = {
 	resolver?: string;
 	protocol: string;
 	port?: number;
-	query: {
+	request: {
 		method: string;
 		host?: string;
 		path: string;
+		query: string;
 		headers?: Record<string, string>;
 	};
 };
@@ -68,23 +69,31 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 	resolver: Joi.string().ip(),
 	protocol: Joi.string().valid(...allowedHttpProtocols).insensitive().default('https'),
 	port: Joi.number(),
-	query: Joi.object({
+	request: Joi.object({
 		method: Joi.string().valid(...allowedHttpMethods).insensitive().default('head'),
 		host: Joi.string().domain(),
 		path: Joi.string().optional().default('/'),
+		query: Joi.string().allow('').optional().default(''),
 		headers: Joi.object().default({}),
 	}).required(),
 });
 
-export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Request => {
+export const urlBuilder = (options: HttpOptions): string => {
 	const protocolPrefix = options.protocol === 'http' ? 'http' : 'https';
-	const port = options.port ?? options.protocol === 'http' ? 80 : 443;
-	const path = options.query.path.startsWith('/') ? options.query.path : `/${options.query.path}`;
-	const url = `${protocolPrefix}://${options.target}:${port}${path}`;
+	const port = options.port ? options.port : (options.protocol === 'http' ? 80 : 443);
+	const path = `/${options.request.path}`.replace(/^\/\//, '/');
+	const query = options.request.query.length > 0 ? `?${options.request.query}`.replace(/^\?\?/, '?') : '';
+	const url = `${protocolPrefix}://${options.target}:${port}${path}${query}`;
+
+	return url;
+};
+
+export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Request => {
+	const url = urlBuilder(options);
 	const dnsResolver = callbackify(dnsLookup(options.resolver, resolverFn), true);
 
 	const options_ = {
-		method: options.query.method as HTTPAlias,
+		method: options.request.method as HTTPAlias,
 		followRedirect: false,
 		cache: false,
 		dnsLookup: dnsResolver,
@@ -96,9 +105,9 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 		},
 		https: {rejectUnauthorized: false},
 		headers: {
-			...options.query.headers,
+			...options.request.headers,
 			'User-Agent': 'globalping probe (https://github.com/jsdelivr/globalping)',
-			host: options.query.host ?? options.target,
+			host: options.request.host ?? options.target,
 		},
 		setHost: false,
 		throwHttpErrors: false,
@@ -149,7 +158,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				download: timings.phases['download'] ?? Number(timings['end']) - Number(timings['response']),
 			};
 
-			const rawOutput = options.query.method === 'head'
+			const rawOutput = options.request.method === 'head'
 				? `HTTP/${result.httpVersion} ${result.statusCode}\n` + result.curlHeaders
 				: result.rawBody;
 

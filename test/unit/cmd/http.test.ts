@@ -7,6 +7,7 @@ import {Socket} from 'socket.io-client';
 import {
 	HttpCommand,
 	httpCmd,
+	urlBuilder,
 } from '../../../src/command/http-command.js';
 import type {Timings} from '../../../src/command/http-command.js';
 
@@ -76,6 +77,185 @@ describe('http command', () => {
 		sandbox.reset();
 	});
 
+	describe('url builder', () => {
+		describe('prefix', () => {
+			it('should set http:// prefix (HTTP)', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'http',
+					request: {
+						method: 'get',
+						path: '/',
+						query: '',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('http://google.com:80/');
+			});
+
+			it('should set https:// prefix (HTTPS)', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'https',
+					request: {
+						method: 'get',
+						path: '/',
+						query: '',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('https://google.com:443/');
+			});
+
+			it('should set https:// prefix (HTTP2)', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'http2',
+					request: {
+						method: 'get',
+						path: '/',
+						query: '',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('https://google.com:443/');
+			});
+		});
+
+		describe('port', () => {
+			it('should set custom port', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'http',
+					port: 1212,
+					request: {
+						method: 'get',
+						path: '/',
+						query: '',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('http://google.com:1212/');
+			});
+
+			it('should set default HTTP port', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'http',
+					request: {
+						method: 'get',
+						path: '/',
+						query: '',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('http://google.com:80/');
+			});
+			it('should set default HTTPS port', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'https',
+					request: {
+						method: 'get',
+						path: '/',
+						query: '',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('https://google.com:443/');
+			});
+		});
+
+		describe('path', () => {
+			it('should prefix pathname with (/) sign', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'http',
+					request: {
+						method: 'get',
+						path: 'abc',
+						query: '',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('http://google.com:80/abc');
+			});
+
+			it('should append pathname at the end of url (prevent double /)', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'http',
+					request: {
+						method: 'get',
+						path: '/abc',
+						query: '',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('http://google.com:80/abc');
+			});
+		});
+		describe('query', () => {
+			it('should prefix query with (?) sign', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'http',
+					request: {
+						method: 'get',
+						path: '/',
+						query: 'abc=def',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('http://google.com:80/?abc=def');
+			});
+
+			it('should append query at the end of url (prevent double ?)', () => {
+				const options = {
+					type: 'http',
+					target: 'google.com',
+					protocol: 'http',
+					request: {
+						method: 'get',
+						path: '/',
+						query: '?abc=def',
+					},
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('http://google.com:80/?abc=def');
+			});
+		});
+	});
+
 	describe('with httCmd', () => {
 		nock('http://google.com')
 			.get('/400')
@@ -84,14 +264,56 @@ describe('http command', () => {
 				test: 'abc',
 			});
 
+		nock('http://google.com')
+			.get('/200?abc=def')
+			.times(1)
+			.reply(200, '200 Ok', {
+				test: 'abc',
+			});
+
+		it('should respond with 200 (query string match)', async () => {
+			const options = {
+				type: 'http',
+				target: 'google.com',
+				protocol: 'http',
+				request: {
+					method: 'get',
+					path: '/200',
+					query: 'abc=def',
+				},
+			};
+
+			const expectedResult = {
+				measurementId: 'measurement',
+				result: {
+					headers: {
+						test: 'abc',
+					},
+					rawHeaders: 'test: abc',
+					rawBody: '200 Ok',
+					rawOutput: '200 Ok',
+					statusCode: 200,
+				},
+				testId: 'test',
+			};
+
+			const http = new HttpCommand(httpCmd);
+			await http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
+			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
+		});
 		it('should respond with 400', async () => {
 			const options = {
 				type: 'http',
 				target: 'google.com',
 				protocol: 'http',
-				query: {
+				request: {
 					method: 'get',
 					path: '/400',
+					query: '',
 				},
 			};
 
@@ -123,9 +345,10 @@ describe('http command', () => {
 				type: 'http',
 				target: 'google.com',
 				protocol: 'http',
-				query: {
+				request: {
 					method: 'get',
 					path: '400',
+					query: '',
 				},
 			};
 
@@ -156,9 +379,10 @@ describe('http command', () => {
 				type: 'http',
 				target: 'google.com',
 				protocol: 'http',
-				query: {
+				request: {
 					method: 'get',
 					path: '/400',
+					query: '',
 				},
 			};
 
@@ -175,9 +399,10 @@ describe('http command', () => {
 				type: 'http',
 				target: 'google.com',
 				protocol: 'http',
-				query: {
+				request: {
 					method: 'get',
 					path: '/',
+					query: '',
 				},
 			};
 
@@ -258,9 +483,10 @@ describe('http command', () => {
 				type: 'http',
 				target: 'google.com',
 				protocol: 'http',
-				query: {
+				request: {
 					method: 'head',
 					path: '/',
+					query: '',
 				},
 			};
 
@@ -333,9 +559,10 @@ describe('http command', () => {
 				type: 'http',
 				target: 'google.com',
 				protocol: 'http',
-				query: {
+				request: {
 					method: 'head',
 					path: '/',
+					query: '',
 				},
 			};
 
@@ -436,9 +663,10 @@ describe('http command', () => {
 				type: 'http',
 				target: 'google.com',
 				protocol: 'http',
-				query: {
+				request: {
 					method: 'get',
 					path: '/',
+					query: '',
 				},
 			};
 
