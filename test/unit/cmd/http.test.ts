@@ -259,7 +259,7 @@ describe('http command', () => {
 	describe('with httCmd', () => {
 		nock('http://google.com')
 			.get('/400')
-			.times(2)
+			.times(3)
 			.reply(400, '400 Bad Request', {
 				test: 'abc',
 			});
@@ -372,6 +372,23 @@ describe('http command', () => {
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
+		});
+
+		it('should ensure keepAlive header is disabled', () => {
+			const options = {
+				type: 'http',
+				target: 'google.com',
+				protocol: 'http',
+				query: {
+					method: 'get',
+					path: '/400',
+				},
+			};
+
+			const returnedOptions = httpCmd(options).options;
+
+			expect(returnedOptions.agent.http).to.have.property('keepAlive', false);
+			expect(returnedOptions.agent.https).to.have.property('keepAlive', false);
 		});
 	});
 
