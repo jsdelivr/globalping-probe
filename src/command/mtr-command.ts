@@ -32,24 +32,30 @@ const mtrOptionsSchema = Joi.object<MtrOptions>({
 
 export const getResultInitState = () => ({hops: [], rawOutput: '', data: []});
 
-export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
-	const protocolArg = options.protocol === 'icmp' ? null : options.protocol;
+export const argBuilder = (options: MtrOptions): string[] => {
+	const intervalArg = ['--interval', process.env['NODE_ENV'] === 'development' ? '1' : '0.5'];
+	const protocolArg = options.protocol === 'icmp' ? [] : `--${options.protocol}`;
 	const packetsArg = String(options.packets);
 
 	const args = [
 		// Ipv4
 		'-4',
-		['--interval', process.env['NODE_ENV'] === 'development' ? '1' : '0.5'],
+		intervalArg,
 		['--gracetime', '3'],
 		['--max-ttl', '30'],
 		['--timeout', '15'],
-		protocolArg ? `--${protocolArg}` : [],
+		protocolArg,
 		['-c', packetsArg],
 		['--raw'],
 		['-P', `${options.port}`],
 		options.target,
 	].flat();
 
+	return args;
+};
+
+export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
+	const args = argBuilder(options);
 	return execa('unbuffer', ['mtr', ...args]);
 };
 
