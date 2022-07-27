@@ -9,7 +9,7 @@ import {InvalidOptionsException} from './exception/invalid-options-exception.js'
 const reHost = /(\S+)\s+\((?:((?:\d+\.){3}\d+)|([\da-fA-F:]))\)/;
 const reRtt = /(\d+(?:\.?\d+)?)\s+ms(!\S*)?/g;
 
-type TraceOptions = {
+export type TraceOptions = {
 	type: string;
 	target: string;
 	protocol: string;
@@ -29,7 +29,9 @@ const traceOptionsSchema = Joi.object<TraceOptions>({
 	port: Joi.number(),
 });
 
-export const traceCmd = (options: TraceOptions): ExecaChildProcess => {
+export const argBuilder = (options: TraceOptions): string[] => {
+	const port = options.protocol === 'TCP' ? ['-p', `${options.port}`] : [];
+
 	const args = [
 		// Ipv4
 		'-4',
@@ -44,11 +46,16 @@ export const traceCmd = (options: TraceOptions): ExecaChildProcess => {
 		// Protocol
 		`--${options.protocol.toLowerCase()}`,
 		// Port
-		options.protocol === 'TCP' ? ['-p', `${options.port}`] : [],
+		port,
 		// Target
 		options.target,
 	].flat();
 
+	return args;
+};
+
+export const traceCmd = (options: TraceOptions): ExecaChildProcess => {
+	const args = argBuilder(options);
 	return execa('unbuffer', ['traceroute', ...args]);
 };
 
