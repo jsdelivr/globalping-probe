@@ -17,6 +17,11 @@ const QUERY_TIME_REG_EXP = /in\s+(\d+)\s+ms/;
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const TraceDigParser = {
+	rewrite(rawOutput: string): string {
+		const output = rawOutput;
+		return output;
+	},
+
 	parse(rawOutput: string): Error | DnsParseResponse {
 		const lines = rawOutput.split(NEW_LINE_REG_EXP);
 

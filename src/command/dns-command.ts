@@ -89,7 +89,9 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			socket.emit('probe:measurement:progress', {
 				testId,
 				measurementId,
-				result: {rawOutput: data.toString()},
+				result: {
+					rawOutput: this.rewrite(data.toString(), Boolean(options.trace)),
+				},
 			});
 		});
 
@@ -97,7 +99,8 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 
 		try {
 			const cmdResult = await cmd;
-			const parsedResult = this.parse(cmdResult.stdout, Boolean(options.trace));
+			const output = this.rewrite(cmdResult.stdout, Boolean(options.trace));
+			const parsedResult = this.parse(output, Boolean(options.trace));
 
 			if (parsedResult instanceof Error) {
 				throw parsedResult;
@@ -158,6 +161,14 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		}
 
 		return false;
+	}
+
+	private rewrite(rawOutput: string, trace: boolean): string {
+		if (!trace) {
+			return ClassicDigParser.rewrite(rawOutput);
+		}
+
+		return TraceDigParser.rewrite(rawOutput);
 	}
 
 	private parse(rawOutput: string, trace: boolean): Error | DnsParseResponseClassic | DnsParseResponseTrace {
