@@ -128,4 +128,50 @@ describe('dns command', () => {
 		expect(mockSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
 		expect(mockSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
 	});
+
+	it('should return connection refused error - dns-connection-refused-error-linux', async () => {
+		const testCase = 'dns-connection-refused-error-linux';
+		const options = {
+			type: 'dns' as const,
+			target: 'test.com',
+			query: {
+				type: 'A',
+			},
+		};
+
+		const rawOutput = getCmdMock(testCase);
+		const expectedResult = getCmdMockResult(testCase);
+
+		const mockCmd = Promise.resolve({stdout: rawOutput});
+
+		const dns = new DnsCommand((): any => mockCmd);
+		await dns.run(mockSocket as any, 'measurement', 'test', options);
+
+		expect(mockSocket.emit.calledOnce).to.be.true;
+		expect(mockSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+		expect(mockSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
+	});
+
+	it('should return connection refused error - dns-connection-refused-private-error-linux (PRIVATE IP)', async () => {
+		const testCase = 'dns-connection-refused-private-error-linux';
+		const options = {
+			type: 'dns' as const,
+			target: 'test.com',
+			query: {
+				type: 'A',
+			},
+		};
+
+		const rawOutput = getCmdMock(testCase);
+		const expectedResult = getCmdMockResult(testCase);
+
+		const mockCmd = Promise.resolve({stdout: rawOutput});
+
+		const dns = new DnsCommand((): any => mockCmd);
+		await dns.run(mockSocket as any, 'measurement', 'test', options);
+
+		expect(mockSocket.emit.calledOnce).to.be.true;
+		expect(mockSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+		expect(mockSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
+	});
 });

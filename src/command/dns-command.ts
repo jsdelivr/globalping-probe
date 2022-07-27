@@ -4,6 +4,7 @@ import type {Socket} from 'socket.io-client';
 import {execa, ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
 import {isExecaError} from '../helper/execa-error-check.js';
+import {InternalError} from '../lib/internal-error.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
 import ClassicDigParser from './handlers/dig/classic.js';
@@ -79,7 +80,8 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		const cmd = this.cmd(cmdOptions);
 		cmd.stdout?.on('data', (data: Buffer) => {
 			pStdout.push(data.toString());
-			const isValid = this.validatePartialResult(pStdout.join(''), cmd, Boolean(options.trace));
+			const output = this.rewrite(data.toString(), Boolean(options.trace));
+			const isValid = this.validatePartialResult(output, cmd, Boolean(options.trace));
 
 			if (!isValid) {
 				isResultPrivate = !isValid;
@@ -90,7 +92,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 				testId,
 				measurementId,
 				result: {
-					rawOutput: this.rewrite(data.toString(), Boolean(options.trace)),
+					rawOutput: output,
 				},
 			});
 		});
@@ -110,7 +112,14 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 
 			result = parsedResult;
 		} catch (error: unknown) {
-			const output = isExecaError(error) ? error.stdout.toString() : '';
+			let output = '';
+
+			if (error instanceof InternalError && error.expose) {
+				output = error.message;
+			} else if (isExecaError(error)) {
+				output = this.rewrite(error.stdout.toString(), Boolean(options.trace));
+			}
+
 			result = {
 				rawOutput: output,
 			};
@@ -130,13 +139,13 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 	}
 
 	private validatePartialResult(rawOutput: string, cmd: ExecaChildProcess, trace: boolean): boolean {
-		const parseResult = this.parse(rawOutput, trace);
+		const result = this.parse(rawOutput, trace);
 
-		if (parseResult instanceof Error) {
-			return false;
+		if (result instanceof Error) {
+			return result.message.includes('connection refused');
 		}
 
-		if (this.hasResultPrivateIp(parseResult)) {
+		if (this.hasResultPrivateIp(result)) {
 			cmd.kill('SIGKILL');
 			return false;
 		}

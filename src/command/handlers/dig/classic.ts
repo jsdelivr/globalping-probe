@@ -1,4 +1,5 @@
 import isIpPrivate from 'private-ip';
+import {InternalError} from '../../../lib/internal-error.js';
 import {
 	SECTION_REG_EXP,
 	NEW_LINE_REG_EXP,
@@ -23,7 +24,7 @@ export const ClassicDigParser = {
 		const lines = rawOutput.split('\n');
 
 		let output = rawOutput;
-		if (lines.length === 1) {
+		if (lines.length <= 2) {
 			const ipMatchList = rawOutput.match(IPV4_REG_EXP) ?? [];
 
 			for (const ip of ipMatchList) {
@@ -53,10 +54,10 @@ export const ClassicDigParser = {
 			const message = lines[lines.length - 2];
 
 			if (!message || message.length < 2) {
-				return new Error(rawOutput);
+				return new InternalError(rawOutput, true);
 			}
 
-			return new Error(message);
+			return new InternalError(message, true);
 		}
 
 		return {
