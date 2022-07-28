@@ -43,7 +43,7 @@
     "mocha": "^10.0.0",
     "semantic-release": "^19.0.3",
     "sinon": "^14.0.0",
-    "ts-node": "^10.8.2",
+    "tsx": "^3.8.0",
     "typescript": "^4.7.4",
     "xo": "^0.50.0"
   },
@@ -51,10 +51,15 @@
     "build": "tsc && npm run copy:sh",
     "copy:sh": "cp -r ./src/sh ./dist/sh",
     "init:hooks": "husky install",
+    "dev": "NODE_ENV=development node ./dist/index.js",
+    "dev:tsx": "NODE_ENV=development tsx ./src/index.ts",
+    "watch": "tsx watch src/index.ts",
     "lint": "xo",
     "lint:fix": "xo --fix",
+    "lint:types": "tsc --noEmit",
     "clean": "rimraf coverage",
-    "test": "mocha",
+    "test": "npm run lint:types npm run test:src",
+    "test:src": "mocha",
     "test:coverage": "npm run clean && c8 mocha"
   },
   "xo": {
