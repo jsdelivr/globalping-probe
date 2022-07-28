@@ -3,7 +3,10 @@ import * as sinon from 'sinon';
 import {expect} from 'chai';
 import {Socket} from 'socket.io-client';
 import {getCmdMock, getCmdMockResult, execaPromise} from '../../utils.js';
-import {MtrCommand} from '../../../src/command/mtr-command.js';
+import {
+	MtrCommand,
+	argBuilder,
+} from '../../../src/command/mtr-command.js';
 import type {MtrOptions} from '../../../src/command/mtr-command.js';
 
 const dnsResolver = (isPrivate: boolean) => async (_addr: string, type = 'A') => {
@@ -19,60 +22,176 @@ const dnsResolver = (isPrivate: boolean) => async (_addr: string, type = 'A') =>
 };
 
 describe('mtr command executor', () => {
-	const sandbox = sinon.createSandbox();
-	const mockedSocket = sandbox.createStubInstance(Socket);
+	describe('argument builder', () => {
+		it('should include all arguments', () => {
+			const options = {
+				type: 'mtr' as MtrOptions['type'],
+				target: 'google.com',
+				protocol: 'tcp',
+				port: 80,
+				packets: 1,
+			};
 
-	beforeEach(() => {
-		sandbox.reset();
-	});
+			const args = argBuilder(options);
+			const joinedArgs = args.join(' ');
 
-	it('should run and parse mtr', async () => {
-		const testCase = 'mtr-success-raw';
-		const options = {
-			type: 'mtr' as const,
-			target: 'jsdelivr.net',
-		};
-
-		const expectedResult = getCmdMockResult(testCase);
-		const rawOutput = getCmdMock(testCase);
-		const rawOutputLines = rawOutput.split('\n');
-
-		const stream = new PassThrough();
-		const promise = new Promise(resolve => {
-			for (const [i, line] of rawOutputLines.entries()) {
-				setTimeout(() => stream.emit('data', Buffer.from(line), i));
-			}
-
-			// Simulate raw output - wait until all lines are emitted.
-			setTimeout(() => {
-				resolve(rawOutput);
-			}, rawOutputLines.length);
+			expect(args[0]).to.equal('-4');
+			expect(args[args.length - 1]).to.equal(options.target);
+			expect(args).to.contain('--tcp');
+			expect(args).to.contain('--raw');
+			expect(joinedArgs).to.contain('--interval 0.5');
+			expect(joinedArgs).to.contain('--gracetime 3');
+			expect(joinedArgs).to.contain('--max-ttl 30');
+			expect(joinedArgs).to.contain(`-c ${options.packets}`);
+			expect(joinedArgs).to.contain(`-P ${options.port}`);
 		});
 
-		const mockCmd = execaPromise({stdout: stream}, promise);
+		describe('protocol', () => {
+			it('should set --udp flag (UDP)', () => {
+				const options = {
+					type: 'mtr' as MtrOptions['type'],
+					target: 'google.com',
+					protocol: 'udp',
+					port: 80,
+					packets: 1,
+				};
 
-		const mtr = new MtrCommand((): any => mockCmd, dnsResolver(false));
-		await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+				const args = argBuilder(options);
 
-		expect(mockedSocket.emit.args.length).to.equal(rawOutputLines.length + 1); // Progress + result
-		expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
-		expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
+				expect(args).to.contain('--udp');
+			});
+
+			it('should set --udp flag (TCP)', () => {
+				const options = {
+					type: 'mtr' as MtrOptions['type'],
+					target: 'google.com',
+					protocol: 'tcp',
+					port: 80,
+					packets: 1,
+				};
+
+				const args = argBuilder(options);
+
+				expect(args).to.contain('--tcp');
+			});
+
+			it('should not set any protocol flag (ICMP)', () => {
+				const options = {
+					type: 'mtr' as MtrOptions['type'],
+					target: 'google.com',
+					protocol: 'icmp',
+					port: 80,
+					packets: 1,
+				};
+
+				const args = argBuilder(options);
+
+				expect(args).to.not.contain('icmp');
+			});
+		});
+
+		describe('port', () => {
+			it('should set -p 90 flag', () => {
+				const options = {
+					type: 'mtr' as MtrOptions['type'],
+					target: 'google.com',
+					protocol: 'icmp',
+					port: 90,
+					packets: 1,
+				};
+
+				const args = argBuilder(options);
+				expect(args.join(' ')).to.contain('-P 90');
+			});
+		});
+
+		describe('packets', () => {
+			it('should set -c 2 flag', () => {
+				const options = {
+					type: 'mtr' as MtrOptions['type'],
+					target: 'google.com',
+					protocol: 'icmp',
+					port: 90,
+					packets: 2,
+				};
+
+				const args = argBuilder(options);
+
+				expect(args.join(' ')).to.contain('-c 2');
+			});
+
+			it('should set -c 5 flag', () => {
+				const options = {
+					type: 'mtr' as MtrOptions['type'],
+					target: 'google.com',
+					protocol: 'icmp',
+					port: 90,
+					packets: 5,
+				};
+
+				const args = argBuilder(options);
+
+				expect(args.join(' ')).to.contain('-c 5');
+			});
+		});
 	});
 
-	it('should detect Private IP and stop', async () => {
-		const testCase = 'mtr-fail-private-ip';
-		const options = {
-			type: 'mtr' as const,
-			target: 'jsdelivr.net',
-		};
+	describe('command handler', () => {
+		const sandbox = sinon.createSandbox();
+		const mockedSocket = sandbox.createStubInstance(Socket);
 
-		const expectedResult = getCmdMockResult(testCase);
-		const mockCmd = execaPromise({stdout: new PassThrough(), kill: () => null}, Promise.resolve());
+		beforeEach(() => {
+			sandbox.reset();
+		});
 
-		const mtr = new MtrCommand((): any => mockCmd, dnsResolver(true));
-		await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+		it('should run and parse mtr', async () => {
+			const testCase = 'mtr-success-raw';
+			const options = {
+				type: 'mtr' as const,
+				target: 'jsdelivr.net',
+			};
 
-		expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
-		expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
+			const expectedResult = getCmdMockResult(testCase);
+			const rawOutput = getCmdMock(testCase);
+			const rawOutputLines = rawOutput.split('\n');
+
+			const stream = new PassThrough();
+			const promise = new Promise(resolve => {
+				for (const [i, line] of rawOutputLines.entries()) {
+					setTimeout(() => stream.emit('data', Buffer.from(line), i));
+				}
+
+				// Simulate raw output - wait until all lines are emitted.
+				setTimeout(() => {
+					resolve(rawOutput);
+				}, rawOutputLines.length);
+			});
+
+			const mockCmd = execaPromise({stdout: stream}, promise);
+
+			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(false));
+			await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+
+			expect(mockedSocket.emit.args.length).to.equal(rawOutputLines.length + 1); // Progress + result
+			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
+		});
+
+		it('should detect Private IP and stop', async () => {
+			const testCase = 'mtr-fail-private-ip';
+			const options = {
+				type: 'mtr' as const,
+				target: 'jsdelivr.net',
+			};
+
+			const expectedResult = getCmdMockResult(testCase);
+			const mockCmd = execaPromise({stdout: new PassThrough(), kill: () => null}, Promise.resolve());
+
+			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(true));
+			await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+
+			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
+		});
 	});
 });
