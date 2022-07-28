@@ -138,7 +138,6 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 				resolvedHostname: result.resolvedHostname ?? '',
 				hops: result.hops,
 				rawOutput: result.rawOutput,
-				data: result.data,
 			},
 		});
 	}
