@@ -4,7 +4,7 @@
   ],
   "node-option": [
     "experimental-specifier-resolution=node",
-    "loader=ts-node/esm"
+    "loader=tsx"
   ],
   "spec": [
     "test/**/*.test.ts"
