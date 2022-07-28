@@ -14,7 +14,7 @@ import type {DnsParseResponse as DnsParseResponseTrace} from './handlers/dig/tra
 import {isDnsSection} from './handlers/dig/shared.js';
 import type {DnsParseLoopResponse} from './handlers/dig/shared.js';
 
-type DnsOptions = {
+export type DnsOptions = {
 	type: 'dns';
 	target: string;
 	protocol?: string;
@@ -43,7 +43,7 @@ const dnsOptionsSchema = Joi.object<DnsOptions>({
 	}),
 });
 
-export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
+export const argBuilder = (options: DnsOptions): string[] => {
 	const protocolArg = options.protocol?.toLowerCase() === 'tcp' ? '+tcp' : [];
 	const resolverArg = options.resolver ? `@${options.resolver}` : [];
 	const traceArg = options.trace ? '+trace' : [];
@@ -52,7 +52,7 @@ export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
 		options.target,
 		resolverArg,
 		['-t', options.query.type],
-		['-p', options.port],
+		['-p', String(options.port)],
 		'-4',
 		'+timeout=3',
 		'+tries=2',
@@ -61,6 +61,11 @@ export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
 		protocolArg,
 	].flat() as string[];
 
+	return args;
+};
+
+export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
+	const args = argBuilder(options);
 	return execa('unbuffer', ['dig', ...args]);
 };
 

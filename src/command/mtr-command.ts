@@ -1,4 +1,3 @@
-import process from 'node:process';
 import dns from 'node:dns';
 import {isIP} from 'is-ip';
 import isIpPrivate from 'private-ip';
@@ -7,6 +6,7 @@ import type {Socket} from 'socket.io-client';
 import {execa, ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
 import {isExecaError} from '../helper/execa-error-check.js';
+import {getConfValue} from '../lib/config.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
 import type {HopType, ResultType} from './handlers/mtr/types.js';
@@ -32,24 +32,30 @@ const mtrOptionsSchema = Joi.object<MtrOptions>({
 
 export const getResultInitState = () => ({hops: [], rawOutput: '', data: []});
 
-export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
-	const protocolArg = options.protocol === 'icmp' ? null : options.protocol;
+export const argBuilder = (options: MtrOptions): string[] => {
+	const intervalArg = ['--interval', String(getConfValue('commands.mtr.interval'))];
+	const protocolArg = options.protocol === 'icmp' ? [] : `--${options.protocol}`;
 	const packetsArg = String(options.packets);
 
 	const args = [
 		// Ipv4
 		'-4',
-		['--interval', process.env['NODE_ENV'] === 'development' ? '1' : '0.5'],
+		intervalArg,
 		['--gracetime', '3'],
 		['--max-ttl', '30'],
 		['--timeout', '15'],
-		protocolArg ? `--${protocolArg}` : [],
+		protocolArg,
 		['-c', packetsArg],
 		['--raw'],
 		['-P', `${options.port}`],
 		options.target,
 	].flat();
 
+	return args;
+};
+
+export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
+	const args = argBuilder(options);
 	return execa('unbuffer', ['mtr', ...args]);
 };
 

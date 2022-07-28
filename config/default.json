@@ -11,5 +11,11 @@
     "interval": 300,
     "maxDeviation": 86400,
     "maxUptime": 604800
+  },
+  "commands": {
+    "mtr": {
+      "interval": 0.5
+    }
   }
+
 }

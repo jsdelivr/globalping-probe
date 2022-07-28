@@ -6,7 +6,7 @@ import type {CommandInterface} from '../types.js';
 import {isExecaError} from '../helper/execa-error-check.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
-type PingOptions = {
+export type PingOptions = {
 	type: 'ping';
 	target: string;
 	packets: number;
@@ -37,7 +37,7 @@ type PingParseOutput = {
 	stats?: PingStats;
 };
 
-export const pingCmd = (options: PingOptions): ExecaChildProcess => {
+export const argBuilder = (options: PingOptions): string[] => {
 	const args = [
 		'-4',
 		['-c', options.packets.toString()],
@@ -46,6 +46,11 @@ export const pingCmd = (options: PingOptions): ExecaChildProcess => {
 		options.target,
 	].flat();
 
+	return args;
+};
+
+export const pingCmd = (options: PingOptions): ExecaChildProcess => {
+	const args = argBuilder(options);
 	return execa('unbuffer', ['ping', ...args]);
 };
 
