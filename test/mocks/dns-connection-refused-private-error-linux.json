@@ -1,0 +1,7 @@
+{
+  "testId": "test",
+  "measurementId": "measurement",
+  "result": {
+    "rawOutput": ";; Connection to x.x.x.x#212(x.x.x.x) for abc.com failed: connection refused."
+  }
+}

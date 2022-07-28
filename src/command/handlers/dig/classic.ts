@@ -1,6 +1,9 @@
+import isIpPrivate from 'private-ip';
+import {InternalError} from '../../../lib/internal-error.js';
 import {
 	SECTION_REG_EXP,
 	NEW_LINE_REG_EXP,
+	IPV4_REG_EXP,
 	SharedDigParser,
 	DnsSection,
 	DnsParseLoopResponse,
@@ -17,6 +20,33 @@ const RESOLVER_REG_EXP = /SERVER:.*\((.*?)\)/g;
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const ClassicDigParser = {
+	rewrite(rawOutput: string): string {
+		const lines = rawOutput.split('\n');
+
+		let output = rawOutput;
+		if (lines.length <= 2) {
+			const ipMatchList = rawOutput.match(IPV4_REG_EXP) ?? [];
+
+			for (const ip of ipMatchList) {
+				if (isIpPrivate(ip) && IPV4_REG_EXP.test(ip)) {
+					output = output.replaceAll(ip, 'x.x.x.x');
+				}
+			}
+		} else {
+			output = lines.map(line => {
+				const serverMatch = ClassicDigParser.getResolverServer(line);
+
+				if (serverMatch && isIpPrivate(serverMatch)) {
+					return line.replaceAll(serverMatch, 'x.x.x.x');
+				}
+
+				return line;
+			}).join('\n');
+		}
+
+		return output;
+	},
+
 	parse(rawOutput: string): Error | DnsParseResponse {
 		const lines = rawOutput.split(NEW_LINE_REG_EXP);
 
@@ -24,10 +54,10 @@ export const ClassicDigParser = {
 			const message = lines[lines.length - 2];
 
 			if (!message || message.length < 2) {
-				return new Error(rawOutput);
+				return new InternalError(rawOutput, true);
 			}
 
-			return new Error(message);
+			return new InternalError(message, true);
 		}
 
 		return {
@@ -53,7 +83,7 @@ export const ClassicDigParser = {
 
 			const serverMatch = ClassicDigParser.getResolverServer(line);
 			if (serverMatch) {
-				result.resolver = serverMatch;
+				result.resolver = serverMatch === 'x.x.x.x' ? 'private' : serverMatch;
 			}
 
 			let sectionChanged = false;
