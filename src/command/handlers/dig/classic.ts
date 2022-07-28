@@ -83,7 +83,7 @@ export const ClassicDigParser = {
 
 			const serverMatch = ClassicDigParser.getResolverServer(line);
 			if (serverMatch) {
-				result.resolver = serverMatch;
+				result.resolver = serverMatch === 'x.x.x.x' ? 'private' : serverMatch;
 			}
 
 			let sectionChanged = false;

@@ -68,7 +68,7 @@
 			}
 		],
 		"timings": { "total": 0 },
-		"resolver": "x.x.x.x",
+		"resolver": "private",
 		"rawOutput": ";; Truncated, retrying in TCP mode.\n\n; <<>> DiG 9.16.1-Ubuntu <<>> google.com -t TXT -p 53 -4 +timeout=3 +tries=2 +nocookie\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 29356\n;; flags: qr rd ra; QUERY: 1, ANSWER: 9, AUTHORITY: 0, ADDITIONAL: 0\n\n;; QUESTION SECTION:\n;google.com.\t\t\tIN\tTXT\n\n;; ANSWER SECTION:\ngoogle.com.\t\t3600\tIN\tTXT\t\"v=spf1 include:_spf.google.com ~all\"\ngoogle.com.\t\t3600\tIN\tTXT\t\"facebook-domain-verification=22rm551cu4k0ab0bxsw536tlds4h95\"\ngoogle.com.\t\t3600\tIN\tTXT\t\"apple-domain-verification=30afIBcvSuDV2PLX\"\ngoogle.com.\t\t3600\tIN\tTXT\t\"docusign=05958488-4752-4ef2-95eb-aa7ba8a3bd0e\"\ngoogle.com.\t\t3600\tIN\tTXT\t\"docusign=1b0a6754-49b1-4db5-8540-d2c12664b289\"\ngoogle.com.\t\t3600\tIN\tTXT\t\"MS=E4A68B9AB2BB9670BCE15412F62916164C0B20BB\"\ngoogle.com.\t\t3600\tIN\tTXT\t\"google-site-verification=TV9-DBe4R80X4v0M4U_bd_J9cpOJM0nikft0jAgjmsQ\"\ngoogle.com.\t\t3600\tIN\tTXT\t\"google-site-verification=wD8N7i1JTNTkezJ49swvWW48f8_9xveREV4oB-0Hf5o\"\ngoogle.com.\t\t3600\tIN\tTXT\t\"globalsign-smime-dv=CDYX+XFHUw2wml6/Gb8+59BsH31KzUr6c1l2BPvqKX8=\"\n\n;; Query time: 0 msec\n;; SERVER: x.x.x.x#53(x.x.x.x)\n;; WHEN: Mon Apr 04 12:25:44 UTC 2022\n;; MSG SIZE  rcvd: 614\n"
 	}
 }
