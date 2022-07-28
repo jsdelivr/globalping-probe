@@ -5,7 +5,6 @@
       "resolvedAddress": "",
       "resolvedHostname": "",
       "hops": [],
-      "data": [],
       "rawOutput": "Private IP ranges are not allowed"
     }
 }
