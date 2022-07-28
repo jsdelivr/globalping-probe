@@ -47,11 +47,12 @@ export const argBuilder = (options: DnsOptions): string[] => {
 	const protocolArg = options.protocol?.toLowerCase() === 'tcp' ? '+tcp' : [];
 	const resolverArg = options.resolver ? `@${options.resolver}` : [];
 	const traceArg = options.trace ? '+trace' : [];
+	const queryArg = options.query.type === 'PTR' ? '-x' : ['-t', options.query.type];
 
 	const args = [
 		options.target,
 		resolverArg,
-		['-t', options.query.type],
+		queryArg,
 		['-p', String(options.port)],
 		'-4',
 		'+timeout=3',

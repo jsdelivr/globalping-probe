@@ -114,7 +114,23 @@ describe('dns command', () => {
 				const args = argBuilder(options);
 				expect(args.join(' ')).to.contain('-t A');
 			});
+
+			it('should set -x PTR flag', () => {
+				const options = {
+					type: 'dns' as DnsOptions['type'],
+					target: '8.8.8.8',
+					resolver: '1.1.1.1',
+					port: 90,
+					query: {
+						type: 'PTR',
+					},
+				};
+
+				const args = argBuilder(options);
+				expect(args.join(' ')).to.contain('-x');
+			});
 		});
+
 		describe('protocol', () => {
 			it('should not add the flag (UDP)', () => {
 				const options = {
