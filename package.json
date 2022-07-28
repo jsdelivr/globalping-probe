@@ -58,7 +58,7 @@
     "lint:fix": "xo --fix",
     "lint:types": "tsc --noEmit",
     "clean": "rimraf coverage",
-    "test": "npm run lint:types npm run test:src",
+    "test": "npm run lint:types && npm run test:src",
     "test:src": "mocha",
     "test:coverage": "npm run clean && c8 mocha"
   },
