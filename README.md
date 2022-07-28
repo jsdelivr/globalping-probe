@@ -74,3 +74,13 @@ The package includes everything you need to get started:
 Learn more about it on our website!
 
 [Hardware probe firmware](https://github.com/jsdelivr/globalping-hwprobe)
+
+## Development
+
+You need to have the [main API](https://github.com/jsdelivr/globalping#development) running before running this!
+
+1. Clone repository.
+2. `npm install && npm run init:hooks`
+3. `npm run build && npm run dev` or `npm run dev:tsx` (no type-checking)
+
+If you run into any errors due to failed scripts, try installing the [unbuffer package](https://command-not-found.com/unbuffer) on your local machine. WSL users will need to do this.
