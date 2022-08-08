@@ -451,7 +451,7 @@ describe('http command', () => {
 					rawBody: 'abcdefghi',
 					rawOutput: 'abcdefghi',
 					statusCode: 200,
-					tls: {},
+					tls: null,
 				},
 				testId: 'test',
 			};
@@ -531,10 +531,10 @@ describe('http command', () => {
 						download: 10,
 					},
 					rawHeaders: 'test: abc',
-					rawBody: '',
+					rawBody: null,
 					rawOutput: 'HTTP/1.1 200\ntest: abc',
 					statusCode: 200,
-					tls: {},
+					tls: null,
 				},
 				testId: 'test',
 			};
@@ -636,7 +636,7 @@ describe('http command', () => {
 						},
 					},
 					rawHeaders: ':status: 200\ntest: abc',
-					rawBody: '',
+					rawBody: null,
 					rawOutput: 'HTTP/2 200\ntest: abc',
 					statusCode: 200,
 				},
@@ -690,17 +690,17 @@ describe('http command', () => {
 			const expectedResult = {
 				measurementId: 'measurement',
 				result: {
-					resolvedAddress: '',
+					resolvedAddress: null,
 					headers: {},
-					rawHeaders: '',
-					rawBody: '',
+					rawHeaders: null,
+					rawBody: null,
 					timings: {
 						download: 10,
 						total: 11,
 					},
-					tls: {},
+					tls: null,
 					rawOutput: 'ENODATA google.com - abc',
-					statusCode: 0,
+					statusCode: null,
 				},
 				testId: 'test',
 			};
