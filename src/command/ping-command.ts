@@ -131,7 +131,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		socket.emit('probe:measurement:result', {
 			testId,
 			measurementId,
-			result: this.toJson(result),
+			result: this.toJsonOutput(result),
 		});
 	}
 
@@ -146,7 +146,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		return true;
 	}
 
-	private toJson(input: PingParseOutput): PingParseOutputJson {
+	private toJsonOutput(input: PingParseOutput): PingParseOutputJson {
 		return {
 			rawOutput: input.rawOutput,
 			resolvedAddress: input.resolvedAddress ? input.resolvedAddress : null,

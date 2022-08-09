@@ -189,7 +189,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			socket.emit('probe:measurement:result', {
 				testId,
 				measurementId,
-				result: this.toJson({
+				result: this.toJsonOutput({
 					resolvedAddress: result.resolvedAddress,
 					headers: result.headers,
 					rawHeaders: result.rawHeaders,
@@ -280,7 +280,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		await pStream;
 	}
 
-	private toJson(input: Output): OutputJson {
+	private toJsonOutput(input: Output): OutputJson {
 		return {
 			resolvedAddress: input.resolvedAddress || null,
 			headers: input.headers,

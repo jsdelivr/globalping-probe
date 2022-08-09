@@ -113,7 +113,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		try {
 			const cmdResult = await cmd;
 			const parseResult = this.parse(cmdResult.stdout.trim());
-			result = this.toJson(parseResult);
+			result = this.toJsonOutput(parseResult);
 
 			if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
 				isResultPrivate = true;
@@ -177,7 +177,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		};
 	}
 
-	private toJson(input: ParsedOutput): ParsedOutputJson {
+	private toJsonOutput(input: ParsedOutput): ParsedOutputJson {
 		return {
 			rawOutput: input.rawOutput,
 			resolvedAddress: input.resolvedAddress === '*' || !input.resolvedAddress ? null : input.resolvedAddress,

@@ -129,7 +129,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		socket.emit('probe:measurement:result', {
 			testId,
 			measurementId,
-			result: this.toJson(result),
+			result: this.toJsonOutput(result),
 		});
 	}
 
@@ -201,7 +201,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		return result.flat()[0];
 	}
 
-	private toJson(input: ResultType): ResultTypeJson {
+	private toJsonOutput(input: ResultType): ResultTypeJson {
 		return {
 			rawOutput: input.rawOutput,
 			resolvedAddress: input.resolvedAddress ? input.resolvedAddress : null,
