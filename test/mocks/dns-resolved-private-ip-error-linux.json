@@ -2,6 +2,11 @@
   "testId": "test",
   "measurementId": "measurement",
   "result": {
-    "rawOutput": "Private IP ranges are not allowed"
+    "rawOutput": "Private IP ranges are not allowed",
+    "answers": [],
+    "resolver": null,
+    "timings": {
+      "total": 0
+    }
   }
 }

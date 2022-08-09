@@ -7,9 +7,14 @@ import {
 	SharedDigParser,
 	DnsSection,
 	DnsParseLoopResponse,
+	DnsParseLoopResponseJson,
 } from './shared.js';
 
 export type DnsParseResponse = DnsParseLoopResponse & {
+	rawOutput: string;
+};
+
+export type DnsParseResponseJson = DnsParseLoopResponseJson & {
 	rawOutput: string;
 };
 
@@ -63,6 +68,17 @@ export const ClassicDigParser = {
 		return {
 			...ClassicDigParser.parseLoop(lines),
 			rawOutput,
+		};
+	},
+
+	toJsonOutput(input: DnsParseResponse): DnsParseResponseJson {
+		return {
+			rawOutput: input.rawOutput,
+			answers: input.answers ?? [],
+			timings: {
+				...(input.timings ?? {total: 0}),
+			},
+			resolver: input.resolver ?? null,
 		};
 	},
 

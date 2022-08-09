@@ -3,10 +3,16 @@ import {
 	SharedDigParser,
 	DnsSection,
 	DnsParseLoopResponse,
+	DnsParseLoopResponseJson,
 } from './shared.js';
 
 export type DnsParseResponse = {
 	hops: DnsParseLoopResponse[];
+	rawOutput: string;
+};
+
+export type DnsParseResponseJson = {
+	hops: DnsParseLoopResponseJson[];
 	rawOutput: string;
 };
 
@@ -84,6 +90,19 @@ export const TraceDigParser = {
 		return groups.map(item => ({
 			...item, answers: item.answers,
 		}));
+	},
+
+	toJsonOutput(input: DnsParseResponse): DnsParseResponseJson {
+		return {
+			rawOutput: input.rawOutput,
+			hops: input.hops.map(h => ({
+				answers: h.answers ?? [],
+				timings: {
+					...(h.timings ?? {total: 0}),
+				},
+				resolver: h.resolver ?? null,
+			})),
+		};
 	},
 };
 
