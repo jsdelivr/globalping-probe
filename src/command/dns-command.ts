@@ -8,9 +8,15 @@ import {InternalError} from '../lib/internal-error.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
 import ClassicDigParser from './handlers/dig/classic.js';
-import type {DnsParseResponse as DnsParseResponseClassic} from './handlers/dig/classic.js';
+import type {
+	DnsParseResponse as DnsParseResponseClassic,
+	DnsParseResponseJson as DnsParseResponseClassicJson,
+} from './handlers/dig/classic.js';
 import TraceDigParser from './handlers/dig/trace.js';
-import type {DnsParseResponse as DnsParseResponseTrace} from './handlers/dig/trace.js';
+import type {
+	DnsParseResponse as DnsParseResponseTrace,
+	DnsParseResponseJson as DnsParseResponseTraceJson,
+} from './handlers/dig/trace.js';
 import {isDnsSection} from './handlers/dig/shared.js';
 import type {DnsParseLoopResponse} from './handlers/dig/shared.js';
 
@@ -140,7 +146,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		socket.emit('probe:measurement:result', {
 			testId,
 			measurementId,
-			result,
+			result: this.toJsonOutput(result as DnsParseResponseClassic | DnsParseResponseTrace, Boolean(options.trace)),
 		});
 	}
 
@@ -157,6 +163,20 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		}
 
 		return true;
+	}
+
+	private toJsonOutput(
+		input: DnsParseResponseClassic | DnsParseResponseTrace,
+		trace: boolean,
+	): DnsParseResponseClassicJson | DnsParseResponseTraceJson {
+		if (trace) {
+			return TraceDigParser.toJsonOutput({
+				...input,
+				hops: (input.hops || []) as DnsParseResponseTrace['hops'],
+			} as DnsParseResponseTrace);
+		}
+
+		return ClassicDigParser.toJsonOutput(input as DnsParseResponseClassic);
 	}
 
 	private hasResultPrivateIp(result: DnsParseResponseClassic | DnsParseResponseTrace): boolean {

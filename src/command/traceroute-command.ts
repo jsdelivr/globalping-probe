@@ -17,10 +17,30 @@ export type TraceOptions = {
 };
 
 type ParsedLine = {
-	resolvedAddress: string;
-	resolvedHostname: string;
+	resolvedAddress?: string;
+	resolvedHostname?: string;
 	timings: Array<{rtt: number}>;
 };
+
+type ParsedOutput = {
+	rawOutput: string;
+	resolvedAddress?: string;
+	resolvedHostname?: string;
+	hops?: ParsedLine[];
+};
+
+/* eslint-disable @typescript-eslint/ban-types */
+type ParsedOutputJson = {
+	rawOutput: string;
+	resolvedAddress: string | null;
+	resolvedHostname: string | null;
+	hops: Array<{
+		resolvedAddress: string | null;
+		resolvedHostname: string | null;
+		timings: Array<{rtt: number}>;
+	}>;
+};
+/* eslint-enable @typescript-eslint/ban-types */
 
 const traceOptionsSchema = Joi.object<TraceOptions>({
 	type: Joi.string().valid('traceroute'),
@@ -93,7 +113,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		try {
 			const cmdResult = await cmd;
 			const parseResult = this.parse(cmdResult.stdout.trim());
-			result = parseResult;
+			result = this.toJsonOutput(parseResult);
 
 			if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
 				isResultPrivate = true;
@@ -129,12 +149,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		return true;
 	}
 
-	private parse(rawOutput: string): {
-		rawOutput: string;
-		resolvedAddress?: string;
-		resolvedHostname?: string;
-		hops?: ParsedLine[];
-	} {
+	private parse(rawOutput: string): ParsedOutput {
 		const lines = rawOutput.split('\n');
 
 		if (lines.length === 0) {
@@ -159,6 +174,19 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 			resolvedHostname: String(hostname),
 			hops,
 			rawOutput,
+		};
+	}
+
+	private toJsonOutput(input: ParsedOutput): ParsedOutputJson {
+		return {
+			rawOutput: input.rawOutput,
+			resolvedAddress: input.resolvedAddress === '*' || !input.resolvedAddress ? null : input.resolvedAddress,
+			resolvedHostname: input.resolvedHostname === '*' || !input.resolvedHostname ? null : input.resolvedHostname,
+			hops: input.hops ? input.hops.map((h: ParsedLine) => ({
+				...h,
+				resolvedAddress: h.resolvedAddress === '*' || !h.resolvedAddress ? null : h.resolvedAddress,
+				resolvedHostname: h.resolvedHostname === '*' || !h.resolvedHostname ? null : h.resolvedHostname,
+			})) : [],
 		};
 	}
 

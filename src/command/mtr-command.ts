@@ -9,7 +9,11 @@ import {isExecaError} from '../helper/execa-error-check.js';
 import {getConfValue} from '../lib/config.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
-import type {HopType, ResultType} from './handlers/mtr/types.js';
+import type {
+	HopType,
+	ResultType,
+	ResultTypeJson,
+} from './handlers/mtr/types.js';
 import MtrParser, {NEW_LINE_REG_EXP} from './handlers/mtr/parser.js';
 
 export type MtrOptions = {
@@ -70,7 +74,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		}
 
 		const cmd = this.cmd(cmdOptions);
-		const result: ResultType = getResultInitState();
+		let result: ResultType = getResultInitState();
 
 		cmd.stdout?.on('data', async (data: Buffer) => {
 			if (data.toString().startsWith('mtr:')) {
@@ -86,9 +90,9 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 				result.data.push(line);
 			}
 
-			const [hops, rawOutput] = await this.parseResult(result.hops, result.data, false);
-			result.hops = hops;
-			result.rawOutput = rawOutput;
+			const output = await this.parseResult(result.hops, result.data, false);
+			result.hops = output.hops;
+			result.rawOutput = output.rawOutput;
 
 			socket.emit('probe:measurement:progress', {
 				testId,
@@ -103,16 +107,8 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 		try {
 			await this.checkForPrivateDest(options.target);
-
 			await cmd;
-			const [hops, rawOutput] = await this.parseResult(result.hops, result.data, true);
-			const lastHop = [...hops].reverse().find(h => h.resolvedAddress && !h.duplicate);
-
-			result.resolvedAddress = String(lastHop?.resolvedAddress);
-			result.resolvedHostname = String(lastHop?.resolvedHostname);
-
-			result.hops = hops;
-			result.rawOutput = rawOutput;
+			result = await this.parseResult(result.hops, result.data, true);
 		} catch (error: unknown) {
 			if (isExecaError(error)) {
 				result.rawOutput = error.stdout.toString();
@@ -133,22 +129,25 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		socket.emit('probe:measurement:result', {
 			testId,
 			measurementId,
-			result: {
-				resolvedAddress: result.resolvedAddress ?? '',
-				resolvedHostname: result.resolvedHostname ?? '',
-				hops: result.hops,
-				rawOutput: result.rawOutput,
-			},
+			result: this.toJsonOutput(result),
 		});
 	}
 
-	async parseResult(hops: HopType[], data: string[], isFinalResult = false): Promise<[HopType[], string]> {
+	async parseResult(hops: HopType[], data: string[], isFinalResult = false): Promise<ResultType> {
 		let nHops = this.parseData(hops, data.join('\n'), isFinalResult);
 		const asnList = await this.queryAsn(nHops);
 		nHops = this.populateAsn(nHops, asnList);
 		const rawOutput = MtrParser.outputBuilder(nHops);
 
-		return [nHops, rawOutput];
+		const lastHop = [...nHops].reverse().find(h => h.resolvedAddress && !h.duplicate);
+
+		return {
+			rawOutput,
+			hops: nHops,
+			data,
+			resolvedAddress: String(lastHop?.resolvedAddress),
+			resolvedHostname: String(lastHop?.resolvedHostname),
+		};
 	}
 
 	parseData(hops: HopType[], data: string, isFinalResult?: boolean): HopType[] {
@@ -200,6 +199,20 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		const result = await this.dnsResolver(`${reversedAddr}.origin.asn.cymru.com`, 'TXT');
 
 		return result.flat()[0];
+	}
+
+	private toJsonOutput(input: ResultType): ResultTypeJson {
+		return {
+			rawOutput: input.rawOutput,
+			resolvedAddress: input.resolvedAddress ? input.resolvedAddress : null,
+			resolvedHostname: input.resolvedHostname ? input.resolvedHostname : null,
+			hops: input.hops ? input.hops.map(h => ({
+				...h,
+				duplicate: Boolean(h.duplicate),
+				resolvedAddress: h.resolvedAddress ? h.resolvedAddress : null,
+				resolvedHostname: h.resolvedHostname ? h.resolvedHostname : null,
+			})) : [],
+		};
 	}
 
 	private async checkForPrivateDest(target: string): Promise<void> {

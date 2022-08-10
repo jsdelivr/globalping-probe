@@ -53,7 +53,10 @@
                     {"rtt": null},
                     {"rtt": null}
                 ],
-                "asn": []
+                "asn": [],
+                "resolvedAddress": null,
+                "resolvedHostname": null,
+                "duplicate": false
             },
             {
                 "stats":
@@ -106,7 +109,10 @@
                     {"rtt": null},
                     {"rtt": null}
                 ],
-                "asn": []
+                "asn": [],
+                "resolvedAddress": null,
+                "resolvedHostname": null,
+                "duplicate": false
             },
             {
                 "stats":

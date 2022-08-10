@@ -22,6 +22,7 @@ type PingStats = {
 	min?: number;
 	max?: number;
 	avg?: number;
+	loss?: number;
 };
 
 type PingTimings = {
@@ -36,6 +37,24 @@ type PingParseOutput = {
 	timings?: PingTimings[];
 	stats?: PingStats;
 };
+
+/* eslint-disable @typescript-eslint/ban-types */
+type PingParseOutputJson = {
+	rawOutput: string;
+	resolvedHostname: string | null;
+	resolvedAddress: string | null;
+	timings: Array<{
+		ttl: number;
+		rtt: number;
+	}>;
+	stats: {
+		min: number | null;
+		max: number | null;
+		avg: number | null;
+		loss: number | null;
+	};
+};
+/* eslint-enable @typescript-eslint/ban-types */
 
 export const argBuilder = (options: PingOptions): string[] => {
 	const args = [
@@ -84,7 +103,9 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			});
 		});
 
-		let result = {};
+		let result = {
+			rawOutput: '',
+		};
 
 		try {
 			const cmdResult = await cmd;
@@ -110,7 +131,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		socket.emit('probe:measurement:result', {
 			testId,
 			measurementId,
-			result,
+			result: this.toJsonOutput(result),
 		});
 	}
 
@@ -123,6 +144,21 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		}
 
 		return true;
+	}
+
+	private toJsonOutput(input: PingParseOutput): PingParseOutputJson {
+		return {
+			rawOutput: input.rawOutput,
+			resolvedAddress: input.resolvedAddress ? input.resolvedAddress : null,
+			resolvedHostname: input.resolvedHostname ? input.resolvedHostname : null,
+			timings: input.timings ?? [],
+			stats: {
+				min: input.stats?.min ?? null,
+				max: input.stats?.max ?? null,
+				avg: input.stats?.avg ?? null,
+				loss: input.stats?.loss ?? null,
+			},
+		};
 	}
 
 	private parse(rawOutput: string): PingParseOutput {

@@ -33,3 +33,19 @@ export type ResultType = {
 	data: string[];
 	rawOutput: string;
 };
+
+/* eslint-disable @typescript-eslint/ban-types */
+export type ResultTypeJson = {
+	resolvedAddress: string | null;
+	resolvedHostname: string | null;
+	hops: Array<{
+		asn: number[];
+		resolvedAddress: string | null;
+		resolvedHostname: string | null;
+		stats: HopStatsType;
+		timings: HopTimesType[];
+		duplicate: boolean;
+	}>;
+	rawOutput: string;
+};
+/* eslint-enable @typescript-eslint/ban-types */

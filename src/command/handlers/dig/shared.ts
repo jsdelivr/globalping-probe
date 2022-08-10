@@ -20,6 +20,14 @@ export type DnsParseLoopResponse = {
 	resolver: string;
 };
 
+/* eslint-disable @typescript-eslint/ban-types */
+export type DnsParseLoopResponseJson = {
+	answers: DnsSection[];
+	timings: {total: number | null};
+	resolver: string | null;
+};
+/* eslint-enable @typescript-eslint/ban-types */
+
 export const isDnsSection = (output: any): output is DnsSection => typeof (output as DnsSection) !== 'undefined';
 
 /* eslint-disable @typescript-eslint/naming-convention */

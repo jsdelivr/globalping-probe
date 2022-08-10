@@ -14,8 +14,8 @@
         ]
       },
       {
-        "resolvedHostname": "*",
-        "resolvedAddress": "*",
+        "resolvedHostname": null,
+        "resolvedAddress": null,
         "timings": []
       },
       {
@@ -27,8 +27,8 @@
         ]
       },
       {
-        "resolvedHostname": "*",
-        "resolvedAddress": "*",
+        "resolvedHostname": null,
+        "resolvedAddress": null,
         "timings": []
       },
       {

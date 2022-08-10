@@ -43,6 +43,30 @@ type Cert = {
 	subjectaltname: string;
 };
 
+type Output = {
+	resolvedAddress: string;
+	headers: Record<string, string>;
+	rawHeaders: string;
+	rawBody: string;
+	statusCode: number;
+	timings: Record<string, number>;
+	tls: Cert | Record<string, unknown>;
+	rawOutput: string;
+};
+
+/* eslint-disable @typescript-eslint/ban-types */
+type OutputJson = {
+	resolvedAddress: string | null;
+	headers: Record<string, string>;
+	rawHeaders: string | null;
+	rawBody: string | null;
+	statusCode: number | null;
+	timings: Record<string, number | null>;
+	tls: Cert | null;
+	rawOutput: string | null;
+};
+/* eslint-enable @typescript-eslint/ban-types */
+
 export type Timings = {
 	[k: string]: number | Record<string, unknown>;
 	phases: Record<string, number>;
@@ -165,7 +189,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			socket.emit('probe:measurement:result', {
 				testId,
 				measurementId,
-				result: {
+				result: this.toJsonOutput({
 					resolvedAddress: result.resolvedAddress,
 					headers: result.headers,
 					rawHeaders: result.rawHeaders,
@@ -174,7 +198,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 					timings: result.timings,
 					tls: result.tls,
 					rawOutput: result.error || rawOutput,
-				},
+				}),
 			});
 
 			resolve();
@@ -256,6 +280,27 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		await pStream;
 	}
 
+	private toJsonOutput(input: Output): OutputJson {
+		return {
+			resolvedAddress: input.resolvedAddress || null,
+			headers: input.headers,
+			rawHeaders: input.rawHeaders || null,
+			rawBody: input.rawBody || null,
+			statusCode: input.statusCode || null,
+			timings: {
+				total: 0,
+				download: 0,
+				firstByte: null,
+				dns: null,
+				tls: null,
+				tcp: null,
+				...input.timings,
+			},
+			tls: Object.keys(input.tls).length > 0 ? input.tls as Cert : null,
+			rawOutput: input.rawOutput,
+		};
+	}
+
 	private parseResponse(resp: Response, cert: Cert | undefined) {
 		const result = getInitialResult();
 
@@ -263,17 +308,19 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		const rawHeaders = _.chunk(resp.rawHeaders, 2).map((g: string[]) => `${String(g[0])}: ${String(g[1])}`);
 		result.rawHeaders = rawHeaders.join('\n');
 		result.curlHeaders = rawHeaders.filter((r: string) => !r.startsWith(':status:')).join('\n');
-		result.headers = resp.headers;
+		result.headers = resp.headers as Record<string, string>;
 
 		result.statusCode = resp.statusCode;
 		result.httpVersion = resp.httpVersion;
 
-		result.timings = {
+		const timings = {
 			firstByte: resp.timings.phases.firstByte,
 			dns: resp.timings.phases.dns,
 			tls: resp.timings.phases.tls,
 			tcp: resp.timings.phases.tcp,
 		};
+
+		result.timings = Object.fromEntries(Object.entries(timings).filter(entry => entry[1])) as Record<string, number>;
 
 		if (cert) {
 			result.tls = {
