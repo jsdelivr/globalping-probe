@@ -61,7 +61,7 @@ type OutputJson = {
 	rawHeaders: string | null;
 	rawBody: string | null;
 	statusCode: number | null;
-	timings: Record<string, number>;
+	timings: Record<string, number | null>;
 	tls: Cert | null;
 	rawOutput: string | null;
 };
@@ -287,7 +287,15 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			rawHeaders: input.rawHeaders || null,
 			rawBody: input.rawBody || null,
 			statusCode: input.statusCode || null,
-			timings: input.timings,
+			timings: {
+				total: 0,
+				download: 0,
+				firstByte: null,
+				dns: null,
+				tls: null,
+				tcp: null,
+				...input.timings,
+			},
 			tls: Object.keys(input.tls).length > 0 ? input.tls as Cert : null,
 			rawOutput: input.rawOutput,
 		};
