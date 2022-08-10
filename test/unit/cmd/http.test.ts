@@ -695,6 +695,10 @@ describe('http command', () => {
 					rawHeaders: null,
 					rawBody: null,
 					timings: {
+						dns: null,
+						firstByte: null,
+						tcp: null,
+						tls: null,
 						download: 10,
 						total: 11,
 					},
