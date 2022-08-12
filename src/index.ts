@@ -16,6 +16,7 @@ import {httpCmd, HttpCommand} from './command/http-command.js';
 import {
 	start as startBenchmark,
 	end as endBenchmark,
+	recordOnBenchmark,
 } from './lib/benchmark/index.js';
 
 import {VERSION} from './constants.js';
@@ -108,6 +109,9 @@ function connect() {
 				return;
 			}
 
+			const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+			recordOnBenchmark({type: 'probe_measurement_request', action: 'start', id: bId});
+
 			const {id: measurementId, measurement} = data;
 			const testId = cryptoRandomString({length: 16, type: 'alphanumeric'});
 
@@ -127,8 +131,11 @@ function connect() {
 					// Todo: maybe we should notify api as well
 					logger.error('failed to run the measurement.', error);
 					worker.jobs.delete(measurementId);
+					recordOnBenchmark({type: 'probe_measurement_request', action: 'end', id: bId});
 				}
 			});
+
+			recordOnBenchmark({type: 'probe_measurement_request', action: 'end', id: bId});
 		});
 
 	process.on('SIGTERM', () => {

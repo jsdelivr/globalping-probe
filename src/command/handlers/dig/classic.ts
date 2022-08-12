@@ -1,5 +1,7 @@
 import isIpPrivate from 'private-ip';
+import cryptoRandomString from 'crypto-random-string';
 import {InternalError} from '../../../lib/internal-error.js';
+import {recordOnBenchmark} from '../../../lib/benchmark/index.js';
 import {
 	SECTION_REG_EXP,
 	NEW_LINE_REG_EXP,
@@ -21,6 +23,9 @@ const RESOLVER_REG_EXP = /SERVER:.*\((.*?)\)/g;
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const ClassicDigParser = {
 	rewrite(rawOutput: string): string {
+		const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+		recordOnBenchmark({type: 'dns_classic_rewrite', action: 'start', id: bId});
+
 		const lines = rawOutput.split('\n');
 
 		let output = rawOutput;
@@ -44,22 +49,29 @@ export const ClassicDigParser = {
 			}).join('\n');
 		}
 
+		recordOnBenchmark({type: 'dns_classic_rewrite', action: 'end', id: bId});
 		return output;
 	},
 
 	parse(rawOutput: string): Error | DnsParseResponse {
+		const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+		recordOnBenchmark({type: 'dns_classic_parse', action: 'start', id: bId});
+
 		const lines = rawOutput.split(NEW_LINE_REG_EXP);
 
 		if (lines.length < 6) {
 			const message = lines[lines.length - 2];
 
 			if (!message || message.length < 2) {
+				recordOnBenchmark({type: 'dns_classic_parse', action: 'end', id: bId});
 				return new InternalError(rawOutput, true);
 			}
 
+			recordOnBenchmark({type: 'dns_classic_parse', action: 'end', id: bId});
 			return new InternalError(message, true);
 		}
 
+		recordOnBenchmark({type: 'dns_classic_parse', action: 'end', id: bId});
 		return {
 			...ClassicDigParser.parseLoop(lines),
 			rawOutput,
@@ -67,6 +79,9 @@ export const ClassicDigParser = {
 	},
 
 	parseLoop(lines: string[]): DnsParseLoopResponse {
+		const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+		recordOnBenchmark({type: 'dns_classic_parse_loop', action: 'start', id: bId});
+
 		const result: DnsParseLoopResponse = {
 			header: [],
 			answers: [],
@@ -116,6 +131,7 @@ export const ClassicDigParser = {
 			}
 		}
 
+		recordOnBenchmark({type: 'dns_classic_parse_loop', action: 'end', id: bId});
 		return {
 			answers: result.answers,
 			resolver: result.resolver,
@@ -124,30 +140,45 @@ export const ClassicDigParser = {
 	},
 
 	parseSection(values: string[], section: string): DnsSection {
+		const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+		recordOnBenchmark({type: 'dns_classic_parse_section', action: 'start', id: bId});
+
 		if (!['answer', 'additional'].includes(section)) {
+			recordOnBenchmark({type: 'dns_classic_parse_section', action: 'end', id: bId});
 			return {};
 		}
 
+		recordOnBenchmark({type: 'dns_classic_parse_section', action: 'end', id: bId});
 		return SharedDigParser.parseSection(values);
 	},
 
 	getQueryTime(line: string): number | undefined {
+		const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+		recordOnBenchmark({type: 'dns_classic_get_query_time', action: 'start', id: bId});
+
 		const result = QUERY_TIME_REG_EXP.exec(line);
 
 		if (!result) {
+			recordOnBenchmark({type: 'dns_classic_get_query_time', action: 'end', id: bId});
 			return;
 		}
 
+		recordOnBenchmark({type: 'dns_classic_get_query_time', action: 'end', id: bId});
 		return Number(result[1]);
 	},
 
 	getResolverServer(line: string): string | undefined {
+		const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+		recordOnBenchmark({type: 'dns_classic_get_resolver_server', action: 'start', id: bId});
+
 		const result = RESOLVER_REG_EXP.exec(line);
 
 		if (!result) {
+			recordOnBenchmark({type: 'dns_classic_get_resolver_server', action: 'end', id: bId});
 			return;
 		}
 
+		recordOnBenchmark({type: 'dns_classic_get_resolver_server', action: 'end', id: bId});
 		return String(result[1]);
 	},
 };
