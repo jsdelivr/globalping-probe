@@ -1,3 +1,5 @@
+import cryptoRandomString from 'crypto-random-string';
+import {recordOnBenchmark} from '../../../lib/benchmark/index.js';
 import type {
 	HopStatsType,
 	HopType,
@@ -46,6 +48,9 @@ const roundNumber = (value: number): number => {
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const MtrParser = {
 	outputBuilder(hops: HopType[]): string {
+		const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+		recordOnBenchmark({type: 'mtr_output_builder', action: 'start', id: bId});
+
 		const rawOutput = [];
 
 		const spacings = {
@@ -123,10 +128,14 @@ export const MtrParser = {
 			rawOutput.push(line);
 		}
 
+		recordOnBenchmark({type: 'mtr_output_builder', action: 'end', id: bId});
 		return rawOutput.join('');
 	},
 
 	rawParse(currentHops: HopType[], data: string, isFinalResult?: boolean): HopType[] {
+		const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+		recordOnBenchmark({type: 'mtr_raw_parse', action: 'start', id: bId});
+
 		const sData = data.split(NEW_LINE_REG_EXP);
 
 		const hops = [...currentHops];
@@ -208,23 +217,34 @@ export const MtrParser = {
 			hops[Number(index)] = entry;
 		}
 
-		return isFinalResult ? MtrParser.hopFinalParse(hops) : hops;
+		const output = isFinalResult ? MtrParser.hopFinalParse(hops) : hops;
+
+		recordOnBenchmark({type: 'mtr_raw_parse', action: 'end', id: bId});
+		return output;
 	},
 
 	hopFinalParse(hops: HopType[]): HopType[] {
+		const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+		recordOnBenchmark({type: 'mtr_final_parse', action: 'start', id: bId});
+
 		for (const hop of hops) {
 			for (const t of hop.timings) {
 				delete t.seq;
 			}
 		}
 
+		recordOnBenchmark({type: 'mtr_final_parse', action: 'end', id: bId});
 		return hops;
 	},
 
 	hopStatsParse(hop: HopType, finalCount?: boolean): HopStatsType {
+		const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+		recordOnBenchmark({type: 'mtr_hop_stats_parse', action: 'start', id: bId});
+
 		const stats: HopStatsType = {...getInitialHopState().stats};
 
 		if (hop.timings.length === 0) {
+			recordOnBenchmark({type: 'mtr_hop_stats_parse', action: 'end', id: bId});
 			return stats;
 		}
 
@@ -272,6 +292,7 @@ export const MtrParser = {
 			stats.jAvg = roundNumber(jitterArray.reduce((a, b) => a + b, 0) / jitterArray.length);
 		}
 
+		recordOnBenchmark({type: 'mtr_hop_stats_parse', action: 'end', id: bId});
 		return stats;
 	},
 };
