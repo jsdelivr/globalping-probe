@@ -2,7 +2,6 @@ import process from 'node:process';
 import throng from 'throng';
 import {io} from 'socket.io-client';
 import cryptoRandomString from 'crypto-random-string';
-import physicalCpuCount from 'physical-cpu-count';
 import type {CommandInterface, MeasurementRequest} from './types.js';
 import {loadAll as loadAllDeps} from './lib/dependencies.js';
 import {scopedLogger} from './lib/logger.js';
@@ -14,6 +13,10 @@ import {pingCmd, PingCommand} from './command/ping-command.js';
 import {traceCmd, TracerouteCommand} from './command/traceroute-command.js';
 import {mtrCmd, MtrCommand} from './command/mtr-command.js';
 import {httpCmd, HttpCommand} from './command/http-command.js';
+import {
+	start as startBenchmark,
+	end as endBenchmark,
+} from './lib/benchmark/index.js';
 
 import {VERSION} from './constants.js';
 
@@ -22,6 +25,8 @@ import './lib/updater.js';
 
 // Run scheduled restart
 import './lib/restart.js';
+
+startBenchmark();
 
 await loadAllDeps();
 
@@ -149,6 +154,8 @@ function connect() {
 			clearInterval(worker.jobsInterval);
 
 			logger.debug('closing process');
+
+			endBenchmark();
 			process.exit(0);
 		};
 	});
@@ -156,7 +163,7 @@ function connect() {
 
 if (process.env['NODE_ENV'] === 'development') {
 	// Run multiple clients in dev mode for easier debugging
-	throng({worker: connect, count: physicalCpuCount})
+	throng({worker: connect, count: 1})
 		.catch(error => {
 			logger.error(error);
 		});
