@@ -1,19 +1,32 @@
 import process from 'node:process';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import linebyline from 'linebyline';
 import _ from 'lodash';
 
 const testName = process.env.TEST_NAME;
 
-const resolveFile = () => {
+const resolveFile = async () => {
 	const filePath = path.resolve(`./benchmark/readings/${testName}-idle.log`);
-	return fs.readFileSync(filePath).toString().split('\n').filter(Boolean).map(l => {
-		try {
-			return JSON.parse(l);
-		} catch {
-			return {};
-		}
+	const rl = linebyline(filePath);
+
+	const records = await new Promise(resolve => {
+		const records = [];
+
+		rl.on('line', l => {
+			try {
+				records.push(JSON.parse(l));
+			} catch {
+				//
+			}
+		});
+
+		rl.on('end', () => {
+			resolve(records);
+		});
 	});
+
+	return records;
 };
 
 const saveResult = data => {
@@ -160,6 +173,6 @@ const calculateResult = data => {
 	return output;
 };
 
-const fileContent = resolveFile();
+const fileContent = await resolveFile();
 const result = calculateResult(fileContent);
 saveResult(result);
