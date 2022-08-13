@@ -2,8 +2,10 @@ import Joi from 'joi';
 import isIpPrivate from 'private-ip';
 import type {Socket} from 'socket.io-client';
 import {execa, ExecaChildProcess} from 'execa';
+import cryptoRandomString from 'crypto-random-string';
 import type {CommandInterface} from '../types.js';
 import {isExecaError} from '../helper/execa-error-check.js';
+import {recordOnBenchmark} from '../lib/benchmark/index.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
 const reHost = /(\S+)\s+\((?:((?:\d+\.){3}\d+)|([\da-fA-F:]))\)/;
@@ -30,6 +32,9 @@ const traceOptionsSchema = Joi.object<TraceOptions>({
 });
 
 export const argBuilder = (options: TraceOptions): string[] => {
+	const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+	recordOnBenchmark({type: 'trace_arg_builder', action: 'start', id: bId});
+
 	const port = options.protocol === 'TCP' ? ['-p', `${options.port}`] : [];
 
 	const args = [
@@ -51,6 +56,7 @@ export const argBuilder = (options: TraceOptions): string[] => {
 		options.target,
 	].flat();
 
+	recordOnBenchmark({type: 'traceroute_arg_builder', action: 'end', id: bId});
 	return args;
 };
 
@@ -63,6 +69,9 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 	constructor(private readonly cmd: typeof traceCmd) {}
 
 	async run(socket: Socket, measurementId: string, testId: string, options: unknown): Promise<void> {
+		const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+		recordOnBenchmark({type: 'trace_run', action: 'start', id: bId});
+
 		const {value: cmdOptions, error} = traceOptionsSchema.validate(options);
 
 		if (error) {
@@ -74,6 +83,9 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 
 		const cmd = this.cmd(cmdOptions);
 		cmd.stdout?.on('data', (data: Buffer) => {
+			const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+			recordOnBenchmark({type: 'trace_progress_capture', action: 'start', id: bId});
+
 			pStdout.push(data.toString());
 			const isValid = this.validatePartialResult(pStdout.join(''), cmd);
 
@@ -87,6 +99,8 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 				measurementId,
 				result: {rawOutput: data.toString()},
 			});
+
+			recordOnBenchmark({type: 'trace_progress_capture', action: 'end', id: bId});
 		});
 
 		let result = {};
@@ -116,16 +130,23 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 			measurementId,
 			result,
 		});
+
+		recordOnBenchmark({type: 'trace_run', action: 'end', id: bId});
 	}
 
 	private validatePartialResult(rawOutput: string, cmd: ExecaChildProcess): boolean {
+		const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+		recordOnBenchmark({type: 'trace_validate_partial_result', action: 'start', id: bId});
+
 		const parseResult = this.parse(rawOutput);
 
 		if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
 			cmd.kill('SIGKILL');
+			recordOnBenchmark({type: 'trace_validate_partial_result', action: 'end', id: bId});
 			return false;
 		}
 
+		recordOnBenchmark({type: 'trace_validate_partial_result', action: 'end', id: bId});
 		return true;
 	}
 
@@ -135,9 +156,13 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		resolvedHostname?: string;
 		hops?: ParsedLine[];
 	} {
+		const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+		recordOnBenchmark({type: 'trace_parse', action: 'start', id: bId});
+
 		const lines = rawOutput.split('\n');
 
 		if (lines.length === 0) {
+			recordOnBenchmark({type: 'trace_parse', action: 'end', id: bId});
 			return {
 				rawOutput,
 			};
@@ -146,6 +171,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		const header = this.parseHeader(lines[0]!);
 
 		if (!header) {
+			recordOnBenchmark({type: 'trace_parse', action: 'end', id: bId});
 			return {
 				rawOutput,
 			};
@@ -154,6 +180,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		const hops = lines.slice(1).map(l => this.parseLine(l));
 		const hostname = hops[hops.length - 1]?.resolvedHostname;
 
+		recordOnBenchmark({type: 'trace_parse', action: 'end', id: bId});
 		return {
 			resolvedAddress: String(header.resolvedAddress),
 			resolvedHostname: String(hostname),
@@ -163,12 +190,17 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 	}
 
 	private parseHeader(line: string) {
+		const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+		recordOnBenchmark({type: 'trace_parse_header', action: 'start', id: bId});
+
 		const hostMatch = reHost.exec(line);
 
 		if (!hostMatch || hostMatch.length < 3) {
+			recordOnBenchmark({type: 'trace_parse_header', action: 'end', id: bId});
 			return;
 		}
 
+		recordOnBenchmark({type: 'trace_parse_header', action: 'end', id: bId});
 		return {
 			host: hostMatch[0] ?? '',
 			resolvedAddress: hostMatch[2],
@@ -176,9 +208,13 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 	}
 
 	private parseLine(line: string): ParsedLine {
+		const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+		recordOnBenchmark({type: 'trace_parse_line', action: 'start', id: bId});
+
 		const hostMatch = reHost.exec(line);
 		const rttList = Array.from(line.matchAll(reRtt), m => Number.parseFloat(m[1]!));
 
+		recordOnBenchmark({type: 'trace_parse_line', action: 'end', id: bId});
 		return {
 			resolvedHostname: hostMatch?.[1] ?? '*',
 			resolvedAddress: hostMatch?.[2] ?? '*',
