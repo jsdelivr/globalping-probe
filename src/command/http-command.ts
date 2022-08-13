@@ -7,8 +7,10 @@ import Joi from 'joi';
 import _ from 'lodash';
 import got, {Response, Request, HTTPAlias, Progress, DnsLookupIpVersion} from 'got';
 import type {Socket} from 'socket.io-client';
+import cryptoRandomString from 'crypto-random-string';
 import type {CommandInterface} from '../types.js';
 import {callbackify} from '../lib/util.js';
+import {recordOnBenchmark} from '../lib/benchmark/index.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 import {dnsLookup, ResolverType} from './handlers/http/dns-resolver.js';
 
@@ -79,12 +81,16 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 });
 
 export const urlBuilder = (options: HttpOptions): string => {
+	const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+	recordOnBenchmark({type: 'http_url_builder', action: 'start', id: bId});
+
 	const protocolPrefix = options.protocol === 'http' ? 'http' : 'https';
 	const port = options.port ? options.port : (options.protocol === 'http' ? 80 : 443);
 	const path = `/${options.request.path}`.replace(/^\/\//, '/');
 	const query = options.request.query.length > 0 ? `?${options.request.query}`.replace(/^\?\?/, '?') : '';
 	const url = `${protocolPrefix}://${options.target}:${port}${path}${query}`;
 
+	recordOnBenchmark({type: 'http_url_builder', action: 'end', id: bId});
 	return url;
 };
 
@@ -133,6 +139,9 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 	constructor(private readonly cmd: typeof httpCmd) {}
 
 	async run(socket: Socket, measurementId: string, testId: string, options: HttpOptions): Promise<void> {
+		const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+		recordOnBenchmark({type: 'http_run', action: 'start', id: bId});
+
 		const {value: cmdOptions, error} = httpOptionsSchema.validate(options);
 
 		if (error) {
@@ -145,6 +154,9 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		let cert: Cert | undefined;
 
 		const respond = (resolve: () => void) => {
+			const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+			recordOnBenchmark({type: 'http_run_respond', action: 'start', id: bId});
+
 			result.resolvedAddress = stream.ip ?? '';
 
 			const timings = (stream.timings ?? {}) as Timings;
@@ -178,6 +190,8 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			});
 
 			resolve();
+
+			recordOnBenchmark({type: 'http_run_respond', action: 'end', id: bId});
 		};
 
 		const captureCert = (socket: TLSSocket): Cert | undefined => ({
@@ -188,14 +202,22 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 		// HTTPS cert is not guaranteed to be available after this point
 		const onSocket = (socket: NetSocket | TLSSocket) => {
+			const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+			recordOnBenchmark({type: 'http_run_on_socket', action: 'start', id: bId});
+
 			if (isTlsSocket(socket)) {
 				socket.on('secureConnect', () => {
 					cert = captureCert(socket);
 				});
 			}
+
+			recordOnBenchmark({type: 'http_run_on_socket', action: 'end', id: bId});
 		};
 
 		const onData = (data: Buffer) => {
+			const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+			recordOnBenchmark({type: 'http_run_on_data', action: 'start', id: bId});
+
 			result.rawBody += data.toString();
 
 			socket.emit('probe:measurement:progress', {
@@ -203,9 +225,14 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				measurementId,
 				result: {rawOutput: data.toString()},
 			});
+
+			recordOnBenchmark({type: 'http_run_on_data', action: 'end', id: bId});
 		};
 
 		const onResponse = (resp: Response) => {
+			const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+			recordOnBenchmark({type: 'http_run_on_response', action: 'start', id: bId});
+
 			// HTTP2 cert only available in the final response
 			if (!cert && isTlsSocket(resp.socket)) {
 				cert = captureCert(resp.socket);
@@ -215,18 +242,26 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				...result,
 				...this.parseResponse(resp, cert),
 			};
+
+			recordOnBenchmark({type: 'http_run_on_response', action: 'end', id: bId});
 		};
 
 		const onDownloadProgress = (progress: Progress) => {
+			const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+			recordOnBenchmark({type: 'http_run_on_download_progress', action: 'start', id: bId});
+
 			const {downloadLimit} = stream.options.context;
 
 			if (!downloadLimit) {
+				recordOnBenchmark({type: 'http_run_on_download_progress', action: 'end', id: bId});
 				return;
 			}
 
 			if (progress.transferred > Number(downloadLimit) && progress.percent !== 1) {
 				stream.destroy(new Error('Exceeded the download.'));
 			}
+
+			recordOnBenchmark({type: 'http_run_on_download_progress', action: 'end', id: bId});
 		};
 
 		const pStream = new Promise((resolve, _reject) => {
@@ -240,12 +275,16 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			stream.on('socket', onSocket);
 
 			stream.on('error', (error: Error & {code: string}) => {
+				const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+				recordOnBenchmark({type: 'http_run_on_error', action: 'start', id: bId});
+
 				// Skip error mapping on download limit
 				if (error.message !== 'Exceeded the download.') {
 					result.error = `${error.message} - ${error.code}`;
 				}
 
 				respond(onResolve);
+				recordOnBenchmark({type: 'http_run_on_error', action: 'end', id: bId});
 			});
 
 			stream.on('end', () => {
@@ -254,9 +293,13 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		});
 
 		await pStream;
+		recordOnBenchmark({type: 'http_run', action: 'end', id: bId});
 	}
 
 	private parseResponse(resp: Response, cert: Cert | undefined) {
+		const bId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+		recordOnBenchmark({type: 'http_parse_response', action: 'start', id: bId});
+
 		const result = getInitialResult();
 
 		// Headers
@@ -291,6 +334,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			};
 		}
 
+		recordOnBenchmark({type: 'http_parse_response', action: 'end', id: bId});
 		return result;
 	}
 }
