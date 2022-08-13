@@ -34,77 +34,97 @@ const saveResult = data => {
 	fs.writeFileSync(filePath, JSON.stringify(data, 0, 2));
 };
 
-const arrayMinMax = array =>
-// eslint-disable-next-line unicorn/no-array-reduce
-	array.reduce(([min, max], value) => [Math.min(min, value), Math.max(max, value)], [
-		Number.POSITIVE_INFINITY,
-		Number.NEGATIVE_INFINITY,
-	]);
+const arrayMinMax = array => {
+	let output = array.slice(0, 2);
 
-const bigIntMinAndMax = array =>
-// eslint-disable-next-line unicorn/no-array-reduce
-	array.reduce(([min, max], value) => [
-		value < min ? value : min,
-		value > max ? value : max,
-	], [array[0], array[1]]);
+	for (const value of array) {
+		output = [
+			value < output[0] ? value : output[0],
+			value > output[1] ? value : output[1],
+		];
+	}
+
+	return output;
+};
+
+const arrayAvg = array => {
+	const isBigInt = typeof array[0] === 'bigint';
+	let total = isBigInt ? BigInt(0) : 0;
+
+	for (const element of array) {
+		total += element;
+	}
+
+	return total / (isBigInt ? BigInt(array.length) : array.length);
+};
 
 const calcPerGroup = (data, duration) => {
 	let durationObject = {};
 
 	if (duration) {
-		const [min, max] = bigIntMinAndMax(duration);
+		const [min, max] = arrayMinMax(duration);
+		const avg = arrayAvg(duration);
+
 		durationObject = {
 			min: `${min} ns`,
 			max: `${max} ns`,
-			avg: `${duration.reduce((total, item) => total + item, 0n) / BigInt(duration.length)} ns`,
+			avg: `${avg} ns`,
+		};
+	}
+
+	const output = {
+		memory: {},
+		cpu: {},
+	};
+
+	const memKeys = Object.keys(data[0]?.mem ?? {});
+	for (const key of memKeys) {
+		const [min, max] = arrayMinMax(data.map(item => item.mem[key]));
+		const avg = arrayAvg(data.map(item => item.mem[key]));
+
+		output.memory = {
+			...output.memory,
+			min: {
+				...output.memory.min,
+				[key]: `${Math.round(min / 1024 / 1024)} MB`,
+			},
+			max: {
+				...output.memory.max,
+				[key]: `${Math.round(max / 1024 / 1024)} MB`,
+			},
+			avg: {
+				...output.memory.avg,
+				[key]: `${Math.round(avg / 1024 / 1024)} MB`,
+			},
+		};
+	}
+
+	const cpuKeys = Object.keys(data[0]?.cpu ?? {});
+	for (const key of cpuKeys) {
+		const [min, max] = arrayMinMax(data.map(item => item.cpu[key]));
+		const avg = arrayAvg(data.map(item => item.cpu[key]));
+
+		output.cpu = {
+			...output.cpu,
+			min: {
+				...output.cpu.min,
+				[key]: min,
+			},
+			max: {
+				...output.cpu.max,
+				[key]: max,
+			},
+			avg: {
+				...output.cpu.avg,
+				[key]: avg,
+			},
 		};
 	}
 
 	return {
 		samples: data.length,
-		// eslint-disable-next-line unicorn/no-array-reduce
-		memory: Object.keys(data[0]?.mem ?? {}).reduce((acc, key) => {
-			const [min, max] = arrayMinMax(data.map(item => item.mem[key]));
-
-			const avg = data.reduce((total, item) => total + item.mem[key], 0) / data.length;
-
-			return {
-				...acc,
-				min: {
-					...acc.min,
-					[key]: `${Math.round(min / 1024 / 1024)} MB`,
-				},
-				max: {
-					...acc.max,
-					[key]: `${Math.round(max / 1024 / 1024)} MB`,
-				},
-				avg: {
-					...acc.avg,
-					[key]: `${Math.round(avg / 1024 / 1024)} MB`,
-				},
-			};
-		}, {}),
-		// eslint-disable-next-line unicorn/no-array-reduce
-		cpu: Object.keys(data[0]?.cpu ?? {}).reduce((acc, key) => {
-			const [min, max] = arrayMinMax(data.map(item => item.cpu[key]));
-
-			return {
-				...acc,
-				min: {
-					...acc.min,
-					[key]: min,
-				},
-				max: {
-					...acc.max,
-					[key]: max,
-				},
-				avg: {
-					...acc.avg,
-
-					[key]: Math.round(data.reduce((total, item) => total + item.cpu[key], 0) / data.length),
-				},
-			};
-		}, {}),
+		memory: output.memory,
+		cpu: output.cpu,
 		...(duration ? {duration: durationObject} : {}),
 	};
 };
@@ -112,58 +132,85 @@ const calcPerGroup = (data, duration) => {
 const calculateResult = data => {
 	const output = {};
 
-	// Total duration
-	const bReadings = data.filter(l => l.type === 'benchmark' && l.action === 'report');
-	output.total = calcPerGroup(bReadings);
+	const bReadings = [];
+	const startIndexList = [];
 
-	// Start indexes
-	const startIndexList = data.filter(l => l.action === 'start');
-	// eslint-disable-next-line unicorn/no-array-reduce
-	const testGroups = startIndexList.reduce((acc, entry) => {
-		const startEntryIndex = data.findIndex(l => l.id === entry.id && l.action === 'start');
-		const endEntryIndex = data.findIndex(l => l.id === entry.id && l.action === 'end');
-
-		if (endEntryIndex === -1) {
-			return acc;
+	for (const l of data) {
+		if (l.type === 'benchmark' && l.action === 'report') {
+			bReadings.push(l);
 		}
 
-		const group = data.slice(startEntryIndex, endEntryIndex).filter(l => l.type === 'benchmark' && l.action === 'report');
-		const duration = BigInt(data[endEntryIndex].date) - BigInt(data[startEntryIndex].date);
+		if (l.action === 'start') {
+			startIndexList.push(l);
+		}
+	}
 
-		console.log(entry);
-		return {
-			...acc,
-			[entry.id]: {
+	output.total = calcPerGroup(bReadings);
+
+	const testGroups = {};
+	const individualActions = {};
+	for (let z = 0; z < startIndexList.length; z++) {
+		const entry = startIndexList[z];
+
+		const entryIndexObject = {
+			start: -1,
+			end: -1,
+		};
+
+		for (const [i, l] of data.entries()) {
+			if (l.id === entry.id) {
+				if (l.action === 'start') {
+					entryIndexObject.start = i;
+				}
+
+				if (l.action === 'end') {
+					entryIndexObject.end = i;
+				}
+			}
+		}
+
+		if (entryIndexObject.end !== -1) {
+			const group = [];
+
+			const sampleArray = data.slice(entryIndexObject.start, entryIndexObject.end);
+			for (let i = 0; i < sampleArray.length; i++) {
+				const l = data[i];
+
+				if (l.type === 'benchmark' && l.action === 'report') {
+					group.push(l);
+				}
+			}
+
+			const duration = BigInt(data[entryIndexObject.end].date) - BigInt(data[entryIndexObject.start].date);
+
+			console.log(`${z} / ${startIndexList.length}`, entry);
+			testGroups[entry.id] = {
 				type: entry.type,
 				data: group,
 				duration,
-			},
-		};
-	}, {});
+			};
 
-	// eslint-disable-next-line unicorn/no-array-reduce
-	const individualActions = Object.keys(testGroups).reduce((acc, key) => {
-		const item = testGroups[key];
-		return {
-			...acc,
-			[key]: {
-				type: item.type,
-				duration: `${item.duration.toString()} ns`,
-				data: calcPerGroup(item.data),
-			},
-		};
-	}, {});
+			individualActions[entry.id] = {
+				type: entry.type,
+				data: calcPerGroup(group),
+				duration: `${duration.toString} ns`,
+			};
+		}
+	}
 
-	// eslint-disable-next-line unicorn/no-array-reduce
-	const totalActions = Object.values(_.groupBy(testGroups, 'type')).reduce((acc, entry) => {
-		const group = entry.map(g => g.data);
-		const duration = entry.map(g => BigInt(g.duration));
+	const totalActions = {};
+	const testGroupValuesByType = Object.values(_.groupBy(testGroups, 'type'));
+	for (const list of testGroupValuesByType) {
+		const dataList = [];
+		const durationList = [];
 
-		return {
-			...acc,
-			[entry[0].type]: calcPerGroup(group.flat(), duration),
-		};
-	}, {});
+		for (const g of list) {
+			dataList.push(g.data);
+			durationList.push(BigInt(g.duration));
+		}
+
+		totalActions[list[0].type] = calcPerGroup(dataList.flat(), durationList);
+	}
 
 	output.actions = {
 		total: totalActions,
