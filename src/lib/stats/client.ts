@@ -1,9 +1,12 @@
 import type {Socket} from 'socket.io-client';
+import {getConfValue} from '../config.js';
 import {getCpuUsage} from './cpu.js';
 
 type Worker = {
 	jobs: Map<string, number>;
 };
+
+const statsConfig = getConfValue<{interval: number}>('stats');
 
 export const report = async (socket: Socket, jobCount: number) => {
 	const cpuUsage = await getCpuUsage();
@@ -19,5 +22,5 @@ export const report = async (socket: Socket, jobCount: number) => {
 export const run = (socket: Socket, worker: Worker) => {
 	setInterval(async () => {
 		await report(socket, worker.jobs.size);
-	}, 10_000);
+	}, statsConfig.interval * 1000);
 };
