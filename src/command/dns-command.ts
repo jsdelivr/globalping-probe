@@ -96,7 +96,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			let output = '';
 
 			try {
-				output = this.rewrite(data.toString(), Boolean(options.trace));
+				output = this.rewrite(pStdout.join(''), Boolean(options.trace));
 				const parsedResult = this.parse(output, Boolean(options.trace));
 				const isValid = this.validatePartialResult(output, cmd, Boolean(options.trace));
 
