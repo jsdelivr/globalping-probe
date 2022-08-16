@@ -106,6 +106,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 				}
 			} catch (error: unknown) {
 				output = error instanceof InternalError && error.expose ? error.message : 'Unknown error occured.';
+				cmd.kill('SIGKILL');
 			}
 
 			socket.emit('probe:measurement:progress', {
