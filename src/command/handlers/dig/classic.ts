@@ -59,10 +59,10 @@ export const ClassicDigParser = {
 			const message = lines[lines.length - 2];
 
 			if (!message || message.length < 2) {
-				return new InternalError(rawOutput, true);
+				throw new InternalError(rawOutput, true);
 			}
 
-			return new InternalError(message, true);
+			throw new InternalError(message, true);
 		}
 
 		return {
