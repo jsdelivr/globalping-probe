@@ -92,12 +92,20 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		const cmd = this.cmd(cmdOptions);
 		cmd.stdout?.on('data', (data: Buffer) => {
 			pStdout.push(data.toString());
-			const output = this.rewrite(data.toString(), Boolean(options.trace));
-			const isValid = this.validatePartialResult(output, cmd, Boolean(options.trace));
 
-			if (!isValid) {
-				isResultPrivate = !isValid;
-				return;
+			let output = '';
+
+			try {
+				output = this.rewrite(data.toString(), Boolean(options.trace));
+				const parsedResult = this.parse(output, Boolean(options.trace));
+				const isValid = this.validatePartialResult(output, cmd, Boolean(options.trace));
+
+				if (!isValid && !(parsedResult instanceof Error)) {
+					isResultPrivate = this.hasResultPrivateIp(parsedResult);
+					return;
+				}
+			} catch (error: unknown) {
+				output = error instanceof InternalError && error.expose ? error.message : 'Unknown error occured.';
 			}
 
 			socket.emit('probe:measurement:progress', {
@@ -124,7 +132,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 
 			result = parsedResult;
 		} catch (error: unknown) {
-			let output = '';
+			let output = 'Unknown error occured.';
 
 			if (error instanceof InternalError && error.expose) {
 				output = error.message;
