@@ -14,6 +14,7 @@ import {pingCmd, PingCommand} from './command/ping-command.js';
 import {traceCmd, TracerouteCommand} from './command/traceroute-command.js';
 import {mtrCmd, MtrCommand} from './command/mtr-command.js';
 import {httpCmd, HttpCommand} from './command/http-command.js';
+import {run as runStatsAgent} from './lib/stats/client.js';
 
 import {VERSION} from './constants.js';
 
@@ -62,6 +63,8 @@ function connect() {
 			version: VERSION,
 		},
 	});
+
+	runStatsAgent(socket, worker);
 
 	socket
 		.on('probe:sigkill', () => {

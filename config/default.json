@@ -7,6 +7,9 @@
     "interval": 300,
     "maxDeviation": 300
   },
+  "stats": {
+    "interval": 10
+  },
   "uptime": {
     "interval": 300,
     "maxDeviation": 86400,
