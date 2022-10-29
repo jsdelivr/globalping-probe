@@ -2,7 +2,7 @@
 
 
 
-## Join the Globalping Probe Community
+## Join the Globalping Probe Community - [Learn more about it](https://github.com/jsdelivr/globalping)
 
 To join the Globalping probe network all you have to do is run our container.
 
