@@ -26,6 +26,11 @@ export type HopType = {
 	duplicate?: boolean;
 };
 
+export type ProgressType = {
+	rawOutput: string;
+	hops: HopType[];
+};
+
 export type ResultType = {
 	resolvedAddress?: string;
 	resolvedHostname?: string;

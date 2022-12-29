@@ -5,6 +5,7 @@ import {execa, ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
 import {isExecaError} from '../helper/execa-error-check.js';
 import {InternalError} from '../lib/internal-error.js';
+import {ProgressBuffer} from '../helper/progress-buffer.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
 import ClassicDigParser from './handlers/dig/classic.js';
@@ -81,6 +82,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 
 	async run(socket: Socket, measurementId: string, testId: string, options: DnsOptions): Promise<void> {
 		const {value: cmdOptions, error} = dnsOptionsSchema.validate(options);
+		const buffer = new ProgressBuffer(socket, testId, measurementId);
 
 		if (error) {
 			throw new InvalidOptionsException('dns', error);
@@ -108,13 +110,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 				output = error instanceof InternalError && error.expose && error.message?.length > 0 ? error.message : 'Unknown error occured.';
 			}
 
-			socket.emit('probe:measurement:progress', {
-				testId,
-				measurementId,
-				result: {
-					rawOutput: output,
-				},
-			});
+			buffer.pushProgress({rawOutput: output});
 		});
 
 		let result = {};
@@ -151,11 +147,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			};
 		}
 
-		socket.emit('probe:measurement:result', {
-			testId,
-			measurementId,
-			result: this.toJsonOutput(result as DnsParseResponseClassic | DnsParseResponseTrace, Boolean(options.trace)),
-		});
+		buffer.pushResult(this.toJsonOutput(result as DnsParseResponseClassic | DnsParseResponseTrace, Boolean(options.trace)));
 	}
 
 	private validatePartialResult(rawOutput: string, cmd: ExecaChildProcess, trace: boolean): boolean {
