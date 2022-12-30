@@ -4,15 +4,13 @@ import type {DnsParseResponseJson as DnsParseResponseClassicJson} from '../comma
 import type {DnsParseResponseJson as DnsParseResponseTraceJson} from '../command/handlers/dig/trace.js';
 import type {OutputJson as HttpOutputJson} from '../command/http-command.js';
 import type {PingParseOutputJson} from '../command/ping-command.js';
+import {PROGRESS_INTERVAL_TIME} from '../constants.js';
 
 type ProgressType = {
 	rawOutput: string;
 };
 
 type ResultTypeJson = DnsParseResponseClassicJson | DnsParseResponseTraceJson | PingParseOutputJson | HttpOutputJson | Record<string, unknown>;
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const PROGRESS_INTERVAL_TIME = 1000;
 
 export class ProgressBuffer {
 	private buffer: ProgressType[] = [];
@@ -39,7 +37,10 @@ export class ProgressBuffer {
 	}
 
 	pushResult(result: ResultTypeJson) {
-		this.sendProgress();
+		if (this.timer) {
+			clearTimeout(this.timer);
+		}
+
 		this.sendResult(result);
 	}
 

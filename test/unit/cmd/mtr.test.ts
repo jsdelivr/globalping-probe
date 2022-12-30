@@ -172,7 +172,7 @@ describe('mtr command executor', () => {
 			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(false));
 			await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
 
-			expect(mockedSocket.emit.args.length).to.equal(rawOutputLines.length + 1); // Progress + result
+			expect(mockedSocket.emit.args.length).to.equal(2);
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
 		});

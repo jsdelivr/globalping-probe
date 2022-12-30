@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import * as fs from 'node:fs';
 
 const pkg: {version: string} = JSON.parse(fs.readFileSync('./package.json').toString()) as never;
 
-/* eslint-disable-next-line @typescript-eslint/naming-convention */
 export const VERSION = pkg.version;
+
+export const PROGRESS_INTERVAL_TIME = 500;

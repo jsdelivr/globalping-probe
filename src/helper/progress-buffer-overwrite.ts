@@ -1,12 +1,10 @@
 
 import type {Socket} from 'socket.io-client';
 import type {ProgressType as MtrProgressType, ResultTypeJson as MtrResultTypeJson} from '../command/handlers/mtr/types.js';
+import {PROGRESS_INTERVAL_TIME} from '../constants.js';
 
 type ProgressType = MtrProgressType;
 type ResultTypeJson = MtrResultTypeJson;
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const PROGRESS_INTERVAL_TIME = 1000;
 
 export class ProgressBufferOverwrite {
 	private buffer?: ProgressType;
@@ -33,7 +31,10 @@ export class ProgressBufferOverwrite {
 	}
 
 	pushResult(result: ResultTypeJson) {
-		this.sendProgress();
+		if (this.timer) {
+			clearTimeout(this.timer);
+		}
+
 		this.sendResult(result);
 	}
 
