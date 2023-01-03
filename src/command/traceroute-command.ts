@@ -84,11 +84,11 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 	constructor(private readonly cmd: typeof traceCmd) {}
 
 	async run(socket: Socket, measurementId: string, testId: string, options: unknown): Promise<void> {
-		const {value: cmdOptions, error} = traceOptionsSchema.validate(options);
+		const {value: cmdOptions, error: validationError} = traceOptionsSchema.validate(options);
 		const buffer = new ProgressBuffer(socket, testId, measurementId);
 
-		if (error) {
-			throw new InvalidOptionsException('traceroute', error);
+		if (validationError) {
+			throw new InvalidOptionsException('traceroute', validationError);
 		}
 
 		const pStdout: string[] = [];

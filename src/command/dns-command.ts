@@ -81,11 +81,11 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 	constructor(private readonly cmd: typeof dnsCmd) {}
 
 	async run(socket: Socket, measurementId: string, testId: string, options: DnsOptions): Promise<void> {
-		const {value: cmdOptions, error} = dnsOptionsSchema.validate(options);
+		const {value: cmdOptions, error: validationError} = dnsOptionsSchema.validate(options);
 		const buffer = new ProgressBuffer(socket, testId, measurementId);
 
-		if (error) {
-			throw new InvalidOptionsException('dns', error);
+		if (validationError) {
+			throw new InvalidOptionsException('dns', validationError);
 		}
 
 		const pStdout: string[] = [];
