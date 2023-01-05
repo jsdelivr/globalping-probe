@@ -77,6 +77,8 @@ Learn more about it on our website! [Get a probe](https://www.jsdelivr.com/globa
 
 You can also explore the firmware itself and build your own version if you wish - [Hardware probe firmware](https://github.com/jsdelivr/globalping-hwprobe)
 
+Your company can also become a [hardware probe sponsor!](https://docs.google.com/document/d/1xIe-BaZ-6mmkjN1yMH5Kauw3FTXADrB79w4pnJ4SLa4/edit?usp=sharing)
+
 ## Development
 
 You need to have the [main API](https://github.com/jsdelivr/globalping#development) running before running this!
