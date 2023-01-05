@@ -425,7 +425,7 @@ describe('http command', () => {
 					headers: {test: 'abc'},
 					rawHeaders: ['test', 'abc'],
 				},
-				data: ['abc', 'def', 'ghi'],
+				data: ['abc', 'def', 'ghi', 'jkl', 'mno'],
 			};
 
 			const response = {
@@ -448,8 +448,8 @@ describe('http command', () => {
 						total: 11,
 					},
 					rawHeaders: 'test: abc',
-					rawBody: 'abcdefghi',
-					rawOutput: 'abcdefghi',
+					rawBody: 'abcdefghijklmno',
+					rawOutput: 'abcdefghijklmno',
 					statusCode: 200,
 					tls: null,
 				},
@@ -475,7 +475,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
-			expect(mockedSocket.emit.callCount).to.equal(4);
+			expect(mockedSocket.emit.callCount).to.equal(2);
 		});
 
 		it('should emit headers (rawOutput - HEAD request)', async () => {

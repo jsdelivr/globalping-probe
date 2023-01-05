@@ -7,6 +7,7 @@ import {execa, ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
 import {isExecaError} from '../helper/execa-error-check.js';
 import {getConfValue} from '../lib/config.js';
+import {ProgressBufferOverwrite} from '../helper/progress-buffer-overwrite.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
 import type {
@@ -67,10 +68,11 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 	constructor(private readonly cmd: typeof mtrCmd, readonly dnsResolver: DnsResolver = dns.promises.resolve) {}
 
 	async run(socket: Socket, measurementId: string, testId: string, options: MtrOptions): Promise<void> {
-		const {value: cmdOptions, error} = mtrOptionsSchema.validate(options);
+		const {value: cmdOptions, error: validationError} = mtrOptionsSchema.validate(options);
+		const buffer = new ProgressBufferOverwrite(socket, testId, measurementId);
 
-		if (error) {
-			throw new InvalidOptionsException('mtr', error);
+		if (validationError) {
+			throw new InvalidOptionsException('mtr', validationError);
 		}
 
 		const cmd = this.cmd(cmdOptions);
@@ -94,14 +96,9 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			result.hops = output.hops;
 			result.rawOutput = output.rawOutput;
 
-			socket.emit('probe:measurement:progress', {
-				testId,
-				measurementId,
-				overwrite: true,
-				result: {
-					hops: result.hops,
-					rawOutput: result.rawOutput,
-				},
+			buffer.pushProgress({
+				hops: result.hops,
+				rawOutput: result.rawOutput,
 			});
 		});
 
@@ -126,11 +123,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			}
 		}
 
-		socket.emit('probe:measurement:result', {
-			testId,
-			measurementId,
-			result: this.toJsonOutput(result),
-		});
+		buffer.pushResult(this.toJsonOutput(result));
 	}
 
 	async parseResult(hops: HopType[], data: string[], isFinalResult = false): Promise<ResultType> {
@@ -175,7 +168,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		const dnsResult = await Promise.allSettled(hops.map(async h => (
 			h?.asn.length < 1 && h?.resolvedAddress && !isIpPrivate(h?.resolvedAddress)
 				? this.lookupAsn(h?.resolvedAddress)
-				: Promise.reject()
+				: Promise.reject(new Error('didn\'t lookup ASN'))
 		)));
 
 		const asnList = [];

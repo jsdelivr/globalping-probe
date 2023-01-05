@@ -9,6 +9,7 @@ import got, {Response, Request, HTTPAlias, Progress, DnsLookupIpVersion} from 'g
 import type {Socket} from 'socket.io-client';
 import type {CommandInterface} from '../types.js';
 import {callbackify} from '../lib/util.js';
+import {ProgressBuffer} from '../helper/progress-buffer.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 import {dnsLookup, ResolverType} from './handlers/http/dns-resolver.js';
 
@@ -55,7 +56,7 @@ type Output = {
 };
 
 /* eslint-disable @typescript-eslint/ban-types */
-type OutputJson = {
+export type OutputJson = {
 	resolvedAddress: string | null;
 	headers: Record<string, string>;
 	rawHeaders: string | null;
@@ -157,10 +158,11 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 	constructor(private readonly cmd: typeof httpCmd) {}
 
 	async run(socket: Socket, measurementId: string, testId: string, options: HttpOptions): Promise<void> {
-		const {value: cmdOptions, error} = httpOptionsSchema.validate(options);
+		const {value: cmdOptions, error: validationError} = httpOptionsSchema.validate(options);
+		const buffer = new ProgressBuffer(socket, testId, measurementId);
 
-		if (error) {
-			throw new InvalidOptionsException('http', error);
+		if (validationError) {
+			throw new InvalidOptionsException('http', validationError);
 		}
 
 		const stream = this.cmd(cmdOptions);
@@ -186,20 +188,16 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				? `HTTP/${result.httpVersion} ${result.statusCode}\n` + result.curlHeaders
 				: result.rawBody;
 
-			socket.emit('probe:measurement:result', {
-				testId,
-				measurementId,
-				result: this.toJsonOutput({
-					resolvedAddress: result.resolvedAddress,
-					headers: result.headers,
-					rawHeaders: result.rawHeaders,
-					rawBody: result.rawBody,
-					statusCode: result.statusCode,
-					timings: result.timings,
-					tls: result.tls,
-					rawOutput: result.error || rawOutput,
-				}),
-			});
+			buffer.pushResult(this.toJsonOutput({
+				resolvedAddress: result.resolvedAddress,
+				headers: result.headers,
+				rawHeaders: result.rawHeaders,
+				rawBody: result.rawBody,
+				statusCode: result.statusCode,
+				timings: result.timings,
+				tls: result.tls,
+				rawOutput: result.error || rawOutput,
+			}));
 
 			resolve();
 		};
@@ -221,12 +219,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 		const onData = (data: Buffer) => {
 			result.rawBody += data.toString();
-
-			socket.emit('probe:measurement:progress', {
-				testId,
-				measurementId,
-				result: {rawOutput: data.toString()},
-			});
+			buffer.pushProgress({rawOutput: data.toString()});
 		};
 
 		const onResponse = (resp: Response) => {

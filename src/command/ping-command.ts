@@ -4,6 +4,7 @@ import type {Socket} from 'socket.io-client';
 import {execa, ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
 import {isExecaError} from '../helper/execa-error-check.js';
+import {ProgressBuffer} from '../helper/progress-buffer.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
 export type PingOptions = {
@@ -39,7 +40,7 @@ type PingParseOutput = {
 };
 
 /* eslint-disable @typescript-eslint/ban-types */
-type PingParseOutputJson = {
+export type PingParseOutputJson = {
 	rawOutput: string;
 	resolvedHostname: string | null;
 	resolvedAddress: string | null;
@@ -77,10 +78,11 @@ export class PingCommand implements CommandInterface<PingOptions> {
 	constructor(private readonly cmd: typeof pingCmd) {}
 
 	async run(socket: Socket, measurementId: string, testId: string, options: unknown): Promise<void> {
-		const {value: cmdOptions, error} = pingOptionsSchema.validate(options);
+		const {value: cmdOptions, error: validationError} = pingOptionsSchema.validate(options);
+		const buffer = new ProgressBuffer(socket, testId, measurementId);
 
-		if (error) {
-			throw new InvalidOptionsException('ping', error);
+		if (validationError) {
+			throw new InvalidOptionsException('ping', validationError);
 		}
 
 		const pStdout: string[] = [];
@@ -96,11 +98,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 				return;
 			}
 
-			socket.emit('probe:measurement:progress', {
-				testId,
-				measurementId,
-				result: {rawOutput: data.toString()},
-			});
+			buffer.pushProgress({rawOutput: data.toString()});
 		});
 
 		let result = {
@@ -128,11 +126,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			};
 		}
 
-		socket.emit('probe:measurement:result', {
-			testId,
-			measurementId,
-			result: this.toJsonOutput(result),
-		});
+		buffer.pushResult(this.toJsonOutput(result));
 	}
 
 	private validatePartialResult(rawOutput: string, cmd: ExecaChildProcess): boolean {
