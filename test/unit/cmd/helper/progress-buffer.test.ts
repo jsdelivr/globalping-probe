@@ -23,7 +23,7 @@ describe('progress buffer', () => {
 		progressBuffer.pushProgress({rawOutput: 'b'});
 		progressBuffer.pushProgress({rawOutput: 'c'});
 
-		expect(mockedSocket.emit.args.length).to.equal(1);
+		expect(mockedSocket.emit.callCount).to.equal(1);
 		expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
 		expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal({
 			measurementId: 'measurement-id',
@@ -45,7 +45,7 @@ describe('progress buffer', () => {
 		progressBuffer.pushProgress({rawOutput: 'e'});
 		sandbox.clock.tick(700);
 
-		expect(mockedSocket.emit.args.length).to.equal(3);
+		expect(mockedSocket.emit.callCount).to.equal(3);
 		expect(mockedSocket.emit.secondCall.args[0]).to.equal('probe:measurement:progress');
 		expect(mockedSocket.emit.secondCall.args[1]).to.deep.equal({
 			measurementId: 'measurement-id',
@@ -73,7 +73,7 @@ describe('progress buffer', () => {
 		progressBuffer.pushResult({rawOutput: 'abc'});
 		sandbox.clock.tick(700);
 
-		expect(mockedSocket.emit.args.length).to.equal(2);
+		expect(mockedSocket.emit.callCount).to.equal(2);
 		expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
 		expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal({
 			measurementId: 'measurement-id',
