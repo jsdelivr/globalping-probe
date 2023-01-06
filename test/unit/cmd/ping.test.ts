@@ -1,6 +1,7 @@
 import * as sinon from 'sinon';
 import {expect} from 'chai';
 import {Socket} from 'socket.io-client';
+import {execaSync} from 'execa';
 import {getCmdMock, getCmdMockResult} from '../../utils.js';
 import {
 	PingCommand,
@@ -72,18 +73,36 @@ describe('ping command executor', () => {
 		const sandbox = sinon.createSandbox();
 		const mockedSocket = sandbox.createStubInstance(Socket);
 
-		const testCases = ['ping-success-linux', 'ping-timeout-linux', 'ping-success-mac', 'ping-timeout-mac', 'ping-private-ip-linux'];
-
 		beforeEach(() => {
 			sandbox.reset();
 		});
 
-		for (const testCase of testCases) {
-			it(`should run and parse ping - ${testCase}`, async () => {
-				const rawOutput = getCmdMock(testCase);
-				const expectedResult = getCmdMockResult(testCase);
+		const successfulCommands = ['ping-success-linux', 'ping-success-mac', 'ping-private-ip-linux'];
+		for (const command of successfulCommands) {
+			it(`should run and parse successful commands - ${command}`, async () => {
+				const rawOutput = getCmdMock(command);
+				const expectedResult = getCmdMockResult(command);
 
 				const mockedCmd = Promise.resolve({stdout: rawOutput});
+
+				const ping = new PingCommand((): any => mockedCmd);
+				await ping.run(mockedSocket as any, 'measurement', 'test', {target: 'google.com'});
+
+				expect(mockedSocket.emit.calledOnce).to.be.true;
+				expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+				expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
+			});
+		}
+
+		const failedCommands = ['ping-timeout-linux', 'ping-timeout-mac'];
+		for (const command of failedCommands) {
+			it(`should run and parse failed commands - ${command}`, async () => {
+				const rawOutput = getCmdMock(command);
+				const expectedResult = getCmdMockResult(command);
+
+				const execaError = execaSync('unknown-command', [], {reject: false});
+				execaError.stdout = rawOutput;
+				const mockedCmd = Promise.reject(execaError);
 
 				const ping = new PingCommand((): any => mockedCmd);
 				await ping.run(mockedSocket as any, 'measurement', 'test', {target: 'google.com'});

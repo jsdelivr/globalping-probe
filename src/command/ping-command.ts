@@ -114,10 +114,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 				isResultPrivate = true;
 			}
 		} catch (error: unknown) {
-			const output = isExecaError(error) ? error.stdout.toString() : '';
-			result = {
-				rawOutput: output,
-			};
+			result = isExecaError(error) ? this.parse(error.stdout.toString()) : {rawOutput: ''};
 		}
 
 		if (isResultPrivate) {
