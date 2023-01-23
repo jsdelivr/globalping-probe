@@ -6,8 +6,8 @@ import {getCmdMock, getCmdMockResult, execaPromise} from '../../utils.js';
 import {
 	MtrCommand,
 	argBuilder,
+	type MtrOptions,
 } from '../../../src/command/mtr-command.js';
-import type {MtrOptions} from '../../../src/command/mtr-command.js';
 
 const dnsResolver = (isPrivate: boolean) => async (_addr: string, type = 'A') => {
 	if (type === 'TXT') {

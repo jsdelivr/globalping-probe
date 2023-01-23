@@ -5,8 +5,8 @@ import {getCmdMock, getCmdMockResult} from '../../utils.js';
 import {
 	TracerouteCommand,
 	argBuilder,
+	type TraceOptions,
 } from '../../../src/command/traceroute-command.js';
-import type {TraceOptions} from '../../../src/command/traceroute-command.js';
 
 describe('trace command', () => {
 	describe('argument builder', () => {

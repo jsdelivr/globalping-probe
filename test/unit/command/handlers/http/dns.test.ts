@@ -1,7 +1,6 @@
 import {expect} from 'chai';
 import {callbackify} from '../../../../../src/lib/util.js';
-import {dnsLookup} from '../../../../../src/command/handlers/http/dns-resolver.js';
-import type {ResolverType, ResolverOptionsType} from '../../../../../src/command/handlers/http/dns-resolver.js';
+import {dnsLookup, type ResolverType, type ResolverOptionsType} from '../../../../../src/command/handlers/http/dns-resolver.js';
 
 export const buildResolver = (ipList: string[]): ResolverType => async (_hostname: string, _options: ResolverOptionsType): Promise<string[]> => ipList;
 

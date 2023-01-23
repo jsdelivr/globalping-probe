@@ -1,9 +1,9 @@
 import {Socket} from 'socket.io-client';
 import * as sinon from 'sinon';
 import {expect} from 'chai';
-import {ProgressBuffer} from '../../../../src/helper/progress-buffer.js';
+import {ProgressBufferOverwrite} from '../../../src/helper/progress-buffer-overwrite.js';
 
-describe('progress buffer', () => {
+describe('progress buffer overwrite', () => {
 	let sandbox: sinon.SinonSandbox;
 	let mockedSocket: sinon.SinonStubbedInstance<Socket>;
 
@@ -17,11 +17,11 @@ describe('progress buffer', () => {
 	});
 
 	it('should send first message immideately', () => {
-		const progressBuffer = new ProgressBuffer(mockedSocket, 'test-id', 'measurement-id');
+		const progressBuffer = new ProgressBufferOverwrite(mockedSocket, 'test-id', 'measurement-id');
 
-		progressBuffer.pushProgress({rawOutput: 'a'});
-		progressBuffer.pushProgress({rawOutput: 'b'});
-		progressBuffer.pushProgress({rawOutput: 'c'});
+		progressBuffer.pushProgress({rawOutput: 'a', hops: []});
+		progressBuffer.pushProgress({rawOutput: 'b', hops: []});
+		progressBuffer.pushProgress({rawOutput: 'c', hops: []});
 
 		expect(mockedSocket.emit.callCount).to.equal(1);
 		expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
@@ -29,20 +29,22 @@ describe('progress buffer', () => {
 			measurementId: 'measurement-id',
 			result: {
 				rawOutput: 'a',
+				hops: [],
 			},
+			overwrite: true,
 			testId: 'test-id',
 		});
 	});
 
-	it('should accumulate all messages after the first and send them as one message in fixed time intervals', () => {
-		const progressBuffer = new ProgressBuffer(mockedSocket, 'test-id', 'measurement-id');
+	it('should overwrite all messages after the first and send the last one in fixed time intervals', () => {
+		const progressBuffer = new ProgressBufferOverwrite(mockedSocket, 'test-id', 'measurement-id');
 
-		progressBuffer.pushProgress({rawOutput: 'a'});
-		progressBuffer.pushProgress({rawOutput: 'b'});
-		progressBuffer.pushProgress({rawOutput: 'c'});
+		progressBuffer.pushProgress({rawOutput: 'a', hops: []});
+		progressBuffer.pushProgress({rawOutput: 'b', hops: []});
+		progressBuffer.pushProgress({rawOutput: 'c', hops: []});
 		sandbox.clock.tick(700);
-		progressBuffer.pushProgress({rawOutput: 'd'});
-		progressBuffer.pushProgress({rawOutput: 'e'});
+		progressBuffer.pushProgress({rawOutput: 'd', hops: []});
+		progressBuffer.pushProgress({rawOutput: 'e', hops: []});
 		sandbox.clock.tick(700);
 
 		expect(mockedSocket.emit.callCount).to.equal(3);
@@ -50,27 +52,31 @@ describe('progress buffer', () => {
 		expect(mockedSocket.emit.secondCall.args[1]).to.deep.equal({
 			measurementId: 'measurement-id',
 			result: {
-				rawOutput: 'bc',
+				rawOutput: 'c',
+				hops: [],
 			},
+			overwrite: true,
 			testId: 'test-id',
 		});
 		expect(mockedSocket.emit.thirdCall.args[0]).to.equal('probe:measurement:progress');
 		expect(mockedSocket.emit.thirdCall.args[1]).to.deep.equal({
 			measurementId: 'measurement-id',
 			result: {
-				rawOutput: 'de',
+				rawOutput: 'e',
+				hops: [],
 			},
+			overwrite: true,
 			testId: 'test-id',
 		});
 	});
 
 	it('should ignore pending messages and only send result if pushResult was called', () => {
-		const progressBuffer = new ProgressBuffer(mockedSocket, 'test-id', 'measurement-id');
+		const progressBuffer = new ProgressBufferOverwrite(mockedSocket, 'test-id', 'measurement-id');
 
-		progressBuffer.pushProgress({rawOutput: 'a'});
-		progressBuffer.pushProgress({rawOutput: 'b'});
-		progressBuffer.pushProgress({rawOutput: 'c'});
-		progressBuffer.pushResult({rawOutput: 'abc'});
+		progressBuffer.pushProgress({rawOutput: 'a', hops: []});
+		progressBuffer.pushProgress({rawOutput: 'b', hops: []});
+		progressBuffer.pushProgress({rawOutput: 'c', hops: []});
+		progressBuffer.pushResult({resolvedAddress: null, resolvedHostname: null, rawOutput: 'abc', hops: []});
 		sandbox.clock.tick(700);
 
 		expect(mockedSocket.emit.callCount).to.equal(2);
@@ -79,14 +85,19 @@ describe('progress buffer', () => {
 			measurementId: 'measurement-id',
 			result: {
 				rawOutput: 'a',
+				hops: [],
 			},
+			overwrite: true,
 			testId: 'test-id',
 		});
 		expect(mockedSocket.emit.secondCall.args[0]).to.equal('probe:measurement:result');
 		expect(mockedSocket.emit.secondCall.args[1]).to.deep.equal({
 			measurementId: 'measurement-id',
 			result: {
+				resolvedAddress: null,
+				resolvedHostname: null,
 				rawOutput: 'abc',
+				hops: [],
 			},
 			testId: 'test-id',
 		});

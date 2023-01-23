@@ -5,9 +5,8 @@ import {getCmdMock, getCmdMockResult} from '../../utils.js';
 import {
 	DnsCommand,
 	argBuilder,
+	type DnsOptions,
 } from '../../../src/command/dns-command.js';
-
-import type {DnsOptions} from '../../../src/command/dns-command.js';
 
 describe('dns command', () => {
 	const sandbox = sinon.createSandbox();

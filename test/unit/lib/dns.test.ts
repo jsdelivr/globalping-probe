@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import {getDnsServers} from '../../../../src/lib/dns.js';
+import {getDnsServers} from '../../../src/lib/dns.js';
 
 const client = (list: string[]) => () => list;
 

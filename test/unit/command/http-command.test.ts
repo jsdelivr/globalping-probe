@@ -8,8 +8,8 @@ import {
 	HttpCommand,
 	httpCmd,
 	urlBuilder,
+	type Timings,
 } from '../../../src/command/http-command.js';
-import type {Timings} from '../../../src/command/http-command.js';
 
 type StreamCert = {
 	valid_from: number | string;

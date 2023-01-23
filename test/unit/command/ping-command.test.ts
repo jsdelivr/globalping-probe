@@ -6,8 +6,8 @@ import {getCmdMock, getCmdMockResult} from '../../utils.js';
 import {
 	PingCommand,
 	argBuilder,
+	type PingOptions,
 } from '../../../src/command/ping-command.js';
-import type {PingOptions} from '../../../src/command/ping-command.js';
 
 describe('ping command executor', () => {
 	describe('argument builder', () => {
