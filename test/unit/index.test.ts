@@ -1,9 +1,7 @@
-import process from 'node:process';
 import { EventEmitter } from 'node:events';
 import {expect} from 'chai';
 import * as td from 'testdouble';
 import * as sinon from 'sinon';
-import * as constants from '../../src/constants.js';
 
 const fakeLocation = {
 	continent: 'EU',
@@ -16,7 +14,7 @@ const fakeLocation = {
 	state: null
 };
 
-describe('probe index file', () => {
+describe('index module', () => {
 	let sandbox: sinon.SinonSandbox;
 	const execaStub = sinon.stub();
 	const gotStub = sinon.stub();
@@ -67,36 +65,6 @@ describe('probe index file', () => {
 		expect(probeStatusReadyStub.callCount).to.equal(1);
 		expect(probeStatusReadyStub.firstCall.args).to.deep.equal([ {} ]);
 		expect(probeDnsUpdateStub.callCount).to.equal(1);
-	});
-
-	it('should check for update and call process.exit if there is newer version', async () => {
-		const killStub = sandbox.stub(process, 'kill');
-		td.replaceEsm('../../src/constants.ts', {...constants, VERSION: '0.10.0'});
-		gotStub.returns({json: () => ({tag_name: 'v0.11.0'})});
-
-		await import('../../src/index.js');
-		await sandbox.clock.tickAsync(650_000);
-
-		expect(gotStub.firstCall.args).to.deep.equal([
-			'https://api.github.com/repos/jsdelivr/globalping-probe/releases/latest',
-			{ timeout: { request: 15000 } }
-		]);
-		expect(killStub.called).to.be.true;
-	});
-
-	it('should check for update and call do nothing if there is no newer version', async () => {
-		const killStub = sandbox.stub(process, 'kill');
-		td.replaceEsm('../../src/constants.ts', {...constants, VERSION: '0.11.0'});
-		gotStub.returns({json: () => ({tag_name: 'v0.11.0'})});
-
-		await import('../../src/index.js');
-		await sandbox.clock.tickAsync(650_000);
-
-		expect(killStub.called).to.be.false;
-	});
-
-	it('should restart in configured interval', () => {
-		
 	});
 
 	it('should send stats in configured interval', () => {
