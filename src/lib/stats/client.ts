@@ -11,7 +11,7 @@ type Worker = {
 
 const statsConfig = getConfValue<{interval: number}>('stats');
 
-export const report = async (socket: Socket, jobCount: number) => {
+const report = async (socket: Socket, jobCount: number) => {
 	const cpuUsage = await getCpuUsage();
 
 	socket.emit('probe:stats:report', {
