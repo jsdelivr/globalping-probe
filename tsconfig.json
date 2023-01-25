@@ -6,6 +6,9 @@
     "paths": { "node-dig-dns": [ "./@types/node-dig-dns.d.ts" ] },
     "sourceMap": true
   },
+  "ts-node": {
+    "transpileOnly": true
+  },
   "include": [
     "src/**/*"
   ],

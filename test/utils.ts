@@ -1,3 +1,4 @@
+import { EventEmitter } from 'node:events';
 import * as path from 'node:path';
 import {readFileSync} from 'node:fs';
 
@@ -41,3 +42,15 @@ export const execaPromise = (object: ArgObject, promise: ArgPromise): ArgObject 
 
 	return object;
 };
+
+export class MockSocket extends EventEmitter {
+	override emit(event: string, data?: any, callback?: Function) {
+		super.emit(event, data);
+		callback && callback();
+		return true;
+	}
+
+	connect () {}
+
+	disconnect () {}
+}

@@ -18,7 +18,7 @@ describe('restart module', () => {
 		const uptimeStub = sandbox.stub(process, 'uptime').returns(800_000);
 
 		await import('../../../src/lib/restart.js');
-		sandbox.clock.tick(87_000 * 1000);
+		sandbox.clock.tick(87_000_000);
 
 		expect(uptimeStub.called).to.be.true;
 		expect(killStub.called).to.be.true;
