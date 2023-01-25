@@ -67,10 +67,6 @@ describe('index module', () => {
 		expect(probeDnsUpdateStub.callCount).to.equal(1);
 	});
 
-	it('should send stats in configured interval', () => {
-
-	});
-
 	it('should handle measurement request', () => {
 
 	})
