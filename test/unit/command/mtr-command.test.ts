@@ -1,8 +1,7 @@
-import PassThrough from 'node:stream';
 import * as sinon from 'sinon';
 import {expect} from 'chai';
 import {Socket} from 'socket.io-client';
-import {getCmdMock, getCmdMockResult, execaPromise} from '../../utils.js';
+import {getCmdMock, getCmdMockResult, getExecaMock} from '../../utils.js';
 import {
 	MtrCommand,
 	argBuilder,
@@ -154,27 +153,20 @@ describe('mtr command executor', () => {
 			const expectedResult = getCmdMockResult(testCase);
 			const rawOutput = getCmdMock(testCase);
 			const rawOutputLines = rawOutput.split('\n');
-
-			const stream = new PassThrough();
-			const promise = new Promise(resolve => {
-				for (const [i, line] of rawOutputLines.entries()) {
-					setTimeout(() => stream.emit('data', Buffer.from(line), i));
-				}
-
-				// Simulate raw output - wait until all lines are emitted.
-				setTimeout(() => {
-					resolve(rawOutput);
-				}, rawOutputLines.length);
-			});
-
-			const mockCmd = execaPromise({stdout: stream}, promise);
+			const mockCmd = getExecaMock();
 
 			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(false));
-			await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+			for (const progressOutput of rawOutputLines) {
+				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+			}
+
+			mockCmd.resolve(rawOutput);
+			await runPromise;
 
 			expect(mockedSocket.emit.callCount).to.equal(2);
-			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
-			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
+			// expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', rawOutputLines[0]]);
+			expect(mockedSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
 		});
 
 		it('should detect Private IP and stop', async () => {
@@ -185,13 +177,14 @@ describe('mtr command executor', () => {
 			};
 
 			const expectedResult = getCmdMockResult(testCase);
-			const mockCmd = execaPromise({stdout: new PassThrough(), kill: () => null}, Promise.resolve());
+			const mockCmd = getExecaMock();
 
 			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(true));
 			await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
 
-			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
-			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
+			expect(mockedSocket.emit.calledOnce).to.be.true;
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
 		});
 	});
 });
