@@ -1,0 +1,6 @@
+[
+  "PING test.com (192.168.0.5) 56(84) bytes of data.\n64 bytes from test.com (192.168.0.5): icmp_seq=1 ttl=64 time=1.62 ms\n",
+  "64 bytes from test.com (192.168.0.5): icmp_seq=2 ttl=64 time=1.08 ms\n",
+  "64 bytes from test.com (192.168.0.5): icmp_seq=3 ttl=64 time=0.690 ms\n",
+  "64 bytes from test.com (192.168.0.5): icmp_seq=4 ttl=64 time=0.768 ms\n^C\n--- test.com ping statistics ---\n4 packets transmitted, 4 received, 0% packet loss, time 3008ms\nrtt min/avg/max/mdev = 0.690/1.037/1.615/0.363 ms\n"
+]

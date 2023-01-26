@@ -3,7 +3,8 @@ import * as path from 'node:path';
 import {readFileSync} from 'node:fs';
 
 export const getCmdMock = (name: string): string => readFileSync(path.resolve(`./test/mocks/${name}.txt`)).toString();
-export const getCmdMockResult = (name: string): unknown => JSON.parse(readFileSync(path.resolve(`./test/mocks/${name}.json`)).toString());
+export const getCmdMockProgress = (name: string): string[] => JSON.parse(readFileSync(path.resolve(`./test/mocks/${name}-progress.json`)).toString());
+export const getCmdMockResult = (name: string): Object => JSON.parse(readFileSync(path.resolve(`./test/mocks/${name}.json`)).toString());
 
 // A helper for execa return.
 // stolen from https://github.com/sindresorhus/execa/blob/main/lib/promise.js

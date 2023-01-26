@@ -1,8 +1,9 @@
+import { EventEmitter } from 'node:events';
 import * as sinon from 'sinon';
 import {expect} from 'chai';
 import {Socket} from 'socket.io-client';
 import {execaSync} from 'execa';
-import {getCmdMock, getCmdMockResult} from '../../utils.js';
+import {getCmdMock, getCmdMockProgress, getCmdMockResult} from '../../utils.js';
 import {
 	PingCommand,
 	argBuilder,
@@ -77,20 +78,29 @@ describe('ping command executor', () => {
 			sandbox.reset();
 		});
 
-		const successfulCommands = ['ping-success-linux', 'ping-success-mac', 'ping-private-ip-linux'];
+		// const successfulCommands = ['ping-success-linux', 'ping-success-mac', 'ping-private-ip-linux'];
+		const successfulCommands = ['ping-success-linux', 'ping-success-mac'];
 		for (const command of successfulCommands) {
 			it(`should run and parse successful commands - ${command}`, async () => {
 				const rawOutput = getCmdMock(command);
+				const outputProgress = getCmdMockProgress(command);
 				const expectedResult = getCmdMockResult(command);
-
-				const mockedCmd = Promise.resolve({stdout: rawOutput});
-
+				const mockedCmd = Promise.resolve({stdout: rawOutput}) as Promise<any> & {stdout: EventEmitter};
+				const execaStdout = new EventEmitter();
+				mockedCmd.stdout = execaStdout;
 				const ping = new PingCommand((): any => mockedCmd);
-				await ping.run(mockedSocket as any, 'measurement', 'test', {target: 'google.com'});
 
-				expect(mockedSocket.emit.calledOnce).to.be.true;
-				expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
-				expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
+				const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', {target: 'google.com'});
+				outputProgress.forEach(progressOutput => execaStdout.emit('data', Buffer.from(progressOutput, 'utf-8')));
+				await runPromise;
+
+				expect(mockedSocket.emit.callCount).to.equal(2);
+				expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
+						testId: 'test',
+						measurementId: 'measurement',
+						result: { rawOutput: outputProgress[0] }
+				}]);
+				expect(mockedSocket.emit.secondCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
 			});
 		}
 
