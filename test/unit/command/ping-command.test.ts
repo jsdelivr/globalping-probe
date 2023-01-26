@@ -3,7 +3,7 @@ import * as sinon from 'sinon';
 import {expect} from 'chai';
 import {Socket} from 'socket.io-client';
 import {execaSync} from 'execa';
-import {getCmdMock, getCmdMockProgress, getCmdMockResult} from '../../utils.js';
+import {getCmdMock, getCmdMockProgress, getCmdMockResult, getExecaMock} from '../../utils.js';
 import {
 	PingCommand,
 	argBuilder,
@@ -78,20 +78,20 @@ describe('ping command executor', () => {
 			sandbox.reset();
 		});
 
-		// const successfulCommands = ['ping-success-linux', 'ping-success-mac', 'ping-private-ip-linux'];
 		const successfulCommands = ['ping-success-linux', 'ping-success-mac'];
 		for (const command of successfulCommands) {
 			it(`should run and parse successful commands - ${command}`, async () => {
 				const rawOutput = getCmdMock(command);
 				const outputProgress = getCmdMockProgress(command);
 				const expectedResult = getCmdMockResult(command);
-				const mockedCmd = Promise.resolve({stdout: rawOutput}) as Promise<any> & {stdout: EventEmitter};
-				const execaStdout = new EventEmitter();
-				mockedCmd.stdout = execaStdout;
+
+				const mockedCmd = getExecaMock();
+
 				const ping = new PingCommand((): any => mockedCmd);
 
 				const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', {target: 'google.com'});
-				outputProgress.forEach(progressOutput => execaStdout.emit('data', Buffer.from(progressOutput, 'utf-8')));
+				outputProgress.forEach(progressOutput => mockedCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf-8')));
+				mockedCmd.resolve({stdout: rawOutput});
 				await runPromise;
 
 				expect(mockedSocket.emit.callCount).to.equal(2);
@@ -104,6 +104,41 @@ describe('ping command executor', () => {
 			});
 		}
 
+		it(`should run and parse private ip command on the progress step`, async () => {
+			const command = 'ping-private-ip-linux';
+			const outputProgress = getCmdMockProgress(command);
+			const expectedResult = getCmdMockResult(command);
+
+			const mockedCmd = getExecaMock();
+
+			const ping = new PingCommand((): any => mockedCmd);
+
+			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', {target: 'google.com'});
+			outputProgress.forEach(progressOutput => mockedCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf-8')));
+			await runPromise;
+
+			expect(mockedSocket.emit.calledOnce).to.be.true;
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+		});
+
+		it(`should run and parse private ip command on the result step`, async () => {
+			const command = 'ping-private-ip-linux';
+			const rawOutput = getCmdMock(command);
+			const expectedResult = getCmdMockResult(command);
+
+			const mockedCmd = getExecaMock();
+
+			const ping = new PingCommand((): any => mockedCmd);
+
+			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', {target: 'google.com'});
+			mockedCmd.resolve({stdout: rawOutput});
+			await runPromise;
+
+			expect(mockedSocket.emit.calledOnce).to.be.true;
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+		});
+
+
 		const failedCommands = ['ping-timeout-linux', 'ping-timeout-mac'];
 		for (const command of failedCommands) {
 			it(`should run and parse failed commands - ${command}`, async () => {
@@ -112,10 +147,12 @@ describe('ping command executor', () => {
 
 				const execaError = execaSync('unknown-command', [], {reject: false});
 				execaError.stdout = rawOutput;
-				const mockedCmd = Promise.reject(execaError);
+				const mockedCmd = getExecaMock();
 
 				const ping = new PingCommand((): any => mockedCmd);
-				await ping.run(mockedSocket as any, 'measurement', 'test', {target: 'google.com'});
+				const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', {target: 'google.com'});
+				mockedCmd.reject(execaError);
+				await runPromise;
 
 				expect(mockedSocket.emit.calledOnce).to.be.true;
 				expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');

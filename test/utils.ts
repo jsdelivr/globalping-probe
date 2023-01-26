@@ -55,3 +55,16 @@ export class MockSocket extends EventEmitter {
 
 	disconnect () {}
 }
+
+export const getExecaMock = () => {
+	let resolve, reject;
+	const execaMock = new Promise((res, rej) => {
+		resolve = res;
+		reject = rej;
+	}) as Promise<any> & {resolve: Function, reject: Function, kill: Function, stdout: EventEmitter};
+	execaMock.resolve = resolve;
+	execaMock.reject = reject;
+	execaMock.kill = reject;
+	execaMock.stdout = new EventEmitter();
+	return execaMock;
+};
