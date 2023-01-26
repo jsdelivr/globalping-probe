@@ -165,7 +165,30 @@ describe('mtr command executor', () => {
 			await runPromise;
 
 			expect(mockedSocket.emit.callCount).to.equal(2);
-			// expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', rawOutputLines[0]]);
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
+				measurementId: 'measurement',
+				overwrite: true,
+				result: {
+					hops: [{
+						asn: [],
+						stats: {
+							avg: 0,
+							drop: 0,
+							jAvg: 0,
+							jMax: 0,
+							jMin: 0,
+							max: 0,
+							min: 0,
+							rcv: 0,
+							stDev: 0,
+							total: 0,
+						},
+						timings: [{rtt: null, seq: '33000'}],
+					}],
+					rawOutput: 'Host          Loss% Drop Rcv Avg  StDev  Javg \n',
+				},
+				testId: 'test',
+			}]);
 			expect(mockedSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
 		});
 

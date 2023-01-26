@@ -1,7 +1,7 @@
 import * as sinon from 'sinon';
 import {expect} from 'chai';
 import {Socket} from 'socket.io-client';
-import {getCmdMock, getCmdMockResult} from '../../utils.js';
+import {getCmdMock, getCmdMockResult, getExecaMock} from '../../utils.js';
 import {
 	TracerouteCommand,
 	argBuilder,
@@ -97,29 +97,66 @@ describe('trace command', () => {
 		});
 
 		describe('mock', () => {
-			const testCases = ['trace-success-linux', 'trace-private-ip-linux'];
+			it('should run and parse trace', async () => {
+				const options = {
+					target: 'google.com',
+					port: 53,
+					protocol: 'UDP',
+				};
 
-			for (const testCase of testCases) {
-				it(`should run and parse trace - ${testCase}`, async () => {
-					const options = {
-						target: 'google.com',
-						port: 53,
-						protocol: 'UDP',
-					};
+				const testCase = 'trace-success-linux';
+				const rawOutput = getCmdMock(testCase);
+				const outputProgress = rawOutput.split('\n');
+				const expectedResult = getCmdMockResult(testCase);
 
-					const rawOutput = getCmdMock(testCase);
-					const expectedResult = getCmdMockResult(testCase);
+				const mockCmd = getExecaMock();
 
-					const mockCmd = Promise.resolve({stdout: rawOutput});
+				const ping = new TracerouteCommand((): any => mockCmd);
+				const runPromise = ping.run(mockSocket as any, 'measurement', 'test', options);
+				for (const progressOutput of outputProgress) {
+					mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+				}
 
-					const ping = new TracerouteCommand((): any => mockCmd);
-					await ping.run(mockSocket as any, 'measurement', 'test', options);
+				mockCmd.resolve({stdout: rawOutput});
+				await runPromise;
 
-					expect(mockSocket.emit.calledOnce).to.be.true;
-					expect(mockSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
-					expect(mockSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
-				});
-			}
+				expect(mockSocket.emit.callCount).to.equal(2);
+				expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
+					testId: 'test',
+					measurementId: 'measurement',
+					result: {
+						rawOutput: outputProgress[0],
+					},
+				}]);
+				expect(mockSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+			});
+
+			it('should run and parse private ip trace', async () => {
+				const options = {
+					target: 'google.com',
+					port: 53,
+					protocol: 'UDP',
+				};
+
+				const testCase = 'trace-private-ip-linux';
+				const rawOutput = getCmdMock(testCase);
+				const outputProgress = rawOutput.split('\n');
+				const expectedResult = getCmdMockResult(testCase);
+
+				const mockCmd = getExecaMock();
+
+				const ping = new TracerouteCommand((): any => mockCmd);
+				const runPromise = ping.run(mockSocket as any, 'measurement', 'test', options);
+				for (const progressOutput of outputProgress) {
+					mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+				}
+
+				mockCmd.resolve({stdout: rawOutput});
+				await runPromise;
+
+				expect(mockSocket.emit.calledOnce).to.be.true;
+				expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+			});
 		});
 	});
 });
