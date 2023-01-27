@@ -8,8 +8,8 @@ import {
 	HttpCommand,
 	httpCmd,
 	urlBuilder,
+	type Timings,
 } from '../../../src/command/http-command.js';
-import type {Timings} from '../../../src/command/http-command.js';
 
 type StreamCert = {
 	valid_from: number | string;
@@ -301,10 +301,16 @@ describe('http command', () => {
 			await http.run(mockedSocket as any, 'measurement', 'test', options);
 
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
+				testId: 'test',
+				measurementId: 'measurement',
+				result: {rawOutput: '200 Ok'},
+			}]);
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
 		});
+
 		it('should respond with 400', async () => {
 			const options = {
 				type: 'http',
@@ -335,6 +341,11 @@ describe('http command', () => {
 			await http.run(mockedSocket as any, 'measurement', 'test', options);
 
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
+				testId: 'test',
+				measurementId: 'measurement',
+				result: {rawOutput: '400 Bad Request'},
+			}]);
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
@@ -369,6 +380,13 @@ describe('http command', () => {
 			const http = new HttpCommand(httpCmd);
 			await http.run(mockedSocket as any, 'measurement', 'test', options);
 
+			expect(mockedSocket.emit.callCount).to.equal(2);
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
+				testId: 'test',
+				measurementId: 'measurement',
+				result: {rawOutput: '400 Bad Request'},
+			}]);
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
@@ -472,10 +490,14 @@ describe('http command', () => {
 
 			await cmd;
 
-			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
+			expect(mockedSocket.emit.callCount).to.equal(2);
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress',	{
+				testId: 'test',
+				measurementId: 'measurement',
+				result: {rawOutput: 'abc'},
+			}]);
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
-			expect(mockedSocket.emit.callCount).to.equal(2);
 		});
 
 		it('should emit headers (rawOutput - HEAD request)', async () => {
@@ -550,6 +572,7 @@ describe('http command', () => {
 
 			await cmd;
 
+			expect(mockedSocket.emit.callCount).to.equal(1);
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
 		});
@@ -654,6 +677,7 @@ describe('http command', () => {
 
 			await cmd;
 
+			expect(mockedSocket.emit.callCount).to.equal(1);
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
 		});
@@ -720,6 +744,7 @@ describe('http command', () => {
 
 			await cmd;
 
+			expect(mockedSocket.emit.callCount).to.equal(1);
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
 		});

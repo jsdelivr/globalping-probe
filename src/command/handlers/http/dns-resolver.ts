@@ -1,11 +1,11 @@
-import dns, {RecordWithTtl} from 'node:dns';
+import dns, {type RecordWithTtl} from 'node:dns';
 import isIpPrivate from 'private-ip';
 
-type IpFamily = 4 | 6;
-type Options = {
+export type IpFamily = 4 | 6;
+export type Options = {
 	family: IpFamily;
 };
-type ErrnoException = NodeJS.ErrnoException;
+export type ErrnoException = NodeJS.ErrnoException;
 export type ResolverOptionsType = {ttl: boolean};
 export type ResolverType = (hostname: string, options: ResolverOptionsType) => Promise<string[]>;
 

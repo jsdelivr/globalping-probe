@@ -1,18 +1,38 @@
 import {expect} from 'chai';
+import * as td from 'testdouble';
 import {callbackify} from '../../../../../src/lib/util.js';
-import {dnsLookup} from '../../../../../src/command/handlers/http/dns-resolver.js';
-import type {ResolverType, ResolverOptionsType} from '../../../../../src/command/handlers/http/dns-resolver.js';
+import {type ResolverType, type ResolverOptionsType, type Options, type ErrnoException, type IpFamily} from '../../../../../src/command/handlers/http/dns-resolver.js';
 
 export const buildResolver = (ipList: string[]): ResolverType => async (_hostname: string, _options: ResolverOptionsType): Promise<string[]> => ipList;
 
+class NativeResolverMock {
+	public resolve4: ResolverType;
+
+	constructor() {
+		this.resolve4 = buildResolver(['1.1.1.1']);
+	}
+}
+
 describe('http helper', () => {
+	let dnsLookup: (resolverAddr: string | undefined, resolverFn?: ResolverType) => (hostname: string, options: Options) => Promise<Error | ErrnoException | [string, number]>;
+
+	before(async () => {
+		// eslint-disable-next-line @typescript-eslint/naming-convention
+		await td.replaceEsm('node:dns', null, {promises: {Resolver: NativeResolverMock}});
+		({dnsLookup} = await import('../../../../../src/command/handlers/http/dns-resolver.js'));
+	});
+
+	after(() => {
+		td.reset();
+	});
+
 	describe('dns', () => {
 		it('should return an error (private ip)', async () => {
 			const data = {
 				ipList: ['192.168.0.1'],
 				hostname: 'abc.com',
 				options: {
-					family: 4,
+					family: 4 as IpFamily,
 				},
 			};
 
@@ -24,7 +44,6 @@ describe('http helper', () => {
 			try {
 				response = await lookup(
 					data.hostname,
-					// @ts-expect-error family type error
 					data.options,
 				) as [string, number];
 			} catch (error: unknown) {
@@ -39,24 +58,17 @@ describe('http helper', () => {
 				ipList: ['192.168.0.1', '1.1.1.1'],
 				hostname: 'abc.com',
 				options: {
-					family: 4,
+					family: 4 as IpFamily,
 				},
 			};
 
 			const resolver = buildResolver(data.ipList);
 			const lookup = dnsLookup(undefined, resolver);
 
-			let response: unknown;
-
-			try {
-				response = await lookup(
-					data.hostname,
-					// @ts-expect-error family type error
-					data.options,
-				) as [string, number];
-			} catch (error: unknown) {
-				response = error;
-			}
+			const response = await lookup(
+				data.hostname,
+				data.options,
+			) as [string, number];
 
 			expect(response).to.deep.equal(['1.1.1.1', 4]);
 		});
@@ -66,7 +78,7 @@ describe('http helper', () => {
 				ipList: ['192.168.0.1', '1.1.1.1'],
 				hostname: 'abc.com',
 				options: {
-					family: 4,
+					family: 4 as IpFamily,
 				},
 			};
 
@@ -82,6 +94,24 @@ describe('http helper', () => {
 					done();
 				},
 			);
+		});
+
+		it('should use native resolver if not provided', async () => {
+			const data = {
+				hostname: 'abc.com',
+				options: {
+					family: 4 as IpFamily,
+				},
+			};
+
+			const lookup = dnsLookup(undefined);
+
+			const response = await lookup(
+				data.hostname,
+				data.options,
+			) as [string, number];
+
+			expect(response).to.deep.equal(['1.1.1.1', 4]);
 		});
 	});
 });

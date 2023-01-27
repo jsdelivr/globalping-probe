@@ -1,43 +1,48 @@
+import {EventEmitter} from 'node:events';
 import * as path from 'node:path';
 import {readFileSync} from 'node:fs';
+import * as sinon from 'sinon';
 
 export const getCmdMock = (name: string): string => readFileSync(path.resolve(`./test/mocks/${name}.txt`)).toString();
-export const getCmdMockResult = (name: string): unknown => JSON.parse(readFileSync(path.resolve(`./test/mocks/${name}.json`)).toString());
+export const getCmdMockResult = (name: string) => JSON.parse(readFileSync(path.resolve(`./test/mocks/${name}.json`)).toString()) as Record<string, unknown>;
 
-// A helper for execa return.
-// stolen from https://github.com/sindresorhus/execa/blob/main/lib/promise.js
-type Descriptor = {
-	value: () => unknown;
-	writable: boolean;
-	enumerable: boolean;
-	configurable: boolean;
-};
-type DescriptorMap = [ string, Descriptor ];
-
-const nativePromise = Promise.resolve();
-const nativePromisePrototype = nativePromise.constructor.prototype as never;
-const descriptors = ['then', 'catch', 'finally'].map((property: string) => [
-	property,
-	Reflect.getOwnPropertyDescriptor(nativePromisePrototype, property) as Descriptor,
-]) as DescriptorMap[];
-
-type ArgPromise = Promise<unknown> | (() => Promise<unknown>);
-type ArgObject = Record<string, unknown>;
-
-// The return value is a mixin of `childProcess` and `Promise`
-export const execaPromise = (object: ArgObject, promise: ArgPromise): ArgObject => {
-	for (const [property, descriptor] of descriptors) {
-		if (!property || typeof property !== 'string' || !descriptor || typeof descriptor !== 'object') {
-			continue;
+export class MockSocket extends EventEmitter {
+	override emit(event: string, data?: any, callback?: () => void) {
+		super.emit(event, data);
+		if (callback) {
+			callback();
 		}
 
-		// Starting the main `promise` is deferred to avoid consuming streams
-		const value = typeof promise === 'function'
-			? (...args: unknown[]) => Reflect.apply(descriptor.value, promise(), args) as never
-			: descriptor.value.bind(promise);
-
-		Reflect.defineProperty(object, property, {...descriptor, value});
+		return true;
 	}
 
-	return object;
+	connect() {
+		// Empty connect method, that will be overridden with stub in tests
+	}
+
+	disconnect() {
+		// Empty disconnect method, that will be overridden with stub in tests
+	}
+}
+
+type ExecaMock = Promise<any> & {
+	resolve: (data: any) => void;
+	reject: (error: any) => void;
+	kill: sinon.SinonStub;
+	stdout: EventEmitter;
+};
+
+export const getExecaMock = () => {
+	let resolve;
+	let reject;
+	const execaMock = new Promise((resolvePromise, rejectPromise) => {
+		resolve = resolvePromise;
+		reject = rejectPromise;
+	}) as ExecaMock;
+	execaMock.resolve = resolve;
+	execaMock.reject = reject;
+	execaMock.kill = sinon.stub();
+
+	execaMock.stdout = new EventEmitter();
+	return execaMock;
 };

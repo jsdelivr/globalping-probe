@@ -1,7 +1,7 @@
 import {Socket} from 'socket.io-client';
 import * as sinon from 'sinon';
 import {expect} from 'chai';
-import {ProgressBuffer} from '../../../../src/helper/progress-buffer.js';
+import {ProgressBuffer} from '../../../src/helper/progress-buffer.js';
 
 describe('progress buffer', () => {
 	let sandbox: sinon.SinonSandbox;
@@ -23,7 +23,7 @@ describe('progress buffer', () => {
 		progressBuffer.pushProgress({rawOutput: 'b'});
 		progressBuffer.pushProgress({rawOutput: 'c'});
 
-		expect(mockedSocket.emit.callCount).to.equal(1);
+		expect(mockedSocket.emit.calledOnce).to.be.true;
 		expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
 		expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal({
 			measurementId: 'measurement-id',
