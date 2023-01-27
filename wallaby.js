@@ -18,8 +18,7 @@ export default function wallaby() {
 		env: {
 			type: 'node',
 			params: {
-				runner: '--experimental-specifier-resolution=node --loader '
-          + path.join(__dirname, 'node_modules/testdouble/lib/index.mjs'),
+				runner: `--experimental-specifier-resolution=node --loader ${path.join(__dirname, 'node_modules/testdouble/lib/index.mjs')}`,
 				env: 'NODE_ENV=test;NEW_RELIC_ENABLED=false;NEW_RELIC_LOG_ENABLED=false',
 			},
 		},
