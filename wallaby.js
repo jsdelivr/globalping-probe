@@ -27,6 +27,5 @@ export default function wallaby() {
 			'**/*.ts': file => file.content.replace(/\.ts/g, '.js'),
 		},
 		workers: {restart: true},
-		runMode: 'onsave',
 	};
 }

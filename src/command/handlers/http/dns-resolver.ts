@@ -1,4 +1,4 @@
-import dns, {RecordWithTtl} from 'node:dns';
+import dns, {type RecordWithTtl} from 'node:dns';
 import isIpPrivate from 'private-ip';
 
 type IpFamily = 4 | 6;
