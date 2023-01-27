@@ -2,7 +2,7 @@ import * as sinon from 'sinon';
 import {expect} from 'chai';
 import {Socket} from 'socket.io-client';
 import {execaSync} from 'execa';
-import {getCmdMock, getCmdMockProgress, getCmdMockResult, getExecaMock} from '../../utils.js';
+import {getCmdMock, getCmdMockResult, getExecaMock} from '../../utils.js';
 import {
 	PingCommand,
 	argBuilder,
@@ -81,7 +81,7 @@ describe('ping command executor', () => {
 		for (const command of successfulCommands) {
 			it(`should run and parse successful commands - ${command}`, async () => {
 				const rawOutput = getCmdMock(command);
-				const outputProgress = getCmdMockProgress(command);
+				const outputProgress = rawOutput.split('\n');
 				const expectedResult = getCmdMockResult(command);
 
 				const mockedCmd = getExecaMock();
@@ -108,7 +108,8 @@ describe('ping command executor', () => {
 
 		it('should run and parse private ip command on the progress step', async () => {
 			const command = 'ping-private-ip-linux';
-			const outputProgress = getCmdMockProgress(command);
+			const rawOutput = getCmdMock(command);
+			const outputProgress = rawOutput.split('\n');
 			const expectedResult = getCmdMockResult(command);
 
 			const mockedCmd = getExecaMock();
@@ -119,7 +120,8 @@ describe('ping command executor', () => {
 			for (const progressOutput of outputProgress) {
 				mockedCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 			}
-			mockedCmd.reject(new Error());
+
+			mockedCmd.reject(new Error('KILL'));
 
 			await runPromise;
 

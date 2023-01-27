@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import process from 'node:process';
 import {expect} from 'chai';
 import * as td from 'testdouble';
@@ -9,7 +10,7 @@ describe('updater module', () => {
 	const gotStub = sinon.stub();
 
 	before(async () => {
-		td.replaceEsm('got', null, gotStub);
+		await td.replaceEsm('got', null, gotStub);
 	});
 
 	beforeEach(() => {
@@ -22,11 +23,11 @@ describe('updater module', () => {
 
 	after(() => {
 		td.reset();
-	})
+	});
 
 	it('should check for update and call process.exit if there is newer version', async () => {
 		const killStub = sandbox.stub(process, 'kill');
-		td.replaceEsm('../../../src/constants.ts', {...constants, VERSION: '0.6.0'});
+		await td.replaceEsm('../../../src/constants.ts', {...constants, VERSION: '0.6.0'});
 		gotStub.returns({json: () => ({tag_name: 'v0.7.0'})});
 
 		await import('../../../src/lib/updater.js');
@@ -34,14 +35,14 @@ describe('updater module', () => {
 
 		expect(gotStub.firstCall.args).to.deep.equal([
 			'https://api.github.com/repos/jsdelivr/globalping-probe/releases/latest',
-			{ timeout: { request: 15000 } }
+			{timeout: {request: 15_000}},
 		]);
 		expect(killStub.called).to.be.true;
 	});
 
 	it('should check for update and call do nothing if there is no newer version', async () => {
 		const killStub = sandbox.stub(process, 'kill');
-		td.replaceEsm('../../../src/constants.ts', {...constants, VERSION: '0.7.0'});
+		await td.replaceEsm('../../../src/constants.ts', {...constants, VERSION: '0.7.0'});
 		gotStub.returns({json: () => ({tag_name: 'v0.7.0'})});
 
 		await import('../../../src/lib/updater.js');

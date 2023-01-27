@@ -1,25 +1,30 @@
 import {expect} from 'chai';
 import * as td from 'testdouble';
 import {callbackify} from '../../../../../src/lib/util.js';
-import {type ResolverType, type ResolverOptionsType} from '../../../../../src/command/handlers/http/dns-resolver.js';
+import {type ResolverType, type ResolverOptionsType, type Options, type ErrnoException, type IpFamily} from '../../../../../src/command/handlers/http/dns-resolver.js';
 
 export const buildResolver = (ipList: string[]): ResolverType => async (_hostname: string, _options: ResolverOptionsType): Promise<string[]> => ipList;
 
-const NativeResolverMock = function () {
-	this.resolve4 = buildResolver(['1.1.1.1'])
+class NativeResolverMock {
+	public resolve4: ResolverType;
+
+	constructor() {
+		this.resolve4 = buildResolver(['1.1.1.1']);
+	}
 }
 
 describe('http helper', () => {
-	let dnsLookup;
+	let dnsLookup: (resolverAddr: string | undefined, resolverFn?: ResolverType) => (hostname: string, options: Options) => Promise<Error | ErrnoException | [string, number]>;
 
 	before(async () => {
+		// eslint-disable-next-line @typescript-eslint/naming-convention
 		await td.replaceEsm('node:dns', null, {promises: {Resolver: NativeResolverMock}});
 		({dnsLookup} = await import('../../../../../src/command/handlers/http/dns-resolver.js'));
 	});
 
 	after(() => {
 		td.reset();
-	})
+	});
 
 	describe('dns', () => {
 		it('should return an error (private ip)', async () => {
@@ -27,7 +32,7 @@ describe('http helper', () => {
 				ipList: ['192.168.0.1'],
 				hostname: 'abc.com',
 				options: {
-					family: 4,
+					family: 4 as IpFamily,
 				},
 			};
 
@@ -53,7 +58,7 @@ describe('http helper', () => {
 				ipList: ['192.168.0.1', '1.1.1.1'],
 				hostname: 'abc.com',
 				options: {
-					family: 4,
+					family: 4 as IpFamily,
 				},
 			};
 
@@ -73,7 +78,7 @@ describe('http helper', () => {
 				ipList: ['192.168.0.1', '1.1.1.1'],
 				hostname: 'abc.com',
 				options: {
-					family: 4,
+					family: 4 as IpFamily,
 				},
 			};
 
@@ -95,7 +100,7 @@ describe('http helper', () => {
 			const data = {
 				hostname: 'abc.com',
 				options: {
-					family: 4,
+					family: 4 as IpFamily,
 				},
 			};
 
