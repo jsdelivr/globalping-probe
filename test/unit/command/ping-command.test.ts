@@ -125,6 +125,7 @@ describe('ping command executor', () => {
 
 			await runPromise;
 
+			expect(mockedCmd.kill.called).to.be.true;
 			expect(mockedSocket.emit.calledOnce).to.be.true;
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
 		});
@@ -142,6 +143,7 @@ describe('ping command executor', () => {
 			mockedCmd.resolve({stdout: rawOutput});
 			await runPromise;
 
+			expect(mockedCmd.kill.called).to.be.false;
 			expect(mockedSocket.emit.calledOnce).to.be.true;
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
 		});

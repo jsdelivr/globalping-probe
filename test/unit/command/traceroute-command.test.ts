@@ -131,7 +131,7 @@ describe('trace command', () => {
 				expect(mockSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
 			});
 
-			it('should run and parse private ip trace', async () => {
+			it('should run and parse private ip trace on progress step', async () => {
 				const options = {
 					target: 'google.com',
 					port: 53,
@@ -150,6 +150,30 @@ describe('trace command', () => {
 				for (const progressOutput of outputProgress) {
 					mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 				}
+
+				mockCmd.reject(new Error('KILL'));
+				await runPromise;
+
+				expect(mockCmd.kill.called).to.be.true;
+				expect(mockSocket.emit.calledOnce).to.be.true;
+				expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+			});
+
+			it('should run and parse private ip trace on result step', async () => {
+				const options = {
+					target: 'google.com',
+					port: 53,
+					protocol: 'UDP',
+				};
+
+				const testCase = 'trace-private-ip-linux';
+				const rawOutput = getCmdMock(testCase);
+				const expectedResult = getCmdMockResult(testCase);
+
+				const mockCmd = getExecaMock();
+
+				const ping = new TracerouteCommand((): any => mockCmd);
+				const runPromise = ping.run(mockSocket as any, 'measurement', 'test', options);
 
 				mockCmd.resolve({stdout: rawOutput});
 				await runPromise;

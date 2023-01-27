@@ -1,6 +1,7 @@
 import {EventEmitter} from 'node:events';
 import * as path from 'node:path';
 import {readFileSync} from 'node:fs';
+import * as sinon from 'sinon';
 
 export const getCmdMock = (name: string): string => readFileSync(path.resolve(`./test/mocks/${name}.txt`)).toString();
 export const getCmdMockResult = (name: string) => JSON.parse(readFileSync(path.resolve(`./test/mocks/${name}.json`)).toString()) as Record<string, unknown>;
@@ -27,7 +28,7 @@ export class MockSocket extends EventEmitter {
 type ExecaMock = Promise<any> & {
 	resolve: (data: any) => void;
 	reject: (error: any) => void;
-	kill: () => void;
+	kill: sinon.SinonStub;
 	stdout: EventEmitter;
 };
 
@@ -40,9 +41,7 @@ export const getExecaMock = () => {
 	}) as ExecaMock;
 	execaMock.resolve = resolve;
 	execaMock.reject = reject;
-	execaMock.kill = () => {
-		// Empty kill method, that will be overriden with stub in tests
-	};
+	execaMock.kill = sinon.stub();
 
 	execaMock.stdout = new EventEmitter();
 	return execaMock;
