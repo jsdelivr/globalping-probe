@@ -1,6 +1,6 @@
 import {PassThrough} from 'node:stream';
 import nock from 'nock';
-import type {Request} from 'got';
+import {Request, PlainResponse, HTTPError, CacheError} from 'got';
 import * as sinon from 'sinon';
 import {expect} from 'chai';
 import {Socket} from 'socket.io-client';
@@ -34,15 +34,6 @@ type StreamResponse = {
 		getPeerCertificate?: () => StreamCert;
 	};
 };
-
-class HttpError extends Error {
-	code: string;
-
-	constructor(message: string, code: string) {
-		super(message);
-		this.code = code;
-	}
-}
 
 class Stream {
 	response: StreamResponse | undefined;
@@ -453,6 +444,7 @@ describe('http command', () => {
 			const expectedResult = {
 				measurementId: 'measurement',
 				result: {
+					status: 'finished',
 					resolvedAddress: '1.1.1.1',
 					headers: {
 						test: 'abc',
@@ -540,6 +532,7 @@ describe('http command', () => {
 			const expectedResult = {
 				measurementId: 'measurement',
 				result: {
+					status: 'finished',
 					resolvedAddress: '1.1.1.1',
 					headers: {
 						test: 'abc',
@@ -634,6 +627,7 @@ describe('http command', () => {
 			const expectedResult = {
 				measurementId: 'measurement',
 				result: {
+					status: 'finished',
 					resolvedAddress: '1.1.1.1',
 					headers: {
 						test: 'abc',
@@ -682,7 +676,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
 		});
 
-		it('should emit error', async () => {
+		it('should send "finished" status if it is HTTPError', async () => {
 			const options = {
 				type: 'http',
 				target: 'google.com',
@@ -704,7 +698,7 @@ describe('http command', () => {
 						},
 					},
 				},
-				error: new HttpError('ENODATA google.com', 'abc'),
+				error: new HTTPError({statusCode: 404, statusMessage: 'Not Found'} as unknown as PlainResponse),
 			};
 
 			const response = {
@@ -714,6 +708,7 @@ describe('http command', () => {
 			const expectedResult = {
 				measurementId: 'measurement',
 				result: {
+					status: 'finished',
 					resolvedAddress: null,
 					headers: {},
 					rawHeaders: null,
@@ -727,7 +722,75 @@ describe('http command', () => {
 						total: 11,
 					},
 					tls: null,
-					rawOutput: 'ENODATA google.com - abc',
+					rawOutput: 'Response code 404 (Not Found) - ERR_NON_2XX_3XX_RESPONSE',
+					statusCode: null,
+				},
+				testId: 'test',
+			};
+
+			const stream = new Stream(response, '');
+
+			const mockHttpCmd = (): Request => stream as never;
+
+			const http = new HttpCommand(mockHttpCmd);
+			const cmd = http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			stream.emit('error', events.error);
+
+			await cmd;
+
+			expect(mockedSocket.emit.callCount).to.equal(1);
+			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
+		});
+
+		it('should send "failed" status in all other cases of errors', async () => {
+			const options = {
+				type: 'http',
+				target: 'google.com',
+				protocol: 'http',
+				request: {
+					method: 'get',
+					path: '/',
+					query: '',
+				},
+			};
+
+			const events = {
+				response: {
+					socket: {},
+					timings: {
+						phases: {
+							download: 10,
+							total: 11,
+						},
+					},
+				},
+				error: new CacheError(new Error('cache error'), {} as unknown as Request),
+			};
+
+			const response = {
+				...events.response,
+			};
+
+			const expectedResult = {
+				measurementId: 'measurement',
+				result: {
+					status: 'failed',
+					resolvedAddress: null,
+					headers: {},
+					rawHeaders: null,
+					rawBody: null,
+					timings: {
+						dns: null,
+						firstByte: null,
+						tcp: null,
+						tls: null,
+						download: 10,
+						total: 11,
+					},
+					tls: null,
+					rawOutput: 'cache error - ERR_CACHE_ACCESS',
 					statusCode: null,
 				},
 				testId: 'test',

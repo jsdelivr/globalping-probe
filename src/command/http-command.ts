@@ -5,7 +5,7 @@ import https from 'node:https';
 import http2 from 'http2-wrapper';
 import Joi from 'joi';
 import _ from 'lodash';
-import got, {Response, Request, HTTPAlias, Progress, DnsLookupIpVersion} from 'got';
+import got, {Response, Request, HTTPAlias, Progress, DnsLookupIpVersion, RequestError, HTTPError} from 'got';
 import type {Socket} from 'socket.io-client';
 import type {CommandInterface} from '../types.js';
 import {callbackify} from '../lib/util.js';
@@ -45,6 +45,7 @@ type Cert = {
 };
 
 type Output = {
+	status: 'finished' | 'failed';
 	resolvedAddress: string;
 	headers: Record<string, string>;
 	rawHeaders: string;
@@ -75,6 +76,7 @@ export type Timings = {
 };
 
 const getInitialResult = () => ({
+	status: 'finished' as 'finished' | 'failed',
 	resolvedAddress: '',
 	tls: {},
 	error: '',
@@ -190,6 +192,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				: result.rawBody;
 
 			buffer.pushResult(this.toJsonOutput({
+				status: result.status,
 				resolvedAddress: result.resolvedAddress,
 				headers: result.headers,
 				rawHeaders: result.rawHeaders,
@@ -257,7 +260,11 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			stream.on('response', onResponse);
 			stream.on('socket', onSocket);
 
-			stream.on('error', (error: Error & {code: string}) => {
+			stream.on('error', (error: RequestError) => {
+				if (!(error instanceof HTTPError)) {
+					result.status = 'failed';
+				}
+
 				// Skip error mapping on download limit
 				if (error.message !== 'Exceeded the download.') {
 					result.error = `${error.message} - ${error.code}`;
@@ -276,7 +283,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 	private toJsonOutput(input: Output): OutputJson {
 		return {
-			status: 'finished',
+			status: input.status,
 			resolvedAddress: input.resolvedAddress || null,
 			headers: input.headers,
 			rawHeaders: input.rawHeaders || null,
