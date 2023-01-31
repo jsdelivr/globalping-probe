@@ -32,6 +32,7 @@ export type ProgressType = {
 };
 
 export type ResultType = {
+	status: 'finished' | 'failed';
 	resolvedAddress?: string;
 	resolvedHostname?: string;
 	hops: HopType[];
@@ -41,6 +42,7 @@ export type ResultType = {
 
 /* eslint-disable @typescript-eslint/ban-types */
 export type ResultTypeJson = {
+	status: 'finished' | 'failed';
 	resolvedAddress: string | null;
 	resolvedHostname: string | null;
 	hops: Array<{

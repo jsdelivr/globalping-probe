@@ -57,6 +57,7 @@ type Output = {
 
 /* eslint-disable @typescript-eslint/ban-types */
 export type OutputJson = {
+	status: 'finished' | 'failed';
 	resolvedAddress: string | null;
 	headers: Record<string, string>;
 	rawHeaders: string | null;
@@ -275,6 +276,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 	private toJsonOutput(input: Output): OutputJson {
 		return {
+			status: 'finished',
 			resolvedAddress: input.resolvedAddress || null,
 			headers: input.headers,
 			rawHeaders: input.rawHeaders || null,

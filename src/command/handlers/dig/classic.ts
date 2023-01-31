@@ -11,10 +11,12 @@ import {
 } from './shared.js';
 
 export type DnsParseResponse = DnsParseLoopResponse & {
+	status: 'finished' | 'failed';
 	rawOutput: string;
 };
 
 export type DnsParseResponseJson = DnsParseLoopResponseJson & {
+	status: 'finished' | 'failed';
 	rawOutput: string;
 };
 
@@ -67,12 +69,14 @@ export const ClassicDigParser = {
 
 		return {
 			...ClassicDigParser.parseLoop(lines),
+			status: 'finished',
 			rawOutput,
 		};
 	},
 
 	toJsonOutput(input: DnsParseResponse): DnsParseResponseJson {
 		return {
+			status: input.status,
 			rawOutput: input.rawOutput,
 			answers: input.answers ?? [],
 			timings: {

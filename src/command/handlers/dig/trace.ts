@@ -7,11 +7,13 @@ import {
 } from './shared.js';
 
 export type DnsParseResponse = {
+	status: 'finished' | 'failed';
 	hops: DnsParseLoopResponse[];
 	rawOutput: string;
 };
 
 export type DnsParseResponseJson = {
+	status: 'finished' | 'failed';
 	hops: DnsParseLoopResponseJson[];
 	rawOutput: string;
 };
@@ -43,6 +45,7 @@ export const TraceDigParser = {
 
 		return {
 			hops: TraceDigParser.parseLoop(lines.slice(2)),
+			status: 'finished',
 			rawOutput,
 		};
 	},
@@ -94,6 +97,7 @@ export const TraceDigParser = {
 
 	toJsonOutput(input: DnsParseResponse): DnsParseResponseJson {
 		return {
+			status: input.status,
 			rawOutput: input.rawOutput,
 			hops: input.hops.map(h => ({
 				answers: h.answers ?? [],

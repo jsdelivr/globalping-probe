@@ -32,6 +32,7 @@ type PingTimings = {
 };
 
 type PingParseOutput = {
+	status: 'finished' | 'failed';
 	rawOutput: string;
 	resolvedHostname?: string;
 	resolvedAddress?: string;
@@ -41,6 +42,7 @@ type PingParseOutput = {
 
 /* eslint-disable @typescript-eslint/ban-types */
 export type PingParseOutputJson = {
+	status: 'finished' | 'failed';
 	rawOutput: string;
 	resolvedHostname: string | null;
 	resolvedAddress: string | null;
@@ -101,9 +103,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			buffer.pushProgress({rawOutput: data.toString()});
 		});
 
-		let result = {
-			rawOutput: '',
-		};
+		let result: PingParseOutput;
 
 		try {
 			const cmdResult = await cmd;
@@ -114,11 +114,12 @@ export class PingCommand implements CommandInterface<PingOptions> {
 				isResultPrivate = true;
 			}
 		} catch (error: unknown) {
-			result = isExecaError(error) ? this.parse(error.stdout.toString()) : {rawOutput: ''};
+			result = isExecaError(error) ? this.parse(error.stdout.toString()) : {status: 'failed', rawOutput: ''};
 		}
 
 		if (isResultPrivate) {
 			result = {
+				status: 'failed',
 				rawOutput: 'Private IP ranges are not allowed',
 			};
 		}
@@ -139,6 +140,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 
 	private toJsonOutput(input: PingParseOutput): PingParseOutputJson {
 		return {
+			status: input.status,
 			rawOutput: input.rawOutput,
 			resolvedAddress: input.resolvedAddress ? input.resolvedAddress : null,
 			resolvedHostname: input.resolvedHostname ? input.resolvedHostname : null,
@@ -156,12 +158,12 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		const lines = rawOutput.split('\n');
 
 		if (lines.length === 0) {
-			return {rawOutput};
+			return {status: 'failed', rawOutput};
 		}
 
 		const header = /^PING\s(?<host>.*?)\s\((?<addr>.+?)\)/.exec(lines[0] ?? '');
 		if (!header) {
-			return {rawOutput};
+			return {status: 'failed', rawOutput};
 		}
 
 		const resolvedAddress = String(header?.groups?.['addr']);
@@ -172,6 +174,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		const summary = this.parseSummary(lines.slice(summaryHeaderIndex + 1));
 
 		return {
+			status: 'finished',
 			resolvedAddress,
 			resolvedHostname: resolvedHostname ?? '',
 			timings: timeLines,
