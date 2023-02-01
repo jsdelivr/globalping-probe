@@ -240,7 +240,7 @@ describe('dns command', () => {
 			expect(mockSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
 		});
 
-		it('should return ExecaError - dns-resolver-error-linux', async () => {
+		it('should fail in case of execa error - dns-resolver-error-linux', async () => {
 			const testCase = 'dns-resolver-error-linux';
 			const options = {
 				type: 'dns' as const,
@@ -266,7 +266,7 @@ describe('dns command', () => {
 			expect(mockSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
 		});
 
-		it('should return private IP error - dns-resolved-private-ip-error-linux', async () => {
+		it('should fail in case of private ip - dns-resolved-private-ip-error-linux', async () => {
 			const testCase = 'dns-resolved-private-ip-error-linux';
 			const options = {
 				type: 'dns' as const,
@@ -302,7 +302,7 @@ describe('dns command', () => {
 			expect(mockSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
 		});
 
-		it('should return private IP error - dns-trace-resolved-private-ip-error-linux', async () => {
+		it('should fail in case of private ip - dns-trace-resolved-private-ip-error-linux', async () => {
 			const testCase = 'dns-trace-resolved-private-ip-error-linux';
 			const options = {
 				type: 'dns' as const,

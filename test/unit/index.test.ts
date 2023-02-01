@@ -19,7 +19,6 @@ const fakeLocation = {
 describe('index module', () => {
 	let sandbox: sinon.SinonSandbox;
 	const execaStub = sinon.stub();
-	const gotStub = sinon.stub();
 	const runStub = sinon.stub();
 	const PingCommandStub = sinon.stub().returns({
 		run: runStub,
@@ -48,7 +47,6 @@ describe('index module', () => {
 	before(async () => {
 		await td.replaceEsm('execa', {execa: execaStub});
 		await td.replaceEsm('socket.io-client', {io: ioStub});
-		await td.replaceEsm('got', null, gotStub);
 		await td.replaceEsm('../../src/command/ping-command.ts', {PingCommand: PingCommandStub, pingCmd: pingCmdStub});
 	});
 
@@ -58,7 +56,6 @@ describe('index module', () => {
 
 	afterEach(() => {
 		execaStub.reset();
-		gotStub.reset();
 		runStub.reset();
 		for (const stub of Object.values(handlers)) {
 			stub.reset();
