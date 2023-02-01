@@ -339,7 +339,7 @@ describe('dns command', () => {
 			expect(mockSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
 		});
 
-		it('should return connection refused error - dns-connection-refused-error-linux', async () => {
+		it('should fail in case of connection refused - dns-connection-refused-error-linux', async () => {
 			const testCase = 'dns-connection-refused-error-linux';
 			const options = {
 				type: 'dns' as const,
@@ -375,7 +375,7 @@ describe('dns command', () => {
 			expect(mockSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
 		});
 
-		it('should return connection refused error - dns-connection-refused-private-error-linux (PRIVATE IP)', async () => {
+		it('should fail in case of connection refused with private ip - dns-connection-refused-private-error-linux (PRIVATE IP)', async () => {
 			const testCase = 'dns-connection-refused-private-error-linux';
 			const options = {
 				type: 'dns' as const,
