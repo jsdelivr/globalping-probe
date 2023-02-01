@@ -106,7 +106,7 @@ describe('ping command executor', () => {
 			});
 		}
 
-		it('should run and parse private ip command on the progress step', async () => {
+		it('should run and fail private ip command on the progress step', async () => {
 			const command = 'ping-private-ip-linux';
 			const rawOutput = getCmdMock(command);
 			const outputProgress = rawOutput.split('\n');
@@ -130,7 +130,7 @@ describe('ping command executor', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
 		});
 
-		it('should run and parse private ip command on the result step', async () => {
+		it('should run and fail private ip command on the result step', async () => {
 			const command = 'ping-private-ip-linux';
 			const rawOutput = getCmdMock(command);
 			const expectedResult = getCmdMockResult(command);
