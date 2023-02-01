@@ -168,5 +168,27 @@ describe('ping command executor', () => {
 				expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
 			});
 		}
+
+		it('should fail in case of output without header', async () => {
+			const mockedCmd = getExecaMock();
+			const ping = new PingCommand((): any => mockedCmd);
+
+			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', {target: 'google.com'});
+			mockedCmd.resolve({stdout: ''});
+			await runPromise;
+
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', {
+				testId: 'test',
+				measurementId: 'measurement',
+				result: {
+					status: 'failed',
+					rawOutput: '',
+					resolvedAddress: null,
+					resolvedHostname: null,
+					timings: [],
+					stats: {min: null, max: null, avg: null, loss: null},
+				},
+			}]);
+		});
 	});
 });
