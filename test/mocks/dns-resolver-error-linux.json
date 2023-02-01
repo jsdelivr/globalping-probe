@@ -2,6 +2,7 @@
   "testId": "test",
   "measurementId": "measurement",
   "result": {
+    "status": "failed",
     "rawOutput": "dig: couldn't get address for 'sdsa': not found\n",
     "answers": [],
     "resolver": null,

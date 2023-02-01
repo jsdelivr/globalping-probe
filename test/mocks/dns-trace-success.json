@@ -3,6 +3,7 @@
     "measurementId": "measurement",
     "result":
     {
+        "status": "finished",
         "hops":
         [
             {
