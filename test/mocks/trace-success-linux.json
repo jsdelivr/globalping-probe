@@ -2,6 +2,7 @@
   "testId": "test",
   "measurementId": "measurement",
   "result": {
+    "status": "finished",
     "resolvedAddress": "216.239.38.21",
     "resolvedHostname": "142.250.160.116",
     "hops": [

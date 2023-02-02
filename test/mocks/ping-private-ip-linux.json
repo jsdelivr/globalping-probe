@@ -2,6 +2,7 @@
   "testId": "test",
   "measurementId": "measurement",
   "result": {
+    "status": "failed",
     "resolvedAddress": null,
     "resolvedHostname": null,
     "stats": {

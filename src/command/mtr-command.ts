@@ -35,7 +35,7 @@ const mtrOptionsSchema = Joi.object<MtrOptions>({
 	port: Joi.number(),
 });
 
-export const getResultInitState = () => ({hops: [], rawOutput: '', data: []});
+export const getResultInitState = (): ResultType => ({status: 'finished', hops: [], rawOutput: '', data: []});
 
 export const argBuilder = (options: MtrOptions): string[] => {
 	const intervalArg = ['--interval', String(getConfValue('commands.mtr.interval'))];
@@ -107,6 +107,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			await cmd;
 			result = await this.parseResult(result.hops, result.data, true);
 		} catch (error: unknown) {
+			result.status = 'failed';
 			if (isExecaError(error)) {
 				result.rawOutput = error.stdout.toString();
 			} else {
@@ -135,6 +136,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		const lastHop = [...nHops].reverse().find(h => h.resolvedAddress && !h.duplicate);
 
 		return {
+			status: 'finished',
 			rawOutput,
 			hops: nHops,
 			data,
@@ -196,6 +198,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 	private toJsonOutput(input: ResultType): ResultTypeJson {
 		return {
+			status: input.status,
 			rawOutput: input.rawOutput,
 			resolvedAddress: input.resolvedAddress ? input.resolvedAddress : null,
 			resolvedHostname: input.resolvedHostname ? input.resolvedHostname : null,

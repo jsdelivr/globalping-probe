@@ -2,6 +2,7 @@
   "testId": "test",
   "measurementId": "measurement",
   "result": {
+    "status": "finished",
     "resolvedAddress": "172.13.23.43",
     "resolvedHostname": null,
     "timings": [],

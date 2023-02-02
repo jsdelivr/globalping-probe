@@ -2,6 +2,7 @@
   "testId": "test",
   "measurementId": "measurement",
   "result": {
+    "status": "finished",
     "resolvedAddress": "172.217.20.206",
     "resolvedHostname": "lhr25s33-in-f14.1e100.net",
     "stats": {

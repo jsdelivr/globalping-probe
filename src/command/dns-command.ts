@@ -137,12 +137,14 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			}
 
 			result = {
+				status: 'failed',
 				rawOutput: output,
 			};
 		}
 
 		if (isResultPrivate) {
 			result = {
+				status: 'failed',
 				rawOutput: 'Private IP ranges are not allowed',
 			};
 		}

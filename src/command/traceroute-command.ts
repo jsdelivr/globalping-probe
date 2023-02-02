@@ -33,6 +33,7 @@ type ParsedOutput = {
 /* eslint-disable @typescript-eslint/ban-types */
 type ParsedOutputJson = {
 	rawOutput: string;
+	status: 'finished' | 'failed';
 	resolvedAddress: string | null;
 	resolvedHostname: string | null;
 	hops: Array<{
@@ -119,12 +120,14 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		} catch (error: unknown) {
 			const output = isExecaError(error) ? error.stdout.toString() : '';
 			result = {
+				status: 'failed',
 				rawOutput: output,
 			};
 		}
 
 		if (isResultPrivate) {
 			result = {
+				status: 'failed',
 				rawOutput: 'Private IP ranges are not allowed',
 			};
 		}
@@ -174,6 +177,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 	private toJsonOutput(input: ParsedOutput): ParsedOutputJson {
 		return {
 			rawOutput: input.rawOutput,
+			status: 'finished',
 			resolvedAddress: input.resolvedAddress === '*' || !input.resolvedAddress ? null : input.resolvedAddress,
 			resolvedHostname: input.resolvedHostname === '*' || !input.resolvedHostname ? null : input.resolvedHostname,
 			hops: input.hops ? input.hops.map((h: ParsedLine) => ({
