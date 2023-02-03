@@ -51,7 +51,7 @@
   },
   "scripts": {
     "build": "tsc && npm run copy:sh",
-    "copy:sh": "sudo cp -r ./src/sh ./dist/sh",
+    "copy:sh": "cp -r ./src/sh ./dist/sh",
     "init:hooks": "husky install",
     "dev": "NODE_ENV=development node ./dist/index.js",
     "dev:tsx": "NODE_ENV=development tsx ./src/index.ts",
