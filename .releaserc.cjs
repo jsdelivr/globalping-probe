@@ -1,5 +1,6 @@
 module.exports = {
 	branches: [ 'master' ],
+	repositoryUrl: 'https://github.com/jsdelivr/globalping-probe.git',
 	plugins: [
 		'@semantic-release/commit-analyzer',
 		'@semantic-release/release-notes-generator',

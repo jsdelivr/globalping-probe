@@ -4,8 +4,12 @@
   "description": "",
   "type": "module",
   "main": "dist/index.js",
-  "author": "Artem Stoianov <stoianov.artem@gmail.com>",
+  "author": "jsDelivr team",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jsdelivr/globalping-probe.git"
+  },
   "dependencies": {
     "crypto-random-string": "^5.0.0",
     "execa": "^6.1.0",
