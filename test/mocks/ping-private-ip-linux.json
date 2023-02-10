@@ -9,7 +9,10 @@
       "min": null,
       "max": null,
       "avg": null,
-      "loss": null
+      "total": null,
+      "loss": null,
+      "rcv": null,
+      "drop": null
     },
     "timings": [],
     "rawOutput": "Private IP ranges are not allowed"
