@@ -9,20 +9,29 @@ import {
 	DnsParseLoopResponse,
 	DnsParseLoopResponseJson,
 } from './shared.js';
+import {statusNameToStatusCodeMap} from './dig-status-code-map.js';
 
-export type DnsParseResponse = DnsParseLoopResponse & {
+type DnsParseLoopResponseClassic = DnsParseLoopResponse & {
+	statusCodeName: string;
+	statusCode: number | null; // eslint-disable-line @typescript-eslint/ban-types
+};
+
+export type DnsParseResponse = DnsParseLoopResponseClassic & {
 	status: 'finished' | 'failed';
 	rawOutput: string;
 };
 
 export type DnsParseResponseJson = DnsParseLoopResponseJson & {
 	status: 'finished' | 'failed';
+	statusCodeName: string;
+	statusCode: number | null; // eslint-disable-line @typescript-eslint/ban-types
 	rawOutput: string;
 };
 
 /* eslint-disable @typescript-eslint/naming-convention */
 const QUERY_TIME_REG_EXP = /Query\s+time:\s+(\d+)/g;
 const RESOLVER_REG_EXP = /SERVER:.*\((.*?)\)/g;
+const STATUS_CODE_NAME_REG_EXP = /status:\s*([A-Z]+)/g;
 /* eslint-enable @typescript-eslint/naming-convention */
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -77,6 +86,8 @@ export const ClassicDigParser = {
 	toJsonOutput(input: DnsParseResponse): DnsParseResponseJson {
 		return {
 			status: input.status,
+			statusCodeName: input.statusCodeName ?? null,
+			statusCode: input.statusCode ?? null,
 			rawOutput: input.rawOutput,
 			answers: input.answers ?? [],
 			timings: {
@@ -86,8 +97,10 @@ export const ClassicDigParser = {
 		};
 	},
 
-	parseLoop(lines: string[]): DnsParseLoopResponse {
-		const result: DnsParseLoopResponse = {
+	parseLoop(lines: string[]): DnsParseLoopResponseClassic {
+		const result: DnsParseLoopResponseClassic = {
+			statusCodeName: '',
+			statusCode: null,
 			header: [],
 			answers: [],
 			resolver: '',
@@ -99,6 +112,12 @@ export const ClassicDigParser = {
 			const time = ClassicDigParser.getQueryTime(line);
 			if (time !== undefined) {
 				result.timings.total = time;
+			}
+
+			const statusCodeName = ClassicDigParser.getStatusCodeName(line);
+			if (statusCodeName) {
+				result.statusCodeName = statusCodeName;
+				result.statusCode = statusNameToStatusCodeMap[statusCodeName.toLowerCase()] ?? null;
 			}
 
 			const serverMatch = ClassicDigParser.getResolverServer(line);
@@ -137,6 +156,8 @@ export const ClassicDigParser = {
 		}
 
 		return {
+			statusCodeName: result.statusCodeName,
+			statusCode: result.statusCode,
 			answers: result.answers,
 			resolver: result.resolver,
 			timings: result.timings,
@@ -159,6 +180,16 @@ export const ClassicDigParser = {
 		}
 
 		return Number(result[1]);
+	},
+
+	getStatusCodeName(line: string): string | undefined {
+		const result = STATUS_CODE_NAME_REG_EXP.exec(line);
+
+		if (!result) {
+			return;
+		}
+
+		return result[1];
 	},
 
 	getResolverServer(line: string): string | undefined {
