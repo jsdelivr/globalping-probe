@@ -147,7 +147,7 @@ export const ClassicDigParser = {
 
 			if (!sectionChanged && line) {
 				if (section === 'header') {
-					result[section]!.push(line);
+					result.header!.push(line);
 				} else if (section === 'answer') {
 					const sectionResult = ClassicDigParser.parseSection(line.split(/\s+/g), section);
 					(result.answers).push(sectionResult);

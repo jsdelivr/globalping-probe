@@ -13,8 +13,7 @@ export type DnsSection = Record<string, unknown> | {
 
 export type DnsParseLoopResponse = {
 	[key: string]: any;
-	question?: any[];
-	header?: any[];
+	header?: string[];
 	answers: DnsSection[];
 	timings: {total: number};
 	resolver: string;
@@ -28,7 +27,7 @@ export type DnsParseLoopResponseJson = {
 };
 /* eslint-enable @typescript-eslint/ban-types */
 
-export const isDnsSection = (output: any): output is DnsSection => typeof (output as DnsSection) !== 'undefined';
+export const isDnsSection = (output: unknown): output is DnsSection => typeof (output as DnsSection) !== 'undefined';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 export const SECTION_REG_EXP = /(;; )(\S+)( SECTION:)/g;
