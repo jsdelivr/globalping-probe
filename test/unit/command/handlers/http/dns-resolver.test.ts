@@ -3,7 +3,7 @@ import * as td from 'testdouble';
 import {callbackify} from '../../../../../src/lib/util.js';
 import {type ResolverType, type ResolverOptionsType, type Options, type ErrnoException, type IpFamily} from '../../../../../src/command/handlers/http/dns-resolver.js';
 
-export const buildResolver = (ipList: string[]): ResolverType => async (_hostname: string, _options: ResolverOptionsType): Promise<string[]> => ipList;
+export const buildResolver = (ipList: string[]): ResolverType => (_hostname: string, _options: ResolverOptionsType): Promise<string[]> => Promise.resolve(ipList);
 
 class NativeResolverMock {
 	public resolve4: ResolverType;

@@ -3,6 +3,8 @@
   "measurementId": "measurement",
   "result": {
     "status": "failed",
+    "statusCodeName": null,
+    "statusCode": null,
     "rawOutput": ";; Connection to 8.8.8.8#212(8.8.8.8) for abc.com failed: connection refused.",
     "answers": [],
     "resolver": null,

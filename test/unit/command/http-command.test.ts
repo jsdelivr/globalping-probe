@@ -284,6 +284,7 @@ describe('http command', () => {
 					rawBody: '200 Ok',
 					rawOutput: '200 Ok',
 					statusCode: 200,
+					statusCodeName: 'OK',
 				},
 				testId: 'test',
 			};
@@ -300,6 +301,8 @@ describe('http command', () => {
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.statusCode', expectedResult.result.statusCode);
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.statusCodeName', expectedResult.result.statusCodeName);
 		});
 
 		it('should respond with 400', async () => {
@@ -419,6 +422,7 @@ describe('http command', () => {
 				response: {
 					socket: {},
 					statusCode: 200,
+					statusMessage: 'OK',
 					httpVersion: '1.1',
 					timings: {
 						start: 0,
@@ -461,6 +465,7 @@ describe('http command', () => {
 					rawBody: 'abcdefghijklmno',
 					rawOutput: 'abcdefghijklmno',
 					statusCode: 200,
+					statusCodeName: 'OK',
 					tls: null,
 				},
 				testId: 'test',
@@ -508,6 +513,7 @@ describe('http command', () => {
 				response: {
 					socket: {},
 					statusCode: 200,
+					statusMessage: 'OK',
 					timings: {
 						start: 0,
 						phases: {
@@ -549,6 +555,7 @@ describe('http command', () => {
 					rawBody: null,
 					rawOutput: 'HTTP/1.1 200\ntest: abc',
 					statusCode: 200,
+					statusCodeName: 'OK',
 					tls: null,
 				},
 				testId: 'test',
@@ -603,6 +610,7 @@ describe('http command', () => {
 						getPeerCertificate: () => cert,
 					},
 					statusCode: 200,
+					statusMessage: 'OK',
 					timings: {
 						start: 0,
 						phases: {
@@ -656,6 +664,7 @@ describe('http command', () => {
 					rawBody: null,
 					rawOutput: 'HTTP/2 200\ntest: abc',
 					statusCode: 200,
+					statusCodeName: 'OK',
 				},
 				testId: 'test',
 			};
@@ -691,12 +700,22 @@ describe('http command', () => {
 			const events = {
 				response: {
 					socket: {},
+					statusCode: 404,
+					statusMessage: 'Not Found',
 					timings: {
+						start: 0,
 						phases: {
 							download: 10,
 							total: 11,
+							dns: 5,
+							tls: 5,
+							tcp: 2,
+							firstByte: 1,
 						},
 					},
+					httpVersion: '1.1',
+					headers: {test: 'abc'},
+					rawHeaders: ['test', 'abc'],
 				},
 				error: new HTTPError({statusCode: 404, statusMessage: 'Not Found'} as unknown as PlainResponse),
 			};
@@ -708,22 +727,25 @@ describe('http command', () => {
 			const expectedResult = {
 				measurementId: 'measurement',
 				result: {
-					status: 'finished',
-					resolvedAddress: null,
-					headers: {},
-					rawHeaders: null,
+					headers: {
+						test: 'abc',
+					},
 					rawBody: null,
+					rawHeaders: 'test: abc',
+					rawOutput: 'Response code 404 (Not Found) - ERR_NON_2XX_3XX_RESPONSE',
+					resolvedAddress: null,
+					status: 'finished',
+					statusCode: 404,
+					statusCodeName: 'Not Found',
 					timings: {
-						dns: null,
-						firstByte: null,
-						tcp: null,
-						tls: null,
+						dns: 5,
 						download: 10,
+						firstByte: 1,
+						tcp: 2,
+						tls: 5,
 						total: 11,
 					},
 					tls: null,
-					rawOutput: 'Response code 404 (Not Found) - ERR_NON_2XX_3XX_RESPONSE',
-					statusCode: null,
 				},
 				testId: 'test',
 			};
@@ -735,6 +757,7 @@ describe('http command', () => {
 			const http = new HttpCommand(mockHttpCmd);
 			const cmd = http.run(mockedSocket as any, 'measurement', 'test', options);
 
+			stream.emit('response', events.response);
 			stream.emit('error', events.error);
 
 			await cmd;
@@ -792,6 +815,7 @@ describe('http command', () => {
 					tls: null,
 					rawOutput: 'cache error - ERR_CACHE_ACCESS',
 					statusCode: null,
+					statusCodeName: null,
 				},
 				testId: 'test',
 			};
