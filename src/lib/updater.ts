@@ -1,6 +1,6 @@
 import process from 'node:process';
 import _ from 'lodash';
-import got from 'got';
+import got, {TimeoutError} from 'got';
 import {VERSION} from '../constants.js';
 import {getConfValue} from './config.js';
 import {scopedLogger} from './logger.js';
@@ -14,7 +14,19 @@ const updateConfig = getConfValue<{releaseUrl: string; interval: number; maxDevi
 const updateInterval = updateConfig.interval + _.random(0, updateConfig.maxDeviation);
 
 const checkForUpdates = async () => {
-	const releaseInfo = await got(updateConfig.releaseUrl, {timeout: {request: 15_000}}).json<ReleaseInfo>();
+	let releaseInfo;
+	try {
+		releaseInfo = await got(updateConfig.releaseUrl, {timeout: {request: 15_000}}).json<ReleaseInfo>();
+	} catch (error: unknown) {
+		if (error instanceof TimeoutError) {
+			logger.warn('The server timed out, while checking for a new version.');
+			logger.warn(error);
+			return;
+		}
+
+		throw error;
+	}
+
 	const latestVersion = releaseInfo.tag_name.replace(/^v/, '');
 	const isUpdateAvailable = latestVersion.localeCompare(VERSION, undefined, {numeric: true, sensitivity: 'base'}) > 0;
 

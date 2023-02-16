@@ -5,12 +5,14 @@ import * as td from 'testdouble';
 import * as sinon from 'sinon';
 import * as constants from '../../../src/constants.js';
 
+class MockTimeoutError extends Error {}
+
 describe('updater module', () => {
 	let sandbox: sinon.SinonSandbox;
 	const gotStub = sinon.stub();
 
 	before(async () => {
-		await td.replaceEsm('got', null, gotStub);
+		await td.replaceEsm('got', {TimeoutError: MockTimeoutError}, gotStub);
 	});
 
 	beforeEach(() => {
@@ -25,7 +27,7 @@ describe('updater module', () => {
 		td.reset();
 	});
 
-	it('should check for update and call process.exit if there is newer version', async () => {
+	it('should check for an update and call process.exit if there is a newer version', async () => {
 		const killStub = sandbox.stub(process, 'kill');
 		await td.replaceEsm('../../../src/constants.ts', {...constants, VERSION: '0.6.0'});
 		gotStub.returns({json: () => ({tag_name: 'v0.7.0'})});
@@ -40,7 +42,7 @@ describe('updater module', () => {
 		expect(killStub.called).to.be.true;
 	});
 
-	it('should check for update and call do nothing if there is no newer version', async () => {
+	it('should check for an update and call do nothing if there is no newer version', async () => {
 		const killStub = sandbox.stub(process, 'kill');
 		await td.replaceEsm('../../../src/constants.ts', {...constants, VERSION: '0.7.0'});
 		gotStub.returns({json: () => ({tag_name: 'v0.7.0'})});
@@ -49,5 +51,12 @@ describe('updater module', () => {
 		await sandbox.clock.tickAsync(650 * 1000);
 
 		expect(killStub.called).to.be.false;
+	});
+
+	it('should check for an update and do not throw an error if there is a timeout error', async () => {
+		await td.replaceEsm('../../../src/constants.ts', {...constants, VERSION: '0.7.0'});
+		gotStub.returns({json: () => Promise.reject(new MockTimeoutError('other error'))});
+		await import('../../../src/lib/updater.js');
+		await sandbox.clock.tickAsync(650 * 1000);
 	});
 });
