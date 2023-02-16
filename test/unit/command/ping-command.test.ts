@@ -186,7 +186,7 @@ describe('ping command executor', () => {
 					resolvedAddress: null,
 					resolvedHostname: null,
 					timings: [],
-					stats: {min: null, max: null, avg: null, loss: null},
+					stats: {min: null, max: null, avg: null, total: null, loss: null, rcv: null, drop: null},
 				},
 			}]);
 		});

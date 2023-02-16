@@ -167,7 +167,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 	}
 
 	async queryAsn(hops: HopType[]): Promise<string[][]> {
-		const dnsResult = await Promise.allSettled(hops.map(async h => (
+		const dnsResult = await Promise.allSettled(hops.map(h => (
 			h?.asn.length < 1 && h?.resolvedAddress && !isIpPrivate(h?.resolvedAddress)
 				? this.lookupAsn(h?.resolvedAddress)
 				: Promise.reject(new Error('didn\'t lookup ASN'))

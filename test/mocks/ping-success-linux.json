@@ -9,7 +9,10 @@
       "min": 7.948,
       "avg": 8.018,
       "max": 8.120,
-      "loss": 0
+      "total": 3,
+      "loss": 0,
+      "rcv": 3,
+      "drop": 0
     },
     "timings": [
       {"rtt": 7.99, "ttl": 37},

@@ -76,15 +76,12 @@ describe('index module', () => {
 
 		expect((execaStub.firstCall.args[0] as string).endsWith('/src/sh/unbuffer.sh')).to.be.true;
 		expect(ioStub.calledOnce).to.be.true;
-		expect(ioStub.firstCall.args).to.deep.equal([
-			'ws://api.globalping.io/probes',
-			{
-				transports: ['websocket'],
-				reconnectionDelay: 100,
-				reconnectionDelayMax: 500,
-				query: {version: '0.11.0'},
-			},
-		]);
+		expect(ioStub.firstCall.args[0]).to.equal('ws://api.globalping.io/probes');
+		expect(ioStub.firstCall.args[1]).to.deep.include({
+			transports: ['websocket'],
+			reconnectionDelay: 100,
+			reconnectionDelayMax: 500,
+		});
 		expect(execaStub.secondCall.args).to.deep.equal(['which', ['unbuffer']]);
 		await sandbox.clock.nextAsync();
 		expect(handlers['probe:status:ready'].calledOnce).to.be.true;

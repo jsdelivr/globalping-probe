@@ -2,15 +2,14 @@
     "testId": "test",
     "measurementId": "measurement",
     "result": {
-        "hops":
-        [
+        "hops": [
             {
-                "stats":
-                {
+                "stats": {
                     "min": 2.27,
                     "max": 2.27,
                     "avg": 2.3,
                     "total": 3,
+                    "loss": 66.7,
                     "rcv": 1,
                     "drop": 2,
                     "stDev": 0,
@@ -18,26 +17,29 @@
                     "jMax": 2.3,
                     "jAvg": 2.3
                 },
-                "timings":
-                [
+                "asn": [],
+                "timings": [
                     {
                         "rtt": 2.27
                     },
-                    {"rtt": null},
-                    {"rtt": null}
+                    {
+                        "rtt": null
+                    },
+                    {
+                        "rtt": null
+                    }
                 ],
-                "asn": [],
                 "resolvedAddress": "192.168.0.1",
                 "duplicate": false,
                 "resolvedHostname": "192.168.0.1"
             },
             {
-                "stats":
-                {
+                "stats": {
                     "min": 0,
                     "max": 0,
                     "avg": 0,
-                    "total": 0,
+                    "total": 3,
+                    "loss": 100,
                     "rcv": 0,
                     "drop": 3,
                     "stDev": 0,
@@ -45,21 +47,26 @@
                     "jMax": 0,
                     "jAvg": 0
                 },
-                "timings":
-                [
-                    {"rtt": null},
-                    {"rtt": null},
-                    {"rtt": null}
-                ],
-                "asn": []
+                "asn": [],
+                "timings": [
+                    {
+                        "rtt": null
+                    },
+                    {
+                        "rtt": null
+                    },
+                    {
+                        "rtt": null
+                    }
+                ]
             },
             {
-                "stats":
-                {
+                "stats": {
                     "min": 9.222,
                     "max": 11.276,
                     "avg": 10.3,
                     "total": 3,
+                    "loss": 0,
                     "rcv": 3,
                     "drop": 0,
                     "stDev": 0.8,
@@ -67,8 +74,8 @@
                     "jMax": 11.3,
                     "jAvg": 6.2
                 },
-                "timings":
-                [
+                "asn": [],
+                "timings": [
                     {
                         "rtt": 10.394
                     },
@@ -79,18 +86,17 @@
                         "rtt": 11.276
                     }
                 ],
-                "asn": [],
                 "resolvedAddress": "62.252.67.181",
                 "duplicate": false,
                 "resolvedHostname": "62.252.67.181"
             },
             {
-                "stats":
-                {
+                "stats": {
                     "min": 0,
                     "max": 0,
                     "avg": 0,
-                    "total": 0,
+                    "total": 3,
+                    "loss": 100,
                     "rcv": 0,
                     "drop": 3,
                     "stDev": 0,
@@ -98,21 +104,26 @@
                     "jMax": 0,
                     "jAvg": 0
                 },
-                "timings":
-                [
-                    {"rtt": null},
-                    {"rtt": null},
-                    {"rtt": null}
-                ],
-                "asn": []
+                "asn": [],
+                "timings": [
+                    {
+                        "rtt": null
+                    },
+                    {
+                        "rtt": null
+                    },
+                    {
+                        "rtt": null
+                    }
+                ]
             },
             {
-                "stats":
-                {
+                "stats": {
                     "min": 10.779,
                     "max": 12.049,
                     "avg": 11.5,
                     "total": 3,
+                    "loss": 0,
                     "rcv": 3,
                     "drop": 0,
                     "stDev": 0.5,
@@ -120,8 +131,8 @@
                     "jMax": 11.6,
                     "jAvg": 6.5
                 },
-                "timings":
-                [
+                "asn": [],
+                "timings": [
                     {
                         "rtt": 12.049
                     },
@@ -132,18 +143,17 @@
                         "rtt": 11.638
                     }
                 ],
-                "asn": [],
                 "resolvedAddress": "62.254.59.130",
                 "duplicate": false,
                 "resolvedHostname": "62.254.59.130"
             },
             {
-                "stats":
-                {
+                "stats": {
                     "min": 10.949,
                     "max": 11.595,
                     "avg": 11.3,
                     "total": 3,
+                    "loss": 0,
                     "rcv": 3,
                     "drop": 0,
                     "stDev": 0.3,
@@ -151,8 +161,8 @@
                     "jMax": 11.4,
                     "jAvg": 6
                 },
-                "timings":
-                [
+                "asn": [],
+                "timings": [
                     {
                         "rtt": 10.949
                     },
@@ -163,18 +173,17 @@
                         "rtt": 11.393
                     }
                 ],
-                "asn": [],
                 "resolvedAddress": "142.250.160.116",
                 "duplicate": false,
                 "resolvedHostname": "142.250.160.116"
             },
             {
-                "stats":
-                {
+                "stats": {
                     "min": 15.144,
                     "max": 16.612,
                     "avg": 15.9,
                     "total": 3,
+                    "loss": 0,
                     "rcv": 3,
                     "drop": 0,
                     "stDev": 0.6,
@@ -182,8 +191,8 @@
                     "jMax": 15.1,
                     "jAvg": 8
                 },
-                "timings":
-                [
+                "asn": [],
+                "timings": [
                     {
                         "rtt": 15.835
                     },
@@ -194,18 +203,17 @@
                         "rtt": 15.144
                     }
                 ],
-                "asn": [],
                 "resolvedAddress": "216.239.41.193",
                 "duplicate": false,
                 "resolvedHostname": "216.239.41.193"
             },
             {
-                "stats":
-                {
+                "stats": {
                     "min": 12.228,
                     "max": 15.666,
                     "avg": 13.6,
                     "total": 3,
+                    "loss": 0,
                     "rcv": 3,
                     "drop": 0,
                     "stDev": 1.5,
@@ -213,8 +221,8 @@
                     "jMax": 12.9,
                     "jAvg": 8.2
                 },
-                "timings":
-                [
+                "asn": [],
+                "timings": [
                     {
                         "rtt": 15.666
                     },
@@ -225,18 +233,17 @@
                         "rtt": 12.872
                     }
                 ],
-                "asn": [],
                 "resolvedAddress": "142.251.54.27",
                 "duplicate": false,
                 "resolvedHostname": "142.251.54.27"
             },
             {
-                "stats":
-                {
+                "stats": {
                     "min": 10.092,
                     "max": 11.767,
                     "avg": 11,
                     "total": 3,
+                    "loss": 0,
                     "rcv": 3,
                     "drop": 0,
                     "stDev": 0.7,
@@ -244,8 +251,8 @@
                     "jMax": 11.2,
                     "jAvg": 6.4
                 },
-                "timings":
-                [
+                "asn": [],
+                "timings": [
                     {
                         "rtt": 11.767
                     },
@@ -256,18 +263,17 @@
                         "rtt": 11.215
                     }
                 ],
-                "asn": [],
                 "resolvedAddress": "142.250.179.238",
                 "duplicate": false,
                 "resolvedHostname": "lhr25s31-in-f14.1e100.net"
             },
             {
-                "stats":
-                {
+                "stats": {
                     "min": 11.352,
                     "max": 11.352,
                     "avg": 11.4,
                     "total": 1,
+                    "loss": 0,
                     "rcv": 1,
                     "drop": 0,
                     "stDev": 0,
@@ -275,13 +281,12 @@
                     "jMax": 11.4,
                     "jAvg": 11.4
                 },
-                "timings":
-                [
+                "asn": [],
+                "timings": [
                     {
                         "rtt": 11.352
                     }
                 ],
-                "asn": [],
                 "resolvedAddress": "142.250.179.238",
                 "duplicate": true,
                 "resolvedHostname": "lhr25s31-in-f14.1e100.net"

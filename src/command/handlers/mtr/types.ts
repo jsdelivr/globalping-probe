@@ -9,6 +9,7 @@ export type HopStatsType = {
 	max: number;
 	avg: number;
 	total: number;
+	loss: number;
 	rcv: number;
 	drop: number;
 	stDev: number;

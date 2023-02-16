@@ -51,6 +51,7 @@ type Output = {
 	rawHeaders: string;
 	rawBody: string;
 	statusCode: number;
+	statusCodeName: string;
 	timings: Record<string, number>;
 	tls: Cert | Record<string, unknown>;
 	rawOutput: string;
@@ -64,6 +65,7 @@ export type OutputJson = {
 	rawHeaders: string | null;
 	rawBody: string | null;
 	statusCode: number | null;
+	statusCodeName: string | null;
 	timings: Record<string, number | null>;
 	tls: Cert | null;
 	rawOutput: string | null;
@@ -85,6 +87,7 @@ const getInitialResult = () => ({
 	curlHeaders: '',
 	rawBody: '',
 	statusCode: 0,
+	statusCodeName: '',
 	httpVersion: '',
 	timings: {},
 });
@@ -198,6 +201,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				rawHeaders: result.rawHeaders,
 				rawBody: result.rawBody,
 				statusCode: result.statusCode,
+				statusCodeName: result.statusCodeName,
 				timings: result.timings,
 				tls: result.tls,
 				rawOutput: result.error || rawOutput,
@@ -289,6 +293,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			rawHeaders: input.rawHeaders || null,
 			rawBody: input.rawBody || null,
 			statusCode: input.statusCode || null,
+			statusCodeName: input.statusCodeName || null,
 			timings: {
 				total: 0,
 				download: 0,
@@ -313,6 +318,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		result.headers = resp.headers as Record<string, string>;
 
 		result.statusCode = resp.statusCode;
+		result.statusCodeName = resp.statusMessage ?? '';
 		result.httpVersion = resp.httpVersion;
 
 		const timings = {

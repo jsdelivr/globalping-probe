@@ -7,12 +7,13 @@ import type {
 export const NEW_LINE_REG_EXP = /\r?\n/;
 /* eslint-enable @typescript-eslint/naming-convention */
 
-const getInitialHopState = () => ({
+const getInitialHopState = (): HopType => ({
 	stats: {
 		min: 0,
 		max: 0,
 		avg: 0,
 		total: 0,
+		loss: 0,
 		rcv: 0,
 		drop: 0,
 		stDev: 0,
@@ -228,13 +229,13 @@ export const MtrParser = {
 			return stats;
 		}
 
-		const timesArray = hop.timings.filter(t => t.rtt).map(t => t.rtt) as number[];
+		stats.total = hop.timings.length;
 
+		const timesArray = hop.timings.filter(t => t.rtt).map(t => t.rtt) as number[];
 		if (timesArray.length > 0) {
 			stats.min = Math.min(...timesArray);
 			stats.max = Math.max(...timesArray);
 			stats.avg = roundNumber(timesArray.reduce((a, b) => a + b, 0) / timesArray.length);
-			stats.total = hop.timings.length;
 			stats.stDev = roundNumber(Math.sqrt(timesArray.map(x => (x - stats.avg) ** 2).reduce((a, b) => a + b, 0) / timesArray.length));
 		}
 
@@ -254,6 +255,8 @@ export const MtrParser = {
 				stats.drop++;
 			}
 		}
+
+		stats.loss = roundNumber((stats.drop / stats.total) * 100);
 
 		// Jitter
 		const jitterArray = [];
