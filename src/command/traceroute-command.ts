@@ -5,6 +5,7 @@ import {execa, ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
 import {isExecaError} from '../helper/execa-error-check.js';
 import {ProgressBuffer} from '../helper/progress-buffer.js';
+import {scopedLogger} from '../lib/logger.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
 const reHost = /(\S+)\s+\((?:((?:\d+\.){3}\d+)|([\da-fA-F:]))\)/;
@@ -43,6 +44,8 @@ type ParsedOutputJson = {
 	}>;
 };
 /* eslint-enable @typescript-eslint/ban-types */
+
+const logger = scopedLogger('traceroute-command');
 
 const traceOptionsSchema = Joi.object<TraceOptions>({
 	type: Joi.string().valid('traceroute'),
@@ -118,7 +121,14 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 				isResultPrivate = true;
 			}
 		} catch (error: unknown) {
-			const output = isExecaError(error) ? error.stdout.toString() : '';
+			let output = 'Test failed. Please try again.';
+
+			if (isExecaError(error) && error.stdout.toString().length > 0) {
+				output = error.stdout.toString();
+			} else {
+				logger.error(error);
+			}
+
 			result = {
 				status: 'failed',
 				rawOutput: output,

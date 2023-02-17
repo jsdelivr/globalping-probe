@@ -5,6 +5,7 @@ import {execa, ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
 import {isExecaError} from '../helper/execa-error-check.js';
 import {ProgressBuffer} from '../helper/progress-buffer.js';
+import {scopedLogger} from '../lib/logger.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
 export type PingOptions = {
@@ -65,6 +66,8 @@ export type PingParseOutputJson = {
 };
 /* eslint-enable @typescript-eslint/ban-types */
 
+const logger = scopedLogger('ping-command');
+
 export const argBuilder = (options: PingOptions): string[] => {
 	const args = [
 		'-4',
@@ -120,7 +123,12 @@ export class PingCommand implements CommandInterface<PingOptions> {
 				isResultPrivate = true;
 			}
 		} catch (error: unknown) {
-			result = isExecaError(error) ? this.parse(error.stdout.toString()) : {status: 'failed', rawOutput: ''};
+			if (isExecaError(error) && error.stdout.toString().length > 0) {
+				result = this.parse(error.stdout.toString());
+			} else {
+				logger.error(error);
+				result = {status: 'failed', rawOutput: 'Test failed. Please try again.'};
+			}
 		}
 
 		if (isResultPrivate) {

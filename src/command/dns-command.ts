@@ -6,6 +6,7 @@ import type {CommandInterface} from '../types.js';
 import {isExecaError} from '../helper/execa-error-check.js';
 import {InternalError} from '../lib/internal-error.js';
 import {ProgressBuffer} from '../helper/progress-buffer.js';
+import {scopedLogger} from '../lib/logger.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
 import ClassicDigParser from './handlers/dig/classic.js';
@@ -32,6 +33,8 @@ export type DnsOptions = {
 		type?: string;
 	};
 };
+
+const logger = scopedLogger('dns-command');
 
 const isTrace = (output: unknown): output is DnsParseResponseTrace => Array.isArray((output as DnsParseResponseTrace).hops);
 
@@ -107,7 +110,12 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 					return;
 				}
 			} catch (error: unknown) {
-				output = error instanceof InternalError && error.expose && error.message?.length > 0 ? error.message : 'Unknown error occured.';
+				if (error instanceof InternalError && error.expose && error.message?.length > 0) {
+					output = error.message;
+				} else {
+					logger.error(error);
+					output = 'Test failed. Please try again.';
+				}
 			}
 
 			buffer.pushProgress({rawOutput: output});
@@ -128,12 +136,14 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 
 			result = parsedResult;
 		} catch (error: unknown) {
-			let output = 'Unknown error occured.';
+			let output = 'Test failed. Please try again.';
 
 			if (error instanceof InternalError && error.expose) {
 				output = error.message;
-			} else if (isExecaError(error)) {
+			} else if (isExecaError(error) && error.stdout.toString().length > 0) {
 				output = this.rewrite(error.stdout.toString(), Boolean(options.trace));
+			} else {
+				logger.error(error);
 			}
 
 			result = {
