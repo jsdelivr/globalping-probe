@@ -114,6 +114,11 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		let result = {};
 		try {
 			const cmdResult = await cmd;
+
+			if (cmdResult.stdout.length === 0) {
+				logger.error('Successful stdout is empty', cmdResult);
+			}
+
 			const parseResult = this.parse(cmdResult.stdout.trim());
 			result = this.toJsonOutput(parseResult);
 
