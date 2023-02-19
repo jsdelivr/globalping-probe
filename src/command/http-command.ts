@@ -176,7 +176,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		let result = getInitialResult();
 		let cert: Cert | undefined;
 
-		const respond = (resolve: () => void) => {
+		const respond = (resolveStream: () => void) => {
 			result.resolvedAddress = stream.ip ?? '';
 
 			const timings = (stream.timings ?? {}) as Timings;
@@ -207,7 +207,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				rawOutput: result.error || rawOutput,
 			}));
 
-			resolve();
+			resolveStream();
 		};
 
 		const captureCert = (socket: TLSSocket): Cert | undefined => ({
@@ -254,9 +254,9 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			}
 		};
 
-		const pStream = new Promise((resolve, _reject) => {
-			const onResolve = () => {
-				resolve(null);
+		const pStream = new Promise((_resolve, _reject) => {
+			const resolve = () => {
+				_resolve(null);
 			};
 
 			stream.on('downloadProgress', onDownloadProgress);
@@ -274,11 +274,11 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 					result.error = `${error.message} - ${error.code}`;
 				}
 
-				respond(onResolve);
+				respond(resolve);
 			});
 
 			stream.on('end', () => {
-				respond(onResolve);
+				respond(resolve);
 			});
 		});
 

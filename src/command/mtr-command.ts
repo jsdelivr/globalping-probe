@@ -8,6 +8,7 @@ import type {CommandInterface} from '../types.js';
 import {isExecaError} from '../helper/execa-error-check.js';
 import {getConfValue} from '../lib/config.js';
 import {ProgressBufferOverwrite} from '../helper/progress-buffer-overwrite.js';
+import {scopedLogger} from '../lib/logger.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
 
 import type {
@@ -26,6 +27,8 @@ export type MtrOptions = {
 };
 
 type DnsResolver = (addr: string, rrtype?: string) => Promise<string[]>;
+
+const logger = scopedLogger('mtr-command');
 
 const mtrOptionsSchema = Joi.object<MtrOptions>({
 	type: Joi.string().valid('mtr'),
@@ -108,7 +111,9 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			result = await this.parseResult(result.hops, result.data, true);
 		} catch (error: unknown) {
 			result.status = 'failed';
-			if (isExecaError(error)) {
+			result.rawOutput = 'Test failed. Please try again.';
+
+			if (isExecaError(error) && error.stdout.toString().length > 0) {
 				result.rawOutput = error.stdout.toString();
 			} else {
 				cmd.kill('SIGKILL');
@@ -116,10 +121,12 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 				if (error instanceof Error) {
 					result.hops = [];
 					result.data = [];
+				}
 
-					if (error.message === 'private destination') {
-						result.rawOutput = 'Private IP ranges are not allowed';
-					}
+				if (error instanceof Error && error.message === 'private destination') {
+					result.rawOutput = 'Private IP ranges are not allowed';
+				} else {
+					logger.error(error);
 				}
 			}
 		}

@@ -109,7 +109,7 @@ function connect() {
 			const {id: measurementId, measurement} = data;
 			const testId = cryptoRandomString({length: 16, type: 'alphanumeric'});
 
-			logger.debug(`${measurement.type} request ${data.id} received`, data);
+			logger.debug(`${measurement.type} request ${data.id} received`);
 			socket.emit('probe:measurement:ack', {id: testId, measurementId}, async () => {
 				const handler = handlersMap.get(measurement.type);
 				if (!handler) {
