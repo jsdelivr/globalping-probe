@@ -5,13 +5,13 @@ import https from 'node:https';
 import http2 from 'http2-wrapper';
 import Joi from 'joi';
 import _ from 'lodash';
-import got, {Response, Request, HTTPAlias, Progress, DnsLookupIpVersion, RequestError, HTTPError} from 'got';
+import got, {type Response, type Request, type HTTPAlias, type Progress, type DnsLookupIpVersion, type RequestError, HTTPError} from 'got';
 import type {Socket} from 'socket.io-client';
 import type {CommandInterface} from '../types.js';
 import {callbackify} from '../lib/util.js';
 import {ProgressBuffer} from '../helper/progress-buffer.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
-import {dnsLookup, ResolverType} from './handlers/http/dns-resolver.js';
+import {dnsLookup, type ResolverType} from './handlers/http/dns-resolver.js';
 
 export type HttpOptions = {
 	type: string;
@@ -41,7 +41,7 @@ type Cert = {
 	subject: {
 		CN: string;
 	};
-	subjectaltname: string;
+	subjectaltname?: string;
 };
 
 type Output = {

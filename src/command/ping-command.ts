@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import isIpPrivate from 'private-ip';
 import type {Socket} from 'socket.io-client';
-import {execa, ExecaChildProcess} from 'execa';
+import {execa, type ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
 import {isExecaError} from '../helper/execa-error-check.js';
 import {ProgressBuffer} from '../helper/progress-buffer.js';
@@ -208,7 +208,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 	private parseStatsLine(line: string): PingTimings | undefined {
 		const parsed = /^\d+ bytes from (?<host>.*) .*: (?:icmp_)?seq=\d+ ttl=(?<ttl>\d+) time=(?<time>\d*(?:\.\d+)?) ms/.exec(line);
 
-		if (!parsed || !parsed.groups) {
+		if (!parsed?.groups) {
 			return;
 		}
 

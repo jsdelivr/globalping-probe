@@ -86,7 +86,7 @@ export const MtrParser = {
 
 			if (!hop.resolvedAddress) {
 				const isEmptyUntilEnd = hops.slice(i - 1).every(h => !h.resolvedAddress || h.duplicate);
-				if (hops[i - 1]?.duplicate || isEmptyUntilEnd) {
+				if (hops[i - 1]?.duplicate || isEmptyUntilEnd) { // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing
 					continue;
 				}
 			}
@@ -201,8 +201,9 @@ export const MtrParser = {
 					break;
 				}
 
-				default:
+				default: {
 					break;
+				}
 			}
 
 			entry.stats = MtrParser.hopStatsParse(entry, isFinalResult);

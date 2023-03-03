@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import isIpPrivate from 'private-ip';
 import type {Socket} from 'socket.io-client';
-import {execa, ExecaChildProcess} from 'execa';
+import {execa, type ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
 import {isExecaError} from '../helper/execa-error-check.js';
 import {InternalError} from '../lib/internal-error.js';
