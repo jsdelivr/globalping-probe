@@ -3,7 +3,7 @@ import {isIP} from 'is-ip';
 import isIpPrivate from 'private-ip';
 import Joi from 'joi';
 import type {Socket} from 'socket.io-client';
-import {execa, ExecaChildProcess} from 'execa';
+import {execa, type ExecaChildProcess} from 'execa';
 import type {CommandInterface} from '../types.js';
 import {isExecaError} from '../helper/execa-error-check.js';
 import {getConfValue} from '../lib/config.js';

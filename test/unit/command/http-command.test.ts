@@ -1,6 +1,6 @@
 import {PassThrough} from 'node:stream';
 import nock from 'nock';
-import {Request, PlainResponse, HTTPError, CacheError} from 'got';
+import {type Request, type PlainResponse, HTTPError, CacheError} from 'got';
 import * as sinon from 'sinon';
 import {expect} from 'chai';
 import {Socket} from 'socket.io-client';

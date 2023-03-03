@@ -5,9 +5,9 @@ import {
 	NEW_LINE_REG_EXP,
 	IPV4_REG_EXP,
 	SharedDigParser,
-	DnsSection,
-	DnsParseLoopResponse,
-	DnsParseLoopResponseJson,
+	type DnsSection,
+	type DnsParseLoopResponse,
+	type DnsParseLoopResponseJson,
 } from './shared.js';
 import {statusNameToStatusCodeMap} from './dig-status-code-map.js';
 

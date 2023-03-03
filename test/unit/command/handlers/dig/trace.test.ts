@@ -1,7 +1,7 @@
 import {expect} from 'chai';
 import {
 	TraceDigParser,
-	DnsParseResponse,
+	type DnsParseResponse,
 } from '../../../../../src/command/handlers/dig/trace.js';
 import {getCmdMock} from '../../../../utils.js';
 

@@ -160,7 +160,7 @@ function connect() {
 if (process.env['NODE_ENV'] === 'development') {
 	// Run multiple clients in dev mode for easier debugging
 	throng({worker: connect, count: physicalCpuCount})
-		.catch(error => {
+		.catch(error => { // eslint-disable-line unicorn/prefer-top-level-await
 			logger.error(error);
 		});
 } else {

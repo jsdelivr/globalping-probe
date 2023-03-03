@@ -1,4 +1,4 @@
-import {Socket} from 'socket.io-client';
+import {type Socket} from 'socket.io-client';
 
 type MeasurementRequest = {
 	id: string;
@@ -8,9 +8,9 @@ type MeasurementRequest = {
 };
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-interface CommandInterface<OPT> {
+type CommandInterface<OPT> = {
 	run(socket: Socket, measurementId: string, testId: string, options: OPT): Promise<void>;
-}
+};
 
 type Probe = {
 	location: ProbeLocation;
