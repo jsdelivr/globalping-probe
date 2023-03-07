@@ -10,9 +10,9 @@ export const apiConnectLocationHandler = (socket: Socket) => async (data: ProbeL
 	logger.info(`connected from (${data.city}, ${data.country}, ${data.continent}) (lat: ${data.latitude} long: ${data.longitude})`);
 
 	if (await hasRequiredDeps()) {
-		socket.emit('probe:status:ready', {});
+		socket.emit('probe:status:update', 'ready');
 	} else {
-		socket.emit('probe:status:not_ready', {});
+		socket.emit('probe:status:update', 'unbuffer-missing');
 	}
 
 	const dnsList = getDnsServers();

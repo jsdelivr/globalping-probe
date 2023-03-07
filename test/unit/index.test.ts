@@ -27,12 +27,11 @@ describe('index module', () => {
 
 	const mockSocket = new MockSocket();
 	const handlers = {
-		'probe:status:ready': sinon.stub(),
+		'probe:status:update': sinon.stub(),
 		'probe:dns:update': sinon.stub(),
 		'probe:measurement:request': sinon.stub(),
 		'probe:measurement:ack': sinon.stub(),
 		'connect_error': sinon.stub(),
-		'probe:status:not_ready': sinon.stub(),
 	};
 	const connectStub = sinon.stub();
 	const disconnectStub = sinon.stub();
@@ -84,8 +83,8 @@ describe('index module', () => {
 		});
 		expect(execaStub.secondCall.args).to.deep.equal(['which', ['unbuffer']]);
 		await sandbox.clock.nextAsync();
-		expect(handlers['probe:status:ready'].calledOnce).to.be.true;
-		expect(handlers['probe:status:ready'].firstCall.args).to.deep.equal([{}]);
+		expect(handlers['probe:status:update'].callCount).to.equal(1);
+		expect(handlers['probe:status:update'].firstCall.args).to.deep.equal(['ready']);
 		expect(handlers['probe:dns:update'].calledOnce).to.be.true;
 	});
 
@@ -148,7 +147,8 @@ describe('index module', () => {
 
 		process.once('SIGTERM', () => {
 			sandbox.clock.tick(150);
-			expect(handlers['probe:status:not_ready'].calledOnce).to.be.true;
+			expect(handlers['probe:status:update'].calledOnce).to.be.true;
+			expect(handlers['probe:status:update'].firstCall.args).to.deep.equal(['sigterm']);
 			expect(exitStub.calledOnce).to.be.true;
 		});
 
@@ -163,7 +163,8 @@ describe('index module', () => {
 
 		process.once('SIGTERM', () => {
 			sandbox.clock.tick(60_500);
-			expect(handlers['probe:status:not_ready'].calledOnce).to.be.true;
+			expect(handlers['probe:status:update'].calledOnce).to.be.true;
+			expect(handlers['probe:status:update'].firstCall.args).to.deep.equal(['sigterm']);
 			expect(exitStub.calledOnce).to.be.true;
 		});
 
