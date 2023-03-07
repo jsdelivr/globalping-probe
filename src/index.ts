@@ -133,7 +133,7 @@ function connect() {
 		logger.debug('SIGTERM received');
 
 		worker.active = false;
-		socket.emit('probe:status:not_ready', {});
+		socket.emit('probe:status:update', 'sigterm');
 
 		const closeTimeout = setTimeout(() => {
 			logger.debug('SIGTERM timeout. Force close.');
