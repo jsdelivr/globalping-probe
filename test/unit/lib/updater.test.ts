@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/naming-convention */
+
 import process from 'node:process';
 import {expect} from 'chai';
 import * as td from 'testdouble';

@@ -15,7 +15,7 @@ import {traceCmd, TracerouteCommand} from './command/traceroute-command.js';
 import {mtrCmd, MtrCommand} from './command/mtr-command.js';
 import {httpCmd, HttpCommand} from './command/http-command.js';
 import {run as runStatsAgent} from './lib/stats/client.js';
-
+import {initStatusManager} from './lib/status-manager.js';
 import {VERSION} from './constants.js';
 
 // Run self-update checks
@@ -65,6 +65,7 @@ function connect() {
 	});
 
 	runStatsAgent(socket, worker);
+	const statusManager = initStatusManager(socket, pingCmd);
 
 	socket
 		.on('probe:sigkill', () => {
@@ -133,7 +134,7 @@ function connect() {
 		logger.debug('SIGTERM received');
 
 		worker.active = false;
-		socket.emit('probe:status:update', 'sigterm');
+		statusManager.updateStatus('sigterm');
 
 		const closeTimeout = setTimeout(() => {
 			logger.debug('SIGTERM timeout. Force close.');

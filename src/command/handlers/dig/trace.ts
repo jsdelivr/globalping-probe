@@ -18,12 +18,9 @@ export type DnsParseResponseJson = {
 	rawOutput: string;
 };
 
-/* eslint-disable @typescript-eslint/naming-convention */
 const RESOLVER_REG_EXP = /from.*\((.*?)\)/;
 const QUERY_TIME_REG_EXP = /in\s+(\d+)\s+ms/;
-/* eslint-enable @typescript-eslint/naming-convention */
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const TraceDigParser = {
 	rewrite(rawOutput: string): string {
 		const output = rawOutput;

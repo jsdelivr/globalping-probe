@@ -589,7 +589,6 @@ describe('http command', () => {
 				},
 			};
 
-			/* eslint-disable @typescript-eslint/naming-convention */
 			const cert = {
 				valid_from: (new Date(1_657_802_359_042)).toUTCString(),
 				valid_to: (new Date(1_657_802_359_042)).toUTCString(),
@@ -601,7 +600,6 @@ describe('http command', () => {
 				},
 				subjectaltname: 'DNS:defllc.com, DNS:*.defllc.com',
 			};
-			/* eslint-enable @typescript-eslint/naming-convention */
 
 			const events = {
 				response: {

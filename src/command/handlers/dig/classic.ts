@@ -28,13 +28,10 @@ export type DnsParseResponseJson = DnsParseLoopResponseJson & {
 	rawOutput: string;
 };
 
-/* eslint-disable @typescript-eslint/naming-convention */
 const QUERY_TIME_REG_EXP = /Query\s+time:\s+(\d+)/g;
 const RESOLVER_REG_EXP = /SERVER:.*\((.*?)\)/g;
 const STATUS_CODE_NAME_REG_EXP = /status:\s*([A-Z]+)/g;
-/* eslint-enable @typescript-eslint/naming-convention */
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const ClassicDigParser = {
 	rewrite(rawOutput: string): string {
 		const lines = rawOutput.split('\n');

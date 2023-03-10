@@ -17,7 +17,6 @@ describe('http helper', () => {
 	let dnsLookup: (resolverAddr: string | undefined, resolverFn?: ResolverType) => (hostname: string, options: Options) => Promise<Error | ErrnoException | [string, number]>;
 
 	before(async () => {
-		// eslint-disable-next-line @typescript-eslint/naming-convention
 		await td.replaceEsm('node:dns', null, {promises: {Resolver: NativeResolverMock}});
 		({dnsLookup} = await import('../../../../../src/command/handlers/http/dns-resolver.js'));
 	});
