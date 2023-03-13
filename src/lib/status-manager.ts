@@ -3,12 +3,15 @@ import type {Socket} from 'socket.io-client';
 import parse from '../command/handlers/ping/parse.js';
 import type {PingOptions} from '../command/ping-command.js';
 import {hasRequired} from './dependencies.js';
+import {scopedLogger} from './logger.js';
 
-// Const INTERVAL_TIME = 10 * 60 * 1000; // 10 mins
-const INTERVAL_TIME = 3000;
+const logger = scopedLogger('status-manager');
+
+const INTERVAL_TIME = 10 * 60 * 1000; // 10 mins
 
 class StatusManager {
 	private status: 'initializing' | 'ready' | 'unbuffer-missing' | 'ping-test-failed' | 'sigterm' = 'initializing';
+	private timer?: NodeJS.Timeout;
 
 	constructor(
 		private readonly socket: Socket,
@@ -26,12 +29,23 @@ class StatusManager {
 		await this.runTest();
 	}
 
+	public stop() {
+		clearTimeout(this.timer);
+	}
+
+	public getStatus() {
+		return this.status;
+	}
+
 	public updateStatus(status: StatusManager['status']) {
-		console.log('updateStatus:', status);
 		if (status !== this.status) {
-			this.socket.emit('probe:status:update', status);
 			this.status = status;
+			this.sendCurrentStatus();
 		}
+	}
+
+	public sendCurrentStatus() {
+		this.socket.emit('probe:status:update', this.status);
 	}
 
 	private async runTest() {
@@ -42,18 +56,24 @@ class StatusManager {
 			this.updateStatus('ping-test-failed');
 		}
 
-		setTimeout(async () => {
+		this.timer = setTimeout(async () => {
 			await this.runTest();
 		}, INTERVAL_TIME);
 	}
 
 	private async pingTest() {
-		const promisesResults = await Promise.allSettled([
+		const results = await Promise.allSettled([
 			this.pingCmd({type: 'ping', target: 'pool.ntp.org', packets: 10}),
 			this.pingCmd({type: 'ping', target: 'k.root-servers.net', packets: 10}),
 			this.pingCmd({type: 'ping', target: 'i.root-servers.net', packets: 10}),
 		]);
-		const fulfilledPromises = promisesResults.filter((promise): promise is PromiseFulfilledResult<ExecaReturnValue> => promise.status === 'fulfilled');
+
+		const rejectedPromises = results.filter((promise): promise is PromiseRejectedResult => promise.status === 'rejected');
+		for (const promise of rejectedPromises) {
+			logger.warn(promise.reason);
+		}
+
+		const fulfilledPromises = results.filter((promise): promise is PromiseFulfilledResult<ExecaReturnValue> => promise.status === 'fulfilled');
 		const cmdResults = fulfilledPromises.map(promise => promise.value).map(result => parse(result.stdout));
 		const successfulResults = cmdResults.filter(result => result.status === 'finished' && result.stats?.loss === 0);
 		return successfulResults.length >= 2;
