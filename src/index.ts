@@ -73,7 +73,7 @@ function connect() {
 			process.exit();
 		})
 		.on('connect', () => {
-			statusManager.sendCurrentStatus();
+			statusManager.sendStatus();
 			logger.debug('connection to API established');
 		})
 		.on('disconnect', (reason: string): void => {

@@ -9,7 +9,7 @@ const logger = scopedLogger('status-manager');
 
 const INTERVAL_TIME = 10 * 60 * 1000; // 10 mins
 
-class StatusManager {
+export class StatusManager {
 	private status: 'initializing' | 'ready' | 'unbuffer-missing' | 'ping-test-failed' | 'sigterm' = 'initializing';
 	private timer?: NodeJS.Timeout;
 
@@ -40,11 +40,11 @@ class StatusManager {
 	public updateStatus(status: StatusManager['status']) {
 		if (status !== this.status) {
 			this.status = status;
-			this.sendCurrentStatus();
+			this.sendStatus();
 		}
 	}
 
-	public sendCurrentStatus() {
+	public sendStatus() {
 		this.socket.emit('probe:status:update', this.status);
 	}
 
