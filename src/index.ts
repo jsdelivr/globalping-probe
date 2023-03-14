@@ -134,8 +134,7 @@ function connect() {
 	process.on('SIGTERM', () => {
 		logger.debug('SIGTERM received');
 
-		statusManager.updateStatus('sigterm');
-		statusManager.stop();
+		statusManager.stop('sigterm');
 
 		const closeTimeout = setTimeout(() => {
 			logger.debug('SIGTERM timeout. Force close.');

@@ -58,7 +58,7 @@
     "copy:sh": "cp -r ./src/sh ./dist/sh",
     "init:hooks": "husky install",
     "dev": "NODE_ENV=development node ./dist/index.js",
-    "dev:tsx": "NODE_ENV=development tsx --inspect ./src/index.ts",
+    "dev:tsx": "NODE_ENV=development tsx ./src/index.ts",
     "watch": "tsx watch src/index.ts",
     "lint": "xo",
     "lint:fix": "xo --fix",

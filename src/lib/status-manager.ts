@@ -29,7 +29,8 @@ export class StatusManager {
 		await this.runTest();
 	}
 
-	public stop() {
+	public stop(status: StatusManager['status']) {
+		this.updateStatus(status);
 		clearTimeout(this.timer);
 	}
 

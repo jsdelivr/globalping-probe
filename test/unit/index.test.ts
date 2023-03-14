@@ -170,9 +170,8 @@ describe('index module', () => {
 
 		process.once('SIGTERM', () => {
 			sandbox.clock.tick(150);
-			expect(statusManagerStub.updateStatus.callCount).to.equal(1);
-			expect(statusManagerStub.updateStatus.args[0]).to.deep.equal(['sigterm']);
 			expect(statusManagerStub.stop.callCount).to.equal(1);
+			expect(statusManagerStub.stop.args[0]).to.deep.equal(['sigterm']);
 			expect(exitStub.calledOnce).to.be.true;
 		});
 
@@ -187,9 +186,8 @@ describe('index module', () => {
 
 		process.once('SIGTERM', () => {
 			sandbox.clock.tick(60_500);
-			expect(statusManagerStub.updateStatus.callCount).to.equal(1);
-			expect(statusManagerStub.updateStatus.args[0]).to.deep.equal(['sigterm']);
 			expect(statusManagerStub.stop.callCount).to.equal(1);
+			expect(statusManagerStub.stop.args[0]).to.deep.equal(['sigterm']);
 			expect(exitStub.calledOnce).to.be.true;
 		});
 
