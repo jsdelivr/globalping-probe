@@ -3,9 +3,7 @@ import type {
 	HopType,
 } from './types.js';
 
-/* eslint-disable @typescript-eslint/naming-convention */
 export const NEW_LINE_REG_EXP = /\r?\n/;
-/* eslint-enable @typescript-eslint/naming-convention */
 
 const getInitialHopState = (): HopType => ({
 	stats: {
@@ -44,7 +42,6 @@ const roundNumber = (value: number): number => {
 	return Number.parseFloat(value.toFixed(1));
 };
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const MtrParser = {
 	outputBuilder(hops: HopType[]): string {
 		const rawOutput = [];

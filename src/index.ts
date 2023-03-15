@@ -15,7 +15,7 @@ import {traceCmd, TracerouteCommand} from './command/traceroute-command.js';
 import {mtrCmd, MtrCommand} from './command/mtr-command.js';
 import {httpCmd, HttpCommand} from './command/http-command.js';
 import {run as runStatsAgent} from './lib/stats/client.js';
-
+import {initStatusManager} from './lib/status-manager.js';
 import {VERSION} from './constants.js';
 
 // Run self-update checks
@@ -44,7 +44,6 @@ logger.info(`Start probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'p
 
 function connect() {
 	const worker = {
-		active: false,
 		jobs: new Map<string, number>(),
 		jobsInterval: setInterval(() => {
 			for (const [key, value] of worker.jobs) {
@@ -65,6 +64,7 @@ function connect() {
 	});
 
 	runStatsAgent(socket, worker);
+	const statusManager = initStatusManager(socket, pingCmd);
 
 	socket
 		.on('probe:sigkill', () => {
@@ -73,7 +73,7 @@ function connect() {
 			process.exit();
 		})
 		.on('connect', () => {
-			worker.active = true;
+			statusManager.sendStatus();
 			logger.debug('connection to API established');
 		})
 		.on('disconnect', (reason: string): void => {
@@ -102,7 +102,9 @@ function connect() {
 		.on('api:error', apiErrorHandler)
 		.on('api:connect:location', apiConnectLocationHandler(socket))
 		.on('probe:measurement:request', (data: MeasurementRequest) => {
-			if (!worker.active) {
+			const status = statusManager.getStatus();
+			if (status !== 'ready') {
+				logger.warn(`measurement was sent to probe with ${status} status`);
 				return;
 			}
 
@@ -132,8 +134,7 @@ function connect() {
 	process.on('SIGTERM', () => {
 		logger.debug('SIGTERM received');
 
-		worker.active = false;
-		socket.emit('probe:status:update', 'sigterm');
+		statusManager.stop('sigterm');
 
 		const closeTimeout = setTimeout(() => {
 			logger.debug('SIGTERM timeout. Force close.');

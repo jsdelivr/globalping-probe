@@ -7,7 +7,6 @@ type MeasurementRequest = {
 	};
 };
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 type CommandInterface<OPT> = {
 	run(socket: Socket, measurementId: string, testId: string, options: OPT): Promise<void>;
 };

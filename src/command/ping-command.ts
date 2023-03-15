@@ -7,6 +7,7 @@ import {isExecaError} from '../helper/execa-error-check.js';
 import {ProgressBuffer} from '../helper/progress-buffer.js';
 import {scopedLogger} from '../lib/logger.js';
 import {InvalidOptionsException} from './exception/invalid-options-exception.js';
+import parse, {type PingParseOutput} from './handlers/ping/parse.js';
 
 export type PingOptions = {
 	type: 'ping';
@@ -19,30 +20,6 @@ const pingOptionsSchema = Joi.object<PingOptions>({
 	target: Joi.string(),
 	packets: Joi.number().min(1).max(16).default(3),
 });
-
-type PingStats = {
-	min?: number;
-	max?: number;
-	avg?: number;
-	total?: number;
-	loss?: number;
-	rcv?: number;
-	drop?: number;
-};
-
-type PingTimings = {
-	ttl: number;
-	rtt: number;
-};
-
-type PingParseOutput = {
-	status: 'finished' | 'failed';
-	rawOutput: string;
-	resolvedHostname?: string;
-	resolvedAddress?: string;
-	timings?: PingTimings[];
-	stats?: PingStats;
-};
 
 /* eslint-disable @typescript-eslint/ban-types */
 export type PingParseOutputJson = {
@@ -121,7 +98,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 				logger.error('Successful stdout is empty', cmdResult);
 			}
 
-			const parseResult = this.parse(cmdResult.stdout);
+			const parseResult = parse(cmdResult.stdout);
 			result = parseResult;
 
 			if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
@@ -129,7 +106,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			}
 		} catch (error: unknown) {
 			if (isExecaError(error) && error.stdout.toString().length > 0) {
-				result = this.parse(error.stdout.toString());
+				result = parse(error.stdout.toString());
 			} else {
 				logger.error(error);
 				result = {status: 'failed', rawOutput: 'Test failed. Please try again.'};
@@ -147,7 +124,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 	}
 
 	private validatePartialResult(rawOutput: string, cmd: ExecaChildProcess): boolean {
-		const parseResult = this.parse(rawOutput);
+		const parseResult = parse(rawOutput);
 
 		if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
 			cmd.kill('SIGKILL');
@@ -174,70 +151,5 @@ export class PingCommand implements CommandInterface<PingOptions> {
 				drop: input.stats?.drop ?? null,
 			},
 		};
-	}
-
-	private parse(rawOutput: string): PingParseOutput {
-		const lines = rawOutput.split('\n');
-
-		if (lines.length === 0) {
-			return {status: 'failed', rawOutput};
-		}
-
-		const header = /^PING\s(?<host>.*?)\s\((?<addr>.+?)\)/.exec(lines[0] ?? '');
-		if (!header) {
-			return {status: 'failed', rawOutput};
-		}
-
-		const resolvedAddress = String(header?.groups?.['addr']);
-		const timeLines = lines.slice(1).map(l => this.parseStatsLine(l)).filter(Boolean) as PingTimings[];
-
-		const resolvedHostname = (/(?<=from\s).*?(?=\s)/.exec((lines[1] ?? '')))?.[0];
-		const summaryHeaderIndex = lines.findIndex(l => /^---\s(.*)\sstatistics ---/.test(l));
-		const summary = this.parseSummary(lines.slice(summaryHeaderIndex + 1));
-
-		return {
-			status: 'finished',
-			resolvedAddress,
-			resolvedHostname: resolvedHostname ?? '',
-			timings: timeLines,
-			stats: summary,
-			rawOutput,
-		};
-	}
-
-	private parseStatsLine(line: string): PingTimings | undefined {
-		const parsed = /^\d+ bytes from (?<host>.*) .*: (?:icmp_)?seq=\d+ ttl=(?<ttl>\d+) time=(?<time>\d*(?:\.\d+)?) ms/.exec(line);
-
-		if (!parsed?.groups) {
-			return;
-		}
-
-		return {
-			ttl: Number.parseInt(parsed.groups['ttl'] ?? '-1', 10),
-			rtt: Number.parseFloat(parsed.groups['time'] ?? '-1'),
-		};
-	}
-
-	private parseSummary(lines: string[]): PingStats {
-		const [packets, rtt] = lines;
-		const stats: PingStats = {};
-
-		if (rtt) {
-			const rttMatch = /^(?:round-trip|rtt)\s.*\s=\s(?<min>\d*(?:\.\d+)?)\/(?<avg>\d*(?:\.\d+)?)\/(?<max>\d*(?:\.\d+)?)?/.exec(rtt);
-
-			stats.min = Number.parseFloat(rttMatch?.groups?.['min'] ?? '');
-			stats.avg = Number.parseFloat(rttMatch?.groups?.['avg'] ?? '');
-			stats.max = Number.parseFloat(rttMatch?.groups?.['max'] ?? '');
-		}
-
-		if (packets) {
-			const packetsMatch = /(?<total>\d+)\spackets\stransmitted,\s(?<rcv>\d+)\s(received|packets received),\s(?<loss>\d*(?:\.\d+)?)%\spacket\sloss/.exec(packets);
-			stats.total = Number.parseInt(packetsMatch?.groups?.['total'] ?? '-1', 10);
-			stats.loss = Number.parseFloat(packetsMatch?.groups?.['loss'] ?? '-1');
-			stats.rcv = Number.parseInt(packetsMatch?.groups?.['rcv'] ?? '-1', 10);
-			stats.drop = stats.total - stats.rcv;
-		}
-
-		return stats;
 	}
 }
