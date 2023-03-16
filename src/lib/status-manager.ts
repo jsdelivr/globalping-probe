@@ -71,12 +71,21 @@ export class StatusManager {
 
 		const rejectedPromises = results.filter((promise): promise is PromiseRejectedResult => promise.status === 'rejected');
 		for (const promise of rejectedPromises) {
+			logger.warn('ping test promise rejected:');
 			logger.warn(promise.reason);
 		}
 
 		const fulfilledPromises = results.filter((promise): promise is PromiseFulfilledResult<ExecaReturnValue> => promise.status === 'fulfilled');
 		const cmdResults = fulfilledPromises.map(promise => promise.value).map(result => parse(result.stdout));
-		const successfulResults = cmdResults.filter(result => result.status === 'finished' && result.stats?.loss === 0);
+		const successfulResults = cmdResults.filter(result => {
+			const isSuccessful = result.status === 'finished' && result.stats?.loss === 0;
+			if (!isSuccessful) {
+				logger.warn('ping test result don\'t match criterias:');
+				logger.warn(result);
+			}
+
+			return isSuccessful;
+		});
 		return successfulResults.length >= 2;
 	}
 }
