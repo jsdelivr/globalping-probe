@@ -56,7 +56,7 @@ describe('StatusManager', () => {
 		pingCmd.rejects({stdout: 'host not found'});
 		await statusManager.start();
 		expect(pingCmd.callCount).to.equal(3);
-		expect(pingCmd.args[0]).to.deep.equal([{type: 'ping', target: 'pool.ntp.org', packets: 10}]);
+		expect(pingCmd.args[0]).to.deep.equal([{type: 'ping', target: 'l.root-servers.net', packets: 10}]);
 		expect(pingCmd.args[1]).to.deep.equal([{type: 'ping', target: 'k.root-servers.net', packets: 10}]);
 		expect(pingCmd.args[2]).to.deep.equal([{type: 'ping', target: 'i.root-servers.net', packets: 10}]);
 		expect(statusManager.getStatus()).to.equal('ping-test-failed');
@@ -110,7 +110,7 @@ describe('StatusManager', () => {
 		const statusManager = initStatusManager(socket, pingCmd);
 		await statusManager.start();
 		expect(pingCmd.callCount).to.equal(3);
-		expect(pingCmd.args[0]).to.deep.equal([{type: 'ping', target: 'pool.ntp.org', packets: 10}]);
+		expect(pingCmd.args[0]).to.deep.equal([{type: 'ping', target: 'l.root-servers.net', packets: 10}]);
 		expect(pingCmd.args[1]).to.deep.equal([{type: 'ping', target: 'k.root-servers.net', packets: 10}]);
 		expect(pingCmd.args[2]).to.deep.equal([{type: 'ping', target: 'i.root-servers.net', packets: 10}]);
 		expect(statusManager.getStatus()).to.equal('ready');
