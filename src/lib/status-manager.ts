@@ -64,7 +64,7 @@ export class StatusManager {
 
 	private async pingTest() {
 		const results = await Promise.allSettled([
-			this.pingCmd({type: 'ping', target: 'pool.ntp.org', packets: 10}),
+			this.pingCmd({type: 'ping', target: 'l.root-servers.net', packets: 10}),
 			this.pingCmd({type: 'ping', target: 'k.root-servers.net', packets: 10}),
 			this.pingCmd({type: 'ping', target: 'i.root-servers.net', packets: 10}),
 		]);
