@@ -71,8 +71,7 @@ export class StatusManager {
 
 		const rejectedPromises = results.filter((promise): promise is PromiseRejectedResult => promise.status === 'rejected');
 		for (const promise of rejectedPromises) {
-			logger.warn('ping test promise rejected:');
-			logger.warn(promise.reason);
+			logger.warn('ping test promise rejected:', promise.reason);
 		}
 
 		const fulfilledPromises = results.filter((promise): promise is PromiseFulfilledResult<ExecaReturnValue> => promise.status === 'fulfilled');
@@ -80,8 +79,7 @@ export class StatusManager {
 		const successfulResults = cmdResults.filter(result => {
 			const isSuccessful = result.status === 'finished' && result.stats?.loss === 0;
 			if (!isSuccessful) {
-				logger.warn('ping test result don\'t match criterias:');
-				logger.warn(result);
+				logger.warn('ping test result don\'t match criterias:', result);
 			}
 
 			return isSuccessful;
