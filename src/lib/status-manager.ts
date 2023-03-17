@@ -39,10 +39,8 @@ export class StatusManager {
 	}
 
 	public updateStatus(status: StatusManager['status']) {
-		if (status !== this.status) {
-			this.status = status;
-			this.sendStatus();
-		}
+		this.status = status;
+		this.sendStatus();
 	}
 
 	public sendStatus() {
@@ -66,7 +64,7 @@ export class StatusManager {
 		const results = await Promise.allSettled([
 			this.pingCmd({type: 'ping', target: 'l.root-servers.net', packets: 10}),
 			this.pingCmd({type: 'ping', target: 'k.root-servers.net', packets: 10}),
-			this.pingCmd({type: 'ping', target: 'i.root-servers.net', packets: 10}),
+			this.pingCmd({type: 'ping', target: 'j.root-servers.net', packets: 10}),
 		]);
 
 		const rejectedPromises = results.filter((promise): promise is PromiseRejectedResult => promise.status === 'rejected');

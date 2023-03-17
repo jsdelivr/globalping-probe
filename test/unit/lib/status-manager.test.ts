@@ -58,7 +58,7 @@ describe('StatusManager', () => {
 		expect(pingCmd.callCount).to.equal(3);
 		expect(pingCmd.args[0]).to.deep.equal([{type: 'ping', target: 'l.root-servers.net', packets: 10}]);
 		expect(pingCmd.args[1]).to.deep.equal([{type: 'ping', target: 'k.root-servers.net', packets: 10}]);
-		expect(pingCmd.args[2]).to.deep.equal([{type: 'ping', target: 'i.root-servers.net', packets: 10}]);
+		expect(pingCmd.args[2]).to.deep.equal([{type: 'ping', target: 'j.root-servers.net', packets: 10}]);
 		expect(statusManager.getStatus()).to.equal('ping-test-failed');
 		expect(socket.emit.callCount).to.equal(1);
 		expect(socket.emit.args[0]).to.deep.equal(['probe:status:update', 'ping-test-failed']);
@@ -112,13 +112,13 @@ describe('StatusManager', () => {
 		expect(pingCmd.callCount).to.equal(3);
 		expect(pingCmd.args[0]).to.deep.equal([{type: 'ping', target: 'l.root-servers.net', packets: 10}]);
 		expect(pingCmd.args[1]).to.deep.equal([{type: 'ping', target: 'k.root-servers.net', packets: 10}]);
-		expect(pingCmd.args[2]).to.deep.equal([{type: 'ping', target: 'i.root-servers.net', packets: 10}]);
+		expect(pingCmd.args[2]).to.deep.equal([{type: 'ping', target: 'j.root-servers.net', packets: 10}]);
 		expect(statusManager.getStatus()).to.equal('ready');
 		expect(socket.emit.callCount).to.equal(1);
 		expect(socket.emit.args[0]).to.deep.equal(['probe:status:update', 'ready']);
 	});
 
-	it('should run check in a fixed intervals and do not emit if status doesn`t change', async () => {
+	it('should run check in a fixed intervals and do emit with a status every time', async () => {
 		const statusManager = initStatusManager(socket, pingCmd);
 		expect(pingCmd.callCount).to.equal(0);
 		await statusManager.start();
@@ -127,7 +127,7 @@ describe('StatusManager', () => {
 		expect(socket.emit.args[0]).to.deep.equal(['probe:status:update', 'ready']);
 		await sandbox.clock.tickAsync(11 * 60 * 1000);
 		expect(pingCmd.callCount).to.equal(6);
-		expect(socket.emit.callCount).to.equal(1);
+		expect(socket.emit.callCount).to.equal(2);
 	});
 
 	it('should update the status during regular checks', async () => {
