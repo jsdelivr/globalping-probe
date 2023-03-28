@@ -14,6 +14,12 @@ The container will work on both x86 and ARM architectures.
 Once you connect you will become part of the global community that powers the [Globalping Platform](https://github.com/jsdelivr/globalping)
 
 
+#### Podman alternative
+Note that you also need to [install a service](https://linuxhandbook.com/autostart-podman-containers/) to make sure the container starts on boot. 
+```
+podman run --cap-add=NET_RAW -d --network host --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
+```
+
 ## Where to run
 
 You can run it on anything that can run a docker container. Any kind of linux server hosted with a cloud provider, your home server or even a Raspberry Pi that you have lying around. There is nothing to configure, simply run the container.
