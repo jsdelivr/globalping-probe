@@ -7,7 +7,7 @@
 To join the Globalping probe network all you have to do is run our container.
 
 ```
-docker run -d --network host --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
+docker run -d --log-driver local --network host --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
 ```
 The container will work on both x86 and ARM architectures.
 
@@ -30,7 +30,7 @@ To update the container all you have to do is
 docker pull ghcr.io/jsdelivr/globalping-probe
 docker stop globalping-probe
 docker rm globalping-probe
-docker run -d --network host --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
+docker run -d --log-driver local --network host --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
 ```
 
 ## Limitations
