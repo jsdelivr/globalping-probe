@@ -143,15 +143,15 @@ describe('index module', () => {
 		mockSocket.emit('api:connect:location', fakeLocation);
 		await sandbox.clock.nextAsync();
 
-		mockSocket.emit('probe:measurement:request', {id: '123', measurement: {type: 'ping'}});
+		mockSocket.emit('probe:measurement:request', {measurementId: 'measurementid', testId: 'testid', measurement: {type: 'ping'}});
 
 		expect(PingCommandStub.calledOnce).to.be.true;
 		expect(PingCommandStub.firstCall.args[0]).to.equal(pingCmdStub);
 		expect(handlers['probe:measurement:ack'].calledOnce).to.be.true;
 		expect(runStub.calledOnce).to.be.true;
 		expect(runStub.firstCall.args[0]).to.equal(mockSocket);
-		expect(runStub.firstCall.args[1]).to.equal('123');
-		expect(runStub.firstCall.args[2]).to.be.a('string');
+		expect(runStub.firstCall.args[1]).to.equal('measurementid');
+		expect(runStub.firstCall.args[2]).to.equal('testid');
 		expect(runStub.firstCall.args[3]).to.deep.equal({type: 'ping'});
 	});
 

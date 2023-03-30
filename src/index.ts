@@ -1,7 +1,6 @@
 import process from 'node:process';
 import throng from 'throng';
 import {io} from 'socket.io-client';
-import cryptoRandomString from 'crypto-random-string';
 import physicalCpuCount from 'physical-cpu-count';
 import type {CommandInterface, MeasurementRequest} from './types.js';
 import {loadAll as loadAllDeps} from './lib/dependencies.js';
@@ -82,8 +81,9 @@ function connect() {
 				socket.connect();
 			}
 		})
-		.on('connect_error', error => {
-			logger.error('connection to API failed:', error);
+		.on('connect_error', (error: Error & {description?: {message: string}}) => {
+			const message = error.description?.message ?? error.toString();
+			logger.error(`connection to API failed: ${message}`);
 
 			const isFatalError = fatalConnectErrors.some(fatalError => error.message.startsWith(fatalError));
 
@@ -108,11 +108,10 @@ function connect() {
 				return;
 			}
 
-			const {id: measurementId, measurement} = data;
-			const testId = cryptoRandomString({length: 16, type: 'alphanumeric'});
+			const {measurementId, testId, measurement} = data;
 
-			logger.debug(`${measurement.type} request ${data.id} received`);
-			socket.emit('probe:measurement:ack', {id: testId, measurementId}, async () => {
+			logger.debug(`${measurement.type} request ${measurementId} received`);
+			socket.emit('probe:measurement:ack', null, async () => {
 				const handler = handlersMap.get(measurement.type);
 				if (!handler) {
 					return;
