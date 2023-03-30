@@ -1,7 +1,8 @@
 import {type Socket} from 'socket.io-client';
 
 type MeasurementRequest = {
-	id: string;
+	measurementId: string;
+	testId: string;
 	measurement: {
 		type: string;
 	};

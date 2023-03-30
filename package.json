@@ -11,7 +11,6 @@
     "url": "git+https://github.com/jsdelivr/globalping-probe.git"
   },
   "dependencies": {
-    "crypto-random-string": "^5.0.0",
     "execa": "^7.0.0",
     "got": "^12.5.3",
     "http2-wrapper": "^2.2.0",
