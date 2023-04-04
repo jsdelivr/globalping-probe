@@ -12,7 +12,8 @@ const reHost = /(\S+)\s+\((?:((?:\d+\.){3}\d+)|([\da-fA-F:]))\)/;
 const reRtt = /(\d+(?:\.?\d+)?)\s+ms(!\S*)?/g;
 
 export type TraceOptions = {
-	type: string;
+	type: 'traceroute';
+	inProgressUpdates: boolean;
 	target: string;
 	protocol: string;
 	port: number;
@@ -49,6 +50,7 @@ const logger = scopedLogger('traceroute-command');
 
 const traceOptionsSchema = Joi.object<TraceOptions>({
 	type: Joi.string().valid('traceroute'),
+	inProgressUpdates: Joi.boolean(),
 	target: Joi.string(),
 	protocol: Joi.string(),
 	port: Joi.number(),
@@ -89,29 +91,32 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 
 	async run(socket: Socket, measurementId: string, testId: string, options: unknown): Promise<void> {
 		const {value: cmdOptions, error: validationError} = traceOptionsSchema.validate(options);
-		const buffer = new ProgressBuffer(socket, testId, measurementId);
 
 		if (validationError) {
 			throw new InvalidOptionsException('traceroute', validationError);
 		}
 
+		const buffer = new ProgressBuffer(socket, testId, measurementId);
 		const pStdout: string[] = [];
 		let isResultPrivate = false;
+		let result = {};
 
 		const cmd = this.cmd(cmdOptions);
-		cmd.stdout?.on('data', (data: Buffer) => {
-			pStdout.push(data.toString());
-			const isValid = this.validatePartialResult(pStdout.join(''), cmd);
 
-			if (!isValid) {
-				isResultPrivate = !isValid;
-				return;
-			}
+		if (cmdOptions.inProgressUpdates) {
+			cmd.stdout?.on('data', (data: Buffer) => {
+				pStdout.push(data.toString());
+				const isValid = this.validatePartialResult(pStdout.join(''), cmd);
 
-			buffer.pushProgress({rawOutput: data.toString()});
-		});
+				if (!isValid) {
+					isResultPrivate = !isValid;
+					return;
+				}
 
-		let result = {};
+				buffer.pushProgress({rawOutput: data.toString()});
+			});
+		}
+
 		try {
 			const cmdResult = await cmd;
 

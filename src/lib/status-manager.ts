@@ -62,9 +62,9 @@ export class StatusManager {
 
 	private async pingTest() {
 		const results = await Promise.allSettled([
-			this.pingCmd({type: 'ping', target: 'l.root-servers.net', packets: 10}),
-			this.pingCmd({type: 'ping', target: 'k.root-servers.net', packets: 10}),
-			this.pingCmd({type: 'ping', target: 'j.root-servers.net', packets: 10}),
+			this.pingCmd({type: 'ping', target: 'l.root-servers.net', packets: 10, inProgressUpdates: false}),
+			this.pingCmd({type: 'ping', target: 'k.root-servers.net', packets: 10, inProgressUpdates: false}),
+			this.pingCmd({type: 'ping', target: 'j.root-servers.net', packets: 10, inProgressUpdates: false}),
 		]);
 
 		const rejectedPromises = results.filter((promise): promise is PromiseRejectedResult => promise.status === 'rejected');

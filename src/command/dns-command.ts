@@ -24,6 +24,7 @@ import type {DnsParseLoopResponse} from './handlers/dig/shared.js';
 
 export type DnsOptions = {
 	type: 'dns';
+	inProgressUpdates: boolean;
 	target: string;
 	protocol?: string;
 	port?: number;
@@ -43,6 +44,7 @@ const allowedProtocols = ['UDP', 'TCP'];
 
 const dnsOptionsSchema = Joi.object<DnsOptions>({
 	type: Joi.string().valid('dns'),
+	inProgressUpdates: Joi.boolean(),
 	target: Joi.string(),
 	resolver: Joi.string().optional(),
 	protocol: Joi.string().valid(...allowedProtocols).optional().default('udp'),
@@ -85,43 +87,45 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 
 	async run(socket: Socket, measurementId: string, testId: string, options: DnsOptions): Promise<void> {
 		const {value: cmdOptions, error: validationError} = dnsOptionsSchema.validate(options);
-		const buffer = new ProgressBuffer(socket, testId, measurementId);
 
 		if (validationError) {
 			throw new InvalidOptionsException('dns', validationError);
 		}
 
+		const buffer = new ProgressBuffer(socket, testId, measurementId);
 		const pStdout: string[] = [];
 		let isResultPrivate = false;
+		let result = {};
 
 		const cmd = this.cmd(cmdOptions);
-		cmd.stdout?.on('data', (data: Buffer) => {
-			pStdout.push(data.toString());
 
-			let output = '';
+		if (cmdOptions.inProgressUpdates) {
+			cmd.stdout?.on('data', (data: Buffer) => {
+				pStdout.push(data.toString());
 
-			try {
-				output = this.rewrite(pStdout.join(''), Boolean(options.trace));
-				const parsedResult = this.parse(output, Boolean(options.trace));
-				const isValid = this.validatePartialResult(output, cmd, Boolean(options.trace));
+				let output = '';
 
-				if (!isValid && !(parsedResult instanceof Error)) {
-					isResultPrivate = this.hasResultPrivateIp(parsedResult);
-					return;
+				try {
+					output = this.rewrite(pStdout.join(''), Boolean(options.trace));
+					const parsedResult = this.parse(output, Boolean(options.trace));
+					const isValid = this.validatePartialResult(output, cmd, Boolean(options.trace));
+
+					if (!isValid && !(parsedResult instanceof Error)) {
+						isResultPrivate = this.hasResultPrivateIp(parsedResult);
+						return;
+					}
+				} catch (error: unknown) {
+					if (error instanceof InternalError && error.expose && error.message?.length > 0) {
+						output = error.message;
+					} else {
+						logger.error(error);
+						output = 'Test failed. Please try again.';
+					}
 				}
-			} catch (error: unknown) {
-				if (error instanceof InternalError && error.expose && error.message?.length > 0) {
-					output = error.message;
-				} else {
-					logger.error(error);
-					output = 'Test failed. Please try again.';
-				}
-			}
 
-			buffer.pushProgress({rawOutput: output});
-		});
-
-		let result = {};
+				buffer.pushProgress({rawOutput: output});
+			});
+		}
 
 		try {
 			const cmdResult = await cmd;
