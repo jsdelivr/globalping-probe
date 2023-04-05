@@ -80,6 +80,7 @@ describe('http command', () => {
 						path: '/',
 						query: '',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -89,7 +90,7 @@ describe('http command', () => {
 
 			it('should set https:// prefix (HTTPS)', () => {
 				const options = {
-					type: 'http',
+					type: 'http' as const,
 					target: 'google.com',
 					protocol: 'https',
 					request: {
@@ -97,6 +98,7 @@ describe('http command', () => {
 						path: '/',
 						query: '',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -106,7 +108,7 @@ describe('http command', () => {
 
 			it('should set https:// prefix (HTTP2)', () => {
 				const options = {
-					type: 'http',
+					type: 'http' as const,
 					target: 'google.com',
 					protocol: 'http2',
 					request: {
@@ -114,6 +116,7 @@ describe('http command', () => {
 						path: '/',
 						query: '',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -125,7 +128,7 @@ describe('http command', () => {
 		describe('port', () => {
 			it('should set custom port', () => {
 				const options = {
-					type: 'http',
+					type: 'http' as const,
 					target: 'google.com',
 					protocol: 'http',
 					port: 1212,
@@ -134,6 +137,7 @@ describe('http command', () => {
 						path: '/',
 						query: '',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -143,7 +147,7 @@ describe('http command', () => {
 
 			it('should set default HTTP port', () => {
 				const options = {
-					type: 'http',
+					type: 'http' as const,
 					target: 'google.com',
 					protocol: 'http',
 					request: {
@@ -151,6 +155,7 @@ describe('http command', () => {
 						path: '/',
 						query: '',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -159,7 +164,7 @@ describe('http command', () => {
 			});
 			it('should set default HTTPS port', () => {
 				const options = {
-					type: 'http',
+					type: 'http' as const,
 					target: 'google.com',
 					protocol: 'https',
 					request: {
@@ -167,6 +172,7 @@ describe('http command', () => {
 						path: '/',
 						query: '',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -178,7 +184,7 @@ describe('http command', () => {
 		describe('path', () => {
 			it('should prefix pathname with (/) sign', () => {
 				const options = {
-					type: 'http',
+					type: 'http' as const,
 					target: 'google.com',
 					protocol: 'http',
 					request: {
@@ -186,6 +192,7 @@ describe('http command', () => {
 						path: 'abc',
 						query: '',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -195,7 +202,7 @@ describe('http command', () => {
 
 			it('should append pathname at the end of url (prevent double /)', () => {
 				const options = {
-					type: 'http',
+					type: 'http' as const,
 					target: 'google.com',
 					protocol: 'http',
 					request: {
@@ -203,6 +210,7 @@ describe('http command', () => {
 						path: '/abc',
 						query: '',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -213,7 +221,7 @@ describe('http command', () => {
 		describe('query', () => {
 			it('should prefix query with (?) sign', () => {
 				const options = {
-					type: 'http',
+					type: 'http' as const,
 					target: 'google.com',
 					protocol: 'http',
 					request: {
@@ -221,6 +229,7 @@ describe('http command', () => {
 						path: '/',
 						query: 'abc=def',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -230,7 +239,7 @@ describe('http command', () => {
 
 			it('should append query at the end of url (prevent double ?)', () => {
 				const options = {
-					type: 'http',
+					type: 'http' as const,
 					target: 'google.com',
 					protocol: 'http',
 					request: {
@@ -238,6 +247,7 @@ describe('http command', () => {
 						path: '/',
 						query: '?abc=def',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -264,8 +274,9 @@ describe('http command', () => {
 
 		it('should respond with 200 (query string match)', async () => {
 			const options = {
-				type: 'http',
+				type: 'http' as const,
 				target: 'google.com',
+				inProgressUpdates: true,
 				protocol: 'http',
 				request: {
 					method: 'get',
@@ -307,8 +318,9 @@ describe('http command', () => {
 
 		it('should respond with 400', async () => {
 			const options = {
-				type: 'http',
+				type: 'http' as const,
 				target: 'google.com',
+				inProgressUpdates: true,
 				protocol: 'http',
 				request: {
 					method: 'get',
@@ -347,8 +359,9 @@ describe('http command', () => {
 
 		it('should respond with 400 (missing path slash)', async () => {
 			const options = {
-				type: 'http',
+				type: 'http' as const,
 				target: 'google.com',
+				inProgressUpdates: true,
 				protocol: 'http',
 				request: {
 					method: 'get',
@@ -388,7 +401,7 @@ describe('http command', () => {
 
 		it('should ensure keepAlive header is disabled', () => {
 			const options = {
-				type: 'http',
+				type: 'http' as const,
 				target: 'google.com',
 				protocol: 'http',
 				request: {
@@ -396,6 +409,7 @@ describe('http command', () => {
 					path: '/400',
 					query: '',
 				},
+				inProgressUpdates: false,
 			};
 
 			const returnedOptions = httpCmd(options).options;
@@ -408,8 +422,9 @@ describe('http command', () => {
 	describe('manual', () => {
 		it('should emit progress + result events', async () => {
 			const options = {
-				type: 'http',
+				type: 'http' as const,
 				target: 'google.com',
+				inProgressUpdates: true,
 				protocol: 'http',
 				request: {
 					method: 'get',
@@ -499,7 +514,7 @@ describe('http command', () => {
 
 		it('should emit headers (rawOutput - HEAD request)', async () => {
 			const options = {
-				type: 'http',
+				type: 'http' as const,
 				target: 'google.com',
 				protocol: 'http',
 				request: {
@@ -507,6 +522,7 @@ describe('http command', () => {
 					path: '/',
 					query: '',
 				},
+				inProgressUpdates: true,
 			};
 
 			const events = {
@@ -579,7 +595,7 @@ describe('http command', () => {
 
 		it('should filter out :status header (HTTP/2 - rawHeader)', async () => {
 			const options = {
-				type: 'http',
+				type: 'http' as const,
 				target: 'google.com',
 				protocol: 'http',
 				request: {
@@ -587,6 +603,7 @@ describe('http command', () => {
 					path: '/',
 					query: '',
 				},
+				inProgressUpdates: true,
 			};
 
 			const cert = {
@@ -685,7 +702,7 @@ describe('http command', () => {
 
 		it('should send "finished" status if it is HTTPError', async () => {
 			const options = {
-				type: 'http',
+				type: 'http' as const,
 				target: 'google.com',
 				protocol: 'http',
 				request: {
@@ -693,6 +710,7 @@ describe('http command', () => {
 					path: '/',
 					query: '',
 				},
+				inProgressUpdates: true,
 			};
 
 			const events = {
@@ -767,7 +785,7 @@ describe('http command', () => {
 
 		it('should send "failed" status in all other cases of errors', async () => {
 			const options = {
-				type: 'http',
+				type: 'http' as const,
 				target: 'google.com',
 				protocol: 'http',
 				request: {
@@ -775,6 +793,7 @@ describe('http command', () => {
 					path: '/',
 					query: '',
 				},
+				inProgressUpdates: true,
 			};
 
 			const events = {

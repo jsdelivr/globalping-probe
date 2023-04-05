@@ -89,7 +89,7 @@ export const traceCmd = (options: TraceOptions): ExecaChildProcess => {
 export class TracerouteCommand implements CommandInterface<TraceOptions> {
 	constructor(private readonly cmd: typeof traceCmd) {}
 
-	async run(socket: Socket, measurementId: string, testId: string, options: unknown): Promise<void> {
+	async run(socket: Socket, measurementId: string, testId: string, options: TraceOptions): Promise<void> {
 		const {value: cmdOptions, error: validationError} = traceOptionsSchema.validate(options);
 
 		if (validationError) {

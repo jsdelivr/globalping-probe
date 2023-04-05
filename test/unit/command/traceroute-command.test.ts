@@ -16,6 +16,7 @@ describe('trace command', () => {
 				target: 'google.com',
 				port: 80,
 				protocol: 'TCP',
+				inProgressUpdates: false,
 			};
 
 			const args = argBuilder(options);
@@ -38,6 +39,7 @@ describe('trace command', () => {
 					target: 'google.com',
 					port: 90,
 					protocol: 'TCP',
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -51,6 +53,7 @@ describe('trace command', () => {
 					target: 'google.com',
 					port: 90,
 					protocol: 'UDP',
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -66,6 +69,7 @@ describe('trace command', () => {
 					target: 'google.com',
 					port: 90,
 					protocol: 'TCP',
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -79,6 +83,7 @@ describe('trace command', () => {
 					target: 'google.com',
 					port: 90,
 					protocol: 'UDP',
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -99,9 +104,11 @@ describe('trace command', () => {
 		describe('mock', () => {
 			it('should run and parse trace', async () => {
 				const options = {
+					type: 'traceroute' as TraceOptions['type'],
 					target: 'google.com',
 					port: 53,
 					protocol: 'UDP',
+					inProgressUpdates: true,
 				};
 
 				const testCase = 'trace-success-linux';
@@ -133,9 +140,11 @@ describe('trace command', () => {
 
 			it('should run and parse private ip trace on progress step', async () => {
 				const options = {
+					type: 'traceroute' as TraceOptions['type'],
 					target: 'google.com',
 					port: 53,
 					protocol: 'UDP',
+					inProgressUpdates: true,
 				};
 
 				const testCase = 'trace-private-ip-linux';
@@ -161,9 +170,11 @@ describe('trace command', () => {
 
 			it('should run and parse private ip trace on result step', async () => {
 				const options = {
+					type: 'traceroute' as TraceOptions['type'],
 					target: 'google.com',
 					port: 53,
 					protocol: 'UDP',
+					inProgressUpdates: false,
 				};
 
 				const testCase = 'trace-private-ip-linux';

@@ -28,6 +28,7 @@ describe('dns command', () => {
 				query: {
 					type: 'TXT',
 				},
+				inProgressUpdates: false,
 			};
 
 			const args = argBuilder(options);
@@ -57,7 +58,8 @@ describe('dns command', () => {
 					query: {
 						type: 'TXT',
 					},
-				};
+					inProgressUpdates: false,
+			};
 
 				const args = argBuilder(options);
 				expect(args).to.not.include('+trace');
@@ -74,6 +76,7 @@ describe('dns command', () => {
 					query: {
 						type: 'TXT',
 					},
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -91,6 +94,7 @@ describe('dns command', () => {
 					query: {
 						type: 'TXT',
 					},
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -108,6 +112,7 @@ describe('dns command', () => {
 					query: {
 						type: 'A',
 					},
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -123,6 +128,7 @@ describe('dns command', () => {
 					query: {
 						type: 'PTR',
 					},
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -142,6 +148,7 @@ describe('dns command', () => {
 					query: {
 						type: 'TXT',
 					},
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -160,6 +167,7 @@ describe('dns command', () => {
 					query: {
 						type: 'TXT',
 					},
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -176,6 +184,7 @@ describe('dns command', () => {
 				target: 'cdn.jsdelivr.net',
 				trace: true,
 				query: {},
+				inProgressUpdates: true,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -212,6 +221,7 @@ describe('dns command', () => {
 				query: {
 					type: 'TXT',
 				},
+				inProgressUpdates: true,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -249,6 +259,7 @@ describe('dns command', () => {
 				query: {
 					type: 'TXT',
 				},
+				inProgressUpdates: false,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -274,6 +285,7 @@ describe('dns command', () => {
 				query: {
 					type: 'A',
 				},
+				inProgressUpdates: true,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -311,6 +323,7 @@ describe('dns command', () => {
 				query: {
 					type: 'A',
 				},
+				inProgressUpdates: true,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -347,6 +360,7 @@ describe('dns command', () => {
 				query: {
 					type: 'A',
 				},
+				inProgressUpdates: true,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -383,6 +397,7 @@ describe('dns command', () => {
 				query: {
 					type: 'A',
 				},
+				inProgressUpdates: true,
 			};
 
 			const rawOutput = getCmdMock(testCase);

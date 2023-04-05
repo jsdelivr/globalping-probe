@@ -29,6 +29,7 @@ describe('mtr command executor', () => {
 				protocol: 'tcp',
 				port: 80,
 				packets: 1,
+				inProgressUpdates: false,
 			};
 
 			const args = argBuilder(options);
@@ -53,6 +54,7 @@ describe('mtr command executor', () => {
 					protocol: 'udp',
 					port: 80,
 					packets: 1,
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -67,6 +69,7 @@ describe('mtr command executor', () => {
 					protocol: 'tcp',
 					port: 80,
 					packets: 1,
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -81,6 +84,7 @@ describe('mtr command executor', () => {
 					protocol: 'icmp',
 					port: 80,
 					packets: 1,
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -97,6 +101,7 @@ describe('mtr command executor', () => {
 					protocol: 'icmp',
 					port: 90,
 					packets: 1,
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -112,6 +117,7 @@ describe('mtr command executor', () => {
 					protocol: 'icmp',
 					port: 90,
 					packets: 2,
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -126,6 +132,7 @@ describe('mtr command executor', () => {
 					protocol: 'icmp',
 					port: 90,
 					packets: 5,
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -148,6 +155,7 @@ describe('mtr command executor', () => {
 			const options = {
 				type: 'mtr' as const,
 				target: 'jsdelivr.net',
+				inProgressUpdates: true,
 			};
 
 			const expectedResult = getCmdMockResult(testCase);
@@ -198,6 +206,7 @@ describe('mtr command executor', () => {
 			const options = {
 				type: 'mtr' as const,
 				target: 'jsdelivr.net',
+				inProgressUpdates: true,
 			};
 
 			const expectedResult = getCmdMockResult(testCase);
