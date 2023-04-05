@@ -75,13 +75,13 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		}
 
 		const buffer = new ProgressBuffer(socket, testId, measurementId);
-		const pStdout: string[] = [];
 		let isResultPrivate = false;
 		let result: PingParseOutput;
 
 		const cmd = this.cmd(cmdOptions);
 
 		if (cmdOptions.inProgressUpdates) {
+			const pStdout: string[] = [];
 			cmd.stdout?.on('data', (data: Buffer) => {
 				pStdout.push(data.toString());
 				const isValid = this.validatePartialResult(pStdout.join(''), cmd);

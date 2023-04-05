@@ -83,31 +83,31 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		const cmd = this.cmd(cmdOptions);
 		let result: ResultType = getResultInitState();
 
-		if (cmdOptions.inProgressUpdates) {
-			cmd.stdout?.on('data', async (data: Buffer) => {
-				if (data.toString().startsWith('mtr:')) {
-					cmd.stderr?.emit('error', data);
-					return;
+		cmd.stdout?.on('data', async (data: Buffer) => {
+			if (data.toString().startsWith('mtr:')) {
+				cmd.stderr?.emit('error', data);
+				return;
+			}
+
+			for (const line of data.toString().split(NEW_LINE_REG_EXP)) {
+				if (!line) {
+					continue;
 				}
 
-				for (const line of data.toString().split(NEW_LINE_REG_EXP)) {
-					if (!line) {
-						continue;
-					}
+				result.data.push(line);
+			}
 
-					result.data.push(line);
-				}
+			const output = await this.parseResult(result.hops, result.data, false);
+			result.hops = output.hops;
+			result.rawOutput = output.rawOutput;
 
-				const output = await this.parseResult(result.hops, result.data, false);
-				result.hops = output.hops;
-				result.rawOutput = output.rawOutput;
-
+			if (cmdOptions.inProgressUpdates) {
 				buffer.pushProgress({
 					hops: result.hops,
 					rawOutput: result.rawOutput,
 				});
-			});
-		}
+			}
+		});
 
 		try {
 			await this.checkForPrivateDest(options.target);
