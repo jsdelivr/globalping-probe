@@ -19,7 +19,8 @@ import type {
 import MtrParser, {NEW_LINE_REG_EXP} from './handlers/mtr/parser.js';
 
 export type MtrOptions = {
-	type: string;
+	type: 'mtr';
+	inProgressUpdates: boolean;
 	target: string;
 	protocol: string;
 	port: number;
@@ -32,6 +33,7 @@ const logger = scopedLogger('mtr-command');
 
 const mtrOptionsSchema = Joi.object<MtrOptions>({
 	type: Joi.string().valid('mtr'),
+	inProgressUpdates: Joi.boolean(),
 	target: Joi.string(),
 	protocol: Joi.string().lowercase().insensitive(),
 	packets: Joi.number().min(1).max(16).default(3),
@@ -72,12 +74,12 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 	async run(socket: Socket, measurementId: string, testId: string, options: MtrOptions): Promise<void> {
 		const {value: cmdOptions, error: validationError} = mtrOptionsSchema.validate(options);
-		const buffer = new ProgressBufferOverwrite(socket, testId, measurementId);
 
 		if (validationError) {
 			throw new InvalidOptionsException('mtr', validationError);
 		}
 
+		const buffer = new ProgressBufferOverwrite(socket, testId, measurementId);
 		const cmd = this.cmd(cmdOptions);
 		let result: ResultType = getResultInitState();
 
@@ -99,10 +101,12 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			result.hops = output.hops;
 			result.rawOutput = output.rawOutput;
 
-			buffer.pushProgress({
-				hops: result.hops,
-				rawOutput: result.rawOutput,
-			});
+			if (cmdOptions.inProgressUpdates) {
+				buffer.pushProgress({
+					hops: result.hops,
+					rawOutput: result.rawOutput,
+				});
+			}
 		});
 
 		try {

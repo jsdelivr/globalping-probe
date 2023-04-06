@@ -7,6 +7,9 @@
     "interval": 300,
     "maxDeviation": 300
   },
+  "status": {
+    "numberOfPackets": 6
+  },
   "stats": {
     "interval": 10
   },

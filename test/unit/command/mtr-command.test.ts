@@ -29,6 +29,7 @@ describe('mtr command executor', () => {
 				protocol: 'tcp',
 				port: 80,
 				packets: 1,
+				inProgressUpdates: false,
 			};
 
 			const args = argBuilder(options);
@@ -53,6 +54,7 @@ describe('mtr command executor', () => {
 					protocol: 'udp',
 					port: 80,
 					packets: 1,
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -67,6 +69,7 @@ describe('mtr command executor', () => {
 					protocol: 'tcp',
 					port: 80,
 					packets: 1,
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -81,6 +84,7 @@ describe('mtr command executor', () => {
 					protocol: 'icmp',
 					port: 80,
 					packets: 1,
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -97,6 +101,7 @@ describe('mtr command executor', () => {
 					protocol: 'icmp',
 					port: 90,
 					packets: 1,
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -112,6 +117,7 @@ describe('mtr command executor', () => {
 					protocol: 'icmp',
 					port: 90,
 					packets: 2,
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -126,6 +132,7 @@ describe('mtr command executor', () => {
 					protocol: 'icmp',
 					port: 90,
 					packets: 5,
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -148,6 +155,7 @@ describe('mtr command executor', () => {
 			const options = {
 				type: 'mtr' as const,
 				target: 'jsdelivr.net',
+				inProgressUpdates: true,
 			};
 
 			const expectedResult = getCmdMockResult(testCase);
@@ -193,11 +201,58 @@ describe('mtr command executor', () => {
 			expect(mockedSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
 		});
 
+		it('should run and parse mtr without progress messages', async () => {
+			const testCase = 'mtr-success-raw';
+			const options = {
+				type: 'mtr' as const,
+				target: 'jsdelivr.net',
+				inProgressUpdates: false,
+			};
+
+			const expectedResult = getCmdMockResult(testCase);
+			const rawOutput = getCmdMock(testCase);
+			const rawOutputLines = rawOutput.split('\n');
+			const mockCmd = getExecaMock();
+
+			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(false));
+			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+			for (const progressOutput of rawOutputLines) {
+				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+			}
+
+			mockCmd.resolve(rawOutput);
+			await runPromise;
+
+			expect(mockedSocket.emit.callCount).to.equal(1);
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+		});
+
 		it('should detect Private IP and stop', async () => {
 			const testCase = 'mtr-fail-private-ip';
 			const options = {
 				type: 'mtr' as const,
 				target: 'jsdelivr.net',
+				inProgressUpdates: true,
+			};
+
+			const expectedResult = getCmdMockResult(testCase);
+			const mockCmd = getExecaMock();
+
+			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(true));
+			await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+
+			expect(mockCmd.kill.called).to.be.true;
+			expect(mockedSocket.emit.calledOnce).to.be.true;
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
+		});
+
+		it('should detect Private IP and stop without progress messages', async () => {
+			const testCase = 'mtr-fail-private-ip';
+			const options = {
+				type: 'mtr' as const,
+				target: 'jsdelivr.net',
+				inProgressUpdates: false,
 			};
 
 			const expectedResult = getCmdMockResult(testCase);

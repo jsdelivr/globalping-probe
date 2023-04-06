@@ -14,7 +14,8 @@ import {InvalidOptionsException} from './exception/invalid-options-exception.js'
 import {dnsLookup, type ResolverType} from './handlers/http/dns-resolver.js';
 
 export type HttpOptions = {
-	type: string;
+	type: 'http';
+	inProgressUpdates: boolean;
 	target: string;
 	resolver?: string;
 	protocol: string;
@@ -96,6 +97,7 @@ const allowedHttpProtocols = ['http', 'https', 'http2'];
 const allowedHttpMethods = ['get', 'head'];
 export const httpOptionsSchema = Joi.object<HttpOptions>({
 	type: Joi.string().valid('http').insensitive().required(),
+	inProgressUpdates: Joi.boolean().required(),
 	target: Joi.alternatives().try(Joi.string().ip(), Joi.string().domain()).required(),
 	resolver: Joi.string().ip(),
 	protocol: Joi.string().valid(...allowedHttpProtocols).insensitive().default('https'),
@@ -165,12 +167,12 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 	async run(socket: Socket, measurementId: string, testId: string, options: HttpOptions): Promise<void> {
 		const {value: cmdOptions, error: validationError} = httpOptionsSchema.validate(options);
-		const buffer = new ProgressBuffer(socket, testId, measurementId);
 
 		if (validationError) {
 			throw new InvalidOptionsException('http', validationError);
 		}
 
+		const buffer = new ProgressBuffer(socket, testId, measurementId);
 		const stream = this.cmd(cmdOptions);
 
 		let result = getInitialResult();
@@ -227,7 +229,9 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 		const onData = (data: Buffer) => {
 			result.rawBody += data.toString();
-			buffer.pushProgress({rawOutput: data.toString()});
+			if (cmdOptions.inProgressUpdates) {
+				buffer.pushProgress({rawOutput: data.toString()});
+			}
 		};
 
 		const onResponse = (resp: Response) => {

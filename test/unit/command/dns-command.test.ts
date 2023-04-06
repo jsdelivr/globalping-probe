@@ -28,6 +28,7 @@ describe('dns command', () => {
 				query: {
 					type: 'TXT',
 				},
+				inProgressUpdates: false,
 			};
 
 			const args = argBuilder(options);
@@ -57,6 +58,7 @@ describe('dns command', () => {
 					query: {
 						type: 'TXT',
 					},
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -74,6 +76,7 @@ describe('dns command', () => {
 					query: {
 						type: 'TXT',
 					},
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -91,6 +94,7 @@ describe('dns command', () => {
 					query: {
 						type: 'TXT',
 					},
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -108,6 +112,7 @@ describe('dns command', () => {
 					query: {
 						type: 'A',
 					},
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -123,6 +128,7 @@ describe('dns command', () => {
 					query: {
 						type: 'PTR',
 					},
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -142,6 +148,7 @@ describe('dns command', () => {
 					query: {
 						type: 'TXT',
 					},
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -160,6 +167,7 @@ describe('dns command', () => {
 					query: {
 						type: 'TXT',
 					},
+					inProgressUpdates: false,
 				};
 
 				const args = argBuilder(options);
@@ -176,6 +184,7 @@ describe('dns command', () => {
 				target: 'cdn.jsdelivr.net',
 				trace: true,
 				query: {},
+				inProgressUpdates: true,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -204,6 +213,35 @@ describe('dns command', () => {
 			expect(mockSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
 		});
 
+		it('should parse trace without progress messages - dns-trace-success', async () => {
+			const testCase = 'dns-trace-success';
+			const options = {
+				type: 'dns' as const,
+				target: 'cdn.jsdelivr.net',
+				trace: true,
+				query: {},
+				inProgressUpdates: false,
+			};
+
+			const rawOutput = getCmdMock(testCase);
+			const outputProgress = rawOutput.split('\n');
+			const expectedResult = getCmdMockResult(testCase);
+
+			const mockCmd = getExecaMock();
+
+			const dns = new DnsCommand((): any => mockCmd);
+			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+			for (const progressOutput of outputProgress) {
+				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+			}
+
+			mockCmd.resolve({stdout: rawOutput});
+			await runPromise;
+
+			expect(mockSocket.emit.callCount).to.equal(1);
+			expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+		});
+
 		it('should parse dns - dns-success-linux', async () => {
 			const testCase = 'dns-success-linux';
 			const options = {
@@ -212,6 +250,7 @@ describe('dns command', () => {
 				query: {
 					type: 'TXT',
 				},
+				inProgressUpdates: true,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -249,6 +288,7 @@ describe('dns command', () => {
 				query: {
 					type: 'TXT',
 				},
+				inProgressUpdates: false,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -274,6 +314,7 @@ describe('dns command', () => {
 				query: {
 					type: 'A',
 				},
+				inProgressUpdates: true,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -302,6 +343,36 @@ describe('dns command', () => {
 			expect(mockSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
 		});
 
+		it('should fail in case of private ip without progress messages - dns-resolved-private-ip-error-linux', async () => {
+			const testCase = 'dns-resolved-private-ip-error-linux';
+			const options = {
+				type: 'dns' as const,
+				target: 'gitlab.test.com',
+				query: {
+					type: 'A',
+				},
+				inProgressUpdates: false,
+			};
+
+			const rawOutput = getCmdMock(testCase);
+			const outputProgress = rawOutput.split('\n');
+			const expectedResult = getCmdMockResult(testCase);
+
+			const mockCmd = getExecaMock();
+
+			const dns = new DnsCommand((): any => mockCmd);
+			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+			for (const progressOutput of outputProgress) {
+				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+			}
+
+			mockCmd.resolve({stdout: rawOutput});
+			await runPromise;
+
+			expect(mockSocket.emit.callCount).to.equal(1);
+			expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+		});
+
 		it('should fail in case of private ip - dns-trace-resolved-private-ip-error-linux', async () => {
 			const testCase = 'dns-trace-resolved-private-ip-error-linux';
 			const options = {
@@ -311,6 +382,7 @@ describe('dns command', () => {
 				query: {
 					type: 'A',
 				},
+				inProgressUpdates: true,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -347,6 +419,7 @@ describe('dns command', () => {
 				query: {
 					type: 'A',
 				},
+				inProgressUpdates: true,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -383,6 +456,7 @@ describe('dns command', () => {
 				query: {
 					type: 'A',
 				},
+				inProgressUpdates: true,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -409,6 +483,36 @@ describe('dns command', () => {
 				},
 			}]);
 			expect(mockSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+		});
+
+		it('should fail in case of connection refused with private ip without progress messages - dns-connection-refused-private-error-linux (PRIVATE IP)', async () => {
+			const testCase = 'dns-connection-refused-private-error-linux';
+			const options = {
+				type: 'dns' as const,
+				target: 'test.com',
+				query: {
+					type: 'A',
+				},
+				inProgressUpdates: false,
+			};
+
+			const rawOutput = getCmdMock(testCase);
+			const outputProgress = rawOutput.split('\n');
+			const expectedResult = getCmdMockResult(testCase);
+
+			const mockCmd = getExecaMock();
+
+			const dns = new DnsCommand((): any => mockCmd);
+			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+			for (const progressOutput of outputProgress) {
+				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+			}
+
+			mockCmd.resolve({stdout: rawOutput});
+			await runPromise;
+
+			expect(mockSocket.emit.callCount).to.equal(1);
+			expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
 		});
 	});
 });

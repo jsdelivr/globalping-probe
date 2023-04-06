@@ -1,11 +1,14 @@
 import {type Socket} from 'socket.io-client';
+import type {PingOptions} from './command/ping-command';
+import type {DnsOptions} from './command/dns-command';
+import type {TraceOptions} from './command/traceroute-command';
+import type {MtrOptions} from './command/mtr-command';
+import type {HttpOptions} from './command/http-command';
 
 type MeasurementRequest = {
 	measurementId: string;
 	testId: string;
-	measurement: {
-		type: string;
-	};
+	measurement: PingOptions | DnsOptions | TraceOptions | MtrOptions | HttpOptions;
 };
 
 type CommandInterface<OPT> = {

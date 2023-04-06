@@ -11,12 +11,14 @@ import parse, {type PingParseOutput} from './handlers/ping/parse.js';
 
 export type PingOptions = {
 	type: 'ping';
+	inProgressUpdates: boolean;
 	target: string;
 	packets: number;
 };
 
 const pingOptionsSchema = Joi.object<PingOptions>({
 	type: Joi.string().valid('ping'),
+	inProgressUpdates: Joi.boolean(),
 	target: Joi.string(),
 	packets: Joi.number().min(1).max(16).default(3),
 });
@@ -65,31 +67,33 @@ export const pingCmd = (options: PingOptions): ExecaChildProcess => {
 export class PingCommand implements CommandInterface<PingOptions> {
 	constructor(private readonly cmd: typeof pingCmd) {}
 
-	async run(socket: Socket, measurementId: string, testId: string, options: unknown): Promise<void> {
+	async run(socket: Socket, measurementId: string, testId: string, options: PingOptions): Promise<void> {
 		const {value: cmdOptions, error: validationError} = pingOptionsSchema.validate(options);
-		const buffer = new ProgressBuffer(socket, testId, measurementId);
 
 		if (validationError) {
 			throw new InvalidOptionsException('ping', validationError);
 		}
 
-		const pStdout: string[] = [];
+		const buffer = new ProgressBuffer(socket, testId, measurementId);
 		let isResultPrivate = false;
+		let result: PingParseOutput;
 
 		const cmd = this.cmd(cmdOptions);
-		cmd.stdout?.on('data', (data: Buffer) => {
-			pStdout.push(data.toString());
-			const isValid = this.validatePartialResult(pStdout.join(''), cmd);
 
-			if (!isValid) {
-				isResultPrivate = !isValid;
-				return;
-			}
+		if (cmdOptions.inProgressUpdates) {
+			const pStdout: string[] = [];
+			cmd.stdout?.on('data', (data: Buffer) => {
+				pStdout.push(data.toString());
+				const isValid = this.validatePartialResult(pStdout.join(''), cmd);
 
-			buffer.pushProgress({rawOutput: data.toString()});
-		});
+				if (!isValid) {
+					isResultPrivate = !isValid;
+					return;
+				}
 
-		let result: PingParseOutput;
+				buffer.pushProgress({rawOutput: data.toString()});
+			});
+		}
 
 		try {
 			const cmdResult = await cmd;

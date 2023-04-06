@@ -80,6 +80,7 @@ describe('http command', () => {
 						path: '/',
 						query: '',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -89,7 +90,7 @@ describe('http command', () => {
 
 			it('should set https:// prefix (HTTPS)', () => {
 				const options = {
-					type: 'http',
+					type: 'http' as const,
 					target: 'google.com',
 					protocol: 'https',
 					request: {
@@ -97,6 +98,7 @@ describe('http command', () => {
 						path: '/',
 						query: '',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -106,7 +108,7 @@ describe('http command', () => {
 
 			it('should set https:// prefix (HTTP2)', () => {
 				const options = {
-					type: 'http',
+					type: 'http' as const,
 					target: 'google.com',
 					protocol: 'http2',
 					request: {
@@ -114,6 +116,7 @@ describe('http command', () => {
 						path: '/',
 						query: '',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -125,7 +128,7 @@ describe('http command', () => {
 		describe('port', () => {
 			it('should set custom port', () => {
 				const options = {
-					type: 'http',
+					type: 'http' as const,
 					target: 'google.com',
 					protocol: 'http',
 					port: 1212,
@@ -134,6 +137,7 @@ describe('http command', () => {
 						path: '/',
 						query: '',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -143,7 +147,7 @@ describe('http command', () => {
 
 			it('should set default HTTP port', () => {
 				const options = {
-					type: 'http',
+					type: 'http' as const,
 					target: 'google.com',
 					protocol: 'http',
 					request: {
@@ -151,6 +155,7 @@ describe('http command', () => {
 						path: '/',
 						query: '',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -159,7 +164,7 @@ describe('http command', () => {
 			});
 			it('should set default HTTPS port', () => {
 				const options = {
-					type: 'http',
+					type: 'http' as const,
 					target: 'google.com',
 					protocol: 'https',
 					request: {
@@ -167,6 +172,7 @@ describe('http command', () => {
 						path: '/',
 						query: '',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -178,7 +184,7 @@ describe('http command', () => {
 		describe('path', () => {
 			it('should prefix pathname with (/) sign', () => {
 				const options = {
-					type: 'http',
+					type: 'http' as const,
 					target: 'google.com',
 					protocol: 'http',
 					request: {
@@ -186,6 +192,7 @@ describe('http command', () => {
 						path: 'abc',
 						query: '',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -195,7 +202,7 @@ describe('http command', () => {
 
 			it('should append pathname at the end of url (prevent double /)', () => {
 				const options = {
-					type: 'http',
+					type: 'http' as const,
 					target: 'google.com',
 					protocol: 'http',
 					request: {
@@ -203,6 +210,7 @@ describe('http command', () => {
 						path: '/abc',
 						query: '',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -213,7 +221,7 @@ describe('http command', () => {
 		describe('query', () => {
 			it('should prefix query with (?) sign', () => {
 				const options = {
-					type: 'http',
+					type: 'http' as const,
 					target: 'google.com',
 					protocol: 'http',
 					request: {
@@ -221,6 +229,7 @@ describe('http command', () => {
 						path: '/',
 						query: 'abc=def',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -230,7 +239,7 @@ describe('http command', () => {
 
 			it('should append query at the end of url (prevent double ?)', () => {
 				const options = {
-					type: 'http',
+					type: 'http' as const,
 					target: 'google.com',
 					protocol: 'http',
 					request: {
@@ -238,6 +247,7 @@ describe('http command', () => {
 						path: '/',
 						query: '?abc=def',
 					},
+					inProgressUpdates: false,
 				};
 
 				const url = urlBuilder(options);
@@ -248,24 +258,12 @@ describe('http command', () => {
 	});
 
 	describe('with httCmd', () => {
-		nock('http://google.com')
-			.get('/400')
-			.times(3)
-			.reply(400, '400 Bad Request', {
-				test: 'abc',
-			});
-
-		nock('http://google.com')
-			.get('/200?abc=def')
-			.times(1)
-			.reply(200, '200 Ok', {
-				test: 'abc',
-			});
-
-		it('should respond with 200 (query string match)', async () => {
+		it('should respond with 200', async () => {
+			nock('http://google.com').get('/200?abc=def').reply(200, '200 Ok', {test: 'abc'});
 			const options = {
-				type: 'http',
+				type: 'http' as const,
 				target: 'google.com',
+				inProgressUpdates: true,
 				protocol: 'http',
 				request: {
 					method: 'get',
@@ -292,6 +290,7 @@ describe('http command', () => {
 			const http = new HttpCommand(httpCmd);
 			await http.run(mockedSocket as any, 'measurement', 'test', options);
 
+			expect(mockedSocket.emit.callCount).to.equal(2);
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
 				testId: 'test',
@@ -305,10 +304,52 @@ describe('http command', () => {
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.statusCodeName', expectedResult.result.statusCodeName);
 		});
 
-		it('should respond with 400', async () => {
+		it('should respond with 200 without progress messages', async () => {
+			nock('http://google.com').get('/200?abc=def').reply(200, '200 Ok', {test: 'abc'});
 			const options = {
-				type: 'http',
+				type: 'http' as const,
 				target: 'google.com',
+				inProgressUpdates: false,
+				protocol: 'http',
+				request: {
+					method: 'get',
+					path: '/200',
+					query: 'abc=def',
+				},
+			};
+
+			const expectedResult = {
+				measurementId: 'measurement',
+				result: {
+					headers: {
+						test: 'abc',
+					},
+					rawHeaders: 'test: abc',
+					rawBody: '200 Ok',
+					rawOutput: '200 Ok',
+					statusCode: 200,
+					statusCodeName: 'OK',
+				},
+				testId: 'test',
+			};
+
+			const http = new HttpCommand(httpCmd);
+			await http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			expect(mockedSocket.emit.callCount).to.equal(1);
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
+			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
+			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.statusCode', expectedResult.result.statusCode);
+			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.statusCodeName', expectedResult.result.statusCodeName);
+		});
+
+		it('should respond with 400', async () => {
+			nock('http://google.com').get('/400').times(3).reply(400, '400 Bad Request', {test: 'abc'});
+			const options = {
+				type: 'http' as const,
+				target: 'google.com',
+				inProgressUpdates: true,
 				protocol: 'http',
 				request: {
 					method: 'get',
@@ -334,6 +375,7 @@ describe('http command', () => {
 			const http = new HttpCommand(httpCmd);
 			await http.run(mockedSocket as any, 'measurement', 'test', options);
 
+			expect(mockedSocket.emit.callCount).to.equal(2);
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
 				testId: 'test',
@@ -345,10 +387,49 @@ describe('http command', () => {
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
 		});
 
-		it('should respond with 400 (missing path slash)', async () => {
+		it('should respond with 400 without progress messages', async () => {
+			nock('http://google.com').get('/400').times(3).reply(400, '400 Bad Request', {test: 'abc'});
 			const options = {
-				type: 'http',
+				type: 'http' as const,
 				target: 'google.com',
+				inProgressUpdates: false,
+				protocol: 'http',
+				request: {
+					method: 'get',
+					path: '/400',
+					query: '',
+				},
+			};
+
+			const expectedResult = {
+				measurementId: 'measurement',
+				result: {
+					headers: {
+						test: 'abc',
+					},
+					rawHeaders: 'test: abc',
+					rawBody: '400 Bad Request',
+					rawOutput: '400 Bad Request',
+					statusCode: 400,
+				},
+				testId: 'test',
+			};
+
+			const http = new HttpCommand(httpCmd);
+			await http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			expect(mockedSocket.emit.callCount).to.equal(1);
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
+			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
+		});
+
+		it('should respond with 400 (missing path slash)', async () => {
+			nock('http://google.com').get('/400').times(3).reply(400, '400 Bad Request', {test: 'abc'});
+			const options = {
+				type: 'http' as const,
+				target: 'google.com',
+				inProgressUpdates: true,
 				protocol: 'http',
 				request: {
 					method: 'get',
@@ -387,8 +468,9 @@ describe('http command', () => {
 		});
 
 		it('should ensure keepAlive header is disabled', () => {
+			nock('http://google.com').get('/400').times(3).reply(400, '400 Bad Request', {test: 'abc'});
 			const options = {
-				type: 'http',
+				type: 'http' as const,
 				target: 'google.com',
 				protocol: 'http',
 				request: {
@@ -396,6 +478,7 @@ describe('http command', () => {
 					path: '/400',
 					query: '',
 				},
+				inProgressUpdates: false,
 			};
 
 			const returnedOptions = httpCmd(options).options;
@@ -408,8 +491,9 @@ describe('http command', () => {
 	describe('manual', () => {
 		it('should emit progress + result events', async () => {
 			const options = {
-				type: 'http',
+				type: 'http' as const,
 				target: 'google.com',
+				inProgressUpdates: true,
 				protocol: 'http',
 				request: {
 					method: 'get',
@@ -497,9 +581,96 @@ describe('http command', () => {
 			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
 		});
 
+		it('should emit only result event', async () => {
+			const options = {
+				type: 'http' as const,
+				target: 'google.com',
+				inProgressUpdates: false,
+				protocol: 'http',
+				request: {
+					method: 'get',
+					path: '/',
+					query: '',
+				},
+			};
+
+			const events = {
+				response: {
+					socket: {},
+					statusCode: 200,
+					statusMessage: 'OK',
+					httpVersion: '1.1',
+					timings: {
+						start: 0,
+						phases: {
+							tls: 2,
+							tcp: 2,
+							dns: 5,
+							download: 10,
+							total: 11,
+							firstByte: 1,
+						},
+					},
+					headers: {test: 'abc'},
+					rawHeaders: ['test', 'abc'],
+				},
+				data: ['abc', 'def', 'ghi', 'jkl', 'mno'],
+			};
+
+			const response = {
+				...events.response,
+			};
+
+			const expectedResult = {
+				measurementId: 'measurement',
+				result: {
+					status: 'finished',
+					resolvedAddress: '1.1.1.1',
+					headers: {
+						test: 'abc',
+					},
+					timings: {
+						dns: 5,
+						tls: 2,
+						tcp: 2,
+						download: 10,
+						firstByte: 1,
+						total: 11,
+					},
+					rawHeaders: 'test: abc',
+					rawBody: 'abcdefghijklmno',
+					rawOutput: 'abcdefghijklmno',
+					statusCode: 200,
+					statusCodeName: 'OK',
+					tls: null,
+				},
+				testId: 'test',
+			};
+
+			const stream = new Stream(response, '1.1.1.1');
+			const mockHttpCmd = (): Request => stream as never;
+
+			const http = new HttpCommand(mockHttpCmd);
+			const cmd = http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			stream.emit('response', events.response);
+
+			for (const data of events.data) {
+				stream.emit('data', Buffer.from(data));
+			}
+
+			stream.emit('end');
+
+			await cmd;
+
+			expect(mockedSocket.emit.callCount).to.equal(1);
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
+		});
+
 		it('should emit headers (rawOutput - HEAD request)', async () => {
 			const options = {
-				type: 'http',
+				type: 'http' as const,
 				target: 'google.com',
 				protocol: 'http',
 				request: {
@@ -507,6 +678,7 @@ describe('http command', () => {
 					path: '/',
 					query: '',
 				},
+				inProgressUpdates: true,
 			};
 
 			const events = {
@@ -579,7 +751,7 @@ describe('http command', () => {
 
 		it('should filter out :status header (HTTP/2 - rawHeader)', async () => {
 			const options = {
-				type: 'http',
+				type: 'http' as const,
 				target: 'google.com',
 				protocol: 'http',
 				request: {
@@ -587,6 +759,7 @@ describe('http command', () => {
 					path: '/',
 					query: '',
 				},
+				inProgressUpdates: true,
 			};
 
 			const cert = {
@@ -685,7 +858,7 @@ describe('http command', () => {
 
 		it('should send "finished" status if it is HTTPError', async () => {
 			const options = {
-				type: 'http',
+				type: 'http' as const,
 				target: 'google.com',
 				protocol: 'http',
 				request: {
@@ -693,6 +866,7 @@ describe('http command', () => {
 					path: '/',
 					query: '',
 				},
+				inProgressUpdates: true,
 			};
 
 			const events = {
@@ -767,7 +941,7 @@ describe('http command', () => {
 
 		it('should send "failed" status in all other cases of errors', async () => {
 			const options = {
-				type: 'http',
+				type: 'http' as const,
 				target: 'google.com',
 				protocol: 'http',
 				request: {
@@ -775,6 +949,77 @@ describe('http command', () => {
 					path: '/',
 					query: '',
 				},
+				inProgressUpdates: true,
+			};
+
+			const events = {
+				response: {
+					socket: {},
+					timings: {
+						phases: {
+							download: 10,
+							total: 11,
+						},
+					},
+				},
+				error: new CacheError(new Error('cache error'), {} as unknown as Request),
+			};
+
+			const response = {
+				...events.response,
+			};
+
+			const expectedResult = {
+				measurementId: 'measurement',
+				result: {
+					status: 'failed',
+					resolvedAddress: null,
+					headers: {},
+					rawHeaders: null,
+					rawBody: null,
+					timings: {
+						dns: null,
+						firstByte: null,
+						tcp: null,
+						tls: null,
+						download: 10,
+						total: 11,
+					},
+					tls: null,
+					rawOutput: 'cache error - ERR_CACHE_ACCESS',
+					statusCode: null,
+					statusCodeName: null,
+				},
+				testId: 'test',
+			};
+
+			const stream = new Stream(response, '');
+
+			const mockHttpCmd = (): Request => stream as never;
+
+			const http = new HttpCommand(mockHttpCmd);
+			const cmd = http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			stream.emit('error', events.error);
+
+			await cmd;
+
+			expect(mockedSocket.emit.callCount).to.equal(1);
+			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
+		});
+
+		it('should send "failed" status in all other cases of errors while `inProgressUpdates: false`', async () => {
+			const options = {
+				type: 'http' as const,
+				target: 'google.com',
+				protocol: 'http',
+				request: {
+					method: 'get',
+					path: '/',
+					query: '',
+				},
+				inProgressUpdates: false,
 			};
 
 			const events = {
