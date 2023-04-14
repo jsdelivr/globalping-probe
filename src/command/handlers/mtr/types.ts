@@ -29,7 +29,6 @@ export type HopType = {
 
 export type ProgressType = {
 	rawOutput: string;
-	hops: HopType[];
 };
 
 export type ResultType = {
@@ -52,7 +51,6 @@ export type ResultTypeJson = {
 		resolvedHostname: string | null;
 		stats: HopStatsType;
 		timings: HopTimesType[];
-		duplicate: boolean;
 	}>;
 	rawOutput: string;
 };

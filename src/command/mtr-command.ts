@@ -103,7 +103,6 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 			if (cmdOptions.inProgressUpdates) {
 				buffer.pushProgress({
-					hops: result.hops,
 					rawOutput: result.rawOutput,
 				});
 			}
@@ -144,7 +143,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		nHops = this.populateAsn(nHops, asnList);
 		const rawOutput = MtrParser.outputBuilder(nHops);
 
-		const lastHop = [...nHops].reverse().find(h => h.resolvedAddress && !h.duplicate);
+		const lastHop = [...nHops].reverse().find(h => h.resolvedAddress);
 
 		return {
 			status: 'finished',
@@ -211,7 +210,6 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			resolvedHostname: input.resolvedHostname ? input.resolvedHostname : null,
 			hops: input.hops ? input.hops.map(h => ({
 				...h,
-				duplicate: Boolean(h.duplicate),
 				resolvedAddress: h.resolvedAddress ? h.resolvedAddress : null,
 				resolvedHostname: h.resolvedHostname ? h.resolvedHostname : null,
 			})) : [],

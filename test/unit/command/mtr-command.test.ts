@@ -177,23 +177,6 @@ describe('mtr command executor', () => {
 				measurementId: 'measurement',
 				overwrite: true,
 				result: {
-					hops: [{
-						asn: [],
-						stats: {
-							min: 0,
-							max: 0,
-							avg: 0,
-							total: 1,
-							loss: 0,
-							rcv: 0,
-							drop: 0,
-							stDev: 0,
-							jMin: 0,
-							jMax: 0,
-							jAvg: 0,
-						},
-						timings: [{rtt: null, seq: '33000'}],
-					}],
 					rawOutput: 'Host          Loss% Drop Rcv Avg  StDev  Javg \n',
 				},
 				testId: 'test',

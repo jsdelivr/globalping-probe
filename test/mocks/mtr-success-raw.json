@@ -32,7 +32,6 @@
                 ],
                 "asn": [],
                 "resolvedAddress": "192.168.0.1",
-                "duplicate": false,
                 "resolvedHostname": "192.168.0.1"
             },
             {
@@ -58,8 +57,7 @@
                 ],
                 "asn": [],
                 "resolvedAddress": null,
-                "resolvedHostname": null,
-                "duplicate": false
+                "resolvedHostname": null
             },
             {
                 "stats":
@@ -89,7 +87,6 @@
                     }
                 ],
                 "resolvedAddress": "62.252.67.181",
-                "duplicate": false,
                 "resolvedHostname": "62.252.67.181",
                 "asn": [123]
             },
@@ -116,8 +113,7 @@
                 ],
                 "asn": [],
                 "resolvedAddress": null,
-                "resolvedHostname": null,
-                "duplicate": false
+                "resolvedHostname": null
             },
             {
                 "stats":
@@ -148,7 +144,6 @@
                 ],
                 "asn": [123],
                 "resolvedAddress": "62.254.59.130",
-                "duplicate": false,
                 "resolvedHostname": "62.254.59.130"
             },
             {
@@ -180,7 +175,6 @@
                 ],
                 "asn": [123],
                 "resolvedAddress": "142.250.160.116",
-                "duplicate": false,
                 "resolvedHostname": "142.250.160.116"
             },
             {
@@ -212,7 +206,6 @@
                 ],
                 "asn": [123],
                 "resolvedAddress": "216.239.41.193",
-                "duplicate": false,
                 "resolvedHostname": "216.239.41.193"
             },
             {
@@ -244,7 +237,6 @@
                 ],
                 "asn": [123],
                 "resolvedAddress": "142.251.54.27",
-                "duplicate": false,
                 "resolvedHostname": "142.251.54.27"
             },
             {
@@ -276,7 +268,6 @@
                 ],
                 "asn": [123],
                 "resolvedAddress": "142.250.179.238",
-                "duplicate": false,
                 "resolvedHostname": "lhr25s31-in-f14.1e100.net"
             }
         ],
