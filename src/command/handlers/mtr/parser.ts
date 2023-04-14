@@ -156,19 +156,19 @@ export const MtrParser = {
 				}
 
 				case 'd': {
-					const [resolvedAddress] = value;
+					const [resolvedHostname] = value;
 
-					if (!resolvedAddress) {
+					if (!resolvedHostname) {
 						break;
 					}
 
-					entry.resolvedHostname = resolvedAddress;
+					entry.resolvedHostname = resolvedHostname;
 					for (const [hIndex, hop] of hops.entries()) {
 						if (hop.resolvedAddress !== entry.resolvedAddress || (hop.resolvedHostname && hop.resolvedHostname !== hop.resolvedAddress)) {
 							continue;
 						}
 
-						(hops[hIndex]!).resolvedHostname = resolvedAddress;
+						(hops[hIndex]!).resolvedHostname = resolvedHostname;
 					}
 
 					break;
