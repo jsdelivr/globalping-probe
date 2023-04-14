@@ -321,30 +321,5 @@
         "resolvedAddress": "185.180.14.250",
         "duplicate": false,
         "resolvedHostname": "edge-595.bunnyinfra.net"
-    },
-    {
-        "stats": {
-            "min": 29.687,
-            "max": 29.687,
-            "avg": 29.7,
-            "total": 1,
-            "loss": 0,
-            "rcv": 0,
-            "drop": 0,
-            "stDev": 0,
-            "jMin": 29.7,
-            "jMax": 29.7,
-            "jAvg": 29.7
-        },
-        "asn": [],
-        "timings": [
-            {
-                "seq": "33010",
-                "rtt": 29.687
-            }
-        ],
-        "resolvedAddress": "185.180.14.250",
-        "duplicate": true,
-        "resolvedHostname": "edge-595.bunnyinfra.net"
     }
 ]

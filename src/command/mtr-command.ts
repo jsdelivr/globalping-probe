@@ -97,7 +97,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 				result.data.push(line);
 			}
 
-			const output = await this.parseResult(result.hops, result.data, false);
+			const output = await this.parseResult(result.data, false);
 			result.hops = output.hops;
 			result.rawOutput = output.rawOutput;
 
@@ -112,7 +112,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		try {
 			await this.checkForPrivateDest(options.target);
 			await cmd;
-			result = await this.parseResult(result.hops, result.data, true);
+			result = await this.parseResult(result.data, true);
 		} catch (error: unknown) {
 			result.status = 'failed';
 			result.rawOutput = 'Test failed. Please try again.';
@@ -138,8 +138,8 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		buffer.pushResult(this.toJsonOutput(result));
 	}
 
-	async parseResult(hops: HopType[], data: string[], isFinalResult = false): Promise<ResultType> {
-		let nHops = this.parseData(hops, data.join('\n'), isFinalResult);
+	async parseResult(data: string[], isFinalResult = false): Promise<ResultType> {
+		let nHops = MtrParser.rawParse(data.join('\n'), isFinalResult);
 		const asnList = await this.queryAsn(nHops);
 		nHops = this.populateAsn(nHops, asnList);
 		const rawOutput = MtrParser.outputBuilder(nHops);
@@ -154,10 +154,6 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			resolvedAddress: String(lastHop?.resolvedAddress),
 			resolvedHostname: String(lastHop?.resolvedHostname),
 		};
-	}
-
-	parseData(hops: HopType[], data: string, isFinalResult?: boolean): HopType[] {
-		return MtrParser.rawParse(hops, data.toString(), isFinalResult);
 	}
 
 	populateAsn(hops: HopType[], asnList: string[][]): HopType[] {
