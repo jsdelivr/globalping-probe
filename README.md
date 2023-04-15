@@ -13,12 +13,14 @@ The container will work on both x86 and ARM architectures.
 
 Once you connect you will become part of the global community that powers the [Globalping Platform](https://github.com/jsdelivr/globalping)
 
-
+---
 #### Podman alternative
 Note that you also need to [install a service](https://linuxhandbook.com/autostart-podman-containers/) to make sure the container starts on boot. 
 ```
 podman run --cap-add=NET_RAW -d --network host --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
 ```
+---
+For automation purposes consider using this template of a [universal installation script for Linux servers](https://gist.github.com/jimaek/7b8312c2c37f9002a5cc0108ebfd43e1).
 
 ## Where to run
 
@@ -64,7 +66,7 @@ If you can host our probes in multiple global regions, espesially locations we d
 
 To get started or if you have any questions make sure to get in contact with us dak@prospectone.io
 
-## Hardware Probes - TODO
+## Hardware Probes
 
 <img src="https://user-images.githubusercontent.com/1834071/183153051-5c741c3c-5e8c-4372-ba12-82a602cb7cb6.png" alt="globalping probe" height="200px" align="right"/>
 
