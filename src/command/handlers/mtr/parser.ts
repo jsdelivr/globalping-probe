@@ -77,13 +77,13 @@ export const MtrParser = {
 		const filteredHops: HopType[] = [];
 
 		for (const [i, hop] of hops.entries()) {
-			if (!hop || hop.duplicate) {
+			if (!hop) {
 				continue;
 			}
 
 			if (!hop.resolvedAddress) {
-				const isEmptyUntilEnd = hops.slice(i - 1).every(h => !h.resolvedAddress || h.duplicate);
-				if (hops[i - 1]?.duplicate || isEmptyUntilEnd) { // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing
+				const isEmptyUntilEnd = hops.slice(i - 1).every(h => !h.resolvedAddress);
+				if (isEmptyUntilEnd) {
 					continue;
 				}
 			}
@@ -124,10 +124,11 @@ export const MtrParser = {
 		return rawOutput.join('');
 	},
 
-	rawParse(currentHops: HopType[], data: string, isFinalResult?: boolean): HopType[] {
+	rawParse(data: string, isFinalResult?: boolean): HopType[] {
 		const sData = data.split(NEW_LINE_REG_EXP);
 
-		const hops = [...currentHops];
+		let hops = [];
+		const addressToHostname = new Map();
 
 		for (const row of sData) {
 			const [action, index, ...value] = row.split(' ');
@@ -156,21 +157,14 @@ export const MtrParser = {
 				}
 
 				case 'd': {
-					const [resolvedAddress] = value;
+					const [resolvedHostname] = value;
 
-					if (!resolvedAddress) {
+					if (!resolvedHostname) {
 						break;
 					}
 
-					entry.resolvedHostname = resolvedAddress;
-					for (const [hIndex, hop] of hops.entries()) {
-						if (hop.resolvedAddress !== entry.resolvedAddress || (hop.resolvedHostname && hop.resolvedHostname !== hop.resolvedAddress)) {
-							continue;
-						}
-
-						(hops[hIndex]!).resolvedHostname = resolvedAddress;
-					}
-
+					entry.resolvedHostname = resolvedHostname;
+					addressToHostname.set(entry.resolvedAddress, resolvedHostname);
 					break;
 				}
 
@@ -207,7 +201,33 @@ export const MtrParser = {
 			hops[Number(index)] = entry;
 		}
 
+		hops = MtrParser.removeDuplicates(hops);
+
+		hops = MtrParser.fulfillMissingHostnames(addressToHostname, hops);
+
 		return isFinalResult ? MtrParser.hopFinalParse(hops) : hops;
+	},
+
+	removeDuplicates(hops: HopType[]): HopType[] {
+		const filteredHops = hops.filter(({duplicate}) => duplicate !== true);
+		for (const hop of filteredHops) {
+			delete hop.duplicate;
+		}
+
+		return filteredHops;
+	},
+
+	fulfillMissingHostnames(addressToHostname: Map<string, string>, hops: HopType[]): HopType[] {
+		for (const hop of hops) {
+			if (!hop.resolvedHostname || hop.resolvedHostname === hop.resolvedAddress) {
+				const sameAddressHostname = addressToHostname.get(hop.resolvedAddress!);
+				if (sameAddressHostname) {
+					hop.resolvedHostname = sameAddressHostname;
+				}
+			}
+		}
+
+		return hops;
 	},
 
 	hopFinalParse(hops: HopType[]): HopType[] {

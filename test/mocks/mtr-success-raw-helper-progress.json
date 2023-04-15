@@ -28,8 +28,7 @@
                 "rtt": null
             }
         ],
-        "resolvedAddress": "192.168.0.1",
-        "duplicate": false
+        "resolvedAddress": "192.168.0.1"
     },
     {
         "stats": {
@@ -91,7 +90,6 @@
             }
         ],
         "resolvedAddress": "62.252.67.181",
-        "duplicate": false,
         "resolvedHostname": "lutn-core-2a-xe-7114-0.network.virginmedia.net"
     },
     {
@@ -154,7 +152,6 @@
             }
         ],
         "resolvedAddress": "62.253.175.34",
-        "duplicate": false,
         "resolvedHostname": "tele-ic-7-ae2-0.network.virginmedia.net"
     },
     {
@@ -187,7 +184,6 @@
             }
         ],
         "resolvedAddress": "80.255.14.105",
-        "duplicate": false,
         "resolvedHostname": "ae15-0.lon10.core-backbone.com"
     },
     {
@@ -220,7 +216,6 @@
             }
         ],
         "resolvedAddress": "81.95.15.118",
-        "duplicate": false,
         "resolvedHostname": "ae1-2053.prg10.core-backbone.com"
     },
     {
@@ -253,7 +248,6 @@
             }
         ],
         "resolvedAddress": "5.56.17.18",
-        "duplicate": false,
         "resolvedHostname": "core-backbone.cdn77.com"
     },
     {
@@ -286,7 +280,6 @@
             }
         ],
         "resolvedAddress": "138.199.0.157",
-        "duplicate": false,
         "resolvedHostname": "vl246.prg-ttc2-cdn77-dist-1.cdn77.com"
     },
     {
@@ -319,32 +312,6 @@
             }
         ],
         "resolvedAddress": "185.180.14.250",
-        "duplicate": false,
-        "resolvedHostname": "edge-595.bunnyinfra.net"
-    },
-    {
-        "stats": {
-            "min": 29.687,
-            "max": 29.687,
-            "avg": 29.7,
-            "total": 1,
-            "loss": 0,
-            "rcv": 0,
-            "drop": 0,
-            "stDev": 0,
-            "jMin": 29.7,
-            "jMax": 29.7,
-            "jAvg": 29.7
-        },
-        "asn": [],
-        "timings": [
-            {
-                "seq": "33010",
-                "rtt": 29.687
-            }
-        ],
-        "resolvedAddress": "185.180.14.250",
-        "duplicate": true,
         "resolvedHostname": "edge-595.bunnyinfra.net"
     }
 ]

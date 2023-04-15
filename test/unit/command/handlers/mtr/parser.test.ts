@@ -18,7 +18,7 @@ describe('mtr parser helper', () => {
 
 			const rawOutput = getCmdMock(testCase);
 
-			const parsedOutput = MtrParser.rawParse([], rawOutput, false);
+			const parsedOutput = MtrParser.rawParse(rawOutput, false);
 
 			expect(parsedOutput).to.deep.equal(expectedResult);
 		});
@@ -29,7 +29,7 @@ describe('mtr parser helper', () => {
 
 			const rawOutput = getCmdMock(testCase);
 
-			const parsedOutput = MtrParser.rawParse([], rawOutput, true);
+			const parsedOutput = MtrParser.rawParse(rawOutput, true);
 
 			expect(parsedOutput).to.deep.equal(expectedResult);
 		});
