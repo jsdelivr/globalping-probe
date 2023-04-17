@@ -1,10 +1,10 @@
 {
-  "testId": "test",
-  "measurementId": "measurement",
-  "result": {
+	"testId": "test",
+	"measurementId": "measurement",
+	"result": {
 		"status": "finished",
-    "statusCodeName": "NOERROR",
-    "statusCode": 0,
+		"statusCodeName": "NOERROR",
+		"statusCode": 0,
 		"answers": [
 			{
 				"name": "google.com.",

@@ -1,17 +1,17 @@
-import type {TLSSocket} from 'node:tls';
-import type {Socket as NetSocket} from 'node:net';
+import type { TLSSocket } from 'node:tls';
+import type { Socket as NetSocket } from 'node:net';
 import http from 'node:http';
 import https from 'node:https';
 import http2 from 'http2-wrapper';
 import Joi from 'joi';
 import _ from 'lodash';
-import got, {type Response, type Request, type HTTPAlias, type Progress, type DnsLookupIpVersion, type RequestError, HTTPError} from 'got';
-import type {Socket} from 'socket.io-client';
-import type {CommandInterface} from '../types.js';
-import {callbackify} from '../lib/util.js';
-import {ProgressBuffer} from '../helper/progress-buffer.js';
-import {InvalidOptionsException} from './exception/invalid-options-exception.js';
-import {dnsLookup, type ResolverType} from './handlers/http/dns-resolver.js';
+import got, { type Response, type Request, type HTTPAlias, type Progress, type DnsLookupIpVersion, type RequestError, HTTPError } from 'got';
+import type { Socket } from 'socket.io-client';
+import type { CommandInterface } from '../types.js';
+import { callbackify } from '../lib/util.js';
+import { ProgressBuffer } from '../helper/progress-buffer.js';
+import { InvalidOptionsException } from './exception/invalid-options-exception.js';
+import { dnsLookup, type ResolverType } from './handlers/http/dns-resolver.js';
 
 export type HttpOptions = {
 	type: 'http';
@@ -93,8 +93,9 @@ const getInitialResult = () => ({
 	timings: {},
 });
 
-const allowedHttpProtocols = ['http', 'https', 'http2'];
-const allowedHttpMethods = ['get', 'head'];
+const allowedHttpProtocols = [ 'http', 'https', 'http2' ];
+const allowedHttpMethods = [ 'get', 'head' ];
+
 export const httpOptionsSchema = Joi.object<HttpOptions>({
 	type: Joi.string().valid('http').insensitive().required(),
 	inProgressUpdates: Joi.boolean().required(),
@@ -136,11 +137,11 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 			request: 10_000,
 			response: 10_000,
 		},
-		https: {rejectUnauthorized: false},
+		https: { rejectUnauthorized: false },
 		headers: {
 			...options.request.headers,
 			'User-Agent': 'globalping probe (https://github.com/jsdelivr/globalping)',
-			host: options.request.host ?? options.target,
+			'host': options.request.host ?? options.target,
 		},
 		setHost: false,
 		throwHttpErrors: false,
@@ -149,11 +150,9 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 		},
 		agent: {
 			// Ensure Connection: closed header is used - https://nodejs.org/api/http.html#new-agentoptions
-			// eslint-disable-next-line unicorn/prefer-number-properties
-			http: new http.Agent({keepAlive: false, maxSockets: Infinity}),
-			// eslint-disable-next-line unicorn/prefer-number-properties
-			https: new https.Agent({maxCachedSessions: 0, keepAlive: false, maxSockets: Infinity}),
-			http2: new http2.Agent({maxCachedTlsSessions: 1}),
+			http: new http.Agent({ keepAlive: false, maxSockets: Infinity }),
+			https: new https.Agent({ maxCachedSessions: 0, keepAlive: false, maxSockets: Infinity }),
+			http2: new http2.Agent({ maxCachedTlsSessions: 1 }),
 		},
 	};
 
@@ -163,10 +162,10 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 const isTlsSocket = (socket: unknown): socket is TLSSocket => Boolean((socket as {getPeerCertificate?: unknown}).getPeerCertificate);
 
 export class HttpCommand implements CommandInterface<HttpOptions> {
-	constructor(private readonly cmd: typeof httpCmd) {}
+	constructor (private readonly cmd: typeof httpCmd) {}
 
-	async run(socket: Socket, measurementId: string, testId: string, options: HttpOptions): Promise<void> {
-		const {value: cmdOptions, error: validationError} = httpOptionsSchema.validate(options);
+	async run (socket: Socket, measurementId: string, testId: string, options: HttpOptions): Promise<void> {
+		const { value: cmdOptions, error: validationError } = httpOptionsSchema.validate(options);
 
 		if (validationError) {
 			throw new InvalidOptionsException('http', validationError);
@@ -182,6 +181,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			result.resolvedAddress = stream.ip ?? '';
 
 			const timings = (stream.timings ?? {}) as Timings;
+
 			if (!timings['end']) {
 				timings['end'] = Date.now();
 			}
@@ -229,8 +229,9 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 		const onData = (data: Buffer) => {
 			result.rawBody += data.toString();
+
 			if (cmdOptions.inProgressUpdates) {
-				buffer.pushProgress({rawOutput: data.toString()});
+				buffer.pushProgress({ rawOutput: data.toString() });
 			}
 		};
 
@@ -247,7 +248,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		};
 
 		const onDownloadProgress = (progress: Progress) => {
-			const {downloadLimit} = stream.options.context;
+			const { downloadLimit } = stream.options.context;
 
 			if (!downloadLimit) {
 				return;
@@ -258,7 +259,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			}
 		};
 
-		const pStream = new Promise((_resolve, _reject) => {
+		const pStream = new Promise((_resolve) => {
 			const resolve = () => {
 				_resolve(null);
 			};
@@ -289,7 +290,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		await pStream;
 	}
 
-	private toJsonOutput(input: Output): OutputJson {
+	private toJsonOutput (input: Output): OutputJson {
 		return {
 			status: input.status,
 			resolvedAddress: input.resolvedAddress || null,
@@ -312,7 +313,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		};
 	}
 
-	private parseResponse(resp: Response, cert: Cert | undefined) {
+	private parseResponse (resp: Response, cert: Cert | undefined) {
 		const result = getInitialResult();
 
 		// Headers
@@ -337,12 +338,12 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		if (cert) {
 			result.tls = {
 				authorized: cert.authorized,
-				...(cert.authorizationError ? {error: cert.authorizationError} : {}),
+				...(cert.authorizationError ? { error: cert.authorizationError } : {}),
 				...(cert.valid_from && cert.valid_to ? {
 					createdAt: (new Date(cert.valid_from)).toISOString(),
 					expiresAt: (new Date(cert.valid_to)).toISOString(),
 				} : {}),
-				issuer: {...cert.issuer},
+				issuer: { ...cert.issuer },
 				subject: {
 					...cert.subject,
 					alt: cert.subjectaltname,

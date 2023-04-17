@@ -1,8 +1,8 @@
 import * as sinon from 'sinon';
-import {expect} from 'chai';
-import {Socket} from 'socket.io-client';
-import {execaSync} from 'execa';
-import {getCmdMock, getCmdMockResult, getExecaMock} from '../../utils.js';
+import { expect } from 'chai';
+import { Socket } from 'socket.io-client';
+import { execaSync } from 'execa';
+import { getCmdMock, getCmdMockResult, getExecaMock } from '../../utils.js';
 import {
 	PingCommand,
 	argBuilder,
@@ -81,7 +81,8 @@ describe('ping command executor', () => {
 			sandbox.reset();
 		});
 
-		const successfulCommands = ['ping-success-linux', 'ping-success-mac'];
+		const successfulCommands = [ 'ping-success-linux', 'ping-success-mac' ];
+
 		for (const command of successfulCommands) {
 			it(`should run and parse successful commands - ${command}`, async () => {
 				const rawOutput = getCmdMock(command);
@@ -99,20 +100,23 @@ describe('ping command executor', () => {
 				const ping = new PingCommand((): any => mockedCmd);
 
 				const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+
 				for (const progressOutput of outputProgress) {
 					mockedCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 				}
 
-				mockedCmd.resolve({stdout: rawOutput});
+				mockedCmd.resolve({ stdout: rawOutput });
 				await runPromise;
 
 				expect(mockedSocket.emit.callCount).to.equal(2);
-				expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
+
+				expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 					testId: 'test',
 					measurementId: 'measurement',
-					result: {rawOutput: outputProgress[0]},
+					result: { rawOutput: outputProgress[0] },
 				}]);
-				expect(mockedSocket.emit.secondCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+
+				expect(mockedSocket.emit.secondCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 			});
 		}
 
@@ -133,15 +137,16 @@ describe('ping command executor', () => {
 				const ping = new PingCommand((): any => mockedCmd);
 
 				const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+
 				for (const progressOutput of outputProgress) {
 					mockedCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 				}
 
-				mockedCmd.resolve({stdout: rawOutput});
+				mockedCmd.resolve({ stdout: rawOutput });
 				await runPromise;
 
 				expect(mockedSocket.emit.callCount).to.equal(1);
-				expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+				expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 			});
 		}
 
@@ -162,6 +167,7 @@ describe('ping command executor', () => {
 			const ping = new PingCommand((): any => mockedCmd);
 
 			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+
 			for (const progressOutput of outputProgress) {
 				mockedCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 			}
@@ -172,7 +178,7 @@ describe('ping command executor', () => {
 
 			expect(mockedCmd.kill.called).to.be.true;
 			expect(mockedSocket.emit.calledOnce).to.be.true;
-			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
 		it('should run and fail private ip command on the result step', async () => {
@@ -191,12 +197,12 @@ describe('ping command executor', () => {
 			const ping = new PingCommand((): any => mockedCmd);
 
 			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
-			mockedCmd.resolve({stdout: rawOutput});
+			mockedCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
 			expect(mockedCmd.kill.called).to.be.false;
 			expect(mockedSocket.emit.calledOnce).to.be.true;
-			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
 		it('should run and fail private ip command on the result step if progress updates are disabled', async () => {
@@ -216,19 +222,21 @@ describe('ping command executor', () => {
 			const ping = new PingCommand((): any => mockedCmd);
 
 			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+
 			for (const progressOutput of outputProgress) {
 				mockedCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 			}
 
-			mockedCmd.resolve({stdout: rawOutput});
+			mockedCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
 			expect(mockedCmd.kill.called).to.be.false;
 			expect(mockedSocket.emit.calledOnce).to.be.true;
-			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
-		const failedCommands = ['ping-timeout-linux', 'ping-timeout-mac'];
+		const failedCommands = [ 'ping-timeout-linux', 'ping-timeout-mac' ];
+
 		for (const command of failedCommands) {
 			it(`should run and parse failed commands - ${command}`, async () => {
 				const rawOutput = getCmdMock(command);
@@ -240,7 +248,7 @@ describe('ping command executor', () => {
 					inProgressUpdates: true,
 				};
 
-				const execaError = execaSync('unknown-command', [], {reject: false});
+				const execaError = execaSync('unknown-command', [], { reject: false });
 				execaError.stdout = rawOutput;
 				const mockedCmd = getExecaMock();
 
@@ -266,10 +274,10 @@ describe('ping command executor', () => {
 			};
 
 			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
-			mockedCmd.resolve({stdout: ''});
+			mockedCmd.resolve({ stdout: '' });
 			await runPromise;
 
-			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', {
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', {
 				testId: 'test',
 				measurementId: 'measurement',
 				result: {
@@ -278,7 +286,7 @@ describe('ping command executor', () => {
 					resolvedAddress: null,
 					resolvedHostname: null,
 					timings: [],
-					stats: {min: null, max: null, avg: null, total: null, loss: null, rcv: null, drop: null},
+					stats: { min: null, max: null, avg: null, total: null, loss: null, rcv: null, drop: null },
 				},
 			}]);
 		});

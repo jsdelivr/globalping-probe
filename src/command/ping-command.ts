@@ -1,13 +1,13 @@
 import Joi from 'joi';
 import isIpPrivate from 'private-ip';
-import type {Socket} from 'socket.io-client';
-import {execa, type ExecaChildProcess} from 'execa';
-import type {CommandInterface} from '../types.js';
-import {isExecaError} from '../helper/execa-error-check.js';
-import {ProgressBuffer} from '../helper/progress-buffer.js';
-import {scopedLogger} from '../lib/logger.js';
-import {InvalidOptionsException} from './exception/invalid-options-exception.js';
-import parse, {type PingParseOutput} from './handlers/ping/parse.js';
+import type { Socket } from 'socket.io-client';
+import { execa, type ExecaChildProcess } from 'execa';
+import type { CommandInterface } from '../types.js';
+import { isExecaError } from '../helper/execa-error-check.js';
+import { ProgressBuffer } from '../helper/progress-buffer.js';
+import { scopedLogger } from '../lib/logger.js';
+import { InvalidOptionsException } from './exception/invalid-options-exception.js';
+import parse, { type PingParseOutput } from './handlers/ping/parse.js';
 
 export type PingOptions = {
 	type: 'ping';
@@ -50,9 +50,9 @@ const logger = scopedLogger('ping-command');
 export const argBuilder = (options: PingOptions): string[] => {
 	const args = [
 		'-4',
-		['-c', options.packets.toString()],
-		['-i', '0.2'],
-		['-w', '15'],
+		[ '-c', options.packets.toString() ],
+		[ '-i', '0.2' ],
+		[ '-w', '15' ],
 		options.target,
 	].flat();
 
@@ -61,14 +61,14 @@ export const argBuilder = (options: PingOptions): string[] => {
 
 export const pingCmd = (options: PingOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', ['ping', ...args]);
+	return execa('unbuffer', [ 'ping', ...args ]);
 };
 
 export class PingCommand implements CommandInterface<PingOptions> {
-	constructor(private readonly cmd: typeof pingCmd) {}
+	constructor (private readonly cmd: typeof pingCmd) {}
 
-	async run(socket: Socket, measurementId: string, testId: string, options: PingOptions): Promise<void> {
-		const {value: cmdOptions, error: validationError} = pingOptionsSchema.validate(options);
+	async run (socket: Socket, measurementId: string, testId: string, options: PingOptions): Promise<void> {
+		const { value: cmdOptions, error: validationError } = pingOptionsSchema.validate(options);
 
 		if (validationError) {
 			throw new InvalidOptionsException('ping', validationError);
@@ -91,7 +91,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 					return;
 				}
 
-				buffer.pushProgress({rawOutput: data.toString()});
+				buffer.pushProgress({ rawOutput: data.toString() });
 			});
 		}
 
@@ -113,7 +113,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 				result = parse(error.stdout.toString());
 			} else {
 				logger.error(error);
-				result = {status: 'failed', rawOutput: 'Test failed. Please try again.'};
+				result = { status: 'failed', rawOutput: 'Test failed. Please try again.' };
 			}
 		}
 
@@ -127,7 +127,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		buffer.pushResult(this.toJsonOutput(result));
 	}
 
-	private validatePartialResult(rawOutput: string, cmd: ExecaChildProcess): boolean {
+	private validatePartialResult (rawOutput: string, cmd: ExecaChildProcess): boolean {
 		const parseResult = parse(rawOutput);
 
 		if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
@@ -138,7 +138,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		return true;
 	}
 
-	private toJsonOutput(input: PingParseOutput): PingParseOutputJson {
+	private toJsonOutput (input: PingParseOutput): PingParseOutputJson {
 		return {
 			status: input.status,
 			rawOutput: input.rawOutput,

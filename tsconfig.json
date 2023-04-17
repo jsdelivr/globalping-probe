@@ -1,19 +1,18 @@
 {
-  "extends": "@tsconfig/node16-strictest-esm/tsconfig.json",
-  "compilerOptions": {
-    "outDir": "./dist",
-    "moduleResolution": "node",
-    "paths": { "node-dig-dns": [ "./@types/node-dig-dns.d.ts" ] },
-    "sourceMap": true
-  },
-  "ts-node": {
-    "transpileOnly": true
-  },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+	"extends": "@tsconfig/node16-strictest-esm/tsconfig.json",
+	"compilerOptions": {
+		"outDir": "./dist",
+		"moduleResolution": "node",
+		"paths": { "node-dig-dns": [
+			"./@types/node-dig-dns.d.ts"
+		] },
+		"sourceMap": true
+	},
+	"include": [
+		"src/**/*"
+	],
+	"exclude": [
+		"dist",
+		"node_modules"
+	]
 }

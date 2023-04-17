@@ -1,7 +1,7 @@
-import {expect} from 'chai';
-import {MtrParser} from '../../../../../src/command/handlers/mtr/parser.js';
-import type {HopType} from '../../../../../src/command/handlers/mtr/types.js';
-import {getCmdMock, getCmdMockResult} from '../../../../utils.js';
+import { expect } from 'chai';
+import { MtrParser } from '../../../../../src/command/handlers/mtr/parser.js';
+import type { HopType } from '../../../../../src/command/handlers/mtr/types.js';
+import { getCmdMock, getCmdMockResult } from '../../../../utils.js';
 
 type MockResult = {
 	result: {

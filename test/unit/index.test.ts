@@ -1,10 +1,10 @@
 /* eslint-disable quote-props */
 import process from 'node:process';
-import {expect} from 'chai';
+import { expect } from 'chai';
 import * as td from 'testdouble';
 import * as sinon from 'sinon';
-import {getCmdMock, MockSocket} from '../utils.js';
-import {StatusManager} from '../../src/lib/status-manager.js';
+import { getCmdMock, MockSocket } from '../utils.js';
+import { StatusManager } from '../../src/lib/status-manager.js';
 
 const pingStdout = getCmdMock('ping-success-linux');
 const fakeLocation = {
@@ -25,7 +25,7 @@ describe('index module', () => {
 	const PingCommandStub = sinon.stub().returns({
 		run: runStub,
 	});
-	const pingCmdStub = sinon.stub().returns({stdout: pingStdout});
+	const pingCmdStub = sinon.stub().returns({ stdout: pingStdout });
 	const statusManagerStub = sinon.createStubInstance(StatusManager);
 	statusManagerStub.getStatus.returns('ready');
 	const initStatusManagerStub = sinon.stub().returns(statusManagerStub);
@@ -41,7 +41,8 @@ describe('index module', () => {
 	};
 	const connectStub = sinon.stub();
 	const disconnectStub = sinon.stub();
-	for (const [event, handler] of Object.entries(handlers)) {
+
+	for (const [ event, handler ] of Object.entries(handlers)) {
 		mockSocket.on(event, handler);
 	}
 
@@ -50,19 +51,20 @@ describe('index module', () => {
 	const ioStub = sinon.stub().returns(mockSocket);
 
 	before(async () => {
-		await td.replaceEsm('execa', {execa: execaStub});
-		await td.replaceEsm('socket.io-client', {io: ioStub});
-		await td.replaceEsm('../../src/command/ping-command.ts', {PingCommand: PingCommandStub, pingCmd: pingCmdStub});
-		await td.replaceEsm('../../src/lib/status-manager.ts', {initStatusManager: initStatusManagerStub, getStatusManager: getStatusManagerStub});
+		await td.replaceEsm('execa', { execa: execaStub });
+		await td.replaceEsm('socket.io-client', { io: ioStub });
+		await td.replaceEsm('../../src/command/ping-command.ts', { PingCommand: PingCommandStub, pingCmd: pingCmdStub });
+		await td.replaceEsm('../../src/lib/status-manager.ts', { initStatusManager: initStatusManagerStub, getStatusManager: getStatusManagerStub });
 	});
 
 	beforeEach(() => {
-		sandbox = sinon.createSandbox({useFakeTimers: true});
+		sandbox = sinon.createSandbox({ useFakeTimers: true });
 	});
 
 	afterEach(() => {
 		execaStub.reset();
 		runStub.reset();
+
 		for (const stub of Object.values(handlers)) {
 			stub.reset();
 		}
@@ -88,7 +90,7 @@ describe('index module', () => {
 		mockSocket.emit('connect');
 		await sandbox.clock.nextAsync();
 
-		mockSocket.emit('probe:measurement:request', {id: '123', measurement: {type: 'ping'}});
+		mockSocket.emit('probe:measurement:request', { id: '123', measurement: { type: 'ping' } });
 
 		expect((execaStub.firstCall.args[0] as string).endsWith('/src/sh/unbuffer.sh')).to.be.true;
 		expect(initStatusManagerStub.callCount).to.equal(1);
@@ -105,14 +107,16 @@ describe('index module', () => {
 
 		expect(ioStub.calledOnce).to.be.true;
 		expect(ioStub.firstCall.args[0]).to.equal('ws://api.globalping.io/probes');
+
 		expect(ioStub.firstCall.args[1]).to.deep.include({
-			transports: ['websocket'],
+			transports: [ 'websocket' ],
 			reconnectionDelay: 100,
 			reconnectionDelayMax: 500,
 		});
+
 		expect(statusManagerStub.sendStatus.callCount).to.equal(1);
 		expect(initStatusManagerStub.callCount).to.equal(1);
-		expect(initStatusManagerStub.firstCall.args).to.deep.equal([mockSocket, pingCmdStub]);
+		expect(initStatusManagerStub.firstCall.args).to.deep.equal([ mockSocket, pingCmdStub ]);
 		expect(handlers['probe:dns:update'].calledOnce).to.be.true;
 	});
 
@@ -120,8 +124,8 @@ describe('index module', () => {
 		const exitStub = sandbox.stub(process, 'exit');
 
 		await import('../../src/index.js');
-		mockSocket.emit('connect_error', {message: 'failed to collect probe metadata'});
-		mockSocket.emit('connect_error', {message: 'vpn detected'});
+		mockSocket.emit('connect_error', { message: 'failed to collect probe metadata' });
+		mockSocket.emit('connect_error', { message: 'vpn detected' });
 
 		expect(disconnectStub.callCount).to.equal(2);
 		expect(exitStub.notCalled).to.be.true;
@@ -131,7 +135,7 @@ describe('index module', () => {
 		const exitStub = sandbox.stub(process, 'exit');
 
 		await import('../../src/index.js');
-		mockSocket.emit('connect_error', {message: 'invalid probe version'});
+		mockSocket.emit('connect_error', { message: 'invalid probe version' });
 
 		expect(disconnectStub.notCalled).to.be.true;
 		expect(exitStub.calledOnce).to.be.true;
@@ -143,7 +147,7 @@ describe('index module', () => {
 		mockSocket.emit('api:connect:location', fakeLocation);
 		await sandbox.clock.nextAsync();
 
-		mockSocket.emit('probe:measurement:request', {measurementId: 'measurementid', testId: 'testid', measurement: {type: 'ping'}});
+		mockSocket.emit('probe:measurement:request', { measurementId: 'measurementid', testId: 'testid', measurement: { type: 'ping' } });
 
 		expect(PingCommandStub.calledOnce).to.be.true;
 		expect(PingCommandStub.firstCall.args[0]).to.equal(pingCmdStub);
@@ -152,7 +156,7 @@ describe('index module', () => {
 		expect(runStub.firstCall.args[0]).to.equal(mockSocket);
 		expect(runStub.firstCall.args[1]).to.equal('measurementid');
 		expect(runStub.firstCall.args[2]).to.equal('testid');
-		expect(runStub.firstCall.args[3]).to.deep.equal({type: 'ping'});
+		expect(runStub.firstCall.args[3]).to.deep.equal({ type: 'ping' });
 	});
 
 	it('should disconnect on "disconnect" event from API', async () => {
@@ -171,7 +175,7 @@ describe('index module', () => {
 		process.once('SIGTERM', () => {
 			sandbox.clock.tick(150);
 			expect(statusManagerStub.stop.callCount).to.equal(1);
-			expect(statusManagerStub.stop.args[0]).to.deep.equal(['sigterm']);
+			expect(statusManagerStub.stop.args[0]).to.deep.equal([ 'sigterm' ]);
 			expect(exitStub.calledOnce).to.be.true;
 		});
 
@@ -182,12 +186,12 @@ describe('index module', () => {
 		const exitStub = sandbox.stub(process, 'exit');
 		await import('../../src/index.js');
 		mockSocket.emit('connect');
-		mockSocket.emit('probe:measurement:request', {id: '123', measurement: {type: 'ping'}});
+		mockSocket.emit('probe:measurement:request', { id: '123', measurement: { type: 'ping' } });
 
 		process.once('SIGTERM', () => {
 			sandbox.clock.tick(60_500);
 			expect(statusManagerStub.stop.callCount).to.equal(1);
-			expect(statusManagerStub.stop.args[0]).to.deep.equal(['sigterm']);
+			expect(statusManagerStub.stop.args[0]).to.deep.equal([ 'sigterm' ]);
 			expect(exitStub.calledOnce).to.be.true;
 		});
 

@@ -1,7 +1,7 @@
 
-import type {Socket} from 'socket.io-client';
-import type {ProgressType as MtrProgressType, ResultTypeJson as MtrResultTypeJson} from '../command/handlers/mtr/types.js';
-import {PROGRESS_INTERVAL_TIME} from '../constants.js';
+import type { Socket } from 'socket.io-client';
+import type { ProgressType as MtrProgressType, ResultTypeJson as MtrResultTypeJson } from '../command/handlers/mtr/types.js';
+import { PROGRESS_INTERVAL_TIME } from '../constants.js';
 
 type ProgressType = MtrProgressType;
 type ResultTypeJson = MtrResultTypeJson;
@@ -11,13 +11,13 @@ export class ProgressBufferOverwrite {
 	private timer?: NodeJS.Timeout;
 	private isFirst = true;
 
-	constructor(
+	constructor (
 		private readonly socket: Socket,
 		private readonly testId: string,
 		private readonly measurementId: string,
 	) {}
 
-	pushProgress(progress: ProgressType) {
+	pushProgress (progress: ProgressType) {
 		this.buffer = progress;
 
 		if (this.isFirst) {
@@ -30,7 +30,7 @@ export class ProgressBufferOverwrite {
 		}
 	}
 
-	pushResult(result: ResultTypeJson) {
+	pushResult (result: ResultTypeJson) {
 		if (this.timer) {
 			clearTimeout(this.timer);
 		}
@@ -38,7 +38,7 @@ export class ProgressBufferOverwrite {
 		this.sendResult(result);
 	}
 
-	private sendProgress() {
+	private sendProgress () {
 		delete this.timer;
 
 		if (!this.buffer) {
@@ -51,10 +51,11 @@ export class ProgressBufferOverwrite {
 			overwrite: true,
 			result: this.buffer,
 		});
+
 		delete this.buffer;
 	}
 
-	private sendResult(result: ResultTypeJson) {
+	private sendResult (result: ResultTypeJson) {
 		this.socket.emit('probe:measurement:result', {
 			testId: this.testId,
 			measurementId: this.measurementId,

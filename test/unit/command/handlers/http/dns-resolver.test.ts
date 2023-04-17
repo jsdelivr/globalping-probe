@@ -1,15 +1,15 @@
-import {expect} from 'chai';
+import { expect } from 'chai';
 import * as td from 'testdouble';
-import {callbackify} from '../../../../../src/lib/util.js';
-import {type ResolverType, type ResolverOptionsType, type Options, type ErrnoException, type IpFamily} from '../../../../../src/command/handlers/http/dns-resolver.js';
+import { callbackify } from '../../../../../src/lib/util.js';
+import type { ResolverType, Options, ErrnoException, IpFamily } from '../../../../../src/command/handlers/http/dns-resolver.js';
 
-export const buildResolver = (ipList: string[]): ResolverType => (_hostname: string, _options: ResolverOptionsType): Promise<string[]> => Promise.resolve(ipList);
+export const buildResolver = (ipList: string[]): ResolverType => (): Promise<string[]> => Promise.resolve(ipList);
 
 class NativeResolverMock {
 	public resolve4: ResolverType;
 
-	constructor() {
-		this.resolve4 = buildResolver(['1.1.1.1']);
+	constructor () {
+		this.resolve4 = buildResolver([ '1.1.1.1' ]);
 	}
 }
 
@@ -17,8 +17,8 @@ describe('http helper', () => {
 	let dnsLookup: (resolverAddr: string | undefined, resolverFn?: ResolverType) => (hostname: string, options: Options) => Promise<Error | ErrnoException | [string, number]>;
 
 	before(async () => {
-		await td.replaceEsm('node:dns', null, {promises: {Resolver: NativeResolverMock}});
-		({dnsLookup} = await import('../../../../../src/command/handlers/http/dns-resolver.js'));
+		await td.replaceEsm('node:dns', null, { promises: { Resolver: NativeResolverMock } });
+		({ dnsLookup } = await import('../../../../../src/command/handlers/http/dns-resolver.js'));
 	});
 
 	after(() => {
@@ -28,7 +28,7 @@ describe('http helper', () => {
 	describe('dns', () => {
 		it('should return an error (private ip)', async () => {
 			const data = {
-				ipList: ['192.168.0.1'],
+				ipList: [ '192.168.0.1' ],
 				hostname: 'abc.com',
 				options: {
 					family: 4 as IpFamily,
@@ -54,7 +54,7 @@ describe('http helper', () => {
 
 		it('should filter out private ip, return public ip', async () => {
 			const data = {
-				ipList: ['192.168.0.1', '1.1.1.1'],
+				ipList: [ '192.168.0.1', '1.1.1.1' ],
 				hostname: 'abc.com',
 				options: {
 					family: 4 as IpFamily,
@@ -69,12 +69,12 @@ describe('http helper', () => {
 				data.options,
 			) as [string, number];
 
-			expect(response).to.deep.equal(['1.1.1.1', 4]);
+			expect(response).to.deep.equal([ '1.1.1.1', 4 ]);
 		});
 
-		it('should pass - callbackify', done => {
+		it('should pass - callbackify', (done) => {
 			const data = {
-				ipList: ['192.168.0.1', '1.1.1.1'],
+				ipList: [ '192.168.0.1', '1.1.1.1' ],
 				hostname: 'abc.com',
 				options: {
 					family: 4 as IpFamily,
@@ -110,7 +110,7 @@ describe('http helper', () => {
 				data.options,
 			) as [string, number];
 
-			expect(response).to.deep.equal(['1.1.1.1', 4]);
+			expect(response).to.deep.equal([ '1.1.1.1', 4 ]);
 		});
 	});
 });

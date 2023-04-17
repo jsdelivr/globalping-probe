@@ -1,12 +1,12 @@
 import process from 'node:process';
-import {expect} from 'chai';
+import { expect } from 'chai';
 import * as sinon from 'sinon';
 
 describe('restart module', () => {
 	let sandbox: sinon.SinonSandbox;
 
 	beforeEach(() => {
-		sandbox = sinon.createSandbox({useFakeTimers: true});
+		sandbox = sinon.createSandbox({ useFakeTimers: true });
 	});
 
 	afterEach(() => {

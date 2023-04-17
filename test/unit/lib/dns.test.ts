@@ -1,5 +1,5 @@
-import {expect} from 'chai';
-import {getDnsServers} from '../../../src/lib/dns.js';
+import { expect } from 'chai';
+import { getDnsServers } from '../../../src/lib/dns.js';
 
 const client = (list: string[]) => () => list;
 
@@ -14,6 +14,7 @@ describe('dns lib', () => {
 			const servers = getDnsServers(client(input));
 
 			expect(servers.length).to.equal(1);
+
 			expect(servers).to.deep.equal([
 				'1.1.1.1',
 			]);
@@ -28,6 +29,7 @@ describe('dns lib', () => {
 			const servers = getDnsServers(client(input));
 
 			expect(servers.length).to.equal(1);
+
 			expect(servers).to.deep.equal([
 				'1.1.1.1',
 			]);
@@ -44,6 +46,7 @@ describe('dns lib', () => {
 			const servers = getDnsServers(client(input));
 
 			expect(servers.length).to.equal(2);
+
 			expect(servers).to.deep.equal([
 				'private',
 				'1.1.1.1',
@@ -59,6 +62,7 @@ describe('dns lib', () => {
 			const servers = getDnsServers(client(input));
 
 			expect(servers.length).to.equal(2);
+
 			expect(servers).to.deep.equal([
 				'private',
 				'1.1.1.1',

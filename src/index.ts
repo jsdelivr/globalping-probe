@@ -1,21 +1,21 @@
 import process from 'node:process';
 import throng from 'throng';
-import {io} from 'socket.io-client';
+import { io } from 'socket.io-client';
 import physicalCpuCount from 'physical-cpu-count';
-import type {CommandInterface, MeasurementRequest} from './types.js';
-import {loadAll as loadAllDeps} from './lib/dependencies.js';
-import {scopedLogger} from './lib/logger.js';
-import {getConfValue} from './lib/config.js';
-import {apiErrorHandler} from './helper/api-error-handler.js';
-import {apiConnectLocationHandler} from './helper/api-connect-handler.js';
-import {dnsCmd, DnsCommand} from './command/dns-command.js';
-import {pingCmd, PingCommand} from './command/ping-command.js';
-import {traceCmd, TracerouteCommand} from './command/traceroute-command.js';
-import {mtrCmd, MtrCommand} from './command/mtr-command.js';
-import {httpCmd, HttpCommand} from './command/http-command.js';
-import {run as runStatsAgent} from './lib/stats/client.js';
-import {initStatusManager} from './lib/status-manager.js';
-import {VERSION} from './constants.js';
+import type { CommandInterface, MeasurementRequest } from './types.js';
+import { loadAll as loadAllDeps } from './lib/dependencies.js';
+import { scopedLogger } from './lib/logger.js';
+import { getConfValue } from './lib/config.js';
+import { apiErrorHandler } from './helper/api-error-handler.js';
+import { apiConnectLocationHandler } from './helper/api-connect-handler.js';
+import { dnsCmd, DnsCommand } from './command/dns-command.js';
+import { pingCmd, PingCommand } from './command/ping-command.js';
+import { traceCmd, TracerouteCommand } from './command/traceroute-command.js';
+import { mtrCmd, MtrCommand } from './command/mtr-command.js';
+import { httpCmd, HttpCommand } from './command/http-command.js';
+import { run as runStatsAgent } from './lib/stats/client.js';
+import { initStatusManager } from './lib/status-manager.js';
+import { VERSION } from './constants.js';
 
 // Run self-update checks
 import './lib/updater.js';
@@ -41,11 +41,11 @@ handlersMap.set('http', new HttpCommand(httpCmd));
 
 logger.info(`Start probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode`);
 
-function connect() {
+function connect () {
 	const worker = {
 		jobs: new Map<string, number>(),
 		jobsInterval: setInterval(() => {
-			for (const [key, value] of worker.jobs) {
+			for (const [ key, value ] of worker.jobs) {
 				if (Date.now() >= (value + 30_000)) {
 					worker.jobs.delete(key);
 				}
@@ -54,7 +54,7 @@ function connect() {
 	};
 
 	const socket = io(`${getConfValue<string>('api.host')}/probes`, {
-		transports: ['websocket'],
+		transports: [ 'websocket' ],
 		reconnectionDelay: 100,
 		reconnectionDelayMax: 500,
 		query: {
@@ -68,7 +68,6 @@ function connect() {
 	socket
 		.on('probe:sigkill', () => {
 			logger.debug('probe:sigkill requested. Killing the probe.');
-			/* eslint-disable-next-line unicorn/no-process-exit */
 			process.exit();
 		})
 		.on('connect', () => {
@@ -77,6 +76,7 @@ function connect() {
 		})
 		.on('disconnect', (reason: string): void => {
 			logger.debug(`disconnected from API: (${reason})`);
+
 			if (reason === 'io server disconnect') {
 				socket.connect();
 			}
@@ -95,7 +95,6 @@ function connect() {
 
 			if (error.message.startsWith('invalid probe version')) {
 				logger.debug('Detected outdated probe. Restarting.');
-				/* eslint-disable-next-line unicorn/no-process-exit */
 				process.exit();
 			}
 		})
@@ -103,16 +102,19 @@ function connect() {
 		.on('api:connect:location', apiConnectLocationHandler(socket))
 		.on('probe:measurement:request', (data: MeasurementRequest) => {
 			const status = statusManager.getStatus();
+
 			if (status !== 'ready') {
 				logger.warn(`measurement was sent to probe with ${status} status`);
 				return;
 			}
 
-			const {measurementId, testId, measurement} = data;
+			const { measurementId, testId, measurement } = data;
 
 			logger.debug(`${measurement.type} request ${measurementId} received`);
+
 			socket.emit('probe:measurement:ack', null, async () => {
 				const handler = handlersMap.get(measurement.type);
+
 				if (!handler) {
 					return;
 				}
@@ -159,8 +161,8 @@ function connect() {
 
 if (process.env['NODE_ENV'] === 'development') {
 	// Run multiple clients in dev mode for easier debugging
-	throng({worker: connect, count: physicalCpuCount})
-		.catch(error => { // eslint-disable-line unicorn/prefer-top-level-await
+	throng({ worker: connect, count: physicalCpuCount })
+		.catch((error) => {
 			logger.error(error);
 		});
 } else {

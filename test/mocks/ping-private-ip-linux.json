@@ -1,20 +1,20 @@
 {
-  "testId": "test",
-  "measurementId": "measurement",
-  "result": {
-    "status": "failed",
-    "resolvedAddress": null,
-    "resolvedHostname": null,
-    "stats": {
-      "min": null,
-      "max": null,
-      "avg": null,
-      "total": null,
-      "loss": null,
-      "rcv": null,
-      "drop": null
-    },
-    "timings": [],
-    "rawOutput": "Private IP ranges are not allowed"
-  }
+	"testId": "test",
+	"measurementId": "measurement",
+	"result": {
+		"status": "failed",
+		"resolvedAddress": null,
+		"resolvedHostname": null,
+		"stats": {
+			"min": null,
+			"max": null,
+			"avg": null,
+			"total": null,
+			"loss": null,
+			"rcv": null,
+			"drop": null
+		},
+		"timings": [],
+		"rawOutput": "Private IP ranges are not allowed"
+	}
 }

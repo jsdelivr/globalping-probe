@@ -1,15 +1,15 @@
 {
-  "api": {
-    "host": "ws://localhost:3000"
-  },
-  "update": {
-    "releaseUrl": "https://api.github.com/repos/jsdelivr/globalping-probe/releases/latest",
-    "interval": 10,
-    "maxDeviation": 5
-  },
-  "commands": {
-    "mtr": {
-      "interval": 1
-    }
-  }
+	"api": {
+		"host": "ws://172.31.0.1:3000"
+	},
+	"update": {
+		"releaseUrl": "https://api.github.com/repos/jsdelivr/globalping-probe/releases/latest",
+		"interval": 10,
+		"maxDeviation": 5
+	},
+	"commands": {
+		"mtr": {
+			"interval": 1
+		}
+	}
 }

@@ -1,22 +1,22 @@
 import dns from 'node:dns';
-import {isIP} from 'is-ip';
+import { isIP } from 'is-ip';
 import isIpPrivate from 'private-ip';
 import Joi from 'joi';
-import type {Socket} from 'socket.io-client';
-import {execa, type ExecaChildProcess} from 'execa';
-import type {CommandInterface} from '../types.js';
-import {isExecaError} from '../helper/execa-error-check.js';
-import {getConfValue} from '../lib/config.js';
-import {ProgressBufferOverwrite} from '../helper/progress-buffer-overwrite.js';
-import {scopedLogger} from '../lib/logger.js';
-import {InvalidOptionsException} from './exception/invalid-options-exception.js';
+import type { Socket } from 'socket.io-client';
+import { execa, type ExecaChildProcess } from 'execa';
+import type { CommandInterface } from '../types.js';
+import { isExecaError } from '../helper/execa-error-check.js';
+import { getConfValue } from '../lib/config.js';
+import { ProgressBufferOverwrite } from '../helper/progress-buffer-overwrite.js';
+import { scopedLogger } from '../lib/logger.js';
+import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 
 import type {
 	HopType,
 	ResultType,
 	ResultTypeJson,
 } from './handlers/mtr/types.js';
-import MtrParser, {NEW_LINE_REG_EXP} from './handlers/mtr/parser.js';
+import MtrParser, { NEW_LINE_REG_EXP } from './handlers/mtr/parser.js';
 
 export type MtrOptions = {
 	type: 'mtr';
@@ -40,10 +40,10 @@ const mtrOptionsSchema = Joi.object<MtrOptions>({
 	port: Joi.number(),
 });
 
-export const getResultInitState = (): ResultType => ({status: 'finished', hops: [], rawOutput: '', data: []});
+export const getResultInitState = (): ResultType => ({ status: 'finished', hops: [], rawOutput: '', data: [] });
 
 export const argBuilder = (options: MtrOptions): string[] => {
-	const intervalArg = ['--interval', String(getConfValue('commands.mtr.interval'))];
+	const intervalArg = [ '--interval', String(getConfValue('commands.mtr.interval')) ];
 	const protocolArg = options.protocol === 'icmp' ? [] : `--${options.protocol}`;
 	const packetsArg = String(options.packets);
 
@@ -51,13 +51,13 @@ export const argBuilder = (options: MtrOptions): string[] => {
 		// Ipv4
 		'-4',
 		intervalArg,
-		['--gracetime', '3'],
-		['--max-ttl', '30'],
-		['--timeout', '15'],
+		[ '--gracetime', '3' ],
+		[ '--max-ttl', '30' ],
+		[ '--timeout', '15' ],
 		protocolArg,
-		['-c', packetsArg],
-		['--raw'],
-		['-P', `${options.port}`],
+		[ '-c', packetsArg ],
+		[ '--raw' ],
+		[ '-P', `${options.port}` ],
 		options.target,
 	].flat();
 
@@ -66,14 +66,14 @@ export const argBuilder = (options: MtrOptions): string[] => {
 
 export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', ['mtr', ...args]);
+	return execa('unbuffer', [ 'mtr', ...args ]);
 };
 
 export class MtrCommand implements CommandInterface<MtrOptions> {
-	constructor(private readonly cmd: typeof mtrCmd, readonly dnsResolver: DnsResolver = dns.promises.resolve) {}
+	constructor (private readonly cmd: typeof mtrCmd, readonly dnsResolver: DnsResolver = dns.promises.resolve) {}
 
-	async run(socket: Socket, measurementId: string, testId: string, options: MtrOptions): Promise<void> {
-		const {value: cmdOptions, error: validationError} = mtrOptionsSchema.validate(options);
+	async run (socket: Socket, measurementId: string, testId: string, options: MtrOptions): Promise<void> {
+		const { value: cmdOptions, error: validationError } = mtrOptionsSchema.validate(options);
 
 		if (validationError) {
 			throw new InvalidOptionsException('mtr', validationError);
@@ -83,6 +83,8 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		const cmd = this.cmd(cmdOptions);
 		let result: ResultType = getResultInitState();
 
+		// TODO: remove:
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		cmd.stdout?.on('data', async (data: Buffer) => {
 			if (data.toString().startsWith('mtr:')) {
 				cmd.stderr?.emit('error', data);
@@ -137,13 +139,13 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		buffer.pushResult(this.toJsonOutput(result));
 	}
 
-	async parseResult(data: string[], isFinalResult = false): Promise<ResultType> {
+	async parseResult (data: string[], isFinalResult = false): Promise<ResultType> {
 		let nHops = MtrParser.rawParse(data.join('\n'), isFinalResult);
 		const asnList = await this.queryAsn(nHops);
 		nHops = this.populateAsn(nHops, asnList);
 		const rawOutput = MtrParser.outputBuilder(nHops);
 
-		const lastHop = [...nHops].reverse().find(h => h.resolvedAddress);
+		const lastHop = [ ...nHops ].reverse().find(h => h.resolvedAddress);
 
 		return {
 			status: 'finished',
@@ -155,7 +157,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		};
 	}
 
-	populateAsn(hops: HopType[], asnList: string[][]): HopType[] {
+	populateAsn (hops: HopType[], asnList: string[][]): HopType[] {
 		return hops.map((hop: HopType) => {
 			const asn = asnList.find((a: string[]) => hop.resolvedAddress ? a.includes(hop.resolvedAddress) : false);
 
@@ -172,7 +174,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		});
 	}
 
-	async queryAsn(hops: HopType[]): Promise<string[][]> {
+	async queryAsn (hops: HopType[]): Promise<string[][]> {
 		const dnsResult = await Promise.allSettled(hops.map(h => (
 			h?.asn.length < 1 && h?.resolvedAddress && !isIpPrivate(h?.resolvedAddress)
 				? this.lookupAsn(h?.resolvedAddress)
@@ -181,7 +183,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 		const asnList = [];
 
-		for (const [index, result] of dnsResult.entries()) {
+		for (const [ index, result ] of dnsResult.entries()) {
 			const resolvedAddress = hops[index]?.resolvedAddress;
 
 			if (!resolvedAddress || result.status === 'rejected' || !result.value) {
@@ -189,20 +191,20 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			}
 
 			const sDns = result.value.split('|');
-			asnList.push([resolvedAddress, sDns[0]!.trim() ?? '']);
+			asnList.push([ resolvedAddress, sDns[0]!.trim() ?? '' ]);
 		}
 
 		return asnList;
 	}
 
-	async lookupAsn(addr: string): Promise<string | undefined> {
+	async lookupAsn (addr: string): Promise<string | undefined> {
 		const reversedAddr = addr.split('.').reverse().join('.');
 		const result = await this.dnsResolver(`${reversedAddr}.origin.asn.cymru.com`, 'TXT');
 
 		return result.flat()[0];
 	}
 
-	private toJsonOutput(input: ResultType): ResultTypeJson {
+	private toJsonOutput (input: ResultType): ResultTypeJson {
 		return {
 			status: input.status,
 			rawOutput: input.rawOutput,
@@ -216,7 +218,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		};
 	}
 
-	private async checkForPrivateDest(target: string): Promise<void> {
+	private async checkForPrivateDest (target: string): Promise<void> {
 		if (isIP(target)) {
 			if (isIpPrivate(target)) {
 				throw new Error('private destination');
@@ -225,7 +227,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			return;
 		}
 
-		const [ipAddress] = await this.dnsResolver(target).catch(() => []);
+		const [ ipAddress ] = await this.dnsResolver(target).catch(() => []);
 
 		if (isIpPrivate(String(ipAddress))) {
 			throw new Error('private destination');

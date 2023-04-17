@@ -1,12 +1,12 @@
 import Joi from 'joi';
 import isIpPrivate from 'private-ip';
-import type {Socket} from 'socket.io-client';
-import {execa, type ExecaChildProcess} from 'execa';
-import type {CommandInterface} from '../types.js';
-import {isExecaError} from '../helper/execa-error-check.js';
-import {ProgressBuffer} from '../helper/progress-buffer.js';
-import {scopedLogger} from '../lib/logger.js';
-import {InvalidOptionsException} from './exception/invalid-options-exception.js';
+import type { Socket } from 'socket.io-client';
+import { execa, type ExecaChildProcess } from 'execa';
+import type { CommandInterface } from '../types.js';
+import { isExecaError } from '../helper/execa-error-check.js';
+import { ProgressBuffer } from '../helper/progress-buffer.js';
+import { scopedLogger } from '../lib/logger.js';
+import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 
 const reHost = /(\S+)\s+\((?:((?:\d+\.){3}\d+)|([\da-fA-F:]))\)/;
 const reRtt = /(\d+(?:\.?\d+)?)\s+ms(!\S*)?/g;
@@ -57,19 +57,19 @@ const traceOptionsSchema = Joi.object<TraceOptions>({
 });
 
 export const argBuilder = (options: TraceOptions): string[] => {
-	const port = options.protocol === 'TCP' ? ['-p', `${options.port}`] : [];
+	const port = options.protocol === 'TCP' ? [ '-p', `${options.port}` ] : [];
 
 	const args = [
 		// Ipv4
 		'-4',
 		// Max ttl
-		['-m', '20'],
+		[ '-m', '20' ],
 		// Max timeout
-		['-w', '2'],
+		[ '-w', '2' ],
 		// Probe packets per hop
-		['-q', '2'],
+		[ '-q', '2' ],
 		// Concurrent packets
-		['-N', '20'],
+		[ '-N', '20' ],
 		// Protocol
 		`--${options.protocol.toLowerCase()}`,
 		// Port
@@ -83,14 +83,14 @@ export const argBuilder = (options: TraceOptions): string[] => {
 
 export const traceCmd = (options: TraceOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', ['traceroute', ...args]);
+	return execa('unbuffer', [ 'traceroute', ...args ]);
 };
 
 export class TracerouteCommand implements CommandInterface<TraceOptions> {
-	constructor(private readonly cmd: typeof traceCmd) {}
+	constructor (private readonly cmd: typeof traceCmd) {}
 
-	async run(socket: Socket, measurementId: string, testId: string, options: TraceOptions): Promise<void> {
-		const {value: cmdOptions, error: validationError} = traceOptionsSchema.validate(options);
+	async run (socket: Socket, measurementId: string, testId: string, options: TraceOptions): Promise<void> {
+		const { value: cmdOptions, error: validationError } = traceOptionsSchema.validate(options);
 
 		if (validationError) {
 			throw new InvalidOptionsException('traceroute', validationError);
@@ -113,7 +113,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 					return;
 				}
 
-				buffer.pushProgress({rawOutput: data.toString()});
+				buffer.pushProgress({ rawOutput: data.toString() });
 			});
 		}
 
@@ -155,7 +155,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		buffer.pushResult(result);
 	}
 
-	private validatePartialResult(rawOutput: string, cmd: ExecaChildProcess): boolean {
+	private validatePartialResult (rawOutput: string, cmd: ExecaChildProcess): boolean {
 		const parseResult = this.parse(rawOutput);
 
 		if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
@@ -166,7 +166,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		return true;
 	}
 
-	private parse(rawOutput: string): ParsedOutput {
+	private parse (rawOutput: string): ParsedOutput {
 		const lines = rawOutput.split('\n');
 
 		if (lines.length === 0) {
@@ -194,7 +194,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		};
 	}
 
-	private toJsonOutput(input: ParsedOutput): ParsedOutputJson {
+	private toJsonOutput (input: ParsedOutput): ParsedOutputJson {
 		return {
 			rawOutput: input.rawOutput,
 			status: 'finished',
@@ -208,7 +208,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		};
 	}
 
-	private parseHeader(line: string) {
+	private parseHeader (line: string) {
 		const hostMatch = reHost.exec(line);
 
 		if (!hostMatch || hostMatch.length < 3) {
@@ -221,14 +221,14 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		};
 	}
 
-	private parseLine(line: string): ParsedLine {
+	private parseLine (line: string): ParsedLine {
 		const hostMatch = reHost.exec(line);
 		const rttList = Array.from(line.matchAll(reRtt), m => Number.parseFloat(m[1]!));
 
 		return {
 			resolvedHostname: hostMatch?.[1] ?? '*',
 			resolvedAddress: hostMatch?.[2] ?? '*',
-			timings: rttList.map(rtt => ({rtt})),
+			timings: rttList.map(rtt => ({ rtt })),
 		};
 	}
 }

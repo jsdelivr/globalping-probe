@@ -1,20 +1,20 @@
 {
-  "testId": "test",
-  "measurementId": "measurement",
-  "result": {
-    "status": "finished",
-    "resolvedAddress": "172.13.23.43",
-    "resolvedHostname": null,
-    "timings": [],
-    "stats": {
-      "min": null,
-      "max": null,
-      "avg": null,
-      "total": 3,
-      "loss": 100,
-      "rcv": 0,
-      "drop": 3
-    },
-    "rawOutput": "PING 172.13.23.43 (172.13.23.43): 56 data bytes\nRequest timeout for icmp_seq 0\nRequest timeout for icmp_seq 1\n\n--- 172.13.23.43 ping statistics ---\n3 packets transmitted, 0 packets received, 100.0% packet loss"
-  }
+	"testId": "test",
+	"measurementId": "measurement",
+	"result": {
+		"status": "finished",
+		"resolvedAddress": "172.13.23.43",
+		"resolvedHostname": null,
+		"timings": [],
+		"stats": {
+			"min": null,
+			"max": null,
+			"avg": null,
+			"total": 3,
+			"loss": 100,
+			"rcv": 0,
+			"drop": 3
+		},
+		"rawOutput": "PING 172.13.23.43 (172.13.23.43): 56 data bytes\nRequest timeout for icmp_seq 0\nRequest timeout for icmp_seq 1\n\n--- 172.13.23.43 ping statistics ---\n3 packets transmitted, 0 packets received, 100.0% packet loss"
+	}
 }

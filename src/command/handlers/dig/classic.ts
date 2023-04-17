@@ -1,5 +1,5 @@
 import isIpPrivate from 'private-ip';
-import {InternalError} from '../../../lib/internal-error.js';
+import { InternalError } from '../../../lib/internal-error.js';
 import {
 	SECTION_REG_EXP,
 	NEW_LINE_REG_EXP,
@@ -9,7 +9,7 @@ import {
 	type DnsParseLoopResponse,
 	type DnsParseLoopResponseJson,
 } from './shared.js';
-import {statusNameToStatusCodeMap} from './dig-status-code-map.js';
+import { statusNameToStatusCodeMap } from './dig-status-code-map.js';
 
 type DnsParseLoopResponseClassic = DnsParseLoopResponse & {
 	statusCodeName: string;
@@ -33,10 +33,11 @@ const RESOLVER_REG_EXP = /SERVER:.*\((.*?)\)/g;
 const STATUS_CODE_NAME_REG_EXP = /status:\s*([A-Z]+)/g;
 
 export const ClassicDigParser = {
-	rewrite(rawOutput: string): string {
+	rewrite (rawOutput: string): string {
 		const lines = rawOutput.split('\n');
 
 		let output = rawOutput;
+
 		if (lines.length <= 2) {
 			const ipMatchList = rawOutput.match(IPV4_REG_EXP) ?? [];
 
@@ -46,7 +47,7 @@ export const ClassicDigParser = {
 				}
 			}
 		} else {
-			output = lines.map(line => {
+			output = lines.map((line) => {
 				const serverMatch = ClassicDigParser.getResolverServer(line);
 
 				if (serverMatch && isIpPrivate(serverMatch)) {
@@ -60,7 +61,7 @@ export const ClassicDigParser = {
 		return output;
 	},
 
-	parse(rawOutput: string): Error | DnsParseResponse {
+	parse (rawOutput: string): Error | DnsParseResponse {
 		const lines = rawOutput.split(NEW_LINE_REG_EXP);
 
 		if (lines.length < 6) {
@@ -80,7 +81,7 @@ export const ClassicDigParser = {
 		};
 	},
 
-	toJsonOutput(input: DnsParseResponse): DnsParseResponseJson {
+	toJsonOutput (input: DnsParseResponse): DnsParseResponseJson {
 		return {
 			status: input.status,
 			statusCodeName: input.statusCodeName ?? null,
@@ -88,41 +89,46 @@ export const ClassicDigParser = {
 			rawOutput: input.rawOutput,
 			answers: input.answers ?? [],
 			timings: {
-				...(input.timings ?? {total: 0}),
+				...(input.timings ?? { total: 0 }),
 			},
 			resolver: input.resolver ?? null,
 		};
 	},
 
-	parseLoop(lines: string[]): DnsParseLoopResponseClassic {
+	parseLoop (lines: string[]): DnsParseLoopResponseClassic {
 		const result: DnsParseLoopResponseClassic = {
 			statusCodeName: '',
 			statusCode: null,
 			header: [],
 			answers: [],
 			resolver: '',
-			timings: {total: 0},
+			timings: { total: 0 },
 		};
 
 		let section = 'header';
+
 		for (const line of lines) {
 			const time = ClassicDigParser.getQueryTime(line);
+
 			if (time !== undefined) {
 				result.timings.total = time;
 			}
 
 			const statusCodeName = ClassicDigParser.getStatusCodeName(line);
+
 			if (statusCodeName) {
 				result.statusCodeName = statusCodeName;
 				result.statusCode = statusNameToStatusCodeMap[statusCodeName.toLowerCase()] ?? null;
 			}
 
 			const serverMatch = ClassicDigParser.getResolverServer(line);
+
 			if (serverMatch) {
 				result.resolver = serverMatch === 'x.x.x.x' ? 'private' : serverMatch;
 			}
 
 			let sectionChanged = false;
+
 			if (line.length === 0) {
 				section = '';
 			} else {
@@ -161,15 +167,15 @@ export const ClassicDigParser = {
 		};
 	},
 
-	parseSection(values: string[], section: string): DnsSection {
-		if (!['answer', 'additional'].includes(section)) {
+	parseSection (values: string[], section: string): DnsSection {
+		if (![ 'answer', 'additional' ].includes(section)) {
 			return {};
 		}
 
 		return SharedDigParser.parseSection(values);
 	},
 
-	getQueryTime(line: string): number | undefined {
+	getQueryTime (line: string): number | undefined {
 		const result = QUERY_TIME_REG_EXP.exec(line);
 
 		if (!result) {
@@ -179,7 +185,7 @@ export const ClassicDigParser = {
 		return Number(result[1]);
 	},
 
-	getStatusCodeName(line: string): string | undefined {
+	getStatusCodeName (line: string): string | undefined {
 		const result = STATUS_CODE_NAME_REG_EXP.exec(line);
 
 		if (!result) {
@@ -189,7 +195,7 @@ export const ClassicDigParser = {
 		return result[1];
 	},
 
-	getResolverServer(line: string): string | undefined {
+	getResolverServer (line: string): string | undefined {
 		const result = RESOLVER_REG_EXP.exec(line);
 
 		if (!result) {

@@ -1,15 +1,15 @@
 {
-  "testId": "test",
-  "measurementId": "measurement",
-  "result": {
-    "status": "failed",
-    "statusCodeName": null,
-    "statusCode": null,
-    "rawOutput": ";; Connection to x.x.x.x#212(x.x.x.x) for abc.com failed: connection refused.",
-    "answers": [],
-    "resolver": null,
-    "timings": {
-      "total": 0
-    }
-  }
+	"testId": "test",
+	"measurementId": "measurement",
+	"result": {
+		"status": "failed",
+		"statusCodeName": null,
+		"statusCode": null,
+		"rawOutput": ";; Connection to x.x.x.x#212(x.x.x.x) for abc.com failed: connection refused.",
+		"answers": [],
+		"resolver": null,
+		"timings": {
+			"total": 0
+		}
+	}
 }

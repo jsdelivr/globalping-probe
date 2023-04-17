@@ -1,4 +1,4 @@
-import dns, {type RecordWithTtl} from 'node:dns';
+import dns, { type RecordWithTtl } from 'node:dns';
 import isIpPrivate from 'private-ip';
 
 export type IpFamily = 4 | 6;
@@ -15,7 +15,7 @@ export const buildResolver = (resolverAddr: string | undefined, family: IpFamily
 	const resolver = new dns.promises.Resolver();
 
 	if (resolverAddr) {
-		resolver.setServers([resolverAddr]);
+		resolver.setServers([ resolverAddr ]);
 	}
 
 	const resolve = family === 6 ? resolver.resolve6.bind(resolver) : resolver.resolve4.bind(resolver);
@@ -29,17 +29,13 @@ export const dnsLookup = (resolverAddr: string | undefined, resolverFn?: Resolve
 ): Promise<Error | ErrnoException | [string, number]> => {
 	const resolver = resolverFn ?? buildResolver(resolverAddr, options.family);
 
-	try {
-		const result = await resolver(hostname, {ttl: false});
+	const result = await resolver(hostname, { ttl: false });
 
-		const validIps = result.map(r => isRecordWithTtl(r) ? r.address : r).filter(r => !isIpPrivate(r));
+	const validIps = result.map(r => isRecordWithTtl(r) ? r.address : r).filter(r => !isIpPrivate(r));
 
-		if (validIps.length === 0) {
-			throw new Error(`ENODATA ${hostname}`);
-		}
-
-		return [validIps[0]!, options.family];
-	} catch (error: unknown) {
-		throw error as ErrnoException;
+	if (validIps.length === 0) {
+		throw new Error(`ENODATA ${hostname}`);
 	}
+
+	return [ validIps[0]!, options.family ];
 };

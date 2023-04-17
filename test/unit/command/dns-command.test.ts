@@ -1,7 +1,7 @@
 import * as sinon from 'sinon';
-import {expect} from 'chai';
-import {Socket} from 'socket.io-client';
-import {getCmdMock, getCmdMockResult, getExecaMock} from '../../utils.js';
+import { expect } from 'chai';
+import { Socket } from 'socket.io-client';
+import { getCmdMock, getCmdMockResult, getExecaMock } from '../../utils.js';
 import {
 	DnsCommand,
 	argBuilder,
@@ -195,22 +195,25 @@ describe('dns command', () => {
 
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+
 			for (const progressOutput of outputProgress) {
 				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 			}
 
-			mockCmd.resolve({stdout: rawOutput});
+			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
 			expect(mockSocket.emit.callCount).to.equal(2);
-			expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
+
+			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
 				result: {
 					rawOutput: outputProgress[0],
 				},
 			}]);
-			expect(mockSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+
+			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
 		it('should parse trace without progress messages - dns-trace-success', async () => {
@@ -231,15 +234,16 @@ describe('dns command', () => {
 
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+
 			for (const progressOutput of outputProgress) {
 				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 			}
 
-			mockCmd.resolve({stdout: rawOutput});
+			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
 			expect(mockSocket.emit.callCount).to.equal(1);
-			expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
 		it('should parse dns - dns-success-linux', async () => {
@@ -261,22 +265,25 @@ describe('dns command', () => {
 
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+
 			for (const progressOutput of outputProgress) {
 				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 			}
 
-			mockCmd.resolve({stdout: rawOutput});
+			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
 			expect(mockSocket.emit.callCount).to.equal(2);
-			expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
+
+			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
 				result: {
 					rawOutput: outputProgress[0],
 				},
 			}]);
-			expect(mockSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+
+			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
 		it('should fail in case of execa error - dns-resolver-error-linux', async () => {
@@ -298,7 +305,7 @@ describe('dns command', () => {
 
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
-			mockCmd.reject({stdout: rawOutput, stderr: ''});
+			mockCmd.reject({ stdout: rawOutput, stderr: '' });
 			await runPromise;
 
 			expect(mockSocket.emit.calledOnce).to.be.true;
@@ -325,22 +332,25 @@ describe('dns command', () => {
 
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+
 			for (const progressOutput of outputProgress) {
 				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 			}
 
-			mockCmd.resolve({stdout: rawOutput});
+			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
 			expect(mockSocket.emit.callCount).to.equal(2);
-			expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
+
+			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
 				result: {
 					rawOutput: outputProgress[0],
 				},
 			}]);
-			expect(mockSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+
+			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
 		it('should fail in case of private ip without progress messages - dns-resolved-private-ip-error-linux', async () => {
@@ -362,15 +372,16 @@ describe('dns command', () => {
 
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+
 			for (const progressOutput of outputProgress) {
 				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 			}
 
-			mockCmd.resolve({stdout: rawOutput});
+			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
 			expect(mockSocket.emit.callCount).to.equal(1);
-			expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
 		it('should fail in case of private ip - dns-trace-resolved-private-ip-error-linux', async () => {
@@ -393,22 +404,25 @@ describe('dns command', () => {
 
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+
 			for (const progressOutput of outputProgress) {
 				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 			}
 
-			mockCmd.resolve({stdout: rawOutput});
+			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
 			expect(mockSocket.emit.callCount).to.equal(2);
-			expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
+
+			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
 				result: {
 					rawOutput: outputProgress[0],
 				},
 			}]);
-			expect(mockSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+
+			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
 		it('should fail in case of connection refused - dns-connection-refused-error-linux', async () => {
@@ -430,22 +444,25 @@ describe('dns command', () => {
 
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+
 			for (const progressOutput of outputProgress) {
 				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 			}
 
-			mockCmd.resolve({stdout: rawOutput});
+			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
 			expect(mockSocket.emit.callCount).to.equal(2);
-			expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
+
+			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
 				result: {
 					rawOutput: outputProgress[0],
 				},
 			}]);
-			expect(mockSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+
+			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
 		it('should fail in case of connection refused with private ip - dns-connection-refused-private-error-linux (PRIVATE IP)', async () => {
@@ -467,22 +484,25 @@ describe('dns command', () => {
 
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+
 			for (const progressOutput of outputProgress) {
 				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 			}
 
-			mockCmd.resolve({stdout: rawOutput});
+			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
 			expect(mockSocket.emit.callCount).to.equal(2);
-			expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
+
+			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
 				result: {
 					rawOutput: ';; Connection to x.x.x.x#212(x.x.x.x) for abc.com failed: connection refused.',
 				},
 			}]);
-			expect(mockSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+
+			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
 		it('should fail in case of connection refused with private ip without progress messages - dns-connection-refused-private-error-linux (PRIVATE IP)', async () => {
@@ -504,15 +524,16 @@ describe('dns command', () => {
 
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+
 			for (const progressOutput of outputProgress) {
 				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 			}
 
-			mockCmd.resolve({stdout: rawOutput});
+			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
 			expect(mockSocket.emit.callCount).to.equal(1);
-			expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 	});
 });

@@ -1,14 +1,14 @@
 import * as sinon from 'sinon';
-import {Socket} from 'socket.io-client';
-import {expect} from 'chai';
-import {run} from '../../../../src/lib/stats/client.js';
+import { Socket } from 'socket.io-client';
+import { expect } from 'chai';
+import { run } from '../../../../src/lib/stats/client.js';
 
 describe('stats client', () => {
 	let sandbox: sinon.SinonSandbox;
 	let mockSocket: sinon.SinonStubbedInstance<Socket>;
 
 	beforeEach(() => {
-		sandbox = sinon.createSandbox({useFakeTimers: true});
+		sandbox = sinon.createSandbox({ useFakeTimers: true });
 		mockSocket = sandbox.createStubInstance(Socket) as sinon.SinonStubbedInstance<Socket>;
 	});
 
@@ -17,7 +17,7 @@ describe('stats client', () => {
 	});
 
 	it('should regularly emit stats event', async () => {
-		const worker = {jobs: new Map()};
+		const worker = { jobs: new Map() };
 
 		run(mockSocket, worker);
 

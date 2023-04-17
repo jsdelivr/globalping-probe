@@ -1,7 +1,7 @@
 import * as sinon from 'sinon';
-import {expect} from 'chai';
-import {Socket} from 'socket.io-client';
-import {getCmdMock, getCmdMockResult, getExecaMock} from '../../utils.js';
+import { expect } from 'chai';
+import { Socket } from 'socket.io-client';
+import { getCmdMock, getCmdMockResult, getExecaMock } from '../../utils.js';
 import {
 	MtrCommand,
 	argBuilder,
@@ -10,14 +10,14 @@ import {
 
 const dnsResolver = (isPrivate: boolean) => async (_addr: string, type = 'A') => {
 	if (type === 'TXT') {
-		return ['123 | abc | abc'];
+		return [ '123 | abc | abc' ];
 	}
 
 	if (isPrivate) {
-		return ['192.168.0.1'];
+		return [ '192.168.0.1' ];
 	}
 
-	return ['1.1.1.1'];
+	return [ '1.1.1.1' ];
 };
 
 describe('mtr command executor', () => {
@@ -165,6 +165,7 @@ describe('mtr command executor', () => {
 
 			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(false));
 			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+
 			for (const progressOutput of rawOutputLines) {
 				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 			}
@@ -173,7 +174,8 @@ describe('mtr command executor', () => {
 			await runPromise;
 
 			expect(mockedSocket.emit.callCount).to.equal(2);
-			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
+
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				measurementId: 'measurement',
 				overwrite: true,
 				result: {
@@ -181,7 +183,8 @@ describe('mtr command executor', () => {
 				},
 				testId: 'test',
 			}]);
-			expect(mockedSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+
+			expect(mockedSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
 		it('should run and parse mtr without progress messages', async () => {
@@ -199,6 +202,7 @@ describe('mtr command executor', () => {
 
 			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(false));
 			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+
 			for (const progressOutput of rawOutputLines) {
 				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 			}
@@ -207,7 +211,7 @@ describe('mtr command executor', () => {
 			await runPromise;
 
 			expect(mockedSocket.emit.callCount).to.equal(1);
-			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
 		it('should detect Private IP and stop', async () => {
