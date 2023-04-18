@@ -52,8 +52,7 @@
 		"testdouble": "^3.17.2",
 		"ts-node": "^10.9.1",
 		"tsx": "^3.12.6",
-		"typescript": "^4.9.5",
-		"xo": "^0.54.1"
+		"typescript": "^4.9.5"
 	},
 	"scripts": {
 		"build": "tsc && npm run copy:sh",
