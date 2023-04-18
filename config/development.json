@@ -1,6 +1,6 @@
 {
 	"api": {
-		"host": "ws://172.31.0.1:3000"
+		"host": "ws://localhost:3000"
 	},
 	"update": {
 		"releaseUrl": "https://api.github.com/repos/jsdelivr/globalping-probe/releases/latest",
