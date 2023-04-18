@@ -23,7 +23,7 @@ const getInitialHopState = (): HopType => ({
 	timings: [],
 });
 
-const getSpacing = (length: number): string => Array.from({length}).fill(' ').join('');
+const getSpacing = (length: number): string => Array.from({ length }).fill(' ').join('');
 const withSpacing = (string_: string | number, dSpacing: number, left = false): string => {
 	const sSpacing = getSpacing(dSpacing - String(string_).length);
 
@@ -43,15 +43,15 @@ const roundNumber = (value: number): number => {
 };
 
 export const MtrParser = {
-	outputBuilder(hops: HopType[]): string {
+	outputBuilder (hops: HopType[]): string {
 		const rawOutput = [];
 
 		const spacings = {
 			index: String(hops.length).length,
 			asn: 2 + Math.max(...hops.map(h => String(h?.asn.join(' ') ?? 0).length)),
 			hostname: (3
-        + Math.max(...hops.map(h => String(h?.resolvedAddress ?? 0).length))
-        + Math.max(...hops.map(h => String(h?.resolvedHostname ?? 0).length))
+				+ Math.max(...hops.map(h => String(h?.resolvedAddress ?? 0).length))
+				+ Math.max(...hops.map(h => String(h?.resolvedHostname ?? 0).length))
 			),
 			loss: 6,
 			drop: Math.max(4, ...hops.map(h => String(h?.stats?.drop ?? 0).length)),
@@ -76,13 +76,14 @@ export const MtrParser = {
 
 		const filteredHops: HopType[] = [];
 
-		for (const [i, hop] of hops.entries()) {
+		for (const [ i, hop ] of hops.entries()) {
 			if (!hop) {
 				continue;
 			}
 
 			if (!hop.resolvedAddress) {
 				const isEmptyUntilEnd = hops.slice(i - 1).every(h => !h.resolvedAddress);
+
 				if (isEmptyUntilEnd) {
 					continue;
 				}
@@ -91,7 +92,7 @@ export const MtrParser = {
 			filteredHops.push(hop);
 		}
 
-		for (const [i, hop] of filteredHops.entries()) {
+		for (const [ i, hop ] of filteredHops.entries()) {
 			// Index
 			const sIndex = withSpacing(String(i + 1), spacings.index, true);
 
@@ -124,14 +125,14 @@ export const MtrParser = {
 		return rawOutput.join('');
 	},
 
-	rawParse(data: string, isFinalResult?: boolean): HopType[] {
+	rawParse (data: string, isFinalResult?: boolean): HopType[] {
 		const sData = data.split(NEW_LINE_REG_EXP);
 
 		let hops = [];
-		const addressToHostname = new Map();
+		const addressToHostname = new Map<string, string>();
 
 		for (const row of sData) {
-			const [action, index, ...value] = row.split(' ');
+			const [ action, index, ...value ] = row.split(' ');
 
 			if (!action || !index || !value) {
 				continue;
@@ -144,7 +145,7 @@ export const MtrParser = {
 
 			switch (action) {
 				case 'h': {
-					const [resolvedAddress] = value;
+					const [ resolvedAddress ] = value;
 					const previousHostMatch = hops.find((h: HopType, hIndex: number) => h.resolvedAddress === resolvedAddress && hIndex < Number(index));
 
 					if (!resolvedAddress) {
@@ -157,36 +158,39 @@ export const MtrParser = {
 				}
 
 				case 'd': {
-					const [resolvedHostname] = value;
+					const [ resolvedHostname ] = value;
 
 					if (!resolvedHostname) {
 						break;
 					}
 
 					entry.resolvedHostname = resolvedHostname;
-					addressToHostname.set(entry.resolvedAddress, resolvedHostname);
+
+					if (entry.resolvedAddress) {
+						addressToHostname.set(entry.resolvedAddress, resolvedHostname);
+					}
+
 					break;
 				}
 
 				case 'x': {
-					const [seq] = value;
+					const [ seq ] = value;
 					const timeEntry = entry.timings.find(t => t.seq === seq);
 
 					if (!seq || timeEntry) {
 						break;
 					}
 
-					entry.timings.push({seq, rtt: null});
+					entry.timings.push({ seq, rtt: null });
 					break;
 				}
 
 				case 'p': {
-					const [rtt, seq] = value;
+					const [ rtt, seq ] = value;
 
 					const timesArray = entry.timings.map(t => t.seq === seq
-						? {...t, rtt: Number(rtt) / 1000}
-						: t,
-					);
+						? { ...t, rtt: Number(rtt) / 1000 }
+						: t);
 
 					entry.timings = timesArray ?? [];
 					break;
@@ -208,8 +212,9 @@ export const MtrParser = {
 		return isFinalResult ? MtrParser.hopFinalParse(hops) : hops;
 	},
 
-	removeDuplicates(hops: HopType[]): HopType[] {
-		const filteredHops = hops.filter(({duplicate}) => duplicate !== true);
+	removeDuplicates (hops: HopType[]): HopType[] {
+		const filteredHops = hops.filter(({ duplicate }) => duplicate !== true);
+
 		for (const hop of filteredHops) {
 			delete hop.duplicate;
 		}
@@ -217,10 +222,11 @@ export const MtrParser = {
 		return filteredHops;
 	},
 
-	fulfillMissingHostnames(addressToHostname: Map<string, string>, hops: HopType[]): HopType[] {
+	fulfillMissingHostnames (addressToHostname: Map<string, string>, hops: HopType[]): HopType[] {
 		for (const hop of hops) {
 			if (!hop.resolvedHostname || hop.resolvedHostname === hop.resolvedAddress) {
 				const sameAddressHostname = addressToHostname.get(hop.resolvedAddress!);
+
 				if (sameAddressHostname) {
 					hop.resolvedHostname = sameAddressHostname;
 				}
@@ -230,7 +236,7 @@ export const MtrParser = {
 		return hops;
 	},
 
-	hopFinalParse(hops: HopType[]): HopType[] {
+	hopFinalParse (hops: HopType[]): HopType[] {
 		for (const hop of hops) {
 			for (const t of hop.timings) {
 				delete t.seq;
@@ -240,8 +246,8 @@ export const MtrParser = {
 		return hops;
 	},
 
-	hopStatsParse(hop: HopType, finalCount?: boolean): HopStatsType {
-		const stats: HopStatsType = {...getInitialHopState().stats};
+	hopStatsParse (hop: HopType, finalCount?: boolean): HopStatsType {
+		const stats: HopStatsType = { ...getInitialHopState().stats };
 
 		if (hop.timings.length === 0) {
 			return stats;
@@ -250,6 +256,7 @@ export const MtrParser = {
 		stats.total = hop.timings.length;
 
 		const timesArray = hop.timings.filter(t => t.rtt).map(t => t.rtt) as number[];
+
 		if (timesArray.length > 0) {
 			stats.min = Math.min(...timesArray);
 			stats.max = Math.max(...timesArray);
@@ -280,6 +287,7 @@ export const MtrParser = {
 		const jitterArray = [];
 
 		let jI = 0;
+
 		while (jI < timesArray.length) {
 			const diff = Math.abs((timesArray[jI] ?? 0) - (timesArray[jI + 1] ?? 0));
 			jitterArray.push(diff);

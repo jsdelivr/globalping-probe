@@ -1,15 +1,15 @@
 {
-  "testId": "test",
-  "measurementId": "measurement",
-  "result": {
-    "status": "failed",
-    "statusCodeName": null,
-    "statusCode": null,
-    "rawOutput": "dig: couldn't get address for 'sdsa': not found\n",
-    "answers": [],
-    "resolver": null,
-    "timings": {
-      "total": 0
-    }
+	"testId": "test",
+	"measurementId": "measurement",
+	"result": {
+		"status": "failed",
+		"statusCodeName": null,
+		"statusCode": null,
+		"rawOutput": "dig: couldn't get address for 'sdsa': not found\n",
+		"answers": [],
+		"resolver": null,
+		"timings": {
+			"total": 0
+		}
 	}
 }

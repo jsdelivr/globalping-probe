@@ -1,14 +1,14 @@
-import {PassThrough} from 'node:stream';
+import { PassThrough } from 'node:stream';
 import nock from 'nock';
-import {type Request, type PlainResponse, HTTPError, CacheError} from 'got';
+import { type Request, type PlainResponse, HTTPError, CacheError } from 'got';
 import * as sinon from 'sinon';
-import {expect} from 'chai';
-import {Socket} from 'socket.io-client';
+import { expect } from 'chai';
+import { Socket } from 'socket.io-client';
 import {
 	HttpCommand,
 	httpCmd,
 	urlBuilder,
-	type Timings,
+	type Timings, HttpOptions,
 } from '../../../src/command/http-command.js';
 
 type StreamCert = {
@@ -41,7 +41,7 @@ class Stream {
 	stream: PassThrough;
 	ip: string;
 
-	constructor(
+	constructor (
 		response: StreamResponse,
 		ip: string,
 	) {
@@ -51,11 +51,11 @@ class Stream {
 		this.ip = ip;
 	}
 
-	on(key: string, fn: (..._args: any[]) => void) {
+	on (key: string, fn: (..._args: any[]) => void) {
 		this.stream.on(key, fn);
 	}
 
-	emit(key: string, data?: any) {
+	emit (key: string, data?: any) {
 		this.stream.emit(key, data);
 	}
 }
@@ -83,7 +83,7 @@ describe('http command', () => {
 					inProgressUpdates: false,
 				};
 
-				const url = urlBuilder(options);
+				const url = urlBuilder(options as HttpOptions);
 
 				expect(url).to.equal('http://google.com:80/');
 			});
@@ -162,6 +162,7 @@ describe('http command', () => {
 
 				expect(url).to.equal('http://google.com:80/');
 			});
+
 			it('should set default HTTPS port', () => {
 				const options = {
 					type: 'http' as const,
@@ -218,6 +219,7 @@ describe('http command', () => {
 				expect(url).to.equal('http://google.com:80/abc');
 			});
 		});
+
 		describe('query', () => {
 			it('should prefix query with (?) sign', () => {
 				const options = {
@@ -259,7 +261,7 @@ describe('http command', () => {
 
 	describe('with httCmd', () => {
 		it('should respond with 200', async () => {
-			nock('http://google.com').get('/200?abc=def').reply(200, '200 Ok', {test: 'abc'});
+			nock('http://google.com').get('/200?abc=def').reply(200, '200 Ok', { test: 'abc' });
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
@@ -292,11 +294,13 @@ describe('http command', () => {
 
 			expect(mockedSocket.emit.callCount).to.equal(2);
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
-			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
+
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
-				result: {rawOutput: '200 Ok'},
+				result: { rawOutput: '200 Ok' },
 			}]);
+
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
@@ -305,7 +309,7 @@ describe('http command', () => {
 		});
 
 		it('should respond with 200 without progress messages', async () => {
-			nock('http://google.com').get('/200?abc=def').reply(200, '200 Ok', {test: 'abc'});
+			nock('http://google.com').get('/200?abc=def').reply(200, '200 Ok', { test: 'abc' });
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
@@ -345,7 +349,7 @@ describe('http command', () => {
 		});
 
 		it('should respond with 400', async () => {
-			nock('http://google.com').get('/400').times(3).reply(400, '400 Bad Request', {test: 'abc'});
+			nock('http://google.com').get('/400').times(3).reply(400, '400 Bad Request', { test: 'abc' });
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
@@ -377,18 +381,20 @@ describe('http command', () => {
 
 			expect(mockedSocket.emit.callCount).to.equal(2);
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
-			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
+
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
-				result: {rawOutput: '400 Bad Request'},
+				result: { rawOutput: '400 Bad Request' },
 			}]);
+
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
 		});
 
 		it('should respond with 400 without progress messages', async () => {
-			nock('http://google.com').get('/400').times(3).reply(400, '400 Bad Request', {test: 'abc'});
+			nock('http://google.com').get('/400').times(3).reply(400, '400 Bad Request', { test: 'abc' });
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
@@ -425,7 +431,7 @@ describe('http command', () => {
 		});
 
 		it('should respond with 400 (missing path slash)', async () => {
-			nock('http://google.com').get('/400').times(3).reply(400, '400 Bad Request', {test: 'abc'});
+			nock('http://google.com').get('/400').times(3).reply(400, '400 Bad Request', { test: 'abc' });
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
@@ -457,18 +463,20 @@ describe('http command', () => {
 
 			expect(mockedSocket.emit.callCount).to.equal(2);
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
-			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
+
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
-				result: {rawOutput: '400 Bad Request'},
+				result: { rawOutput: '400 Bad Request' },
 			}]);
+
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
 		});
 
 		it('should ensure keepAlive header is disabled', () => {
-			nock('http://google.com').get('/400').times(3).reply(400, '400 Bad Request', {test: 'abc'});
+			nock('http://google.com').get('/400').times(3).reply(400, '400 Bad Request', { test: 'abc' });
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
@@ -519,10 +527,10 @@ describe('http command', () => {
 							firstByte: 1,
 						},
 					},
-					headers: {test: 'abc'},
-					rawHeaders: ['test', 'abc'],
+					headers: { test: 'abc' },
+					rawHeaders: [ 'test', 'abc' ],
 				},
-				data: ['abc', 'def', 'ghi', 'jkl', 'mno'],
+				data: [ 'abc', 'def', 'ghi', 'jkl', 'mno' ],
 			};
 
 			const response = {
@@ -572,11 +580,13 @@ describe('http command', () => {
 			await cmd;
 
 			expect(mockedSocket.emit.callCount).to.equal(2);
-			expect(mockedSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress',	{
+
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress',	{
 				testId: 'test',
 				measurementId: 'measurement',
-				result: {rawOutput: 'abc'},
+				result: { rawOutput: 'abc' },
 			}]);
+
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
 		});
@@ -611,10 +621,10 @@ describe('http command', () => {
 							firstByte: 1,
 						},
 					},
-					headers: {test: 'abc'},
-					rawHeaders: ['test', 'abc'],
+					headers: { test: 'abc' },
+					rawHeaders: [ 'test', 'abc' ],
 				},
-				data: ['abc', 'def', 'ghi', 'jkl', 'mno'],
+				data: [ 'abc', 'def', 'ghi', 'jkl', 'mno' ],
 			};
 
 			const response = {
@@ -698,8 +708,8 @@ describe('http command', () => {
 						},
 					},
 					httpVersion: '1.1',
-					headers: {test: 'abc'},
-					rawHeaders: ['test', 'abc'],
+					headers: { test: 'abc' },
+					rawHeaders: [ 'test', 'abc' ],
 				},
 			};
 
@@ -794,8 +804,8 @@ describe('http command', () => {
 						},
 					},
 					httpVersion: '2',
-					headers: {test: 'abc'},
-					rawHeaders: [':status', 200, 'test', 'abc'],
+					headers: { test: 'abc' },
+					rawHeaders: [ ':status', 200, 'test', 'abc' ],
 				},
 			};
 
@@ -886,10 +896,10 @@ describe('http command', () => {
 						},
 					},
 					httpVersion: '1.1',
-					headers: {test: 'abc'},
-					rawHeaders: ['test', 'abc'],
+					headers: { test: 'abc' },
+					rawHeaders: [ 'test', 'abc' ],
 				},
-				error: new HTTPError({statusCode: 404, statusMessage: 'Not Found'} as unknown as PlainResponse),
+				error: new HTTPError({ statusCode: 404, statusMessage: 'Not Found' } as unknown as PlainResponse),
 			};
 
 			const response = {

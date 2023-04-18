@@ -1,9 +1,9 @@
-import {expect} from 'chai';
+import { expect } from 'chai';
 import {
 	TraceDigParser,
 	type DnsParseResponse,
 } from '../../../../../src/command/handlers/dig/trace.js';
-import {getCmdMock} from '../../../../utils.js';
+import { getCmdMock } from '../../../../utils.js';
 
 describe('dig trace helper', () => {
 	describe('parse', () => {

@@ -1,5 +1,5 @@
-import {scopedLogger} from '../lib/logger.js';
-import type {WsApiError} from '../types.js';
+import { scopedLogger } from '../lib/logger.js';
+import type { WsApiError } from '../types.js';
 
 const logger = scopedLogger('api:error');
 

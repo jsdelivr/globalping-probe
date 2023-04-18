@@ -34,7 +34,7 @@ export const NEW_LINE_REG_EXP = /\r?\n/;
 export const IPV4_REG_EXP = /(\b25[0-5]|\b2[0-4]\d|\b[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3}/;
 
 export const SharedDigParser = {
-	parseSection(values: string[]): DnsSection {
+	parseSection (values: string[]): DnsSection {
 		return {
 			name: values[0],
 			type: values[3],
@@ -44,7 +44,7 @@ export const SharedDigParser = {
 		};
 	},
 
-	parseValue(values: string[]): DnsValueType {
+	parseValue (values: string[]): DnsValueType {
 		const type = String(values[3]).toUpperCase();
 
 		if (type === 'SOA') {
@@ -52,7 +52,7 @@ export const SharedDigParser = {
 		}
 
 		if (type === 'MX') {
-			return {priority: Number(values[4]), server: String(values[5])};
+			return { priority: Number(values[4]), server: String(values[5]) };
 		}
 
 		if (type === 'TXT') {

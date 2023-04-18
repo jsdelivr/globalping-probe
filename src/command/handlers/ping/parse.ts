@@ -22,16 +22,17 @@ export type PingParseOutput = {
 	stats?: PingStats;
 };
 
-export default function parse(rawOutput: string): PingParseOutput {
+export default function parse (rawOutput: string): PingParseOutput {
 	const lines = rawOutput.split('\n');
 
 	if (lines.length === 0) {
-		return {status: 'failed', rawOutput};
+		return { status: 'failed', rawOutput };
 	}
 
 	const header = /^PING\s(?<host>.*?)\s\((?<addr>.+?)\)/.exec(lines[0] ?? '');
+
 	if (!header) {
-		return {status: 'failed', rawOutput};
+		return { status: 'failed', rawOutput };
 	}
 
 	const resolvedAddress = String(header?.groups?.['addr']);
@@ -51,7 +52,7 @@ export default function parse(rawOutput: string): PingParseOutput {
 	};
 }
 
-function parseStatsLine(line: string): PingTimings | undefined {
+function parseStatsLine (line: string): PingTimings | undefined {
 	const parsed = /^\d+ bytes from (?<host>.*) .*: (?:icmp_)?seq=\d+ ttl=(?<ttl>\d+) time=(?<time>\d*(?:\.\d+)?) ms/.exec(line);
 
 	if (!parsed?.groups) {
@@ -64,8 +65,8 @@ function parseStatsLine(line: string): PingTimings | undefined {
 	};
 }
 
-function parseSummary(lines: string[]): PingStats {
-	const [packets, rtt] = lines;
+function parseSummary (lines: string[]): PingStats {
+	const [ packets, rtt ] = lines;
 	const stats: PingStats = {};
 
 	if (rtt) {

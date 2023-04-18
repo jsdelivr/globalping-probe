@@ -1,13 +1,13 @@
 import Joi from 'joi';
 import isIpPrivate from 'private-ip';
-import type {Socket} from 'socket.io-client';
-import {execa, type ExecaChildProcess} from 'execa';
-import type {CommandInterface} from '../types.js';
-import {isExecaError} from '../helper/execa-error-check.js';
-import {InternalError} from '../lib/internal-error.js';
-import {ProgressBuffer} from '../helper/progress-buffer.js';
-import {scopedLogger} from '../lib/logger.js';
-import {InvalidOptionsException} from './exception/invalid-options-exception.js';
+import type { Socket } from 'socket.io-client';
+import { execa, type ExecaChildProcess } from 'execa';
+import type { CommandInterface } from '../types.js';
+import { isExecaError } from '../helper/execa-error-check.js';
+import { InternalError } from '../lib/internal-error.js';
+import { ProgressBuffer } from '../helper/progress-buffer.js';
+import { scopedLogger } from '../lib/logger.js';
+import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 
 import ClassicDigParser from './handlers/dig/classic.js';
 import type {
@@ -19,8 +19,8 @@ import type {
 	DnsParseResponse as DnsParseResponseTrace,
 	DnsParseResponseJson as DnsParseResponseTraceJson,
 } from './handlers/dig/trace.js';
-import {isDnsSection} from './handlers/dig/shared.js';
-import type {DnsParseLoopResponse} from './handlers/dig/shared.js';
+import { isDnsSection } from './handlers/dig/shared.js';
+import type { DnsParseLoopResponse } from './handlers/dig/shared.js';
 
 export type DnsOptions = {
 	type: 'dns';
@@ -39,8 +39,8 @@ const logger = scopedLogger('dns-command');
 
 const isTrace = (output: unknown): output is DnsParseResponseTrace => Array.isArray((output as DnsParseResponseTrace).hops);
 
-const allowedTypes = ['A', 'AAAA', 'ANY', 'CNAME', 'DNSKEY', 'DS', 'MX', 'NS', 'NSEC', 'PTR', 'RRSIG', 'SOA', 'TXT', 'SRV'];
-const allowedProtocols = ['UDP', 'TCP'];
+const allowedTypes = [ 'A', 'AAAA', 'ANY', 'CNAME', 'DNSKEY', 'DS', 'MX', 'NS', 'NSEC', 'PTR', 'RRSIG', 'SOA', 'TXT', 'SRV' ];
+const allowedProtocols = [ 'UDP', 'TCP' ];
 
 const dnsOptionsSchema = Joi.object<DnsOptions>({
 	type: Joi.string().valid('dns'),
@@ -59,13 +59,13 @@ export const argBuilder = (options: DnsOptions): string[] => {
 	const protocolArg = options.protocol?.toLowerCase() === 'tcp' ? '+tcp' : [];
 	const resolverArg = options.resolver ? `@${options.resolver}` : [];
 	const traceArg = options.trace ? '+trace' : [];
-	const queryArg = options.query.type === 'PTR' ? '-x' : ['-t', options.query.type];
+	const queryArg = options.query.type === 'PTR' ? '-x' : [ '-t', options.query.type ];
 
 	const args = [
 		options.target,
 		resolverArg,
 		queryArg,
-		['-p', String(options.port)],
+		[ '-p', String(options.port) ],
 		'-4',
 		'+timeout=3',
 		'+tries=2',
@@ -79,14 +79,14 @@ export const argBuilder = (options: DnsOptions): string[] => {
 
 export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', ['dig', ...args]);
+	return execa('unbuffer', [ 'dig', ...args ]);
 };
 
 export class DnsCommand implements CommandInterface<DnsOptions> {
-	constructor(private readonly cmd: typeof dnsCmd) {}
+	constructor (private readonly cmd: typeof dnsCmd) {}
 
-	async run(socket: Socket, measurementId: string, testId: string, options: DnsOptions): Promise<void> {
-		const {value: cmdOptions, error: validationError} = dnsOptionsSchema.validate(options);
+	async run (socket: Socket, measurementId: string, testId: string, options: DnsOptions): Promise<void> {
+		const { value: cmdOptions, error: validationError } = dnsOptionsSchema.validate(options);
 
 		if (validationError) {
 			throw new InvalidOptionsException('dns', validationError);
@@ -123,7 +123,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 					}
 				}
 
-				buffer.pushProgress({rawOutput: output});
+				buffer.pushProgress({ rawOutput: output });
 			});
 		}
 
@@ -171,7 +171,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		buffer.pushResult(this.toJsonOutput(result as DnsParseResponseClassic | DnsParseResponseTrace, Boolean(options.trace)));
 	}
 
-	private validatePartialResult(rawOutput: string, cmd: ExecaChildProcess, trace: boolean): boolean {
+	private validatePartialResult (rawOutput: string, cmd: ExecaChildProcess, trace: boolean): boolean {
 		const result = this.parse(rawOutput, trace);
 
 		if (result instanceof Error) {
@@ -186,7 +186,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		return true;
 	}
 
-	private toJsonOutput(
+	private toJsonOutput (
 		input: DnsParseResponseClassic | DnsParseResponseTrace,
 		trace: boolean,
 	): DnsParseResponseClassicJson | DnsParseResponseTraceJson {
@@ -200,7 +200,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		return ClassicDigParser.toJsonOutput(input as DnsParseResponseClassic);
 	}
 
-	private hasResultPrivateIp(result: DnsParseResponseClassic | DnsParseResponseTrace): boolean {
+	private hasResultPrivateIp (result: DnsParseResponseClassic | DnsParseResponseTrace): boolean {
 		let privateResults = [];
 
 		if (isTrace(result)) {
@@ -219,7 +219,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		return false;
 	}
 
-	private rewrite(rawOutput: string, trace: boolean): string {
+	private rewrite (rawOutput: string, trace: boolean): string {
 		if (!trace) {
 			return ClassicDigParser.rewrite(rawOutput);
 		}
@@ -227,7 +227,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		return TraceDigParser.rewrite(rawOutput);
 	}
 
-	private parse(rawOutput: string, trace: boolean): Error | DnsParseResponseClassic | DnsParseResponseTrace {
+	private parse (rawOutput: string, trace: boolean): Error | DnsParseResponseClassic | DnsParseResponseTrace {
 		if (!trace) {
 			return ClassicDigParser.parse(rawOutput);
 		}

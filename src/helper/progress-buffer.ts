@@ -1,10 +1,10 @@
 
-import type {Socket} from 'socket.io-client';
-import type {DnsParseResponseJson as DnsParseResponseClassicJson} from '../command/handlers/dig/classic.js';
-import type {DnsParseResponseJson as DnsParseResponseTraceJson} from '../command/handlers/dig/trace.js';
-import type {OutputJson as HttpOutputJson} from '../command/http-command.js';
-import type {PingParseOutputJson} from '../command/ping-command.js';
-import {PROGRESS_INTERVAL_TIME} from '../constants.js';
+import type { Socket } from 'socket.io-client';
+import type { DnsParseResponseJson as DnsParseResponseClassicJson } from '../command/handlers/dig/classic.js';
+import type { DnsParseResponseJson as DnsParseResponseTraceJson } from '../command/handlers/dig/trace.js';
+import type { OutputJson as HttpOutputJson } from '../command/http-command.js';
+import type { PingParseOutputJson } from '../command/ping-command.js';
+import { PROGRESS_INTERVAL_TIME } from '../constants.js';
 
 type ProgressType = {
 	rawOutput: string;
@@ -17,13 +17,13 @@ export class ProgressBuffer {
 	private timer?: NodeJS.Timeout;
 	private isFirst = true;
 
-	constructor(
+	constructor (
 		private readonly socket: Socket,
 		private readonly testId: string,
 		private readonly measurementId: string,
 	) {}
 
-	pushProgress(progress: ProgressType) {
+	pushProgress (progress: ProgressType) {
 		this.buffer.push(progress);
 
 		if (this.isFirst) {
@@ -36,7 +36,7 @@ export class ProgressBuffer {
 		}
 	}
 
-	pushResult(result: ResultTypeJson) {
+	pushResult (result: ResultTypeJson) {
 		if (this.timer) {
 			clearTimeout(this.timer);
 		}
@@ -44,7 +44,7 @@ export class ProgressBuffer {
 		this.sendResult(result);
 	}
 
-	private sendProgress() {
+	private sendProgress () {
 		delete this.timer;
 
 		if (this.buffer.length === 0) {
@@ -55,13 +55,14 @@ export class ProgressBuffer {
 			testId: this.testId,
 			measurementId: this.measurementId,
 			result: {
-				rawOutput: this.buffer.map(({rawOutput}) => rawOutput).join(''),
+				rawOutput: this.buffer.map(({ rawOutput }) => rawOutput).join(''),
 			},
 		});
+
 		this.buffer = [];
 	}
 
-	private sendResult(result: ResultTypeJson) {
+	private sendResult (result: ResultTypeJson) {
 		this.socket.emit('probe:measurement:result', {
 			testId: this.testId,
 			measurementId: this.measurementId,

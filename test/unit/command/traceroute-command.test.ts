@@ -1,7 +1,7 @@
 import * as sinon from 'sinon';
-import {expect} from 'chai';
-import {Socket} from 'socket.io-client';
-import {getCmdMock, getCmdMockResult, getExecaMock} from '../../utils.js';
+import { expect } from 'chai';
+import { Socket } from 'socket.io-client';
+import { getCmdMock, getCmdMockResult, getExecaMock } from '../../utils.js';
 import {
 	TracerouteCommand,
 	argBuilder,
@@ -120,22 +120,25 @@ describe('trace command', () => {
 
 				const ping = new TracerouteCommand((): any => mockCmd);
 				const runPromise = ping.run(mockSocket as any, 'measurement', 'test', options);
+
 				for (const progressOutput of outputProgress) {
 					mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 				}
 
-				mockCmd.resolve({stdout: rawOutput});
+				mockCmd.resolve({ stdout: rawOutput });
 				await runPromise;
 
 				expect(mockSocket.emit.callCount).to.equal(2);
-				expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:progress', {
+
+				expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 					testId: 'test',
 					measurementId: 'measurement',
 					result: {
 						rawOutput: outputProgress[0],
 					},
 				}]);
-				expect(mockSocket.emit.lastCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+
+				expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 			});
 
 			it('should run and parse trace without progress messages', async () => {
@@ -156,15 +159,16 @@ describe('trace command', () => {
 
 				const ping = new TracerouteCommand((): any => mockCmd);
 				const runPromise = ping.run(mockSocket as any, 'measurement', 'test', options);
+
 				for (const progressOutput of outputProgress) {
 					mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 				}
 
-				mockCmd.resolve({stdout: rawOutput});
+				mockCmd.resolve({ stdout: rawOutput });
 				await runPromise;
 
 				expect(mockSocket.emit.callCount).to.equal(1);
-				expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+				expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 			});
 
 			it('should run and parse private ip trace on progress step', async () => {
@@ -185,6 +189,7 @@ describe('trace command', () => {
 
 				const ping = new TracerouteCommand((): any => mockCmd);
 				const runPromise = ping.run(mockSocket as any, 'measurement', 'test', options);
+
 				for (const progressOutput of outputProgress) {
 					mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 				}
@@ -194,7 +199,7 @@ describe('trace command', () => {
 
 				expect(mockCmd.kill.called).to.be.true;
 				expect(mockSocket.emit.calledOnce).to.be.true;
-				expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+				expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 			});
 
 			it('should run and parse private ip trace on result step', async () => {
@@ -215,11 +220,11 @@ describe('trace command', () => {
 				const ping = new TracerouteCommand((): any => mockCmd);
 				const runPromise = ping.run(mockSocket as any, 'measurement', 'test', options);
 
-				mockCmd.resolve({stdout: rawOutput});
+				mockCmd.resolve({ stdout: rawOutput });
 				await runPromise;
 
 				expect(mockSocket.emit.calledOnce).to.be.true;
-				expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+				expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 			});
 
 			it('should run and parse private ip trace on result step without progress messages', async () => {
@@ -240,15 +245,16 @@ describe('trace command', () => {
 
 				const ping = new TracerouteCommand((): any => mockCmd);
 				const runPromise = ping.run(mockSocket as any, 'measurement', 'test', options);
+
 				for (const progressOutput of outputProgress) {
 					mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
 				}
 
-				mockCmd.reject({stdout: rawOutput});
+				mockCmd.reject({ stdout: rawOutput });
 				await runPromise;
 
 				expect(mockSocket.emit.calledOnce).to.be.true;
-				expect(mockSocket.emit.firstCall.args).to.deep.equal(['probe:measurement:result', expectedResult]);
+				expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 			});
 		});
 	});

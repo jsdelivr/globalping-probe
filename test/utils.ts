@@ -1,14 +1,15 @@
-import {EventEmitter} from 'node:events';
+import { EventEmitter } from 'node:events';
 import * as path from 'node:path';
-import {readFileSync} from 'node:fs';
+import { readFileSync } from 'node:fs';
 import * as sinon from 'sinon';
 
 export const getCmdMock = (name: string): string => readFileSync(path.resolve(`./test/mocks/${name}.txt`)).toString();
 export const getCmdMockResult = (name: string) => JSON.parse(readFileSync(path.resolve(`./test/mocks/${name}.json`)).toString()) as Record<string, unknown>;
 
 export class MockSocket extends EventEmitter {
-	override emit(event: string, data?: any, callback?: () => void) {
+	override emit (event: string, data?: any, callback?: () => void) {
 		super.emit(event, data);
+
 		if (callback) {
 			callback();
 		}
@@ -16,11 +17,11 @@ export class MockSocket extends EventEmitter {
 		return true;
 	}
 
-	connect() {
+	connect () {
 		// Empty connect method, that will be overridden with stub in tests
 	}
 
-	disconnect() {
+	disconnect () {
 		// Empty disconnect method, that will be overridden with stub in tests
 	}
 }
@@ -33,14 +34,18 @@ type ExecaMock = Promise<any> & {
 };
 
 export const getExecaMock = () => {
-	let resolve;
-	let reject;
-	const execaMock = new Promise((resolvePromise, rejectPromise) => {
-		resolve = resolvePromise;
-		reject = rejectPromise;
+	let res;
+	let rej;
+	const execaMock = new Promise((resolve, reject) => {
+		res = resolve;
+		rej = reject;
 	}) as ExecaMock;
-	execaMock.resolve = resolve;
-	execaMock.reject = reject;
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
+	execaMock.resolve = res;
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
+	execaMock.reject = rej;
 	execaMock.kill = sinon.stub();
 
 	execaMock.stdout = new EventEmitter();

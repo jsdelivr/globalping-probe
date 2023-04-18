@@ -1,10 +1,10 @@
-import type {ExecaChildProcess, ExecaReturnValue} from 'execa';
-import type {Socket} from 'socket.io-client';
+import type { ExecaChildProcess, ExecaReturnValue } from 'execa';
+import type { Socket } from 'socket.io-client';
 import parse from '../command/handlers/ping/parse.js';
-import type {PingOptions} from '../command/ping-command.js';
-import {hasRequired} from './dependencies.js';
-import {scopedLogger} from './logger.js';
-import {getConfValue} from './config.js';
+import type { PingOptions } from '../command/ping-command.js';
+import { hasRequired } from './dependencies.js';
+import { scopedLogger } from './logger.js';
+import { getConfValue } from './config.js';
 
 const logger = scopedLogger('status-manager');
 
@@ -14,12 +14,12 @@ export class StatusManager {
 	private status: 'initializing' | 'ready' | 'unbuffer-missing' | 'ping-test-failed' | 'sigterm' = 'initializing';
 	private timer?: NodeJS.Timeout;
 
-	constructor(
+	constructor (
 		private readonly socket: Socket,
 		private readonly pingCmd: (options: PingOptions) => ExecaChildProcess,
 	) {}
 
-	public async start() {
+	public async start () {
 		const hasRequiredDeps = await hasRequired();
 
 		if (!hasRequiredDeps) {
@@ -30,54 +30,58 @@ export class StatusManager {
 		await this.runTest();
 	}
 
-	public stop(status: StatusManager['status']) {
+	public stop (status: StatusManager['status']) {
 		this.updateStatus(status);
 		clearTimeout(this.timer);
 	}
 
-	public getStatus() {
+	public getStatus () {
 		return this.status;
 	}
 
-	public updateStatus(status: StatusManager['status']) {
+	public updateStatus (status: StatusManager['status']) {
 		this.status = status;
 		this.sendStatus();
 	}
 
-	public sendStatus() {
+	public sendStatus () {
 		this.socket.emit('probe:status:update', this.status);
 	}
 
-	private async runTest() {
+	private async runTest () {
 		const result = await this.pingTest();
+
 		if (result) {
 			this.updateStatus('ready');
 		} else {
 			this.updateStatus('ping-test-failed');
 		}
 
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		this.timer = setTimeout(async () => {
 			await this.runTest();
 		}, INTERVAL_TIME);
 	}
 
-	private async pingTest() {
+	private async pingTest () {
 		const packets = getConfValue<number>('status.numberOfPackets');
 		const results = await Promise.allSettled([
-			this.pingCmd({type: 'ping', target: 'l.root-servers.net', packets, inProgressUpdates: false}),
-			this.pingCmd({type: 'ping', target: 'k.root-servers.net', packets, inProgressUpdates: false}),
-			this.pingCmd({type: 'ping', target: 'j.root-servers.net', packets, inProgressUpdates: false}),
+			this.pingCmd({ type: 'ping', target: 'l.root-servers.net', packets, inProgressUpdates: false }),
+			this.pingCmd({ type: 'ping', target: 'k.root-servers.net', packets, inProgressUpdates: false }),
+			this.pingCmd({ type: 'ping', target: 'j.root-servers.net', packets, inProgressUpdates: false }),
 		]);
 
 		const rejectedPromises = results.filter((promise): promise is PromiseRejectedResult => promise.status === 'rejected');
+
 		for (const promise of rejectedPromises) {
 			logger.warn('ping test promise rejected:', promise.reason);
 		}
 
 		const fulfilledPromises = results.filter((promise): promise is PromiseFulfilledResult<ExecaReturnValue> => promise.status === 'fulfilled');
 		const cmdResults = fulfilledPromises.map(promise => promise.value).map(result => parse(result.stdout));
-		const successfulResults = cmdResults.filter(result => {
+		const successfulResults = cmdResults.filter((result) => {
 			const isSuccessful = result.status === 'finished' && result.stats?.loss === 0;
+
 			if (!isSuccessful) {
 				logger.warn('ping test result don\'t match criterias:', result);
 			}

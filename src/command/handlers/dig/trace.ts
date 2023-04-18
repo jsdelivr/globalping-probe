@@ -22,12 +22,12 @@ const RESOLVER_REG_EXP = /from.*\((.*?)\)/;
 const QUERY_TIME_REG_EXP = /in\s+(\d+)\s+ms/;
 
 export const TraceDigParser = {
-	rewrite(rawOutput: string): string {
+	rewrite (rawOutput: string): string {
 		const output = rawOutput;
 		return output;
 	},
 
-	parse(rawOutput: string): Error | DnsParseResponse {
+	parse (rawOutput: string): Error | DnsParseResponse {
 		const lines = rawOutput.split(NEW_LINE_REG_EXP);
 
 		if (lines.length < 3) {
@@ -47,7 +47,7 @@ export const TraceDigParser = {
 		};
 	},
 
-	parseLoop(lines: string[]): DnsParseLoopResponse[] {
+	parseLoop (lines: string[]): DnsParseLoopResponse[] {
 		const groups: Array<{
 			answers: DnsSection[];
 			timings: {total: number};
@@ -57,7 +57,7 @@ export const TraceDigParser = {
 		const pushNewHop = () => {
 			groups.push({
 				answers: [],
-				timings: {total: 0},
+				timings: { total: 0 },
 				resolver: '',
 			});
 		};
@@ -92,14 +92,14 @@ export const TraceDigParser = {
 		}));
 	},
 
-	toJsonOutput(input: DnsParseResponse): DnsParseResponseJson {
+	toJsonOutput (input: DnsParseResponse): DnsParseResponseJson {
 		return {
 			status: input.status,
 			rawOutput: input.rawOutput,
 			hops: input.hops.map(h => ({
 				answers: h.answers ?? [],
 				timings: {
-					...(h.timings ?? {total: 0}),
+					...(h.timings ?? { total: 0 }),
 				},
 				resolver: h.resolver ?? null,
 			})),

@@ -1,24 +1,33 @@
 {
-  "testId": "test",
-  "measurementId": "measurement",
-  "result": {
-    "status": "finished",
-    "resolvedAddress": "172.217.20.206",
-    "resolvedHostname": "lhr25s33-in-f14.1e100.net",
-    "stats": {
-      "min": 7.948,
-      "avg": 8.018,
-      "max": 8.120,
-      "total": 3,
-      "loss": 0,
-      "rcv": 3,
-      "drop": 0
-    },
-    "timings": [
-      {"rtt": 7.99, "ttl": 37},
-      {"rtt": 8.12, "ttl": 37},
-      {"rtt": 7.95, "ttl": 37}
-    ],
-    "rawOutput": "PING google.com (172.217.20.206) 56(84) bytes of data.\n64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=1 ttl=37 time=7.99 ms\n64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=2 ttl=37 time=8.12 ms\n64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=3 ttl=37 time=7.95 ms\n\n--- google.com ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 404ms\nrtt min/avg/max/mdev = 7.948/8.018/8.120/0.073 ms\n"
-  }
+	"testId": "test",
+	"measurementId": "measurement",
+	"result": {
+		"status": "finished",
+		"resolvedAddress": "172.217.20.206",
+		"resolvedHostname": "lhr25s33-in-f14.1e100.net",
+		"stats": {
+			"min": 7.948,
+			"avg": 8.018,
+			"max": 8.120,
+			"total": 3,
+			"loss": 0,
+			"rcv": 3,
+			"drop": 0
+		},
+		"timings": [
+			{
+				"rtt": 7.99,
+				"ttl": 37
+			},
+			{
+				"rtt": 8.12,
+				"ttl": 37
+			},
+			{
+				"rtt": 7.95,
+				"ttl": 37
+			}
+		],
+		"rawOutput": "PING google.com (172.217.20.206) 56(84) bytes of data.\n64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=1 ttl=37 time=7.99 ms\n64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=2 ttl=37 time=8.12 ms\n64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=3 ttl=37 time=7.95 ms\n\n--- google.com ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 404ms\nrtt min/avg/max/mdev = 7.948/8.018/8.120/0.073 ms\n"
+	}
 }

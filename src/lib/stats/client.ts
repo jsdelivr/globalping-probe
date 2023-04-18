@@ -1,7 +1,7 @@
-import type {Socket} from 'socket.io-client';
-import {getConfValue} from '../config.js';
-import {scopedLogger} from '../logger.js';
-import {getCpuUsage} from './cpu.js';
+import type { Socket } from 'socket.io-client';
+import { getConfValue } from '../config.js';
+import { scopedLogger } from '../logger.js';
+import { getCpuUsage } from './cpu.js';
 
 const logger = scopedLogger('probe:stats:report');
 

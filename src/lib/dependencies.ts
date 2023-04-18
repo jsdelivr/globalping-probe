@@ -1,6 +1,6 @@
-import path, {dirname} from 'node:path';
-import {fileURLToPath} from 'node:url';
-import {execa} from 'execa';
+import path, { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { execa } from 'execa';
 
 const appDir = path.join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -14,7 +14,7 @@ export const loadAll = async () => {
 
 export const isUnbufferAvailable = async (): Promise<boolean> => {
 	try {
-		await execa('which', ['unbuffer']);
+		await execa('which', [ 'unbuffer' ]);
 		return true;
 	} catch {
 		return false;

@@ -14,7 +14,7 @@ export const getCurrentCpu = (): CpuUsageResponse => {
 	const cpus = os.cpus();
 
 	const coreCount = cpus.length;
-	const load = cpus.map(cpu => {
+	const load = cpus.map((cpu) => {
 		const total = Object.values(cpu.times).reduce((a, b) => a + b, 0);
 		return {
 			usage: total - cpu.times.idle,
@@ -36,7 +36,7 @@ export const getCpuUsage = async (): Promise<CpuUsageResponse> => {
 		load: [],
 	};
 
-	await new Promise<void>(resolve => {
+	await new Promise<void>((resolve) => {
 		setTimeout(() => {
 			const endCpu = getCurrentCpu();
 

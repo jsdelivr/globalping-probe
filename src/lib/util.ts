@@ -20,6 +20,7 @@ export const callbackify = (
 	}
 
 	if (Array.isArray(result) && spreadResult) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		cb(undefined, ...result);
 		return;
 	}
