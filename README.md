@@ -15,9 +15,9 @@ Once you connect you will become part of the global community that powers the [G
 
 ---
 #### Podman alternative
-Note that you also need to [install a service](https://linuxhandbook.com/autostart-podman-containers/) to make sure the container starts on boot. 
+Note that you also need to [install a service](https://linuxhandbook.com/autostart-podman-containers/) to make sure the container starts on boot. Additionally check the logs of the container to ensure it started successfully, podman can sometimes break things by requiring additional permissions.
 ```
-podman run --cap-add=NET_RAW -d --network host --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
+sudo podman run --cap-add=NET_RAW -d --network host --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
 ```
 ---
 For automation purposes consider using this template of a [universal installation script for Linux servers](https://gist.github.com/jimaek/7b8312c2c37f9002a5cc0108ebfd43e1).
