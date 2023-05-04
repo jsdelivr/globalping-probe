@@ -192,9 +192,11 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				download: timings.phases['download'] ?? Number(timings['end']) - Number(timings['response']),
 			};
 
-			const rawOutput = options.request.method === 'head'
-				? `HTTP/${result.httpVersion} ${result.statusCode}\n` + result.curlHeaders
-				: `HTTP/${result.httpVersion} ${result.statusCode}\n` + result.curlHeaders + `\n\n` + result.rawBody;
+			let rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}`;
+
+			if (options.request.method === 'get') {
+				rawOutput += `\n\n${result.rawBody}`;
+			}
 
 			buffer.pushResult(this.toJsonOutput({
 				status: result.status,
@@ -228,10 +230,19 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		};
 
 		const onData = (data: Buffer) => {
+			const isFirstMessage = result.rawBody.length === 0;
 			result.rawBody += data.toString();
 
 			if (cmdOptions.inProgressUpdates) {
-				buffer.pushProgress({ rawOutput: data.toString() });
+				let rawOutput = '';
+
+				if (isFirstMessage) {
+					rawOutput += `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}\n\n`;
+				}
+
+				rawOutput += data.toString();
+
+				buffer.pushProgress({ rawOutput });
 			}
 		};
 

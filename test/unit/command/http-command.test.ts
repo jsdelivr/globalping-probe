@@ -282,7 +282,7 @@ describe('http command', () => {
 					},
 					rawHeaders: 'test: abc',
 					rawBody: '200 Ok',
-					rawOutput: '200 Ok',
+					rawOutput: 'HTTP/null 200\ntest: abc\n\n200 Ok',
 					statusCode: 200,
 					statusCodeName: 'OK',
 				},
@@ -298,12 +298,13 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
-				result: { rawOutput: '200 Ok' },
+				result: { rawOutput: 'HTTP/null 200\ntest: abc\n\n200 Ok' },
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
-			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawOutput', expectedResult.result.rawOutput);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.statusCode', expectedResult.result.statusCode);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.statusCodeName', expectedResult.result.statusCodeName);
 		});
@@ -330,7 +331,7 @@ describe('http command', () => {
 					},
 					rawHeaders: 'test: abc',
 					rawBody: '200 Ok',
-					rawOutput: '200 Ok',
+					rawOutput: 'HTTP/null 200\ntest: abc\n\n200 Ok',
 					statusCode: 200,
 					statusCodeName: 'OK',
 				},
@@ -342,8 +343,9 @@ describe('http command', () => {
 
 			expect(mockedSocket.emit.callCount).to.equal(1);
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
-			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
 			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
+			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
+			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawOutput', expectedResult.result.rawOutput);
 			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.statusCode', expectedResult.result.statusCode);
 			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.statusCodeName', expectedResult.result.statusCodeName);
 		});
@@ -370,7 +372,7 @@ describe('http command', () => {
 					},
 					rawHeaders: 'test: abc',
 					rawBody: '400 Bad Request',
-					rawOutput: '400 Bad Request',
+					rawOutput: 'HTTP/null 400\ntest: abc\n\n400 Bad Request',
 					statusCode: 400,
 				},
 				testId: 'test',
@@ -385,11 +387,12 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
-				result: { rawOutput: '400 Bad Request' },
+				result: { rawOutput: 'HTTP/null 400\ntest: abc\n\n400 Bad Request' },
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawOutput', expectedResult.result.rawOutput);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
 		});
 
@@ -415,7 +418,7 @@ describe('http command', () => {
 					},
 					rawHeaders: 'test: abc',
 					rawBody: '400 Bad Request',
-					rawOutput: '400 Bad Request',
+					rawOutput: 'HTTP/null 400\ntest: abc\n\n400 Bad Request',
 					statusCode: 400,
 				},
 				testId: 'test',
@@ -427,6 +430,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.callCount).to.equal(1);
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
+			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawOutput', expectedResult.result.rawOutput);
 			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
 		});
 
@@ -452,7 +456,7 @@ describe('http command', () => {
 					},
 					rawHeaders: 'test: abc',
 					rawBody: '400 Bad Request',
-					rawOutput: '400 Bad Request',
+					rawOutput: 'HTTP/null 400\ntest: abc\n\n400 Bad Request',
 					statusCode: 400,
 				},
 				testId: 'test',
@@ -467,7 +471,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
-				result: { rawOutput: '400 Bad Request' },
+				result: { rawOutput: 'HTTP/null 400\ntest: abc\n\n400 Bad Request' },
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
@@ -584,7 +588,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress',	{
 				testId: 'test',
 				measurementId: 'measurement',
-				result: { rawOutput: 'abc' },
+				result: { rawOutput: 'HTTP/1.1 200\ntest: abc\n\nabc' },
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
