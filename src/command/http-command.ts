@@ -194,7 +194,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 			const rawOutput = options.request.method === 'head'
 				? `HTTP/${result.httpVersion} ${result.statusCode}\n` + result.curlHeaders
-				: result.rawBody;
+				: `HTTP/${result.httpVersion} ${result.statusCode}\n` + result.curlHeaders + `\n\n` + result.rawBody;
 
 			buffer.pushResult(this.toJsonOutput({
 				status: result.status,
