@@ -938,7 +938,7 @@ describe('http command', () => {
 					},
 					rawBody: null,
 					rawHeaders: 'test: abc',
-					rawOutput: 'Response code 404 (Not Found) - ERR_NON_2XX_3XX_RESPONSE',
+					rawOutput: 'HTTP/1.1 404\ntest: abc\n\nResponse code 404 (Not Found) - ERR_NON_2XX_3XX_RESPONSE',
 					resolvedAddress: null,
 					status: 'finished',
 					statusCode: 404,
