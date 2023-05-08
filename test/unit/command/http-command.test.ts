@@ -261,7 +261,12 @@ describe('http command', () => {
 
 	describe('with httCmd', () => {
 		it('should respond with 200', async () => {
-			nock('http://google.com').get('/200?abc=def').reply(200, '200 Ok', { test: 'abc' });
+			nock('http://google.com').get('/200?abc=def').reply(200, function () {
+				const request = this.req as typeof this.req & {response: {httpVersion: string}};
+				request.response.httpVersion = '1.1';
+				return '200 Ok';
+			}, { test: 'abc' });
+
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
@@ -282,7 +287,7 @@ describe('http command', () => {
 					},
 					rawHeaders: 'test: abc',
 					rawBody: '200 Ok',
-					rawOutput: 'HTTP/null 200\ntest: abc\n\n200 Ok',
+					rawOutput: 'HTTP/1.1 200\ntest: abc\n\n200 Ok',
 					statusCode: 200,
 					statusCodeName: 'OK',
 				},
@@ -298,7 +303,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
-				result: { rawOutput: 'HTTP/null 200\ntest: abc\n\n200 Ok' },
+				result: { rawOutput: 'HTTP/1.1 200\ntest: abc\n\n200 Ok' },
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
@@ -310,7 +315,12 @@ describe('http command', () => {
 		});
 
 		it('should respond with 200 without progress messages', async () => {
-			nock('http://google.com').get('/200?abc=def').reply(200, '200 Ok', { test: 'abc' });
+			nock('http://google.com').get('/200?abc=def').reply(200, function () {
+				const request = this.req as typeof this.req & {response: {httpVersion: string}};
+				request.response.httpVersion = '1.1';
+				return '200 Ok';
+			}, { test: 'abc' });
+
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
@@ -331,7 +341,7 @@ describe('http command', () => {
 					},
 					rawHeaders: 'test: abc',
 					rawBody: '200 Ok',
-					rawOutput: 'HTTP/null 200\ntest: abc\n\n200 Ok',
+					rawOutput: 'HTTP/1.1 200\ntest: abc\n\n200 Ok',
 					statusCode: 200,
 					statusCodeName: 'OK',
 				},
@@ -351,7 +361,12 @@ describe('http command', () => {
 		});
 
 		it('should respond with 400', async () => {
-			nock('http://google.com').get('/400').times(3).reply(400, '400 Bad Request', { test: 'abc' });
+			nock('http://google.com').get('/400').times(3).reply(400, function () {
+				const request = this.req as typeof this.req & {response: {httpVersion: string}};
+				request.response.httpVersion = '1.1';
+				return '400 Bad Request';
+			}, { test: 'abc' });
+
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
@@ -372,7 +387,7 @@ describe('http command', () => {
 					},
 					rawHeaders: 'test: abc',
 					rawBody: '400 Bad Request',
-					rawOutput: 'HTTP/null 400\ntest: abc\n\n400 Bad Request',
+					rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request',
 					statusCode: 400,
 				},
 				testId: 'test',
@@ -387,7 +402,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
-				result: { rawOutput: 'HTTP/null 400\ntest: abc\n\n400 Bad Request' },
+				result: { rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request' },
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
@@ -418,7 +433,7 @@ describe('http command', () => {
 					},
 					rawHeaders: 'test: abc',
 					rawBody: '400 Bad Request',
-					rawOutput: 'HTTP/null 400\ntest: abc\n\n400 Bad Request',
+					rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request',
 					statusCode: 400,
 				},
 				testId: 'test',
@@ -435,7 +450,12 @@ describe('http command', () => {
 		});
 
 		it('should respond with 400 (missing path slash)', async () => {
-			nock('http://google.com').get('/400').times(3).reply(400, '400 Bad Request', { test: 'abc' });
+			nock('http://google.com').get('/400').times(3).reply(400, function () {
+				const request = this.req as typeof this.req & {response: {httpVersion: string}};
+				request.response.httpVersion = '1.1';
+				return '400 Bad Request';
+			}, { test: 'abc' });
+
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
@@ -456,7 +476,7 @@ describe('http command', () => {
 					},
 					rawHeaders: 'test: abc',
 					rawBody: '400 Bad Request',
-					rawOutput: 'HTTP/null 400\ntest: abc\n\n400 Bad Request',
+					rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request',
 					statusCode: 400,
 				},
 				testId: 'test',
@@ -471,7 +491,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
-				result: { rawOutput: 'HTTP/null 400\ntest: abc\n\n400 Bad Request' },
+				result: { rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request' },
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
