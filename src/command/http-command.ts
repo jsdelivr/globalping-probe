@@ -5,7 +5,7 @@ import https from 'node:https';
 import http2 from 'http2-wrapper';
 import Joi from 'joi';
 import _ from 'lodash';
-import got, { type Response, type Request, type HTTPAlias, type Progress, type DnsLookupIpVersion, type RequestError, HTTPError } from 'got';
+import got, { type Response, type Request, type HTTPAlias, type DnsLookupIpVersion, type RequestError, HTTPError } from 'got';
 import type { Socket } from 'socket.io-client';
 import type { CommandInterface } from '../types.js';
 import { callbackify } from '../lib/util.js';
@@ -210,11 +210,11 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				headers: result.headers,
 				rawHeaders: result.rawHeaders,
 				rawBody: result.rawBody,
+				rawOutput,
 				statusCode: result.statusCode,
 				statusCodeName: result.statusCodeName,
 				timings: result.timings,
 				tls: result.tls,
-				rawOutput,
 			}));
 
 			resolveStream();
@@ -237,7 +237,17 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 		const onData = (data: Buffer) => {
 			const isFirstMessage = result.rawBody.length === 0;
-			result.rawBody += data.toString();
+			const downloadLimit = stream.options.context['downloadLimit'] as number || Infinity;
+			let dataString = data.toString();
+
+			const remainingSize = downloadLimit - result.rawBody.length;
+
+			if (dataString.length > remainingSize) {
+				dataString = dataString.substring(0, remainingSize);
+				stream.destroy(new Error('Exceeded the download.'));
+			}
+
+			result.rawBody += dataString;
 
 			if (cmdOptions.inProgressUpdates) {
 				let rawOutput = '';
@@ -246,7 +256,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 					rawOutput += `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}\n\n`;
 				}
 
-				rawOutput += data.toString();
+				rawOutput += dataString;
 
 				buffer.pushProgress({ rawOutput });
 			}
@@ -264,30 +274,19 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			};
 		};
 
-		const onDownloadProgress = (progress: Progress) => {
-			const { downloadLimit } = stream.options.context;
-
-			if (!downloadLimit) {
-				return;
-			}
-
-			if (progress.transferred > Number(downloadLimit) && progress.percent !== 1) {
-				stream.destroy(new Error('Exceeded the download.'));
-			}
-		};
-
 		const pStream = new Promise((_resolve) => {
 			const resolve = () => {
 				_resolve(null);
 			};
 
-			stream.on('downloadProgress', onDownloadProgress);
 			stream.on('data', onData);
 			stream.on('response', onResponse);
 			stream.on('socket', onSocket);
 
 			stream.on('error', (error: RequestError) => {
-				if (!(error instanceof HTTPError)) {
+				if (error instanceof HTTPError || error.message === 'Exceeded the download.') {
+					result.status = 'finished';
+				} else {
 					result.status = 'failed';
 				}
 
@@ -314,6 +313,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			headers: input.headers,
 			rawHeaders: input.rawHeaders || null,
 			rawBody: input.rawBody || null,
+			rawOutput: input.rawOutput,
 			statusCode: input.statusCode || null,
 			statusCodeName: input.statusCodeName || null,
 			timings: {
@@ -326,7 +326,6 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				...input.timings,
 			},
 			tls: Object.keys(input.tls).length > 0 ? input.tls as Cert : null,
-			rawOutput: input.rawOutput,
 		};
 	}
 

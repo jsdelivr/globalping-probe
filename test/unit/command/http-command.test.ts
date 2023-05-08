@@ -10,6 +10,7 @@ import {
 	urlBuilder,
 	type Timings, HttpOptions,
 } from '../../../src/command/http-command.js';
+import { getCmdMock } from '../../utils.js';
 
 type StreamCert = {
 	valid_from: number | string;
@@ -35,28 +36,23 @@ type StreamResponse = {
 	};
 };
 
-class Stream {
+class Stream extends PassThrough {
 	response: StreamResponse | undefined;
 	timings: Timings | undefined;
 	stream: PassThrough;
 	ip: string;
+	options: {context: {downloadLimit?: number}};
 
 	constructor (
 		response: StreamResponse,
 		ip: string,
 	) {
+		super();
 		this.stream = new PassThrough();
 		this.response = response;
 		this.timings = response?.timings;
 		this.ip = ip;
-	}
-
-	on (key: string, fn: (..._args: any[]) => void) {
-		this.stream.on(key, fn);
-	}
-
-	emit (key: string, data?: any) {
-		this.stream.emit(key, data);
+		this.options = { context: { downloadLimit: 10_000 } };
 	}
 }
 
@@ -259,7 +255,7 @@ describe('http command', () => {
 		});
 	});
 
-	describe('with httCmd', () => {
+	describe('with real httpCmd', () => {
 		it('should respond with 200', async () => {
 			nock('http://google.com').get('/200?abc=def').reply(200, function () {
 				const request = this.req as typeof this.req & {response: {httpVersion: string}};
@@ -520,7 +516,7 @@ describe('http command', () => {
 		});
 	});
 
-	describe('manual', () => {
+	describe('with mocked httpCmd', () => {
 		it('should emit progress + result events', async () => {
 			const options = {
 				type: 'http' as const,
@@ -1111,6 +1107,190 @@ describe('http command', () => {
 			expect(mockedSocket.emit.callCount).to.equal(1);
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
+		});
+
+		it('should send only first 10 KB of data if response body is too big', async () => {
+			const options = {
+				type: 'http' as const,
+				target: 'cdn.jsdelivr.net',
+				inProgressUpdates: true,
+				protocol: 'http',
+				request: {
+					method: 'get',
+					path: '/npm/jquery',
+					query: '',
+				},
+			};
+
+			const response = {
+				socket: {},
+				statusCode: 200,
+				statusMessage: 'OK',
+				httpVersion: '1.1',
+				timings: {
+					start: 0,
+					phases: {
+						tls: 2,
+						tcp: 2,
+						dns: 5,
+						download: 10,
+						total: 11,
+						firstByte: 1,
+					},
+				},
+				headers: { test: 'abc' },
+				rawHeaders: [ 'test', 'abc' ],
+			};
+
+			const httpResponse = getCmdMock('http-big-response-size');
+			const data = httpResponse.split('\n');
+
+			const stream = new Stream(response, '1.1.1.1');
+			const mockHttpCmd = (): Request => stream as never;
+
+			const http = new HttpCommand(mockHttpCmd);
+			const cmd = http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			stream.emit('response', response);
+
+			for (const chunk of data) {
+				stream.emit('data', Buffer.from(chunk));
+			}
+
+			await cmd;
+
+			expect(mockedSocket.emit.callCount).to.equal(2);
+
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
+			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawOutput.substring(0, 24)).to.equal('HTTP/1.1 200\ntest: abc\n\n');
+			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawOutput.length).to.equal('HTTP/1.1 200\ntest: abc\n\n'.length + data[0]!.length);
+
+			expect((mockedSocket.emit.lastCall.args[0] as any)).to.equal('probe:measurement:result');
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawHeaders).to.equal('test: abc');
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawBody.length).to.equal(10000);
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput.substring(0, 24)).to.equal('HTTP/1.1 200\ntest: abc\n\n');
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput.length).to.equal(10024);
+		});
+
+		it('should send only first 10 KB of data if response body is too big while `inProgressUpdates: false`', async () => {
+			const options = {
+				type: 'http' as const,
+				target: 'cdn.jsdelivr.net',
+				inProgressUpdates: false,
+				protocol: 'http',
+				request: {
+					method: 'get',
+					path: '/npm/jquery',
+					query: '',
+				},
+			};
+
+			const response = {
+				socket: {},
+				statusCode: 200,
+				statusMessage: 'OK',
+				httpVersion: '1.1',
+				timings: {
+					start: 0,
+					phases: {
+						tls: 2,
+						tcp: 2,
+						dns: 5,
+						download: 10,
+						total: 11,
+						firstByte: 1,
+					},
+				},
+				headers: { test: 'abc' },
+				rawHeaders: [ 'test', 'abc' ],
+			};
+
+			const httpResponse = getCmdMock('http-big-response-size');
+			const data = httpResponse.split('\n');
+
+			const stream = new Stream(response, '1.1.1.1');
+			const mockHttpCmd = (): Request => stream as never;
+
+			const http = new HttpCommand(mockHttpCmd);
+			const cmd = http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			stream.emit('response', response);
+
+			for (const chunk of data) {
+				stream.emit('data', Buffer.from(chunk));
+			}
+
+			await cmd;
+
+			expect(mockedSocket.emit.callCount).to.equal(1);
+
+			expect((mockedSocket.emit.lastCall.args[0] as any)).to.equal('probe:measurement:result');
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawHeaders).to.equal('test: abc');
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawBody.length).to.equal(10000);
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput.substring(0, 24)).to.equal('HTTP/1.1 200\ntest: abc\n\n');
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput.length).to.equal(10024);
+		});
+
+		it('should send only first 10 KB and finish if the first progress message data is too big', async () => {
+			const options = {
+				type: 'http' as const,
+				target: 'cdn.jsdelivr.net',
+				inProgressUpdates: true,
+				protocol: 'http',
+				request: {
+					method: 'get',
+					path: '/npm/jquery',
+					query: '',
+				},
+			};
+
+			const response = {
+				socket: {},
+				statusCode: 200,
+				statusMessage: 'OK',
+				httpVersion: '1.1',
+				timings: {
+					start: 0,
+					phases: {
+						tls: 2,
+						tcp: 2,
+						dns: 5,
+						download: 10,
+						total: 11,
+						firstByte: 1,
+					},
+				},
+				headers: { test: 'abc' },
+				rawHeaders: [ 'test', 'abc' ],
+			};
+
+			const httpResponse = getCmdMock('http-big-response-size');
+
+			const stream = new Stream(response, '1.1.1.1');
+			const mockHttpCmd = (): Request => stream as never;
+
+			const http = new HttpCommand(mockHttpCmd);
+			const cmd = http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			stream.emit('response', response);
+
+			for (let i = 0; i < 3; i++) {
+				stream.emit('data', Buffer.from(httpResponse));
+			}
+
+			await cmd;
+
+			expect(mockedSocket.emit.callCount).to.equal(2);
+
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
+			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawOutput.substring(0, 24)).to.equal('HTTP/1.1 200\ntest: abc\n\n');
+			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawOutput.length).to.equal(10024);
+
+			expect((mockedSocket.emit.lastCall.args[0] as any)).to.equal('probe:measurement:result');
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawHeaders).to.equal('test: abc');
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawBody.length).to.equal(10000);
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput.substring(0, 24)).to.equal('HTTP/1.1 200\ntest: abc\n\n');
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput.length).to.equal(10024);
 		});
 	});
 });
