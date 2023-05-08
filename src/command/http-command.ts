@@ -192,10 +192,16 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				download: timings.phases['download'] ?? Number(timings['end']) - Number(timings['response']),
 			};
 
-			let rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}`;
+			let rawOutput;
 
-			if (options.request.method === 'get') {
-				rawOutput += `\n\n${result.rawBody}`;
+			if (result.status === 'failed') {
+				rawOutput = result.error;
+			} else if (result.error) {
+				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}\n\n${result.error}`;
+			} else if (options.request.method === 'head') {
+				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}`;
+			} else {
+				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}\n\n${result.rawBody}`;
 			}
 
 			buffer.pushResult(this.toJsonOutput({
@@ -208,7 +214,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				statusCodeName: result.statusCodeName,
 				timings: result.timings,
 				tls: result.tls,
-				rawOutput: result.error || rawOutput,
+				rawOutput,
 			}));
 
 			resolveStream();
