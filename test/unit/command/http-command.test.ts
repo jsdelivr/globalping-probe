@@ -10,6 +10,7 @@ import {
 	urlBuilder,
 	type Timings, HttpOptions,
 } from '../../../src/command/http-command.js';
+import { getCmdMock } from '../../utils.js';
 
 type StreamCert = {
 	valid_from: number | string;
@@ -35,28 +36,23 @@ type StreamResponse = {
 	};
 };
 
-class Stream {
+class Stream extends PassThrough {
 	response: StreamResponse | undefined;
 	timings: Timings | undefined;
 	stream: PassThrough;
 	ip: string;
+	options: {context: {downloadLimit?: number}};
 
 	constructor (
 		response: StreamResponse,
 		ip: string,
 	) {
+		super();
 		this.stream = new PassThrough();
 		this.response = response;
 		this.timings = response?.timings;
 		this.ip = ip;
-	}
-
-	on (key: string, fn: (..._args: any[]) => void) {
-		this.stream.on(key, fn);
-	}
-
-	emit (key: string, data?: any) {
-		this.stream.emit(key, data);
+		this.options = { context: { downloadLimit: 10_000 } };
 	}
 }
 
@@ -74,9 +70,9 @@ describe('http command', () => {
 				const options = {
 					type: 'http',
 					target: 'google.com',
-					protocol: 'http',
+					protocol: 'HTTP',
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: '/',
 						query: '',
 					},
@@ -92,9 +88,9 @@ describe('http command', () => {
 				const options = {
 					type: 'http' as const,
 					target: 'google.com',
-					protocol: 'https',
+					protocol: 'HTTPS',
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: '/',
 						query: '',
 					},
@@ -110,9 +106,9 @@ describe('http command', () => {
 				const options = {
 					type: 'http' as const,
 					target: 'google.com',
-					protocol: 'http2',
+					protocol: 'HTTP2',
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: '/',
 						query: '',
 					},
@@ -130,10 +126,10 @@ describe('http command', () => {
 				const options = {
 					type: 'http' as const,
 					target: 'google.com',
-					protocol: 'http',
+					protocol: 'HTTP',
 					port: 1212,
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: '/',
 						query: '',
 					},
@@ -149,9 +145,9 @@ describe('http command', () => {
 				const options = {
 					type: 'http' as const,
 					target: 'google.com',
-					protocol: 'http',
+					protocol: 'HTTP',
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: '/',
 						query: '',
 					},
@@ -167,9 +163,9 @@ describe('http command', () => {
 				const options = {
 					type: 'http' as const,
 					target: 'google.com',
-					protocol: 'https',
+					protocol: 'HTTPS',
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: '/',
 						query: '',
 					},
@@ -187,9 +183,9 @@ describe('http command', () => {
 				const options = {
 					type: 'http' as const,
 					target: 'google.com',
-					protocol: 'http',
+					protocol: 'HTTP',
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: 'abc',
 						query: '',
 					},
@@ -205,9 +201,9 @@ describe('http command', () => {
 				const options = {
 					type: 'http' as const,
 					target: 'google.com',
-					protocol: 'http',
+					protocol: 'HTTP',
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: '/abc',
 						query: '',
 					},
@@ -225,9 +221,9 @@ describe('http command', () => {
 				const options = {
 					type: 'http' as const,
 					target: 'google.com',
-					protocol: 'http',
+					protocol: 'HTTP',
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: '/',
 						query: 'abc=def',
 					},
@@ -243,9 +239,9 @@ describe('http command', () => {
 				const options = {
 					type: 'http' as const,
 					target: 'google.com',
-					protocol: 'http',
+					protocol: 'HTTP',
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: '/',
 						query: '?abc=def',
 					},
@@ -259,16 +255,21 @@ describe('http command', () => {
 		});
 	});
 
-	describe('with httCmd', () => {
+	describe('with real httpCmd', () => {
 		it('should respond with 200', async () => {
-			nock('http://google.com').get('/200?abc=def').reply(200, '200 Ok', { test: 'abc' });
+			nock('http://google.com').get('/200?abc=def').reply(200, function () {
+				const request = this.req as typeof this.req & {response: {httpVersion: string}};
+				request.response.httpVersion = '1.1';
+				return '200 Ok';
+			}, { test: 'abc' });
+
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
 				inProgressUpdates: true,
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/200',
 					query: 'abc=def',
 				},
@@ -282,7 +283,7 @@ describe('http command', () => {
 					},
 					rawHeaders: 'test: abc',
 					rawBody: '200 Ok',
-					rawOutput: '200 Ok',
+					rawOutput: 'HTTP/1.1 200\ntest: abc\n\n200 Ok',
 					statusCode: 200,
 					statusCodeName: 'OK',
 				},
@@ -298,25 +299,31 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
-				result: { rawOutput: '200 Ok' },
+				result: { rawOutput: 'HTTP/1.1 200\ntest: abc\n\n200 Ok' },
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
-			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawOutput', expectedResult.result.rawOutput);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.statusCode', expectedResult.result.statusCode);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.statusCodeName', expectedResult.result.statusCodeName);
 		});
 
 		it('should respond with 200 without progress messages', async () => {
-			nock('http://google.com').get('/200?abc=def').reply(200, '200 Ok', { test: 'abc' });
+			nock('http://google.com').get('/200?abc=def').reply(200, function () {
+				const request = this.req as typeof this.req & {response: {httpVersion: string}};
+				request.response.httpVersion = '1.1';
+				return '200 Ok';
+			}, { test: 'abc' });
+
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
 				inProgressUpdates: false,
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/200',
 					query: 'abc=def',
 				},
@@ -330,7 +337,7 @@ describe('http command', () => {
 					},
 					rawHeaders: 'test: abc',
 					rawBody: '200 Ok',
-					rawOutput: '200 Ok',
+					rawOutput: 'HTTP/1.1 200\ntest: abc\n\n200 Ok',
 					statusCode: 200,
 					statusCodeName: 'OK',
 				},
@@ -342,21 +349,27 @@ describe('http command', () => {
 
 			expect(mockedSocket.emit.callCount).to.equal(1);
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
-			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
 			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
+			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
+			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawOutput', expectedResult.result.rawOutput);
 			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.statusCode', expectedResult.result.statusCode);
 			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.statusCodeName', expectedResult.result.statusCodeName);
 		});
 
 		it('should respond with 400', async () => {
-			nock('http://google.com').get('/400').times(3).reply(400, '400 Bad Request', { test: 'abc' });
+			nock('http://google.com').get('/400').times(3).reply(400, function () {
+				const request = this.req as typeof this.req & {response: {httpVersion: string}};
+				request.response.httpVersion = '1.1';
+				return '400 Bad Request';
+			}, { test: 'abc' });
+
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
 				inProgressUpdates: true,
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/400',
 					query: '',
 				},
@@ -370,7 +383,7 @@ describe('http command', () => {
 					},
 					rawHeaders: 'test: abc',
 					rawBody: '400 Bad Request',
-					rawOutput: '400 Bad Request',
+					rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request',
 					statusCode: 400,
 				},
 				testId: 'test',
@@ -385,11 +398,12 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
-				result: { rawOutput: '400 Bad Request' },
+				result: { rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request' },
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawOutput', expectedResult.result.rawOutput);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
 		});
 
@@ -399,9 +413,9 @@ describe('http command', () => {
 				type: 'http' as const,
 				target: 'google.com',
 				inProgressUpdates: false,
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/400',
 					query: '',
 				},
@@ -415,7 +429,7 @@ describe('http command', () => {
 					},
 					rawHeaders: 'test: abc',
 					rawBody: '400 Bad Request',
-					rawOutput: '400 Bad Request',
+					rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request',
 					statusCode: 400,
 				},
 				testId: 'test',
@@ -427,18 +441,24 @@ describe('http command', () => {
 			expect(mockedSocket.emit.callCount).to.equal(1);
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
+			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawOutput', expectedResult.result.rawOutput);
 			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
 		});
 
 		it('should respond with 400 (missing path slash)', async () => {
-			nock('http://google.com').get('/400').times(3).reply(400, '400 Bad Request', { test: 'abc' });
+			nock('http://google.com').get('/400').times(3).reply(400, function () {
+				const request = this.req as typeof this.req & {response: {httpVersion: string}};
+				request.response.httpVersion = '1.1';
+				return '400 Bad Request';
+			}, { test: 'abc' });
+
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
 				inProgressUpdates: true,
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '400',
 					query: '',
 				},
@@ -452,7 +472,7 @@ describe('http command', () => {
 					},
 					rawHeaders: 'test: abc',
 					rawBody: '400 Bad Request',
-					rawOutput: '400 Bad Request',
+					rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request',
 					statusCode: 400,
 				},
 				testId: 'test',
@@ -467,7 +487,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
-				result: { rawOutput: '400 Bad Request' },
+				result: { rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request' },
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
@@ -480,9 +500,9 @@ describe('http command', () => {
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/400',
 					query: '',
 				},
@@ -496,15 +516,15 @@ describe('http command', () => {
 		});
 	});
 
-	describe('manual', () => {
+	describe('with mocked httpCmd', () => {
 		it('should emit progress + result events', async () => {
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
 				inProgressUpdates: true,
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/',
 					query: '',
 				},
@@ -555,7 +575,7 @@ describe('http command', () => {
 					},
 					rawHeaders: 'test: abc',
 					rawBody: 'abcdefghijklmno',
-					rawOutput: 'abcdefghijklmno',
+					rawOutput: 'HTTP/1.1 200\ntest: abc\n\nabcdefghijklmno',
 					statusCode: 200,
 					statusCodeName: 'OK',
 					tls: null,
@@ -584,7 +604,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress',	{
 				testId: 'test',
 				measurementId: 'measurement',
-				result: { rawOutput: 'abc' },
+				result: { rawOutput: 'HTTP/1.1 200\ntest: abc\n\nabc' },
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
@@ -596,9 +616,9 @@ describe('http command', () => {
 				type: 'http' as const,
 				target: 'google.com',
 				inProgressUpdates: false,
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/',
 					query: '',
 				},
@@ -649,7 +669,7 @@ describe('http command', () => {
 					},
 					rawHeaders: 'test: abc',
 					rawBody: 'abcdefghijklmno',
-					rawOutput: 'abcdefghijklmno',
+					rawOutput: 'HTTP/1.1 200\ntest: abc\n\nabcdefghijklmno',
 					statusCode: 200,
 					statusCodeName: 'OK',
 					tls: null,
@@ -682,9 +702,9 @@ describe('http command', () => {
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'head',
+					method: 'HEAD',
 					path: '/',
 					query: '',
 				},
@@ -763,9 +783,9 @@ describe('http command', () => {
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'head',
+					method: 'HEAD',
 					path: '/',
 					query: '',
 				},
@@ -870,9 +890,9 @@ describe('http command', () => {
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/',
 					query: '',
 				},
@@ -914,7 +934,7 @@ describe('http command', () => {
 					},
 					rawBody: null,
 					rawHeaders: 'test: abc',
-					rawOutput: 'Response code 404 (Not Found) - ERR_NON_2XX_3XX_RESPONSE',
+					rawOutput: 'HTTP/1.1 404\ntest: abc\n\nResponse code 404 (Not Found) - ERR_NON_2XX_3XX_RESPONSE',
 					resolvedAddress: null,
 					status: 'finished',
 					statusCode: 404,
@@ -953,9 +973,9 @@ describe('http command', () => {
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/',
 					query: '',
 				},
@@ -1023,9 +1043,9 @@ describe('http command', () => {
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/',
 					query: '',
 				},
@@ -1087,6 +1107,190 @@ describe('http command', () => {
 			expect(mockedSocket.emit.callCount).to.equal(1);
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
+		});
+
+		it('should send only first 10 KB of data if response body is too big', async () => {
+			const options = {
+				type: 'http' as const,
+				target: 'cdn.jsdelivr.net',
+				inProgressUpdates: true,
+				protocol: 'HTTP',
+				request: {
+					method: 'GET',
+					path: '/npm/jquery',
+					query: '',
+				},
+			};
+
+			const response = {
+				socket: {},
+				statusCode: 200,
+				statusMessage: 'OK',
+				httpVersion: '1.1',
+				timings: {
+					start: 0,
+					phases: {
+						tls: 2,
+						tcp: 2,
+						dns: 5,
+						download: 10,
+						total: 11,
+						firstByte: 1,
+					},
+				},
+				headers: { test: 'abc' },
+				rawHeaders: [ 'test', 'abc' ],
+			};
+
+			const httpResponse = getCmdMock('http-big-response-size');
+			const data = httpResponse.split('\n');
+
+			const stream = new Stream(response, '1.1.1.1');
+			const mockHttpCmd = (): Request => stream as never;
+
+			const http = new HttpCommand(mockHttpCmd);
+			const cmd = http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			stream.emit('response', response);
+
+			for (const chunk of data) {
+				stream.emit('data', Buffer.from(chunk));
+			}
+
+			await cmd;
+
+			expect(mockedSocket.emit.callCount).to.equal(2);
+
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
+			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawOutput.substring(0, 24)).to.equal('HTTP/1.1 200\ntest: abc\n\n');
+			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawOutput.length).to.equal('HTTP/1.1 200\ntest: abc\n\n'.length + data[0]!.length);
+
+			expect((mockedSocket.emit.lastCall.args[0] as any)).to.equal('probe:measurement:result');
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawHeaders).to.equal('test: abc');
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawBody.length).to.equal(10000);
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput.substring(0, 24)).to.equal('HTTP/1.1 200\ntest: abc\n\n');
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput.length).to.equal(10024);
+		});
+
+		it('should send only first 10 KB of data if response body is too big while `inProgressUpdates: false`', async () => {
+			const options = {
+				type: 'http' as const,
+				target: 'cdn.jsdelivr.net',
+				inProgressUpdates: false,
+				protocol: 'HTTP',
+				request: {
+					method: 'GET',
+					path: '/npm/jquery',
+					query: '',
+				},
+			};
+
+			const response = {
+				socket: {},
+				statusCode: 200,
+				statusMessage: 'OK',
+				httpVersion: '1.1',
+				timings: {
+					start: 0,
+					phases: {
+						tls: 2,
+						tcp: 2,
+						dns: 5,
+						download: 10,
+						total: 11,
+						firstByte: 1,
+					},
+				},
+				headers: { test: 'abc' },
+				rawHeaders: [ 'test', 'abc' ],
+			};
+
+			const httpResponse = getCmdMock('http-big-response-size');
+			const data = httpResponse.split('\n');
+
+			const stream = new Stream(response, '1.1.1.1');
+			const mockHttpCmd = (): Request => stream as never;
+
+			const http = new HttpCommand(mockHttpCmd);
+			const cmd = http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			stream.emit('response', response);
+
+			for (const chunk of data) {
+				stream.emit('data', Buffer.from(chunk));
+			}
+
+			await cmd;
+
+			expect(mockedSocket.emit.callCount).to.equal(1);
+
+			expect((mockedSocket.emit.lastCall.args[0] as any)).to.equal('probe:measurement:result');
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawHeaders).to.equal('test: abc');
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawBody.length).to.equal(10000);
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput.substring(0, 24)).to.equal('HTTP/1.1 200\ntest: abc\n\n');
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput.length).to.equal(10024);
+		});
+
+		it('should send only first 10 KB and finish if the first progress message data is too big', async () => {
+			const options = {
+				type: 'http' as const,
+				target: 'cdn.jsdelivr.net',
+				inProgressUpdates: true,
+				protocol: 'HTTP',
+				request: {
+					method: 'GET',
+					path: '/npm/jquery',
+					query: '',
+				},
+			};
+
+			const response = {
+				socket: {},
+				statusCode: 200,
+				statusMessage: 'OK',
+				httpVersion: '1.1',
+				timings: {
+					start: 0,
+					phases: {
+						tls: 2,
+						tcp: 2,
+						dns: 5,
+						download: 10,
+						total: 11,
+						firstByte: 1,
+					},
+				},
+				headers: { test: 'abc' },
+				rawHeaders: [ 'test', 'abc' ],
+			};
+
+			const httpResponse = getCmdMock('http-big-response-size');
+
+			const stream = new Stream(response, '1.1.1.1');
+			const mockHttpCmd = (): Request => stream as never;
+
+			const http = new HttpCommand(mockHttpCmd);
+			const cmd = http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			stream.emit('response', response);
+
+			for (let i = 0; i < 3; i++) {
+				stream.emit('data', Buffer.from(httpResponse));
+			}
+
+			await cmd;
+
+			expect(mockedSocket.emit.callCount).to.equal(2);
+
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
+			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawOutput.substring(0, 24)).to.equal('HTTP/1.1 200\ntest: abc\n\n');
+			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawOutput.length).to.equal(10024);
+
+			expect((mockedSocket.emit.lastCall.args[0] as any)).to.equal('probe:measurement:result');
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawHeaders).to.equal('test: abc');
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawBody.length).to.equal(10000);
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput.substring(0, 24)).to.equal('HTTP/1.1 200\ntest: abc\n\n');
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput.length).to.equal(10024);
 		});
 	});
 });

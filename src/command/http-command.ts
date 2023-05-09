@@ -5,7 +5,7 @@ import https from 'node:https';
 import http2 from 'http2-wrapper';
 import Joi from 'joi';
 import _ from 'lodash';
-import got, { type Response, type Request, type HTTPAlias, type Progress, type DnsLookupIpVersion, type RequestError, HTTPError } from 'got';
+import got, { type Response, type Request, type HTTPAlias, type DnsLookupIpVersion, type RequestError, HTTPError } from 'got';
 import type { Socket } from 'socket.io-client';
 import type { CommandInterface } from '../types.js';
 import { callbackify } from '../lib/util.js';
@@ -93,18 +93,18 @@ const getInitialResult = () => ({
 	timings: {},
 });
 
-const allowedHttpProtocols = [ 'http', 'https', 'http2' ];
-const allowedHttpMethods = [ 'get', 'head' ];
+const allowedHttpProtocols = [ 'HTTP', 'HTTPS', 'HTTP2' ];
+const allowedHttpMethods = [ 'GET', 'HEAD' ];
 
 export const httpOptionsSchema = Joi.object<HttpOptions>({
 	type: Joi.string().valid('http').insensitive().required(),
 	inProgressUpdates: Joi.boolean().required(),
 	target: Joi.alternatives().try(Joi.string().ip(), Joi.string().domain()).required(),
 	resolver: Joi.string().ip(),
-	protocol: Joi.string().valid(...allowedHttpProtocols).insensitive().default('https'),
+	protocol: Joi.string().valid(...allowedHttpProtocols).insensitive().default('HTTPS'),
 	port: Joi.number(),
 	request: Joi.object({
-		method: Joi.string().valid(...allowedHttpMethods).insensitive().default('head'),
+		method: Joi.string().valid(...allowedHttpMethods).insensitive().default('HEAD'),
 		host: Joi.string().domain(),
 		path: Joi.string().optional().default('/'),
 		query: Joi.string().allow('').optional().default(''),
@@ -113,8 +113,8 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 });
 
 export const urlBuilder = (options: HttpOptions): string => {
-	const protocolPrefix = options.protocol === 'http' ? 'http' : 'https';
-	const port = options.port ? options.port : (options.protocol === 'http' ? 80 : 443);
+	const protocolPrefix = options.protocol === 'HTTP' ? 'http' : 'https';
+	const port = options.port ? options.port : (options.protocol === 'HTTP' ? 80 : 443);
 	const path = `/${options.request.path}`.replace(/^\/\//, '/');
 	const query = options.request.query.length > 0 ? `?${options.request.query}`.replace(/^\?\?/, '?') : '';
 	const url = `${protocolPrefix}://${options.target}:${port}${path}${query}`;
@@ -132,7 +132,7 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 		cache: false,
 		dnsLookup: dnsResolver,
 		dnsLookupIpVersion: 4 as DnsLookupIpVersion,
-		http2: options.protocol === 'http2',
+		http2: options.protocol === 'HTTP2',
 		timeout: {
 			request: 10_000,
 			response: 10_000,
@@ -192,9 +192,17 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				download: timings.phases['download'] ?? Number(timings['end']) - Number(timings['response']),
 			};
 
-			const rawOutput = options.request.method === 'head'
-				? `HTTP/${result.httpVersion} ${result.statusCode}\n` + result.curlHeaders
-				: result.rawBody;
+			let rawOutput;
+
+			if (result.status === 'failed') {
+				rawOutput = result.error;
+			} else if (result.error) {
+				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}\n\n${result.error}`;
+			} else if (options.request.method === 'HEAD') {
+				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}`;
+			} else {
+				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}\n\n${result.rawBody}`;
+			}
 
 			buffer.pushResult(this.toJsonOutput({
 				status: result.status,
@@ -202,11 +210,11 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				headers: result.headers,
 				rawHeaders: result.rawHeaders,
 				rawBody: result.rawBody,
+				rawOutput,
 				statusCode: result.statusCode,
 				statusCodeName: result.statusCodeName,
 				timings: result.timings,
 				tls: result.tls,
-				rawOutput: result.error || rawOutput,
 			}));
 
 			resolveStream();
@@ -228,10 +236,29 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		};
 
 		const onData = (data: Buffer) => {
-			result.rawBody += data.toString();
+			const isFirstMessage = result.rawBody.length === 0;
+			const downloadLimit = stream.options.context['downloadLimit'] as number || Infinity;
+			let dataString = data.toString();
+
+			const remainingSize = downloadLimit - result.rawBody.length;
+
+			if (dataString.length > remainingSize) {
+				dataString = dataString.substring(0, remainingSize);
+				stream.destroy(new Error('Exceeded the download.'));
+			}
+
+			result.rawBody += dataString;
 
 			if (cmdOptions.inProgressUpdates) {
-				buffer.pushProgress({ rawOutput: data.toString() });
+				let rawOutput = '';
+
+				if (isFirstMessage) {
+					rawOutput += `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}\n\n`;
+				}
+
+				rawOutput += dataString;
+
+				buffer.pushProgress({ rawOutput });
 			}
 		};
 
@@ -247,30 +274,19 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			};
 		};
 
-		const onDownloadProgress = (progress: Progress) => {
-			const { downloadLimit } = stream.options.context;
-
-			if (!downloadLimit) {
-				return;
-			}
-
-			if (progress.transferred > Number(downloadLimit) && progress.percent !== 1) {
-				stream.destroy(new Error('Exceeded the download.'));
-			}
-		};
-
 		const pStream = new Promise((_resolve) => {
 			const resolve = () => {
 				_resolve(null);
 			};
 
-			stream.on('downloadProgress', onDownloadProgress);
 			stream.on('data', onData);
 			stream.on('response', onResponse);
 			stream.on('socket', onSocket);
 
 			stream.on('error', (error: RequestError) => {
-				if (!(error instanceof HTTPError)) {
+				if (error instanceof HTTPError || error.message === 'Exceeded the download.') {
+					result.status = 'finished';
+				} else {
 					result.status = 'failed';
 				}
 
@@ -297,6 +313,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			headers: input.headers,
 			rawHeaders: input.rawHeaders || null,
 			rawBody: input.rawBody || null,
+			rawOutput: input.rawOutput,
 			statusCode: input.statusCode || null,
 			statusCodeName: input.statusCodeName || null,
 			timings: {
@@ -309,7 +326,6 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				...input.timings,
 			},
 			tls: Object.keys(input.tls).length > 0 ? input.tls as Cert : null,
-			rawOutput: input.rawOutput,
 		};
 	}
 
