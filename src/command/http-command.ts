@@ -97,14 +97,14 @@ const allowedHttpProtocols = [ 'HTTP', 'HTTPS', 'HTTP2' ];
 const allowedHttpMethods = [ 'GET', 'HEAD' ];
 
 export const httpOptionsSchema = Joi.object<HttpOptions>({
-	type: Joi.string().valid('http').required(),
+	type: Joi.string().valid('http').insensitive().required(),
 	inProgressUpdates: Joi.boolean().required(),
 	target: Joi.alternatives().try(Joi.string().ip(), Joi.string().domain()).required(),
 	resolver: Joi.string().ip(),
-	protocol: Joi.string().valid(...allowedHttpProtocols).default('HTTPS'),
+	protocol: Joi.string().valid(...allowedHttpProtocols).insensitive().default('HTTPS'),
 	port: Joi.number(),
 	request: Joi.object({
-		method: Joi.string().valid(...allowedHttpMethods).default('HEAD'),
+		method: Joi.string().valid(...allowedHttpMethods).insensitive().default('HEAD'),
 		host: Joi.string().domain(),
 		path: Joi.string().optional().default('/'),
 		query: Joi.string().allow('').optional().default(''),
