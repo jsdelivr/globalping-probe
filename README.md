@@ -70,7 +70,7 @@ To get started or if you have any questions make sure to get in contact with us 
 
 <img src="https://user-images.githubusercontent.com/1834071/183153051-5c741c3c-5e8c-4372-ba12-82a602cb7cb6.png" alt="globalping probe" height="200px" align="right"/>
 
-All GitHub Sponsors that contribute $20+ per month are eligible to receive a hardware probe to install in your home or office. 
+All GitHub Sponsors that contribute $10+ per month are eligible to receive a hardware probe to install in your home or office. 
 
 Installing our hardware probe simplifies the whole process and removes the need of having a computer running 24/7. 
 Just connect the probe to your switch or router via an ethernet cable and you are done!
