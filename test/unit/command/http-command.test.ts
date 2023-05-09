@@ -70,9 +70,9 @@ describe('http command', () => {
 				const options = {
 					type: 'http',
 					target: 'google.com',
-					protocol: 'http',
+					protocol: 'HTTP',
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: '/',
 						query: '',
 					},
@@ -88,9 +88,9 @@ describe('http command', () => {
 				const options = {
 					type: 'http' as const,
 					target: 'google.com',
-					protocol: 'https',
+					protocol: 'HTTPS',
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: '/',
 						query: '',
 					},
@@ -106,9 +106,9 @@ describe('http command', () => {
 				const options = {
 					type: 'http' as const,
 					target: 'google.com',
-					protocol: 'http2',
+					protocol: 'HTTP2',
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: '/',
 						query: '',
 					},
@@ -126,10 +126,10 @@ describe('http command', () => {
 				const options = {
 					type: 'http' as const,
 					target: 'google.com',
-					protocol: 'http',
+					protocol: 'HTTP',
 					port: 1212,
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: '/',
 						query: '',
 					},
@@ -145,9 +145,9 @@ describe('http command', () => {
 				const options = {
 					type: 'http' as const,
 					target: 'google.com',
-					protocol: 'http',
+					protocol: 'HTTP',
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: '/',
 						query: '',
 					},
@@ -163,9 +163,9 @@ describe('http command', () => {
 				const options = {
 					type: 'http' as const,
 					target: 'google.com',
-					protocol: 'https',
+					protocol: 'HTTPS',
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: '/',
 						query: '',
 					},
@@ -183,9 +183,9 @@ describe('http command', () => {
 				const options = {
 					type: 'http' as const,
 					target: 'google.com',
-					protocol: 'http',
+					protocol: 'HTTP',
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: 'abc',
 						query: '',
 					},
@@ -201,9 +201,9 @@ describe('http command', () => {
 				const options = {
 					type: 'http' as const,
 					target: 'google.com',
-					protocol: 'http',
+					protocol: 'HTTP',
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: '/abc',
 						query: '',
 					},
@@ -221,9 +221,9 @@ describe('http command', () => {
 				const options = {
 					type: 'http' as const,
 					target: 'google.com',
-					protocol: 'http',
+					protocol: 'HTTP',
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: '/',
 						query: 'abc=def',
 					},
@@ -239,9 +239,9 @@ describe('http command', () => {
 				const options = {
 					type: 'http' as const,
 					target: 'google.com',
-					protocol: 'http',
+					protocol: 'HTTP',
 					request: {
-						method: 'get',
+						method: 'GET',
 						path: '/',
 						query: '?abc=def',
 					},
@@ -267,9 +267,9 @@ describe('http command', () => {
 				type: 'http' as const,
 				target: 'google.com',
 				inProgressUpdates: true,
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/200',
 					query: 'abc=def',
 				},
@@ -321,9 +321,9 @@ describe('http command', () => {
 				type: 'http' as const,
 				target: 'google.com',
 				inProgressUpdates: false,
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/200',
 					query: 'abc=def',
 				},
@@ -367,9 +367,9 @@ describe('http command', () => {
 				type: 'http' as const,
 				target: 'google.com',
 				inProgressUpdates: true,
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/400',
 					query: '',
 				},
@@ -413,9 +413,9 @@ describe('http command', () => {
 				type: 'http' as const,
 				target: 'google.com',
 				inProgressUpdates: false,
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/400',
 					query: '',
 				},
@@ -456,9 +456,9 @@ describe('http command', () => {
 				type: 'http' as const,
 				target: 'google.com',
 				inProgressUpdates: true,
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '400',
 					query: '',
 				},
@@ -500,9 +500,9 @@ describe('http command', () => {
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/400',
 					query: '',
 				},
@@ -522,9 +522,9 @@ describe('http command', () => {
 				type: 'http' as const,
 				target: 'google.com',
 				inProgressUpdates: true,
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/',
 					query: '',
 				},
@@ -616,9 +616,9 @@ describe('http command', () => {
 				type: 'http' as const,
 				target: 'google.com',
 				inProgressUpdates: false,
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/',
 					query: '',
 				},
@@ -702,9 +702,9 @@ describe('http command', () => {
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'head',
+					method: 'HEAD',
 					path: '/',
 					query: '',
 				},
@@ -783,9 +783,9 @@ describe('http command', () => {
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'head',
+					method: 'HEAD',
 					path: '/',
 					query: '',
 				},
@@ -890,9 +890,9 @@ describe('http command', () => {
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/',
 					query: '',
 				},
@@ -973,9 +973,9 @@ describe('http command', () => {
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/',
 					query: '',
 				},
@@ -1043,9 +1043,9 @@ describe('http command', () => {
 			const options = {
 				type: 'http' as const,
 				target: 'google.com',
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/',
 					query: '',
 				},
@@ -1114,9 +1114,9 @@ describe('http command', () => {
 				type: 'http' as const,
 				target: 'cdn.jsdelivr.net',
 				inProgressUpdates: true,
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/npm/jquery',
 					query: '',
 				},
@@ -1177,9 +1177,9 @@ describe('http command', () => {
 				type: 'http' as const,
 				target: 'cdn.jsdelivr.net',
 				inProgressUpdates: false,
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/npm/jquery',
 					query: '',
 				},
@@ -1236,9 +1236,9 @@ describe('http command', () => {
 				type: 'http' as const,
 				target: 'cdn.jsdelivr.net',
 				inProgressUpdates: true,
-				protocol: 'http',
+				protocol: 'HTTP',
 				request: {
-					method: 'get',
+					method: 'GET',
 					path: '/npm/jquery',
 					query: '',
 				},

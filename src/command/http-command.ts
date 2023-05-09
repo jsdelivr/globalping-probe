@@ -93,18 +93,18 @@ const getInitialResult = () => ({
 	timings: {},
 });
 
-const allowedHttpProtocols = [ 'http', 'https', 'http2' ];
-const allowedHttpMethods = [ 'get', 'head' ];
+const allowedHttpProtocols = [ 'HTTP', 'HTTPS', 'HTTP2' ];
+const allowedHttpMethods = [ 'GET', 'HEAD' ];
 
 export const httpOptionsSchema = Joi.object<HttpOptions>({
-	type: Joi.string().valid('http').insensitive().required(),
+	type: Joi.string().valid('http').required(),
 	inProgressUpdates: Joi.boolean().required(),
 	target: Joi.alternatives().try(Joi.string().ip(), Joi.string().domain()).required(),
 	resolver: Joi.string().ip(),
-	protocol: Joi.string().valid(...allowedHttpProtocols).insensitive().default('https'),
+	protocol: Joi.string().valid(...allowedHttpProtocols).default('HTTPS'),
 	port: Joi.number(),
 	request: Joi.object({
-		method: Joi.string().valid(...allowedHttpMethods).insensitive().default('head'),
+		method: Joi.string().valid(...allowedHttpMethods).default('HEAD'),
 		host: Joi.string().domain(),
 		path: Joi.string().optional().default('/'),
 		query: Joi.string().allow('').optional().default(''),
@@ -113,8 +113,8 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 });
 
 export const urlBuilder = (options: HttpOptions): string => {
-	const protocolPrefix = options.protocol === 'http' ? 'http' : 'https';
-	const port = options.port ? options.port : (options.protocol === 'http' ? 80 : 443);
+	const protocolPrefix = options.protocol === 'HTTP' ? 'http' : 'https';
+	const port = options.port ? options.port : (options.protocol === 'HTTP' ? 80 : 443);
 	const path = `/${options.request.path}`.replace(/^\/\//, '/');
 	const query = options.request.query.length > 0 ? `?${options.request.query}`.replace(/^\?\?/, '?') : '';
 	const url = `${protocolPrefix}://${options.target}:${port}${path}${query}`;
@@ -132,7 +132,7 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 		cache: false,
 		dnsLookup: dnsResolver,
 		dnsLookupIpVersion: 4 as DnsLookupIpVersion,
-		http2: options.protocol === 'http2',
+		http2: options.protocol === 'HTTP2',
 		timeout: {
 			request: 10_000,
 			response: 10_000,
@@ -198,7 +198,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				rawOutput = result.error;
 			} else if (result.error) {
 				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}\n\n${result.error}`;
-			} else if (options.request.method === 'head') {
+			} else if (options.request.method === 'HEAD') {
 				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}`;
 			} else {
 				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}\n\n${result.rawBody}`;
