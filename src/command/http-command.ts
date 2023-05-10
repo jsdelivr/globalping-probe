@@ -258,7 +258,11 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 				rawOutput += dataString;
 
-				buffer.pushProgress({ rawOutput });
+				buffer.pushProgress({
+					...(isFirstMessage && { rawHeaders: result.rawHeaders }),
+					rawBody: dataString,
+					rawOutput,
+				});
 			}
 		};
 

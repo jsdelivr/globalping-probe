@@ -1,19 +1,27 @@
 
 import type { Socket } from 'socket.io-client';
+import _ from 'lodash';
 import type { DnsParseResponseJson as DnsParseResponseClassicJson } from '../command/handlers/dig/classic.js';
 import type { DnsParseResponseJson as DnsParseResponseTraceJson } from '../command/handlers/dig/trace.js';
 import type { OutputJson as HttpOutputJson } from '../command/http-command.js';
 import type { PingParseOutputJson } from '../command/ping-command.js';
 import { PROGRESS_INTERVAL_TIME } from '../constants.js';
 
-type ProgressType = {
-	rawOutput: string;
+type DefaultProgress = {
+	rawOutput: string
+}
+
+type HttpProgress = DefaultProgress & {
+	rawHeaders?: string;
+	rawBody: string;
 };
+
+type ProgressType = DefaultProgress | HttpProgress;
 
 type ResultTypeJson = DnsParseResponseClassicJson | DnsParseResponseTraceJson | PingParseOutputJson | HttpOutputJson | Record<string, unknown>;
 
 export class ProgressBuffer {
-	private buffer: ProgressType[] = [];
+	private buffer: Record<string, string> = {};
 	private timer?: NodeJS.Timeout;
 	private isFirst = true;
 
@@ -24,7 +32,13 @@ export class ProgressBuffer {
 	) {}
 
 	pushProgress (progress: ProgressType) {
-		this.buffer.push(progress);
+		Object.entries(progress).forEach(([ field, value ]) => {
+			if (this.buffer[field] === undefined) {
+				this.buffer[field] = value;
+			} else {
+				this.buffer[field] += value;
+			}
+		});
 
 		if (this.isFirst) {
 			this.sendProgress();
@@ -47,19 +61,17 @@ export class ProgressBuffer {
 	private sendProgress () {
 		delete this.timer;
 
-		if (this.buffer.length === 0) {
+		if (_.isEmpty(this.buffer)) {
 			return;
 		}
 
 		this.socket.emit('probe:measurement:progress', {
 			testId: this.testId,
 			measurementId: this.measurementId,
-			result: {
-				rawOutput: this.buffer.map(({ rawOutput }) => rawOutput).join(''),
-			},
+			result: this.buffer,
 		});
 
-		this.buffer = [];
+		this.buffer = {};
 	}
 
 	private sendResult (result: ResultTypeJson) {

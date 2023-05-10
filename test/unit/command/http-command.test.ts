@@ -294,12 +294,15 @@ describe('http command', () => {
 			await http.run(mockedSocket as any, 'measurement', 'test', options);
 
 			expect(mockedSocket.emit.callCount).to.equal(2);
-			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
 
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
-				result: { rawOutput: 'HTTP/1.1 200\ntest: abc\n\n200 Ok' },
+				result: {
+					rawHeaders: 'test: abc',
+					rawBody: '200 Ok',
+					rawOutput: 'HTTP/1.1 200\ntest: abc\n\n200 Ok',
+				},
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
@@ -393,12 +396,15 @@ describe('http command', () => {
 			await http.run(mockedSocket as any, 'measurement', 'test', options);
 
 			expect(mockedSocket.emit.callCount).to.equal(2);
-			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
 
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
-				result: { rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request' },
+				result: {
+					rawHeaders: 'test: abc',
+					rawBody: '400 Bad Request',
+					rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request',
+				},
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
@@ -482,12 +488,15 @@ describe('http command', () => {
 			await http.run(mockedSocket as any, 'measurement', 'test', options);
 
 			expect(mockedSocket.emit.callCount).to.equal(2);
-			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
 
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
-				result: { rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request' },
+				result: {
+					rawHeaders: 'test: abc',
+					rawBody: '400 Bad Request',
+					rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request',
+				},
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
@@ -601,10 +610,14 @@ describe('http command', () => {
 
 			expect(mockedSocket.emit.callCount).to.equal(2);
 
-			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress',	{
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
-				result: { rawOutput: 'HTTP/1.1 200\ntest: abc\n\nabc' },
+				result: {
+					rawHeaders: 'test: abc',
+					rawBody: 'abc',
+					rawOutput: 'HTTP/1.1 200\ntest: abc\n\nabc',
+				},
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
@@ -1162,6 +1175,8 @@ describe('http command', () => {
 			expect(mockedSocket.emit.callCount).to.equal(2);
 
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
+			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawHeaders).to.equal('test: abc');
+			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawBody.length).to.equal(data[0]!.length);
 			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawOutput.substring(0, 24)).to.equal('HTTP/1.1 200\ntest: abc\n\n');
 			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawOutput.length).to.equal('HTTP/1.1 200\ntest: abc\n\n'.length + data[0]!.length);
 
@@ -1283,6 +1298,8 @@ describe('http command', () => {
 			expect(mockedSocket.emit.callCount).to.equal(2);
 
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
+			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawHeaders).to.equal('test: abc');
+			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawBody.length).to.equal(10000);
 			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawOutput.substring(0, 24)).to.equal('HTTP/1.1 200\ntest: abc\n\n');
 			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawOutput.length).to.equal(10024);
 

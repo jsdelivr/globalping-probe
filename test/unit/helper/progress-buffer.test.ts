@@ -98,4 +98,52 @@ describe('progress buffer', () => {
 			testId: 'test-id',
 		});
 	});
+
+	it('should accumulate and send any fields passed in the progress object', () => {
+		const progressBuffer = new ProgressBuffer(mockedSocket, 'test-id', 'measurement-id');
+
+		progressBuffer.pushProgress({ rawHeaders: 'header', rawBody: 'a', rawOutput: 'a' });
+		progressBuffer.pushProgress({ rawBody: 'b', rawOutput: 'b' });
+		progressBuffer.pushProgress({ rawBody: 'c', rawOutput: 'c' });
+		sandbox.clock.tick(700);
+		progressBuffer.pushProgress({ rawBody: 'd', rawOutput: 'd' });
+		progressBuffer.pushProgress({ rawBody: 'e', rawOutput: 'e' });
+		sandbox.clock.tick(700);
+
+		expect(mockedSocket.emit.callCount).to.equal(3);
+
+		expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
+
+		expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal({
+			measurementId: 'measurement-id',
+			result: {
+				rawHeaders: 'header',
+				rawBody: 'a',
+				rawOutput: 'a',
+			},
+			testId: 'test-id',
+		});
+
+		expect(mockedSocket.emit.secondCall.args[0]).to.equal('probe:measurement:progress');
+
+		expect(mockedSocket.emit.secondCall.args[1]).to.deep.equal({
+			measurementId: 'measurement-id',
+			result: {
+				rawBody: 'bc',
+				rawOutput: 'bc',
+			},
+			testId: 'test-id',
+		});
+
+		expect(mockedSocket.emit.thirdCall.args[0]).to.equal('probe:measurement:progress');
+
+		expect(mockedSocket.emit.thirdCall.args[1]).to.deep.equal({
+			measurementId: 'measurement-id',
+			result: {
+				rawBody: 'de',
+				rawOutput: 'de',
+			},
+			testId: 'test-id',
+		});
+	});
 });
