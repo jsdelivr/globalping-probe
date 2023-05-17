@@ -92,11 +92,11 @@ export const TraceDigParser = {
 		}));
 	},
 
-	toJsonOutput (input: DnsParseResponse): DnsParseResponseJson {
+	toJsonOutput (result: DnsParseResponse): DnsParseResponseJson {
 		return {
-			status: input.status,
-			rawOutput: input.rawOutput,
-			hops: input.hops.map(h => ({
+			status: result.status,
+			rawOutput: result.rawOutput,
+			hops: result.hops.map(h => ({
 				answers: h.answers ?? [],
 				timings: {
 					...(h.timings ?? { total: 0 }),
