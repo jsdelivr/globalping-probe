@@ -7,7 +7,7 @@
 		"statusCode": null,
 		"rawOutput": "Private IP ranges are not allowed",
 		"answers": [],
-		"resolver": null,
+		"resolver": "private",
 		"timings": {
 			"total": 0
 		}
