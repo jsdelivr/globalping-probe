@@ -94,7 +94,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 
 		const buffer = new ProgressBuffer(socket, testId, measurementId);
 		let isResultPrivate = false;
-		let result: Record<string, any> = {};
+		let result: Partial<DnsParseResponseClassic | DnsParseResponseTrace> = {};
 
 		const cmd = this.cmd(cmdOptions);
 
@@ -165,7 +165,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			result = {
 				status: 'failed',
 				rawOutput: 'Private IP ranges are not allowed',
-				resolver: result['resolver'] as string | undefined,
+				...(!options.trace ? { resolver: (result as DnsParseResponseClassic).resolver } : {}),
 			};
 		}
 
