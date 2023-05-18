@@ -346,14 +346,12 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		result.statusCodeName = resp.statusMessage ?? '';
 		result.httpVersion = resp.httpVersion;
 
-		const timings = {
-			firstByte: resp.timings.phases.firstByte,
-			dns: resp.timings.phases.dns,
-			tls: resp.timings.phases.tls,
-			tcp: resp.timings.phases.tcp,
+		result.timings = {
+			firstByte: resp.timings.phases.firstByte ?? null,
+			dns: resp.timings.phases.dns ?? null,
+			tls: resp.timings.phases.tls ?? null,
+			tcp: resp.timings.phases.tcp ?? null,
 		};
-
-		result.timings = Object.fromEntries(Object.entries(timings).filter(entry => entry[1])) as Record<string, number>;
 
 		if (cert) {
 			result.tls = {

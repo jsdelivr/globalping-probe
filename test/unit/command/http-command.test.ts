@@ -711,6 +711,91 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
 		});
 
+		it('should send proper timings if some fields are equal to 0 and some are missing', async () => {
+			const options = {
+				type: 'http' as const,
+				target: 'google.com',
+				inProgressUpdates: false,
+				protocol: 'HTTP',
+				request: {
+					method: 'GET',
+					path: '/',
+					query: '',
+				},
+			};
+
+			const events = {
+				response: {
+					socket: {},
+					statusCode: 200,
+					statusMessage: 'OK',
+					httpVersion: '1.1',
+					timings: {
+						start: 0,
+						phases: {
+							tcp: 0,
+							dns: 0,
+							download: 0,
+							total: 0,
+							firstByte: 0,
+						},
+					},
+					headers: { test: 'abc' },
+					rawHeaders: [ 'test', 'abc' ],
+				},
+				data: [ 'abc', 'def', 'ghi', 'jkl', 'mno' ],
+			};
+
+			const response = {
+				...events.response,
+			};
+
+			const stream = new Stream(response, '1.1.1.1');
+			const mockHttpCmd = (): Request => stream as never;
+
+			const http = new HttpCommand(mockHttpCmd);
+			const cmd = http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			stream.emit('response', events.response);
+
+			for (const data of events.data) {
+				stream.emit('data', Buffer.from(data));
+			}
+
+			stream.emit('end');
+
+			await cmd;
+
+			expect(mockedSocket.emit.callCount).to.equal(1);
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+
+			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal({
+				measurementId: 'measurement',
+				result: {
+					status: 'finished',
+					resolvedAddress: '1.1.1.1',
+					headers: {
+						test: 'abc',
+					},
+					timings: {
+						dns: 0,
+						tls: null,
+						tcp: 0,
+						download: 0,
+						firstByte: 0,
+						total: 0,
+					},
+					rawHeaders: 'test: abc',
+					rawBody: 'abcdefghijklmno',
+					rawOutput: 'HTTP/1.1 200\ntest: abc\n\nabcdefghijklmno',
+					statusCode: 200,
+					statusCodeName: 'OK',
+					tls: null,
+				},
+				testId: 'test',
+			});
+		});
+
 		it('should emit headers (rawOutput - HEAD request)', async () => {
 			const options = {
 				type: 'http' as const,

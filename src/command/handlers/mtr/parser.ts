@@ -274,10 +274,10 @@ export const MtrParser = {
 				continue;
 			}
 
-			if (rtt?.rtt) {
-				stats.rcv++;
-			} else {
+			if (rtt?.rtt === null || rtt?.rtt === undefined) {
 				stats.drop++;
+			} else {
+				stats.rcv++;
 			}
 		}
 
