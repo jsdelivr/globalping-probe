@@ -21,17 +21,18 @@ import type {
 } from './handlers/dig/trace.js';
 import { isDnsSection } from './handlers/dig/shared.js';
 import type { DnsParseLoopResponse } from './handlers/dig/shared.js';
+import type { DeepPartial } from '../lib/types.js';
 
 export type DnsOptions = {
 	type: 'dns';
 	inProgressUpdates: boolean;
 	target: string;
-	protocol?: string;
-	port?: number;
+	protocol: string;
+	port: number;
 	resolver?: string;
 	trace?: boolean;
 	query: {
-		type?: string;
+		type: string;
 	};
 };
 
@@ -56,15 +57,15 @@ const dnsOptionsSchema = Joi.object<DnsOptions>({
 });
 
 export const argBuilder = (options: DnsOptions): string[] => {
-	const protocolArg = options.protocol?.toLowerCase() === 'tcp' ? '+tcp' : [];
+	const protocolArg = options.protocol.toLowerCase() === 'tcp' ? '+tcp' : [];
 	const resolverArg = options.resolver ? `@${options.resolver}` : [];
 	const traceArg = options.trace ? '+trace' : [];
 	const queryArg = options.query.type === 'PTR' ? '-x' : [ '-t', options.query.type ];
 
 	const args = [
+		queryArg,
 		options.target,
 		resolverArg,
-		queryArg,
 		[ '-p', String(options.port) ],
 		'-4',
 		'+timeout=3',
@@ -72,7 +73,7 @@ export const argBuilder = (options: DnsOptions): string[] => {
 		'+nocookie',
 		traceArg,
 		protocolArg,
-	].flat() as string[];
+	].flat();
 
 	return args;
 };
@@ -85,7 +86,7 @@ export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
 export class DnsCommand implements CommandInterface<DnsOptions> {
 	constructor (private readonly cmd: typeof dnsCmd) {}
 
-	async run (socket: Socket, measurementId: string, testId: string, options: DnsOptions): Promise<void> {
+	async run (socket: Socket, measurementId: string, testId: string, options: DeepPartial<DnsOptions>): Promise<void> {
 		const { value: cmdOptions, error: validationError } = dnsOptionsSchema.validate(options);
 
 		if (validationError) {
