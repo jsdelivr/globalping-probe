@@ -32,17 +32,16 @@ describe('dns command', () => {
 			};
 
 			const args = argBuilder(options);
+			console.log(args);
 
-			expect(args[0]).to.equal(options.target);
+			expect([ args[0], args[1], args[2], args[3] ]).to.deep.equal([ '-t', 'TXT', 'google.com', '@1.1.1.1' ]);
 			expect(args.join(' ')).to.include(`-t ${options.query.type}`);
 			expect(args).to.include('-4');
 			expect(args).to.include('+timeout=3');
 			expect(args).to.include('+tries=2');
 			expect(args).to.include('+nocookie');
-			// Optional values
-			expect(args[1]).to.equal(`@${options.resolver}`);
-			// Udp has no flag
-			expect(args).to.not.include('udp');
+			// Optional values:
+			expect(args).to.not.include('udp'); // Udp has no flag
 			expect(args).to.include('+trace');
 		});
 
@@ -90,6 +89,7 @@ describe('dns command', () => {
 					type: 'dns' as DnsOptions['type'],
 					target: 'google.com',
 					resolver: '1.1.1.1',
+					protocol: 'UDP',
 					port: 90,
 					query: {
 						type: 'TXT',
@@ -103,11 +103,12 @@ describe('dns command', () => {
 		});
 
 		describe('type', () => {
-			it('should set -t A flag', () => {
+			it('should set -t A flag before the target', () => {
 				const options = {
 					type: 'dns' as DnsOptions['type'],
 					target: 'google.com',
 					resolver: '1.1.1.1',
+					protocol: 'UDP',
 					port: 90,
 					query: {
 						type: 'A',
@@ -116,14 +117,15 @@ describe('dns command', () => {
 				};
 
 				const args = argBuilder(options);
-				expect(args.join(' ')).to.contain('-t A');
+				expect(args.join(' ')).to.contain('-t A google.com');
 			});
 
-			it('should set -x PTR flag', () => {
+			it('should set -x flag before the target', () => {
 				const options = {
 					type: 'dns' as DnsOptions['type'],
 					target: '8.8.8.8',
 					resolver: '1.1.1.1',
+					protocol: 'UDP',
 					port: 90,
 					query: {
 						type: 'PTR',
@@ -132,7 +134,7 @@ describe('dns command', () => {
 				};
 
 				const args = argBuilder(options);
-				expect(args.join(' ')).to.contain('-x');
+				expect(args.join(' ')).to.contain('-x 8.8.8.8');
 			});
 		});
 
