@@ -21,6 +21,7 @@ import type {
 } from './handlers/dig/trace.js';
 import { isDnsSection } from './handlers/dig/shared.js';
 import type { DnsParseLoopResponse } from './handlers/dig/shared.js';
+import type { DeepPartial } from '../lib/types.js';
 
 export type DnsOptions = {
 	type: 'dns';
@@ -85,7 +86,7 @@ export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
 export class DnsCommand implements CommandInterface<DnsOptions> {
 	constructor (private readonly cmd: typeof dnsCmd) {}
 
-	async run (socket: Socket, measurementId: string, testId: string, options: DnsOptions): Promise<void> {
+	async run (socket: Socket, measurementId: string, testId: string, options: DeepPartial<DnsOptions>): Promise<void> {
 		const { value: cmdOptions, error: validationError } = dnsOptionsSchema.validate(options);
 
 		if (validationError) {
