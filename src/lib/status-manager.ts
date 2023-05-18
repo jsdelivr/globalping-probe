@@ -1,6 +1,6 @@
 import type { ExecaChildProcess, ExecaReturnValue } from 'execa';
 import type { Socket } from 'socket.io-client';
-import parse from '../command/handlers/ping/parse.js';
+import parse, { PingParseOutput } from '../command/handlers/ping/parse.js';
 import type { PingOptions } from '../command/ping-command.js';
 import { hasRequired } from './dependencies.js';
 import { scopedLogger } from './logger.js';
@@ -71,24 +71,29 @@ export class StatusManager {
 			this.pingCmd({ type: 'ping', target: 'j.root-servers.net', packets, inProgressUpdates: false }),
 		]);
 
-		const rejectedPromises = results.filter((promise): promise is PromiseRejectedResult => promise.status === 'rejected');
-
-		for (const promise of rejectedPromises) {
-			logger.warn('ping test promise rejected:', promise.reason);
-		}
-
 		const fulfilledPromises = results.filter((promise): promise is PromiseFulfilledResult<ExecaReturnValue> => promise.status === 'fulfilled');
 		const cmdResults = fulfilledPromises.map(promise => promise.value).map(result => parse(result.stdout));
+		const nonSuccessfulResults: PingParseOutput[] = [];
 		const successfulResults = cmdResults.filter((result) => {
 			const isSuccessful = result.status === 'finished' && result.stats?.loss === 0;
 
 			if (!isSuccessful) {
-				logger.warn('ping test result don\'t match criterias:', result);
+				nonSuccessfulResults.push(result);
 			}
 
 			return isSuccessful;
 		});
-		return successfulResults.length >= 2;
+
+		const isPassingTest = successfulResults.length >= 2;
+
+		if (!isPassingTest) {
+			const rejectedPromises = results.filter((promise): promise is PromiseRejectedResult => promise.status === 'rejected');
+			logger.warn('Ping test failed, here are the reasons:');
+			rejectedPromises.forEach(promise => logger.warn('ping test promise rejected:', promise.reason));
+			nonSuccessfulResults.forEach(result => logger.warn('ping test promise resolved, but result doesn\'t match criterias:', result));
+		}
+
+		return isPassingTest;
 	}
 }
 
