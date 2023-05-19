@@ -11,7 +11,7 @@ jobs:
     name: Release new version
 
     runs-on: ubuntu-latest
-    container: node:18.13-bullseye-slim
+    container: node:18.16-bullseye-slim
 
     needs: test
 
