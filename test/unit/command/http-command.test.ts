@@ -1,6 +1,6 @@
 import { PassThrough } from 'node:stream';
 import nock from 'nock';
-import { type Request, type PlainResponse, HTTPError, CacheError } from 'got';
+import { type Request, type PlainResponse, HTTPError, CacheError, RequestError } from 'got';
 import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { Socket } from 'socket.io-client';
@@ -27,7 +27,7 @@ type StreamCert = {
 };
 
 type StreamResponse = {
-	timings: Timings;
+	timings?: Timings;
 	socket: {
 		authorized?: boolean;
 		authorizationError?: string;
@@ -278,6 +278,7 @@ describe('http command', () => {
 			const expectedResult = {
 				measurementId: 'measurement',
 				result: {
+					status: 'finished',
 					headers: {
 						test: 'abc',
 					},
@@ -306,6 +307,7 @@ describe('http command', () => {
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.status', expectedResult.result.status);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawOutput', expectedResult.result.rawOutput);
@@ -335,6 +337,7 @@ describe('http command', () => {
 			const expectedResult = {
 				measurementId: 'measurement',
 				result: {
+					status: 'finished',
 					headers: {
 						test: 'abc',
 					},
@@ -352,6 +355,7 @@ describe('http command', () => {
 
 			expect(mockedSocket.emit.callCount).to.equal(1);
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.status', expectedResult.result.status);
 			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
 			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
 			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawOutput', expectedResult.result.rawOutput);
@@ -381,6 +385,7 @@ describe('http command', () => {
 			const expectedResult = {
 				measurementId: 'measurement',
 				result: {
+					status: 'finished',
 					headers: {
 						test: 'abc',
 					},
@@ -408,6 +413,7 @@ describe('http command', () => {
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.status', expectedResult.result.status);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawOutput', expectedResult.result.rawOutput);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
@@ -430,6 +436,7 @@ describe('http command', () => {
 			const expectedResult = {
 				measurementId: 'measurement',
 				result: {
+					status: 'finished',
 					headers: {
 						test: 'abc',
 					},
@@ -446,6 +453,7 @@ describe('http command', () => {
 
 			expect(mockedSocket.emit.callCount).to.equal(1);
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.status', expectedResult.result.status);
 			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
 			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawOutput', expectedResult.result.rawOutput);
 			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
@@ -473,6 +481,7 @@ describe('http command', () => {
 			const expectedResult = {
 				measurementId: 'measurement',
 				result: {
+					status: 'finished',
 					headers: {
 						test: 'abc',
 					},
@@ -500,6 +509,7 @@ describe('http command', () => {
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.status', expectedResult.result.status);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
 			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
 		});
@@ -1137,6 +1147,70 @@ describe('http command', () => {
 			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
 		});
 
+		it('should work correctly if error doesn\'t have timings field', async () => {
+			const options = {
+				type: 'http' as const,
+				target: 'google.com',
+				protocol: 'HTTP',
+				request: {
+					method: 'GET',
+					path: '/',
+					query: '',
+				},
+				inProgressUpdates: true,
+			};
+
+			const events = {
+				response: {
+					socket: {},
+				},
+				error: new RequestError('Invalid URL', { code: 'ERR_INVALID_URL' }, {} as unknown as Request),
+			};
+
+			const response = {
+				...events.response,
+			};
+
+			const expectedResult = {
+				measurementId: 'measurement',
+				result: {
+					status: 'failed',
+					resolvedAddress: null,
+					headers: {},
+					rawHeaders: null,
+					rawBody: null,
+					timings: {
+						dns: null,
+						firstByte: null,
+						tcp: null,
+						tls: null,
+						download: null,
+						total: null,
+					},
+					tls: null,
+					rawOutput: 'Invalid URL - ERR_INVALID_URL',
+					statusCode: null,
+					statusCodeName: null,
+				},
+				testId: 'test',
+			};
+
+			const stream = new Stream(response, '');
+
+			const mockHttpCmd = (): Request => stream as never;
+
+			const http = new HttpCommand(mockHttpCmd);
+			const cmd = http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			stream.emit('error', events.error);
+
+			await cmd;
+
+			expect(mockedSocket.emit.callCount).to.equal(1);
+			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.lastCall.args[1]).to.deep.equal(expectedResult);
+		});
+
 		it('should send "failed" status in all other cases of errors while `inProgressUpdates: false`', async () => {
 			const options = {
 				type: 'http' as const,
@@ -1260,16 +1334,16 @@ describe('http command', () => {
 			expect(mockedSocket.emit.callCount).to.equal(2);
 
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:progress');
-			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawHeaders).to.equal('test: abc');
-			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawBody.length).to.equal(data[0]!.length);
+			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawHeaders', 'test: abc');
+			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawBody.length', data[0]!.length);
 			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawOutput.substring(0, 24)).to.equal('HTTP/1.1 200\ntest: abc\n\n');
-			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawOutput.length).to.equal('HTTP/1.1 200\ntest: abc\n\n'.length + data[0]!.length);
+			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawOutput.length', 'HTTP/1.1 200\ntest: abc\n\n'.length + data[0]!.length);
 
-			expect((mockedSocket.emit.lastCall.args[0] as any)).to.equal('probe:measurement:result');
-			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawHeaders).to.equal('test: abc');
-			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawBody.length).to.equal(10000);
+			expect((mockedSocket.emit.lastCall.args[0])).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', 'test: abc');
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody.length', 10000);
 			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput.substring(0, 24)).to.equal('HTTP/1.1 200\ntest: abc\n\n');
-			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput.length).to.equal(10024);
+			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawOutput.length', 10024);
 		});
 
 		it('should send only first 10 KB of data if response body is too big while `inProgressUpdates: false`', async () => {

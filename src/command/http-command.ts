@@ -180,17 +180,8 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		const respond = (resolveStream: () => void) => {
 			result.resolvedAddress = stream.ip ?? '';
 
-			const timings = (stream.timings ?? {}) as Timings;
-
-			if (!timings['end']) {
-				timings['end'] = Date.now();
-			}
-
-			result.timings = {
-				...result.timings,
-				total: timings.phases['total'] ?? Number(timings['end']) - Number(timings['start']),
-				download: timings.phases['download'] ?? Number(timings['end']) - Number(timings['response']),
-			};
+			const { total, download } = this.parseStreamTimings(stream);
+			result.timings = { ...result.timings, total, download };
 
 			let rawOutput;
 
@@ -331,6 +322,27 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			},
 			tls: Object.keys(input.tls).length > 0 ? input.tls as Cert : null,
 		};
+	}
+
+	private parseStreamTimings (stream: Request) {
+		const timings = { ...{ end: Date.now(), phases: {} }, ...stream.timings };
+		let total = null;
+
+		if (timings.phases.total !== undefined) {
+			total = timings.phases.total;
+		} else if (timings.end !== undefined && timings.start !== undefined) {
+			total = Number(timings.end) - Number(timings.start);
+		}
+
+		let download = null;
+
+		if (timings.phases.download !== undefined) {
+			download = timings.phases.download;
+		} else if (timings.end !== undefined && timings.response !== undefined) {
+			download = Number(timings.end) - Number(timings.response);
+		}
+
+		return { total, download };
 	}
 
 	private parseResponse (resp: Response, cert: Cert | undefined) {
