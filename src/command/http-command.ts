@@ -85,7 +85,6 @@ const getInitialResult = () => ({
 	error: '',
 	headers: {},
 	rawHeaders: '',
-	curlHeaders: '',
 	rawBody: '',
 	statusCode: 0,
 	statusCodeName: '',
@@ -197,11 +196,11 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			if (result.status === 'failed') {
 				rawOutput = result.error;
 			} else if (result.error) {
-				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}\n\n${result.error}`;
+				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.rawHeaders}\n\n${result.error}`;
 			} else if (options.request.method === 'HEAD') {
-				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}`;
+				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.rawHeaders}`;
 			} else {
-				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}\n\n${result.rawBody}`;
+				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.rawHeaders}\n\n${result.rawBody}`;
 			}
 
 			buffer.pushResult(this.toJsonOutput({
@@ -253,7 +252,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				let rawOutput = '';
 
 				if (isFirstMessage) {
-					rawOutput += `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}\n\n`;
+					rawOutput += `HTTP/${result.httpVersion} ${result.statusCode}\n${result.rawHeaders}\n\n`;
 				}
 
 				rawOutput += dataString;
@@ -337,9 +336,11 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		const result = getInitialResult();
 
 		// Headers
-		const rawHeaders = _.chunk(resp.rawHeaders, 2).map((g: string[]) => `${String(g[0])}: ${String(g[1])}`);
-		result.rawHeaders = rawHeaders.join('\n');
-		result.curlHeaders = rawHeaders.filter((r: string) => !r.startsWith(':status:')).join('\n');
+		result.rawHeaders = _.chunk(resp.rawHeaders, 2)
+			.map((g: string[]) => `${String(g[0])}: ${String(g[1])}`)
+			.filter((r: string) => !r.startsWith(':status:'))
+			.join('\n');
+
 		result.headers = resp.headers as Record<string, string>;
 
 		result.statusCode = resp.statusCode;
