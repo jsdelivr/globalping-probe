@@ -969,7 +969,7 @@ describe('http command', () => {
 							alt: cert.subjectaltname,
 						},
 					},
-					rawHeaders: ':status: 200\ntest: abc',
+					rawHeaders: 'test: abc',
 					rawBody: null,
 					rawOutput: 'HTTP/2 200\ntest: abc',
 					statusCode: 200,
