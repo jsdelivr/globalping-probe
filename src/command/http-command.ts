@@ -85,7 +85,6 @@ const getInitialResult = () => ({
 	error: '',
 	headers: {},
 	rawHeaders: '',
-	curlHeaders: '',
 	rawBody: '',
 	statusCode: 0,
 	statusCodeName: '',
@@ -180,28 +179,19 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		const respond = (resolveStream: () => void) => {
 			result.resolvedAddress = stream.ip ?? '';
 
-			const timings = (stream.timings ?? {}) as Timings;
-
-			if (!timings['end']) {
-				timings['end'] = Date.now();
-			}
-
-			result.timings = {
-				...result.timings,
-				total: timings.phases['total'] ?? Number(timings['end']) - Number(timings['start']),
-				download: timings.phases['download'] ?? Number(timings['end']) - Number(timings['response']),
-			};
+			const { total, download } = this.parseStreamTimings(stream);
+			result.timings = { ...result.timings, total, download };
 
 			let rawOutput;
 
 			if (result.status === 'failed') {
 				rawOutput = result.error;
 			} else if (result.error) {
-				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}\n\n${result.error}`;
+				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.rawHeaders}\n\n${result.error}`;
 			} else if (options.request.method === 'HEAD') {
-				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}`;
+				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.rawHeaders}`;
 			} else {
-				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}\n\n${result.rawBody}`;
+				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.rawHeaders}\n\n${result.rawBody}`;
 			}
 
 			buffer.pushResult(this.toJsonOutput({
@@ -253,7 +243,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				let rawOutput = '';
 
 				if (isFirstMessage) {
-					rawOutput += `HTTP/${result.httpVersion} ${result.statusCode}\n${result.curlHeaders}\n\n`;
+					rawOutput += `HTTP/${result.httpVersion} ${result.statusCode}\n${result.rawHeaders}\n\n`;
 				}
 
 				rawOutput += dataString;
@@ -333,13 +323,36 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		};
 	}
 
+	private parseStreamTimings (stream: Request) {
+		const timings = { ...{ end: Date.now(), phases: {} }, ...stream.timings };
+		let total = null;
+
+		if (timings.phases.total !== undefined) {
+			total = timings.phases.total;
+		} else if (timings.end !== undefined && timings.start !== undefined) {
+			total = Number(timings.end) - Number(timings.start);
+		}
+
+		let download = null;
+
+		if (timings.phases.download !== undefined) {
+			download = timings.phases.download;
+		} else if (timings.end !== undefined && timings.response !== undefined) {
+			download = Number(timings.end) - Number(timings.response);
+		}
+
+		return { total, download };
+	}
+
 	private parseResponse (resp: Response, cert: Cert | undefined) {
 		const result = getInitialResult();
 
 		// Headers
-		const rawHeaders = _.chunk(resp.rawHeaders, 2).map((g: string[]) => `${String(g[0])}: ${String(g[1])}`);
-		result.rawHeaders = rawHeaders.join('\n');
-		result.curlHeaders = rawHeaders.filter((r: string) => !r.startsWith(':status:')).join('\n');
+		result.rawHeaders = _.chunk(resp.rawHeaders, 2)
+			.map((g: string[]) => `${String(g[0])}: ${String(g[1])}`)
+			.filter((r: string) => !r.startsWith(':status:'))
+			.join('\n');
+
 		result.headers = resp.headers as Record<string, string>;
 
 		result.statusCode = resp.statusCode;
