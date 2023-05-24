@@ -57,7 +57,7 @@
 	},
 	"scripts": {
 		"build": "tsc && npm run copy:sh",
-		"coverage": "npm run clean && c8 mocha",
+		"coverage": "npm run clean && NODE_ENV=test c8 mocha",
 		"clean": "rimraf coverage",
 		"copy:sh": "cp -r src/sh dist/sh",
 		"dev": "NODE_ENV=development tsx src/index.ts",
