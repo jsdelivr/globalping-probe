@@ -1,3 +1,4 @@
+import config from 'config';
 import process from 'node:process';
 import throng from 'throng';
 import { io } from 'socket.io-client';
@@ -5,7 +6,6 @@ import physicalCpuCount from 'physical-cpu-count';
 import type { CommandInterface, MeasurementRequest } from './types.js';
 import { loadAll as loadAllDeps } from './lib/dependencies.js';
 import { scopedLogger } from './lib/logger.js';
-import { getConfValue } from './lib/config.js';
 import { apiErrorHandler } from './helper/api-error-handler.js';
 import { apiConnectLocationHandler } from './helper/api-connect-handler.js';
 import { dnsCmd, DnsCommand } from './command/dns-command.js';
@@ -53,7 +53,7 @@ function connect () {
 		}, 10_000),
 	};
 
-	const socket = io(`${getConfValue<string>('api.host')}/probes`, {
+	const socket = io(`${config.get<string>('api.host')}/probes`, {
 		transports: [ 'websocket' ],
 		reconnectionDelay: 100,
 		reconnectionDelayMax: 500,

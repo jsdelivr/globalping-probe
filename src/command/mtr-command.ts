@@ -1,3 +1,4 @@
+import config from 'config';
 import dns from 'node:dns';
 import { isIP } from 'is-ip';
 import isIpPrivate from 'private-ip';
@@ -6,7 +7,6 @@ import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
-import { getConfValue } from '../lib/config.js';
 import { ProgressBufferOverwrite } from '../helper/progress-buffer-overwrite.js';
 import { scopedLogger } from '../lib/logger.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
@@ -43,7 +43,7 @@ const mtrOptionsSchema = Joi.object<MtrOptions>({
 export const getResultInitState = (): ResultType => ({ status: 'finished', hops: [], rawOutput: '', data: [] });
 
 export const argBuilder = (options: MtrOptions): string[] => {
-	const intervalArg = [ '--interval', String(getConfValue('commands.mtr.interval')) ];
+	const intervalArg = [ '--interval', String(config.get<number>('commands.mtr.interval')) ];
 	const protocolArg = options.protocol === 'icmp' ? [] : `--${options.protocol}`;
 	const packetsArg = String(options.packets);
 
