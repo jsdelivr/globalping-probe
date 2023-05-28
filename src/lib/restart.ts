@@ -1,10 +1,10 @@
+import config from 'config';
 import process from 'node:process';
 import _ from 'lodash';
-import { getConfValue } from './config.js';
 import { scopedLogger } from './logger.js';
 
 const logger = scopedLogger('health-restart');
-const uptimeConfig = getConfValue<{interval: number; maxDeviation: number; maxUptime: number}>('uptime');
+const uptimeConfig = config.get<{interval: number; maxDeviation: number; maxUptime: number}>('uptime');
 const uptimeInterval = uptimeConfig.interval + _.random(0, uptimeConfig.maxDeviation);
 
 const checkUptime = () => {

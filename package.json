@@ -11,6 +11,7 @@
 		"url": "git+https://github.com/jsdelivr/globalping-probe.git"
 	},
 	"dependencies": {
+		"config": "^3.3.9",
 		"execa": "^7.1.1",
 		"got": "^12.6.0",
 		"http2-wrapper": "^2.2.0",
@@ -56,7 +57,7 @@
 	},
 	"scripts": {
 		"build": "tsc && npm run copy:sh",
-		"coverage": "npm run clean && c8 mocha",
+		"coverage": "npm run clean && NODE_ENV=test c8 mocha",
 		"clean": "rimraf coverage",
 		"copy:sh": "cp -r src/sh dist/sh",
 		"dev": "NODE_ENV=development tsx src/index.ts",

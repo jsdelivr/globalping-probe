@@ -1,10 +1,10 @@
+import config from 'config';
 import type { ExecaChildProcess, ExecaReturnValue } from 'execa';
 import type { Socket } from 'socket.io-client';
 import parse, { PingParseOutput } from '../command/handlers/ping/parse.js';
 import type { PingOptions } from '../command/ping-command.js';
 import { hasRequired } from './dependencies.js';
 import { scopedLogger } from './logger.js';
-import { getConfValue } from './config.js';
 
 const logger = scopedLogger('status-manager');
 
@@ -64,7 +64,7 @@ export class StatusManager {
 	}
 
 	private async pingTest () {
-		const packets = getConfValue<number>('status.numberOfPackets');
+		const packets = config.get<number>('status.numberOfPackets');
 		const results = await Promise.allSettled([
 			this.pingCmd({ type: 'ping', target: 'l.root-servers.net', packets, inProgressUpdates: false }),
 			this.pingCmd({ type: 'ping', target: 'k.root-servers.net', packets, inProgressUpdates: false }),

@@ -1,5 +1,5 @@
+import config from 'config';
 import type { Socket } from 'socket.io-client';
-import { getConfValue } from '../config.js';
 import { scopedLogger } from '../logger.js';
 import { getCpuUsage } from './cpu.js';
 
@@ -9,7 +9,7 @@ type Worker = {
 	jobs: Map<string, number>;
 };
 
-const statsConfig = getConfValue<{interval: number}>('stats');
+const statsConfig = config.get<{interval: number}>('stats');
 
 const report = async (socket: Socket, jobCount: number) => {
 	const cpuUsage = await getCpuUsage();
