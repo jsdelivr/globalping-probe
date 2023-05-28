@@ -32,7 +32,6 @@ describe('dns command', () => {
 			};
 
 			const args = argBuilder(options);
-			console.log(args);
 
 			expect([ args[0], args[1], args[2], args[3] ]).to.deep.equal([ '-t', 'TXT', 'google.com', '@1.1.1.1' ]);
 			expect(args.join(' ')).to.include(`-t ${options.query.type}`);
@@ -40,6 +39,7 @@ describe('dns command', () => {
 			expect(args).to.include('+timeout=3');
 			expect(args).to.include('+tries=2');
 			expect(args).to.include('+nocookie');
+			expect(args).to.include('+nsid');
 			// Optional values:
 			expect(args).to.not.include('udp'); // Udp has no flag
 			expect(args).to.include('+trace');
