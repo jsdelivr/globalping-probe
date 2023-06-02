@@ -28,6 +28,7 @@ type ProbeLocation = {
 	asn: string;
 	latitude: string;
 	longitude: string;
+	network: string;
 	state: string | undefined;
 };
 

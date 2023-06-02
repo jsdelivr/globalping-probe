@@ -7,7 +7,7 @@ import { getStatusManager } from '../lib/status-manager.js';
 const logger = scopedLogger('api:connect');
 
 export const apiConnectLocationHandler = (socket: Socket) => async (data: ProbeLocation): Promise<void> => {
-	logger.info(`connected from (${data.city}, ${data.country}, ${data.continent}) (lat: ${data.latitude} long: ${data.longitude})`);
+	logger.info(`connected from ${data.city}, ${data.country}, ${data.continent} (${data.network}, ASN: ${data.asn}, lat: ${data.latitude} long: ${data.longitude})`);
 	const statusManager = getStatusManager();
 	await statusManager.start();
 	const dnsList = getDnsServers();

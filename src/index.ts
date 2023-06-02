@@ -39,7 +39,7 @@ handlersMap.set('mtr', new MtrCommand(mtrCmd));
 handlersMap.set('dns', new DnsCommand(dnsCmd));
 handlersMap.set('http', new HttpCommand(httpCmd));
 
-logger.info(`Start probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode`);
+logger.info(`start probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode`);
 
 function connect () {
 	const worker = {
@@ -68,7 +68,7 @@ function connect () {
 
 	socket
 		.on('probe:sigkill', () => {
-			logger.debug('probe:sigkill requested. Killing the probe.');
+			logger.debug('probe:sigkill requested. Killing the probe');
 			process.exit();
 		})
 		.on('connect', () => {
@@ -89,7 +89,7 @@ function connect () {
 			}
 
 			if (error.message.startsWith('invalid probe version')) {
-				logger.debug('Detected outdated probe. Restarting.');
+				logger.debug('detected an outdated probe. Restarting');
 				process.exit();
 			}
 		})
@@ -121,7 +121,7 @@ function connect () {
 					worker.jobs.delete(measurementId);
 				} catch (error: unknown) {
 					// Todo: maybe we should notify api as well
-					logger.error('failed to run the measurement.', error);
+					logger.error('failed to run the measurement', error);
 					worker.jobs.delete(measurementId);
 				}
 			});
@@ -133,7 +133,7 @@ function connect () {
 		statusManager.stop('sigterm');
 
 		const closeTimeout = setTimeout(() => {
-			logger.debug('SIGTERM timeout. Force close.');
+			logger.debug('SIGTERM timeout. Force close');
 			forceCloseProcess();
 		}, 60_000);
 

@@ -26,7 +26,7 @@ export const run = (socket: Socket, worker: Worker) => {
 	setInterval(() => {
 		report(socket, worker.jobs.size)
 			.catch((error: unknown) => {
-				logger.error('Unknown error', error);
+				logger.error('unknown error', error);
 			});
 	}, statsConfig.interval * 1000);
 };

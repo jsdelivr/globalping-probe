@@ -99,7 +99,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			const cmdResult = await cmd;
 
 			if (cmdResult.stdout.length === 0) {
-				logger.error('Successful stdout is empty', cmdResult);
+				logger.error('successful stdout is empty', cmdResult);
 			}
 
 			const parseResult = parse(cmdResult.stdout);
