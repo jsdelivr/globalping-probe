@@ -75,6 +75,7 @@ describe('index module', () => {
 		statusManagerStub.getStatus.reset();
 		statusManagerStub.getStatus.returns('ready');
 
+		connectStub.reset();
 		disconnectStub.reset();
 		sandbox.restore();
 	});
@@ -159,13 +160,43 @@ describe('index module', () => {
 		expect(runStub.firstCall.args[3]).to.deep.equal({ type: 'ping' });
 	});
 
-	it('should disconnect on "disconnect" event from API', async () => {
+	it('should connect on "disconnect" event from API', async () => {
 		await import('../../src/index.js');
 
 		mockSocket.emit('disconnect');
 		expect(connectStub.notCalled).to.be.true;
 		mockSocket.emit('disconnect', 'io server disconnect');
 		expect(connectStub.calledOnce).to.be.true;
+	});
+
+	it('should connect with a delay on a combination of "ip_limit" "api:error" event + "disconnect" event', async () => {
+		await import('../../src/index.js');
+
+		mockSocket.emit('api:error', {
+			message: 'IP Limit',
+			info: {
+				code: 'ip_limit',
+			},
+		});
+
+		mockSocket.emit('disconnect', 'io server disconnect');
+
+		expect(connectStub.callCount).to.equal(0);
+		sandbox.clock.tick(60_500);
+		expect(connectStub.callCount).to.equal(1);
+
+		mockSocket.emit('disconnect', 'io server disconnect');
+		expect(connectStub.callCount).to.equal(2);
+
+		mockSocket.emit('api:error', {
+			message: 'IP Limit',
+			info: {
+				code: 'NOT_ip_limit',
+			},
+		});
+
+		mockSocket.emit('disconnect', 'io server disconnect');
+		expect(connectStub.callCount).to.equal(3);
 	});
 
 	it('should exit on SIGTERM if there are no active measurements', async () => {
