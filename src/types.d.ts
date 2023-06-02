@@ -17,6 +17,7 @@ type CommandInterface<OPT> = {
 
 type Probe = {
 	location: ProbeLocation;
+	ipAddress?: string;
 };
 
 type ProbeLocation = {

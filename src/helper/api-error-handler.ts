@@ -13,20 +13,21 @@ class ErrorHandler {
 
 	handleApiError = (error: WsApiError): void => {
 		this.lastErrorCode = error.info.code;
-		logger.error(`disconnected due to error (${error.info.socketId}):`, error);
 
 		if (error.info.code === 'ip_limit') {
-			logger.info('Only 1 connection per IP address is allowed. Please make sure you don\'t have another instance of the probe running.');
+			logger.error(`only 1 connection per IP address is allowed. Please make sure you don't have another probe running on IP ${error.info.probe?.ipAddress || ''}`);
+		} else {
+			logger.error('probe validation error:', error);
 		}
 
 		if (error.info.probe) {
 			const location = error.info.probe?.location;
-			logger.debug(`attempted to connect from (${location.city}, ${location.country}, ${location.continent}) (lat: ${location.latitude} long: ${location.longitude})`);
+			logger.debug(`attempted to connect from ${location.city}, ${location.country}, ${location.continent} (lat: ${location.latitude} long: ${location.longitude})`);
 		}
 	};
 
 	handleDisconnect = (reason: string): void => {
-		logger.debug(`disconnected from API: (${reason})`);
+		logger.debug(`disconnected from API: ${reason}`);
 		const lastErrorCode = this.lastErrorCode;
 		this.lastErrorCode = null;
 
