@@ -6,7 +6,7 @@ import physicalCpuCount from 'physical-cpu-count';
 import type { CommandInterface, MeasurementRequest } from './types.js';
 import { loadAll as loadAllDeps } from './lib/dependencies.js';
 import { scopedLogger } from './lib/logger.js';
-import { apiErrorHandler } from './helper/api-error-handler.js';
+import { initErrorHandler } from './helper/api-error-handler.js';
 import { apiConnectLocationHandler } from './helper/api-connect-handler.js';
 import { dnsCmd, DnsCommand } from './command/dns-command.js';
 import { pingCmd, PingCommand } from './command/ping-command.js';
@@ -64,6 +64,7 @@ function connect () {
 
 	runStatsAgent(socket, worker);
 	const statusManager = initStatusManager(socket, pingCmd);
+	const errorHandler = initErrorHandler(socket);
 
 	socket
 		.on('probe:sigkill', () => {
@@ -74,13 +75,7 @@ function connect () {
 			statusManager.sendStatus();
 			logger.debug('connection to API established');
 		})
-		.on('disconnect', (reason: string): void => {
-			logger.debug(`disconnected from API: (${reason})`);
-
-			if (reason === 'io server disconnect') {
-				socket.connect();
-			}
-		})
+		.on('disconnect', errorHandler.handleDisconnect)
 		.on('connect_error', (error: Error & {description?: {message: string}}) => {
 			const message = error.description?.message ?? error.toString();
 			logger.error(`connection to API failed: ${message}`);
@@ -98,7 +93,7 @@ function connect () {
 				process.exit();
 			}
 		})
-		.on('api:error', apiErrorHandler)
+		.on('api:error', errorHandler.handleApiError)
 		.on('api:connect:location', apiConnectLocationHandler(socket))
 		.on('probe:measurement:request', (data: MeasurementRequest) => {
 			const status = statusManager.getStatus();
