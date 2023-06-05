@@ -1,5 +1,5 @@
 import config from 'config';
-import type { ExecaChildProcess, ExecaReturnValue } from 'execa';
+import type { ExecaChildProcess, ExecaError, ExecaReturnValue } from 'execa';
 import type { Socket } from 'socket.io-client';
 import parse, { PingParseOutput } from '../command/handlers/ping/parse.js';
 import type { PingOptions } from '../command/ping-command.js';
@@ -82,17 +82,26 @@ export class StatusManager {
 		});
 
 		const isPassingTest = successfulResults.length >= 2;
+		const testPassText = isPassingTest ? '. Test pass' : '';
+
+		const rejectedPromises = results.filter((promise): promise is PromiseRejectedResult => promise.status === 'rejected');
+		rejectedPromises.forEach((promise) => {
+			const reason = promise.reason as ExecaError;
+
+			if (reason?.exitCode === 1) {
+				const output = (reason).stdout || (reason).stderr || '';
+				logger.warn(`quality control ping test result is unsuccessful: ${output}${testPassText}`);
+			} else {
+				logger.warn(`quality control ping test result is unsuccessful${testPassText}:`, reason);
+			}
+		});
+
+		Object.entries(nonSuccessfulResults).forEach(([ target, result ]) => {
+			logger.warn(`quality control ping test result is unsuccessful: ${target} ${result.stats?.loss?.toString() || ''}% packet loss${testPassText}`);
+		});
 
 		if (!isPassingTest) {
-			const rejectedPromises = results.filter((promise): promise is PromiseRejectedResult => promise.status === 'rejected');
-			logger.warn('quality control ping test failed');
-			rejectedPromises.forEach(promise => logger.warn('ping test request failed:', promise.reason));
-
-			Object.entries(nonSuccessfulResults).forEach(([ target, result ]) => {
-				logger.warn(`ping test result is unsuccessful: ${target} ${result.stats?.loss?.toString() || ''}% packet loss`);
-			});
-
-			logger.warn('retrying in 10 minutes. Probe temporarily disconnected');
+			logger.warn('quality control ping tests failed due to bad internet connection. Re-try in 10 minutes. Probe disconnected');
 		}
 
 		return isPassingTest;
