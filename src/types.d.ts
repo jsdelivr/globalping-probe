@@ -17,6 +17,7 @@ type CommandInterface<OPT> = {
 
 type Probe = {
 	location: ProbeLocation;
+	ipAddress?: string;
 };
 
 type ProbeLocation = {
@@ -34,7 +35,7 @@ type WsApiError = {
 	message: string;
 	info: {
 		socketId: string;
-		code?: string;
+		code: 'ip_limit' | 'metadata';
 		probe?: Probe;
 		cause?: {
 			probe?: Probe;
