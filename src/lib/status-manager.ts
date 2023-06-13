@@ -66,9 +66,9 @@ export class StatusManager {
 	private async pingTest () {
 		const packets = config.get<number>('status.numberOfPackets');
 		const results = await Promise.allSettled([
-			this.pingCmd({ type: 'ping', target: 'a.root-servers.net', packets, inProgressUpdates: false }),
+			this.pingCmd({ type: 'ping', target: 'ns1.registry.in', packets, inProgressUpdates: false }),
 			this.pingCmd({ type: 'ping', target: 'k.root-servers.net', packets, inProgressUpdates: false }),
-			this.pingCmd({ type: 'ping', target: 'j.root-servers.net', packets, inProgressUpdates: false }),
+			this.pingCmd({ type: 'ping', target: 'ns1.dns.nl', packets, inProgressUpdates: false }),
 		]);
 
 		const fulfilledPromises = results.filter((promise): promise is PromiseFulfilledResult<ExecaReturnValue> => promise.status === 'fulfilled');
