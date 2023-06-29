@@ -11,7 +11,7 @@ const checkUptime = () => {
 	const uptime = process.uptime();
 
 	if (uptime >= uptimeConfig.maxUptime) {
-		logger.info('scheduled Probe restart. Sending SIGTERM', { maxUptime: uptimeConfig.maxUptime });
+		logger.info('Scheduled Probe restart. Sending SIGTERM.', { maxUptime: uptimeConfig.maxUptime });
 		process.kill(process.pid, 'SIGTERM');
 	}
 };

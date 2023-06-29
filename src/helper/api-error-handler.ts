@@ -16,19 +16,19 @@ class ErrorHandler {
 
 		if (error.info.probe) {
 			const location = error.info.probe?.location;
-			logger.debug(`attempted to connect from ${location.city}, ${location.country}, ${location.continent} (${location.network}, ASN: ${location.asn}, lat: ${location.latitude} long: ${location.longitude})`);
+			logger.debug(`Attempted to connect from ${location.city}, ${location.country}, ${location.continent} (${location.network}, ASN: ${location.asn}, lat: ${location.latitude} long: ${location.longitude}).`);
 		}
 
 		if (error.info.code === 'ip_limit') {
-			logger.error(`only 1 connection per IP address is allowed. Please make sure you don't have another probe running on IP ${error.info.probe?.ipAddress || ''}`);
-			logger.error('retrying in 1 minute. Probe temporarily disconnected');
+			logger.error(`Only 1 connection per IP address is allowed. Please make sure you don't have another probe running on IP ${error.info.probe?.ipAddress || ''}.`);
+			logger.error('Retrying in 1 minute. Probe temporarily disconnected.');
 		} else {
-			logger.error('probe validation error:', error);
+			logger.error('Probe validation error:', error);
 		}
 	};
 
 	handleDisconnect = (reason: string): void => {
-		logger.debug(`disconnected from API: ${reason}`);
+		logger.debug(`Disconnected from API: ${reason}.`);
 		const lastErrorCode = this.lastErrorCode;
 		this.lastErrorCode = null;
 

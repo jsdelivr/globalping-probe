@@ -22,7 +22,7 @@ const checkForUpdates = () => {
 			return;
 		}
 
-		logger.info(`new version ${latestVersion} of Probe server found. Start self-update`, {
+		logger.info(`New version ${latestVersion} of Probe server found. Start self-update.`, {
 			latestVersion,
 			currentVersion: VERSION,
 		});
@@ -30,7 +30,7 @@ const checkForUpdates = () => {
 		process.kill(process.pid, 'SIGTERM');
 	}).catch((error: unknown) => {
 		if (error instanceof TimeoutError) {
-			logger.warn('the server timed out, while checking for a new version');
+			logger.warn('The server timed out, while checking for a new version.');
 			logger.warn(error);
 			return;
 		}

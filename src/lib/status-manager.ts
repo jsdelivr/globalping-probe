@@ -90,18 +90,18 @@ export class StatusManager {
 
 			if (reason?.exitCode === 1) {
 				const output = (reason).stdout || (reason).stderr || '';
-				logger.warn(`quality control ping test result is unsuccessful: ${output}${testPassText}`);
+				logger.warn(`Quality control ping test result is unsuccessful: ${output}${testPassText}.`);
 			} else {
-				logger.warn(`quality control ping test result is unsuccessful${testPassText}:`, reason);
+				logger.warn(`Quality control ping test result is unsuccessful${testPassText}:`, reason);
 			}
 		});
 
 		Object.entries(nonSuccessfulResults).forEach(([ target, result ]) => {
-			logger.warn(`quality control ping test result is unsuccessful: ${target} ${result.stats?.loss?.toString() || ''}% packet loss${testPassText}`);
+			logger.warn(`Quality control ping test result is unsuccessful: ${target} ${result.stats?.loss?.toString() || ''}% packet loss${testPassText}.`);
 		});
 
 		if (!isPassingTest) {
-			logger.warn('quality control ping tests failed due to bad internet connection. Re-try in 10 minutes. Probe disconnected');
+			logger.warn('Quality control ping tests failed due to bad internet connection. Retrying in 10 minutes. Probe temporarily disconnected.');
 		}
 
 		return isPassingTest;

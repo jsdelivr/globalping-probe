@@ -133,7 +133,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			const cmdResult = await cmd;
 
 			if (cmdResult.stdout.length === 0) {
-				logger.error('successful stdout is empty', cmdResult);
+				logger.error('Successful stdout is empty.', cmdResult);
 			}
 
 			const output = this.rewrite(cmdResult.stdout, Boolean(options.trace));
