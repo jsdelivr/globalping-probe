@@ -14,7 +14,7 @@ const logger = winston.createLogger({
 		winston.format.prettyPrint(),
 		winston.format.printf((info: winston.Logform.TransformableInfo) => {
 			const { timestamp, level, scope, message, stack, ...otherFields } = info; // eslint-disable-line @typescript-eslint/no-unsafe-assignment
-			let result = `[${timestamp as string}] [${level.toUpperCase()}] [${process.pid}] [${scope as string}] ${message as string}`;
+			let result = `[${timestamp as string}] [${level.toUpperCase()}] [${scope as string}] ${message as string}`;
 
 			if (Object.keys(otherFields).length > 0) {
 				result += `\n${objectFormatter(otherFields)}`;

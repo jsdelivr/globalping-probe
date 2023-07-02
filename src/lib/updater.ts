@@ -22,7 +22,7 @@ const checkForUpdates = () => {
 			return;
 		}
 
-		logger.info(`New version ${latestVersion} of Probe server found. Start self-update`, {
+		logger.info(`New version ${latestVersion} of Probe server found. Start self-update.`, {
 			latestVersion,
 			currentVersion: VERSION,
 		});

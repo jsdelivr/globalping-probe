@@ -1,5 +1,5 @@
 import config from 'config';
-import type { ExecaChildProcess, ExecaReturnValue } from 'execa';
+import type { ExecaChildProcess, ExecaError, ExecaReturnValue } from 'execa';
 import type { Socket } from 'socket.io-client';
 import parse, { PingParseOutput } from '../command/handlers/ping/parse.js';
 import type { PingOptions } from '../command/ping-command.js';
@@ -65,32 +65,43 @@ export class StatusManager {
 
 	private async pingTest () {
 		const packets = config.get<number>('status.numberOfPackets');
-		const results = await Promise.allSettled([
-			this.pingCmd({ type: 'ping', target: 'ns1.registry.in', packets, inProgressUpdates: false }),
-			this.pingCmd({ type: 'ping', target: 'k.root-servers.net', packets, inProgressUpdates: false }),
-			this.pingCmd({ type: 'ping', target: 'ns1.dns.nl', packets, inProgressUpdates: false }),
-		]);
+		const targets = [ 'ns1.registry.in', 'k.root-servers.net', 'ns1.dns.nl' ];
+		const results = await Promise.allSettled(targets.map(target => this.pingCmd({ type: 'ping', target, packets, inProgressUpdates: false })));
 
 		const fulfilledPromises = results.filter((promise): promise is PromiseFulfilledResult<ExecaReturnValue> => promise.status === 'fulfilled');
 		const cmdResults = fulfilledPromises.map(promise => promise.value).map(result => parse(result.stdout));
-		const nonSuccessfulResults: PingParseOutput[] = [];
-		const successfulResults = cmdResults.filter((result) => {
+		const nonSuccessfulResults: Record<string, PingParseOutput> = {};
+		const successfulResults = cmdResults.filter((result, index) => {
 			const isSuccessful = result.status === 'finished' && result.stats?.loss === 0;
 
 			if (!isSuccessful) {
-				nonSuccessfulResults.push(result);
+				nonSuccessfulResults[targets[index]!] = result;
 			}
 
 			return isSuccessful;
 		});
 
 		const isPassingTest = successfulResults.length >= 2;
+		const testPassText = isPassingTest ? '. Test pass' : '';
+
+		const rejectedPromises = results.filter((promise): promise is PromiseRejectedResult => promise.status === 'rejected');
+		rejectedPromises.forEach((promise) => {
+			const reason = promise.reason as ExecaError;
+
+			if (reason?.exitCode === 1) {
+				const output = (reason).stdout || (reason).stderr || '';
+				logger.warn(`Quality control ping test result is unsuccessful: ${output}${testPassText}.`);
+			} else {
+				logger.warn(`Quality control ping test result is unsuccessful${testPassText}:`, reason);
+			}
+		});
+
+		Object.entries(nonSuccessfulResults).forEach(([ target, result ]) => {
+			logger.warn(`Quality control ping test result is unsuccessful: ${target} ${result.stats?.loss?.toString() || ''}% packet loss${testPassText}.`);
+		});
 
 		if (!isPassingTest) {
-			const rejectedPromises = results.filter((promise): promise is PromiseRejectedResult => promise.status === 'rejected');
-			logger.warn('Ping test failed, here are the reasons:');
-			rejectedPromises.forEach(promise => logger.warn('ping test promise rejected:', promise.reason));
-			nonSuccessfulResults.forEach(result => logger.warn('ping test promise resolved, but result doesn\'t match criterias:', result));
+			logger.warn('Quality control ping tests failed due to bad internet connection. Retrying in 10 minutes. Probe temporarily disconnected.');
 		}
 
 		return isPassingTest;

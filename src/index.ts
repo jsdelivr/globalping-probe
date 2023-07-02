@@ -39,7 +39,7 @@ handlersMap.set('mtr', new MtrCommand(mtrCmd));
 handlersMap.set('dns', new DnsCommand(dnsCmd));
 handlersMap.set('http', new HttpCommand(httpCmd));
 
-logger.info(`Start probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode`);
+logger.info(`Start probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode.`);
 
 function connect () {
 	const worker = {
@@ -68,17 +68,17 @@ function connect () {
 
 	socket
 		.on('probe:sigkill', () => {
-			logger.debug('probe:sigkill requested. Killing the probe.');
+			logger.debug(`'probe:sigkill' requested. Killing the probe.`);
 			process.exit();
 		})
 		.on('connect', () => {
 			statusManager.sendStatus();
-			logger.debug('connection to API established');
+			logger.debug('Connection to API established.');
 		})
 		.on('disconnect', errorHandler.handleDisconnect)
 		.on('connect_error', (error: Error & {description?: {message: string}}) => {
 			const message = error.description?.message ?? error.toString();
-			logger.error(`connection to API failed: ${message}`);
+			logger.error(`Connection to API failed: ${message}`);
 
 			const isFatalError = fatalConnectErrors.some(fatalError => error.message.startsWith(fatalError));
 
@@ -89,7 +89,7 @@ function connect () {
 			}
 
 			if (error.message.startsWith('invalid probe version')) {
-				logger.debug('Detected outdated probe. Restarting.');
+				logger.debug('Detected an outdated probe. Restarting.');
 				process.exit();
 			}
 		})
@@ -99,13 +99,13 @@ function connect () {
 			const status = statusManager.getStatus();
 
 			if (status !== 'ready') {
-				logger.warn(`measurement was sent to probe with ${status} status`);
+				logger.warn(`Measurement was sent to probe with ${status} status.`);
 				return;
 			}
 
 			const { measurementId, testId, measurement } = data;
 
-			logger.debug(`${measurement.type} request ${measurementId} received`);
+			logger.debug(`'${measurement.type}' request ${measurementId} received.`);
 
 			socket.emit('probe:measurement:ack', null, async () => {
 				const handler = handlersMap.get(measurement.type);
@@ -121,14 +121,14 @@ function connect () {
 					worker.jobs.delete(measurementId);
 				} catch (error: unknown) {
 					// Todo: maybe we should notify api as well
-					logger.error('failed to run the measurement.', error);
+					logger.error('Failed to run the measurement.', error);
 					worker.jobs.delete(measurementId);
 				}
 			});
 		});
 
 	process.on('SIGTERM', () => {
-		logger.debug('SIGTERM received');
+		logger.debug('SIGTERM received.');
 
 		statusManager.stop('sigterm');
 
@@ -148,7 +148,7 @@ function connect () {
 			clearInterval(closeInterval);
 			clearInterval(worker.jobsInterval);
 
-			logger.debug('closing process');
+			logger.debug('Closing process.');
 			process.exit(0);
 		};
 	});
