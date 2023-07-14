@@ -74,8 +74,8 @@ export type OutputJson = {
 /* eslint-enable @typescript-eslint/ban-types */
 
 export type Timings = {
-	[k: string]: number | Record<string, unknown>;
-	phases: Record<string, number>;
+	[k: string]: number | Record<string, unknown> | undefined;
+	phases: Record<string, number | undefined>;
 };
 
 const getInitialResult = () => ({
@@ -324,7 +324,10 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 	}
 
 	private parseStreamTimings (stream: Request) {
-		const timings = { ...{ end: Date.now(), phases: {} }, ...stream.timings };
+		const timings = { ...stream.timings };
+		timings.end = timings.end ?? Date.now();
+		timings.phases = timings.phases ?? {};
+
 		let total = null;
 
 		if (timings.phases.total !== undefined) {
