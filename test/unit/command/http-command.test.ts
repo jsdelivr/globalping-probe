@@ -69,6 +69,10 @@ describe('http command', () => {
 		sandbox.reset();
 	});
 
+	after(() => {
+		sandbox.restore();
+	});
+
 	describe('url builder', () => {
 		describe('prefix', () => {
 			it('should set http:// prefix (HTTP)', () => {
@@ -588,9 +592,9 @@ describe('http command', () => {
 				stream.emit('data', Buffer.from(data));
 			}
 
-			response.timings.end = 1689320000100;
-			response.timings.phases.download = 75;
-			response.timings.phases.total = 100;
+			response.timings['end'] = 1689320000100;
+			response.timings.phases['download'] = 75;
+			response.timings.phases['total'] = 100;
 
 			stream.emit('end');
 
@@ -684,9 +688,9 @@ describe('http command', () => {
 				stream.emit('data', Buffer.from(data));
 			}
 
-			response.timings.end = 1689320000100;
-			response.timings.phases.download = 75;
-			response.timings.phases.total = 100;
+			response.timings['end'] = 1689320000100;
+			response.timings.phases['download'] = 75;
+			response.timings.phases['total'] = 100;
 
 			stream.emit('end');
 
@@ -844,9 +848,9 @@ describe('http command', () => {
 
 			stream.emit('response', response);
 
-			response.timings.end = 1689320000100;
-			response.timings.phases.download = 75;
-			response.timings.phases.total = 100;
+			response.timings['end'] = 1689320000100;
+			response.timings.phases['download'] = 75;
+			response.timings.phases['total'] = 100;
 
 			stream.emit('end');
 
@@ -939,9 +943,9 @@ describe('http command', () => {
 			const cmd = http.run(mockedSocket as any, 'measurement', 'test', options);
 			stream.emit('response', response);
 
-			response.timings.end = 1689320000100;
-			response.timings.phases.download = 75;
-			response.timings.phases.total = 100;
+			response.timings['end'] = 1689320000100;
+			response.timings.phases['download'] = 75;
+			response.timings.phases['total'] = 100;
 
 			stream.emit('end');
 
@@ -1032,9 +1036,9 @@ describe('http command', () => {
 
 			stream.emit('response', response);
 
-			response.timings.end = 1689320000100;
-			response.timings.phases.download = 75;
-			response.timings.phases.total = 100;
+			response.timings['end'] = 1689320000100;
+			response.timings.phases['download'] = 75;
+			response.timings.phases['total'] = 100;
 
 			stream.emit('error', new HTTPError({ statusCode: 404, statusMessage: 'Not Found' } as unknown as PlainResponse));
 
