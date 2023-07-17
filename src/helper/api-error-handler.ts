@@ -6,10 +6,33 @@ const logger = scopedLogger('api:error');
 
 const IP_LIMIT_TIMEOUT = 60_000;
 
+const fatalConnectErrors = [
+	'failed to collect probe metadata',
+	'vpn detected',
+];
+
 class ErrorHandler {
 	private lastErrorCode: WsApiError['info']['code'] | null = null;
 
 	constructor (private readonly socket: Socket) {}
+
+	connectError = (error: Error & {description?: {message: string}}) => {
+		const message = error.description?.message ?? error.toString();
+		logger.error(`Connection to API failed: ${message}`);
+
+		const isFatalError = fatalConnectErrors.some(fatalError => error.message.startsWith(fatalError));
+
+		if (isFatalError) {
+			// At that stage socket.connected=false already,
+			// but we want to stop reconnections for fatal errors
+			this.socket.disconnect();
+		}
+
+		if (error.message.startsWith('invalid probe version')) {
+			logger.debug('Detected an outdated probe. Restarting.');
+			process.exit();
+		}
+	};
 
 	handleApiError = (error: WsApiError): void => {
 		this.lastErrorCode = error.info.code;
