@@ -16,7 +16,7 @@ class ErrorHandler {
 		description?: {message: string}
 		data?: {ipAddress?: string}
 	}) => {
-		const message = error.description?.message ?? error.toString();
+		const message = error?.description?.message ?? error.toString();
 		logger.error(`Connection to API failed: ${message}`);
 
 
@@ -42,7 +42,7 @@ class ErrorHandler {
 	};
 
 	handleDisconnect = (reason: string): void => {
-		logger.debug(`disconnected from API: (${reason})`);
+		logger.debug(`Disconnected from API: (${reason}).`);
 
 		if (reason === 'io server disconnect') {
 			this.socket.connect();

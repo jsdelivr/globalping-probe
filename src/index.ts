@@ -72,7 +72,6 @@ function connect () {
 		})
 		.on('disconnect', errorHandler.handleDisconnect)
 		.on('connect_error', errorHandler.connectError)
-		.on('api:error', errorHandler.handleApiError)
 		.on('api:connect:location', apiConnectLocationHandler(socket))
 		.on('probe:measurement:request', (data: MeasurementRequest) => {
 			const status = statusManager.getStatus();
