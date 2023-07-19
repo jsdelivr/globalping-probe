@@ -28,11 +28,6 @@ await loadAllDeps();
 const logger = scopedLogger('general');
 const handlersMap = new Map<string, CommandInterface<any>>();
 
-const fatalConnectErrors = [
-	'failed to collect probe metadata',
-	'vpn detected',
-];
-
 handlersMap.set('ping', new PingCommand(pingCmd));
 handlersMap.set('traceroute', new TracerouteCommand(traceCmd));
 handlersMap.set('mtr', new MtrCommand(mtrCmd));
@@ -76,24 +71,7 @@ function connect () {
 			logger.debug('Connection to API established.');
 		})
 		.on('disconnect', errorHandler.handleDisconnect)
-		.on('connect_error', (error: Error & {description?: {message: string}}) => {
-			const message = error.description?.message ?? error.toString();
-			logger.error(`Connection to API failed: ${message}`);
-
-			const isFatalError = fatalConnectErrors.some(fatalError => error.message.startsWith(fatalError));
-
-			if (isFatalError) {
-				// At that stage socket.connected=false already,
-				// but we want to stop reconnections for fatal errors
-				socket.disconnect();
-			}
-
-			if (error.message.startsWith('invalid probe version')) {
-				logger.debug('Detected an outdated probe. Restarting.');
-				process.exit();
-			}
-		})
-		.on('api:error', errorHandler.handleApiError)
+		.on('connect_error', errorHandler.connectError)
 		.on('api:connect:location', apiConnectLocationHandler(socket))
 		.on('probe:measurement:request', (data: MeasurementRequest) => {
 			const status = statusManager.getStatus();

@@ -1,45 +1,51 @@
 import type { Socket } from 'socket.io-client';
 import { scopedLogger } from '../lib/logger.js';
-import type { WsApiError } from '../types.js';
 
 const logger = scopedLogger('api:error');
 
-const IP_LIMIT_TIMEOUT = 60_000;
+const fatalConnectErrors = [
+	'failed to collect probe metadata',
+	'vpn detected',
+	'unresolvable geoip',
+];
 
 class ErrorHandler {
-	private lastErrorCode: WsApiError['info']['code'] | null = null;
-
 	constructor (private readonly socket: Socket) {}
 
-	handleApiError = (error: WsApiError): void => {
-		this.lastErrorCode = error.info.code;
+	connectError = (error: Error & {
+		description?: {message: string}
+		data?: {ipAddress?: string}
+	}) => {
+		const message = error?.description?.message ?? error.toString();
+		logger.error(`Connection to API failed: ${message}`);
 
-		if (error.info.probe) {
-			const location = error.info.probe?.location;
-			logger.debug(`Attempted to connect from ${location.city}, ${location.country}, ${location.continent} (${location.network}, ASN: ${location.asn}, lat: ${location.latitude} long: ${location.longitude}).`);
+
+		if (error.message.startsWith('invalid probe version')) {
+			logger.debug('Detected an outdated probe. Restarting.');
+			process.exit();
 		}
 
-		if (error.info.code === 'ip_limit') {
-			logger.error(`Only 1 connection per IP address is allowed. Please make sure you don't have another probe running on IP ${error.info.probe?.ipAddress || ''}.`);
+		this.socket.disconnect();
+
+		const isFatalError = fatalConnectErrors.some(fatalError => error.message.startsWith(fatalError));
+
+		if (isFatalError) {
+			logger.error('Retrying in 1 hour. Probe temporarily disconnected.');
+			setTimeout(() => this.socket.connect(), 60 * 60 * 1000);
+		} else if (error.message.startsWith('ip limit')) {
+			logger.error(`Only 1 connection per IP address is allowed. Please make sure you don't have another probe running on IP ${error?.data?.ipAddress || ''}.`);
 			logger.error('Retrying in 1 minute. Probe temporarily disconnected.');
+			setTimeout(() => this.socket.connect(), 60 * 1000);
 		} else {
-			logger.error('Probe validation error:', error);
+			setTimeout(() => this.socket.connect(), 1000);
 		}
 	};
 
 	handleDisconnect = (reason: string): void => {
-		logger.debug(`Disconnected from API: ${reason}.`);
-		const lastErrorCode = this.lastErrorCode;
-		this.lastErrorCode = null;
+		logger.debug(`Disconnected from API: (${reason}).`);
 
 		if (reason === 'io server disconnect') {
-			if (lastErrorCode === 'ip_limit') {
-				setTimeout(() => {
-					this.socket.connect();
-				}, IP_LIMIT_TIMEOUT);
-			} else {
-				this.socket.connect();
-			}
+			this.socket.connect();
 		}
 	};
 }

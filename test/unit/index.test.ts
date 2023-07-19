@@ -121,14 +121,15 @@ describe('index module', () => {
 		expect(handlers['probe:dns:update'].calledOnce).to.be.true;
 	});
 
-	it('should disconnect on "connect_error" for fatal errors', async () => {
+	it('should disconnect on "connect_error"', async () => {
 		const exitStub = sandbox.stub(process, 'exit');
 
 		await import('../../src/index.js');
+		mockSocket.emit('connect_error', new Error());
 		mockSocket.emit('connect_error', { message: 'failed to collect probe metadata' });
 		mockSocket.emit('connect_error', { message: 'vpn detected' });
 
-		expect(disconnectStub.callCount).to.equal(2);
+		expect(disconnectStub.callCount).to.equal(3);
 		expect(exitStub.notCalled).to.be.true;
 	});
 
@@ -138,7 +139,6 @@ describe('index module', () => {
 		await import('../../src/index.js');
 		mockSocket.emit('connect_error', { message: 'invalid probe version' });
 
-		expect(disconnectStub.notCalled).to.be.true;
 		expect(exitStub.calledOnce).to.be.true;
 	});
 
@@ -160,7 +160,7 @@ describe('index module', () => {
 		expect(runStub.firstCall.args[3]).to.deep.equal({ type: 'ping' });
 	});
 
-	it('should connect on "disconnect" event from API', async () => {
+	it('should reconnect on "disconnect" event from API', async () => {
 		await import('../../src/index.js');
 
 		mockSocket.emit('disconnect');
@@ -169,34 +169,38 @@ describe('index module', () => {
 		expect(connectStub.calledOnce).to.be.true;
 	});
 
-	it('should connect with a delay on a combination of "ip_limit" "api:error" event + "disconnect" event', async () => {
+	it('should reconnect after 1 hour delay on "connect_error" fatal errors', async () => {
 		await import('../../src/index.js');
 
-		mockSocket.emit('api:error', {
-			message: 'IP Limit',
-			info: {
-				code: 'ip_limit',
-			},
-		});
+		mockSocket.emit('connect_error', new Error('failed to collect probe metadata'));
+		mockSocket.emit('connect_error', new Error('vpn detected'));
+		mockSocket.emit('connect_error', new Error('unresolvable geoip'));
 
-		mockSocket.emit('disconnect', 'io server disconnect');
+		sandbox.clock.tick(60 * 1000 + 50);
+		expect(connectStub.callCount).to.equal(0);
+		sandbox.clock.tick(60 * 60 * 1000 + 50);
+		expect(connectStub.callCount).to.equal(3);
+	});
+
+	it('should reconnect after 1 minute delay on "connect_error" with "ip limit"', async () => {
+		await import('../../src/index.js');
+
+		mockSocket.emit('connect_error', new Error('ip limit'));
+
+		sandbox.clock.tick(1000 + 50);
+		expect(connectStub.callCount).to.equal(0);
+		sandbox.clock.tick(60 * 1000 + 50);
+		expect(connectStub.callCount).to.equal(1);
+	});
+
+	it('should reconnect after 1 second delay on "connect_error" with other messages', async () => {
+		await import('../../src/index.js');
+
+		mockSocket.emit('connect_error', new Error('some message'));
 
 		expect(connectStub.callCount).to.equal(0);
-		sandbox.clock.tick(60_500);
+		sandbox.clock.tick(1000 + 50);
 		expect(connectStub.callCount).to.equal(1);
-
-		mockSocket.emit('disconnect', 'io server disconnect');
-		expect(connectStub.callCount).to.equal(2);
-
-		mockSocket.emit('api:error', {
-			message: 'IP Limit',
-			info: {
-				code: 'NOT_ip_limit',
-			},
-		});
-
-		mockSocket.emit('disconnect', 'io server disconnect');
-		expect(connectStub.callCount).to.equal(3);
 	});
 
 	it('should exit on SIGTERM if there are no active measurements', async () => {

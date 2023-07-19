@@ -31,15 +31,3 @@ type ProbeLocation = {
 	network: string;
 	state: string | undefined;
 };
-
-type WsApiError = {
-	message: string;
-	info: {
-		socketId: string;
-		code: 'ip_limit' | 'metadata';
-		probe?: Probe;
-		cause?: {
-			probe?: Probe;
-		};
-	};
-};
