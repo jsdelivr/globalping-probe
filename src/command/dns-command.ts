@@ -21,7 +21,6 @@ import type {
 } from './handlers/dig/trace.js';
 import { isDnsSection } from './handlers/dig/shared.js';
 import type { DnsParseLoopResponse } from './handlers/dig/shared.js';
-import type { DeepPartial } from '../lib/types.js';
 
 export type DnsOptions = {
 	type: 'dns';
@@ -30,7 +29,7 @@ export type DnsOptions = {
 	protocol: string;
 	port: number;
 	resolver?: string;
-	trace?: boolean;
+	trace: boolean;
 	query: {
 		type: string;
 	};
@@ -50,7 +49,7 @@ const dnsOptionsSchema = Joi.object<DnsOptions>({
 	resolver: Joi.string().optional(),
 	protocol: Joi.string().valid(...allowedProtocols).optional().default('udp'),
 	port: Joi.number().optional().default('53'),
-	trace: Joi.boolean().optional(),
+	trace: Joi.boolean().optional().default(false),
 	query: Joi.object({
 		type: Joi.string().valid(...allowedTypes).optional().default('A'),
 	}),
@@ -87,7 +86,7 @@ export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
 export class DnsCommand implements CommandInterface<DnsOptions> {
 	constructor (private readonly cmd: typeof dnsCmd) {}
 
-	async run (socket: Socket, measurementId: string, testId: string, options: DeepPartial<DnsOptions>): Promise<void> {
+	async run (socket: Socket, measurementId: string, testId: string, options: DnsOptions): Promise<void> {
 		const { value: cmdOptions, error: validationError } = dnsOptionsSchema.validate(options);
 
 		if (validationError) {
@@ -108,9 +107,9 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 				let output = '';
 
 				try {
-					output = this.rewrite(pStdout.join(''), Boolean(options.trace));
-					const parsedResult = this.parse(output, Boolean(options.trace));
-					const isValid = this.validatePartialResult(output, cmd, Boolean(options.trace));
+					output = this.rewrite(pStdout.join(''), options.trace);
+					const parsedResult = this.parse(output, options.trace);
+					const isValid = this.validatePartialResult(output, cmd, options.trace);
 
 					if (!isValid && !(parsedResult instanceof Error)) {
 						isResultPrivate = this.hasResultPrivateIp(parsedResult);
@@ -136,8 +135,8 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 				logger.error('Successful stdout is empty.', cmdResult);
 			}
 
-			const output = this.rewrite(cmdResult.stdout, Boolean(options.trace));
-			const parsedResult = this.parse(output, Boolean(options.trace));
+			const output = this.rewrite(cmdResult.stdout, options.trace);
+			const parsedResult = this.parse(output, options.trace);
 
 			if (parsedResult instanceof Error) {
 				throw parsedResult;
@@ -152,7 +151,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			if (error instanceof InternalError && error.expose) {
 				output = error.message;
 			} else if (isExecaError(error) && error.stdout.toString().length > 0) {
-				output = this.rewrite(error.stdout.toString(), Boolean(options.trace));
+				output = this.rewrite(error.stdout.toString(), options.trace);
 			} else {
 				logger.error(error);
 			}
@@ -171,7 +170,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			};
 		}
 
-		buffer.pushResult(this.toJsonOutput(result as DnsParseResponseClassic | DnsParseResponseTrace, Boolean(options.trace)));
+		buffer.pushResult(this.toJsonOutput(result as DnsParseResponseClassic | DnsParseResponseTrace, options.trace));
 	}
 
 	private validatePartialResult (rawOutput: string, cmd: ExecaChildProcess, trace: boolean): boolean {
