@@ -1,0 +1,15 @@
+{
+	"testId": "test",
+	"measurementId": "measurement",
+	"result": {
+		"status": "failed",
+		"statusCodeName": null,
+		"statusCode": null,
+		"rawOutput": "Private IP ranges are not allowed",
+		"answers": [],
+		"timings": {
+			"total": 0
+		},
+		"resolver": "private"
+	}
+}
