@@ -2,6 +2,7 @@ import Joi from 'joi';
 import isIpPrivate from 'private-ip';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
+import tldjs from 'tldjs';
 import type { CommandInterface } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { InternalError } from '../lib/internal-error.js';
@@ -21,7 +22,6 @@ import type {
 } from './handlers/dig/trace.js';
 import { isDnsSection } from './handlers/dig/shared.js';
 import type { DnsParseLoopResponse } from './handlers/dig/shared.js';
-import type { DeepPartial } from '../lib/types.js';
 
 export type DnsOptions = {
 	type: 'dns';
@@ -30,7 +30,7 @@ export type DnsOptions = {
 	protocol: string;
 	port: number;
 	resolver?: string;
-	trace?: boolean;
+	trace: boolean;
 	query: {
 		type: string;
 	};
@@ -50,7 +50,7 @@ const dnsOptionsSchema = Joi.object<DnsOptions>({
 	resolver: Joi.string().optional(),
 	protocol: Joi.string().valid(...allowedProtocols).optional().default('udp'),
 	port: Joi.number().optional().default('53'),
-	trace: Joi.boolean().optional(),
+	trace: Joi.boolean().optional().default(false),
 	query: Joi.object({
 		type: Joi.string().valid(...allowedTypes).optional().default('A'),
 	}),
@@ -87,7 +87,7 @@ export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
 export class DnsCommand implements CommandInterface<DnsOptions> {
 	constructor (private readonly cmd: typeof dnsCmd) {}
 
-	async run (socket: Socket, measurementId: string, testId: string, options: DeepPartial<DnsOptions>): Promise<void> {
+	async run (socket: Socket, measurementId: string, testId: string, options: DnsOptions): Promise<void> {
 		const { value: cmdOptions, error: validationError } = dnsOptionsSchema.validate(options);
 
 		if (validationError) {
@@ -108,12 +108,12 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 				let output = '';
 
 				try {
-					output = this.rewrite(pStdout.join(''), Boolean(options.trace));
-					const parsedResult = this.parse(output, Boolean(options.trace));
-					const isValid = this.validatePartialResult(output, cmd, Boolean(options.trace));
+					output = this.rewrite(pStdout.join(''), cmdOptions.trace);
+					const parsedResult = this.parse(output, cmdOptions.trace);
+					const isValid = this.validatePartialResult(output, cmd, cmdOptions);
 
 					if (!isValid && !(parsedResult instanceof Error)) {
-						isResultPrivate = this.hasResultPrivateIp(parsedResult);
+						isResultPrivate = this.hasResultPrivateIp(parsedResult, cmdOptions.target);
 						return;
 					}
 				} catch (error: unknown) {
@@ -136,14 +136,14 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 				logger.error('Successful stdout is empty.', cmdResult);
 			}
 
-			const output = this.rewrite(cmdResult.stdout, Boolean(options.trace));
-			const parsedResult = this.parse(output, Boolean(options.trace));
+			const output = this.rewrite(cmdResult.stdout, cmdOptions.trace);
+			const parsedResult = this.parse(output, cmdOptions.trace);
 
 			if (parsedResult instanceof Error) {
 				throw parsedResult;
 			}
 
-			isResultPrivate = this.hasResultPrivateIp(parsedResult);
+			isResultPrivate = this.hasResultPrivateIp(parsedResult, cmdOptions.target);
 
 			result = parsedResult;
 		} catch (error: unknown) {
@@ -152,7 +152,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			if (error instanceof InternalError && error.expose) {
 				output = error.message;
 			} else if (isExecaError(error) && error.stdout.toString().length > 0) {
-				output = this.rewrite(error.stdout.toString(), Boolean(options.trace));
+				output = this.rewrite(error.stdout.toString(), cmdOptions.trace);
 			} else {
 				logger.error(error);
 			}
@@ -167,21 +167,21 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			result = {
 				status: 'failed',
 				rawOutput: 'Private IP ranges are not allowed',
-				...(!options.trace ? { resolver: (result as DnsParseResponseClassic).resolver } : {}),
+				...(!cmdOptions.trace ? { resolver: (result as DnsParseResponseClassic).resolver } : {}),
 			};
 		}
 
-		buffer.pushResult(this.toJsonOutput(result as DnsParseResponseClassic | DnsParseResponseTrace, Boolean(options.trace)));
+		buffer.pushResult(this.toJsonOutput(result as DnsParseResponseClassic | DnsParseResponseTrace, cmdOptions.trace));
 	}
 
-	private validatePartialResult (rawOutput: string, cmd: ExecaChildProcess, trace: boolean): boolean {
-		const result = this.parse(rawOutput, trace);
+	private validatePartialResult (rawOutput: string, cmd: ExecaChildProcess, options: DnsOptions): boolean {
+		const result = this.parse(rawOutput, options.trace);
 
 		if (result instanceof Error) {
 			return result.message.includes('connection refused');
 		}
 
-		if (this.hasResultPrivateIp(result)) {
+		if (this.hasResultPrivateIp(result, options.target)) {
 			cmd.kill('SIGKILL');
 			return false;
 		}
@@ -203,7 +203,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		return ClassicDigParser.toJsonOutput(result as DnsParseResponseClassic);
 	}
 
-	private hasResultPrivateIp (result: DnsParseResponseClassic | DnsParseResponseTrace): boolean {
+	private hasResultPrivateIp (result: DnsParseResponseClassic | DnsParseResponseTrace, target: string): boolean {
 		let privateResults = [];
 
 		if (isTrace(result)) {
@@ -215,7 +215,9 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 				.filter((answer: unknown) => isDnsSection(answer) ? isIpPrivate(answer.value as string) : false);
 		}
 
-		if (privateResults.length > 0) {
+		const isPublicHostname = tldjs.tldExists(target);
+
+		if (privateResults.length > 0 && !isPublicHostname) {
 			return true;
 		}
 

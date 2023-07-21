@@ -31,7 +31,7 @@ export const isDnsSection = (output: unknown): output is DnsSection => typeof (o
 
 export const SECTION_REG_EXP = /(;; )(\S+)( SECTION:)/g;
 export const NEW_LINE_REG_EXP = /\r?\n/;
-export const IPV4_REG_EXP = /(\b25[0-5]|\b2[0-4]\d|\b[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3}/;
+export const IPV4_REG_EXP = /(\b25[0-5]|\b2[0-4]\d|\b[01]?\d{1,2})(\.(25[0-5]|2[0-4]\d|[01]?\d{1,2})){3}/g;
 
 export const SharedDigParser = {
 	parseSection (values: string[]): DnsSection {

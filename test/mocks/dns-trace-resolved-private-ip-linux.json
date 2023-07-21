@@ -1,0 +1,315 @@
+{
+	"measurementId": "measurement",
+	"result": {
+		"hops": [
+			{
+				"answers": [
+					{
+						"class": "IN",
+						"name": ".",
+						"ttl": 7112,
+						"type": "NS",
+						"value": "i.root-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": ".",
+						"ttl": 7112,
+						"type": "NS",
+						"value": "f.root-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": ".",
+						"ttl": 7112,
+						"type": "NS",
+						"value": "k.root-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": ".",
+						"ttl": 7112,
+						"type": "NS",
+						"value": "j.root-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": ".",
+						"ttl": 7112,
+						"type": "NS",
+						"value": "b.root-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": ".",
+						"ttl": 7112,
+						"type": "NS",
+						"value": "h.root-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": ".",
+						"ttl": 7112,
+						"type": "NS",
+						"value": "m.root-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": ".",
+						"ttl": 7112,
+						"type": "NS",
+						"value": "l.root-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": ".",
+						"ttl": 7112,
+						"type": "NS",
+						"value": "d.root-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": ".",
+						"ttl": 7112,
+						"type": "NS",
+						"value": "a.root-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": ".",
+						"ttl": 7112,
+						"type": "NS",
+						"value": "g.root-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": ".",
+						"ttl": 7112,
+						"type": "NS",
+						"value": "e.root-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": ".",
+						"ttl": 7112,
+						"type": "NS",
+						"value": "c.root-servers.net."
+					}
+				],
+				"resolver": "127.0.0.53",
+				"timings": {
+					"total": 0
+				}
+			},
+			{
+				"answers": [
+					{
+						"class": "IN",
+						"name": "com.",
+						"ttl": 172800,
+						"type": "NS",
+						"value": "l.gtld-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": "com.",
+						"ttl": 172800,
+						"type": "NS",
+						"value": "b.gtld-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": "com.",
+						"ttl": 172800,
+						"type": "NS",
+						"value": "c.gtld-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": "com.",
+						"ttl": 172800,
+						"type": "NS",
+						"value": "d.gtld-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": "com.",
+						"ttl": 172800,
+						"type": "NS",
+						"value": "e.gtld-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": "com.",
+						"ttl": 172800,
+						"type": "NS",
+						"value": "f.gtld-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": "com.",
+						"ttl": 172800,
+						"type": "NS",
+						"value": "g.gtld-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": "com.",
+						"ttl": 172800,
+						"type": "NS",
+						"value": "a.gtld-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": "com.",
+						"ttl": 172800,
+						"type": "NS",
+						"value": "h.gtld-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": "com.",
+						"ttl": 172800,
+						"type": "NS",
+						"value": "i.gtld-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": "com.",
+						"ttl": 172800,
+						"type": "NS",
+						"value": "j.gtld-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": "com.",
+						"ttl": 172800,
+						"type": "NS",
+						"value": "k.gtld-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": "com.",
+						"ttl": 172800,
+						"type": "NS",
+						"value": "m.gtld-servers.net."
+					},
+					{
+						"class": "IN",
+						"name": "com.",
+						"ttl": 86400,
+						"type": "DS",
+						"value": "C41A5766"
+					},
+					{
+						"class": "IN",
+						"name": "com.",
+						"ttl": 86400,
+						"type": "RRSIG",
+						"value": "V6HI3w=="
+					}
+				],
+				"resolver": "f.root-servers.net",
+				"timings": {
+					"total": 12
+				}
+			},
+			{
+				"answers": [
+					{
+						"class": "IN",
+						"name": "test.com.",
+						"ttl": 172800,
+						"type": "NS",
+						"value": "ns1.hosting.com."
+					},
+					{
+						"class": "IN",
+						"name": "test.com.",
+						"ttl": 172800,
+						"type": "NS",
+						"value": "ns2.hosting.com."
+					},
+					{
+						"class": "IN",
+						"name": "test.com.",
+						"ttl": 172800,
+						"type": "NS",
+						"value": "ns3.hosting.com."
+					},
+					{
+						"class": "IN",
+						"name": "CK0POJMG874LJREF7EFN8430QVIT8BSM.com.",
+						"ttl": 86400,
+						"type": "NSEC3",
+						"value": "NSEC3PARAM"
+					},
+					{
+						"class": "IN",
+						"name": "CK0POJMG874LJREF7EFN8430QVIT8BSM.com.",
+						"ttl": 86400,
+						"type": "RRSIG",
+						"value": "IUk8QQmY8id8rvX/D27sYIrbR6LReGBzp1k5LfjNdMtL8A=="
+					},
+					{
+						"class": "IN",
+						"name": "9P65273NEARA1FQBRRO26V0EPVQ2LA54.com.",
+						"ttl": 86400,
+						"type": "NSEC3",
+						"value": "RRSIG"
+					},
+					{
+						"class": "IN",
+						"name": "9P65273NEARA1FQBRRO26V0EPVQ2LA54.com.",
+						"ttl": 86400,
+						"type": "RRSIG",
+						"value": "3fClOy/nDwWAbu5sFY8A9rZkqM+E6idtkag9vtOlt117hA=="
+					}
+				],
+				"resolver": "f.gtld-servers.net",
+				"timings": {
+					"total": 28
+				}
+			},
+			{
+				"answers": [
+					{
+						"class": "IN",
+						"name": "test.com.",
+						"ttl": 3600,
+						"type": "A",
+						"value": "192.168.10.10"
+					},
+					{
+						"class": "IN",
+						"name": "test.com.",
+						"ttl": 3600,
+						"type": "NS",
+						"value": "ns2.hosting.com."
+					},
+					{
+						"class": "IN",
+						"name": "test.com.",
+						"ttl": 3600,
+						"type": "NS",
+						"value": "ns1.hosting.com."
+					},
+					{
+						"class": "IN",
+						"name": "test.com.",
+						"ttl": 3600,
+						"type": "NS",
+						"value": "ns3.hosting.com."
+					}
+				],
+				"resolver": "ns3.hosting.com",
+				"timings": {
+					"total": 156
+				}
+			}
+		],
+		"rawOutput": "; <<>> DiG 9.16.1-Ubuntu <<>> test.com -t A -p 53 -4 +timeout=3 +tries=2 +nocookie +trace\n;; global options: +cmd\n.\t\t\t7112\tIN\tNS\ti.root-servers.net.\n.\t\t\t7112\tIN\tNS\tf.root-servers.net.\n.\t\t\t7112\tIN\tNS\tk.root-servers.net.\n.\t\t\t7112\tIN\tNS\tj.root-servers.net.\n.\t\t\t7112\tIN\tNS\tb.root-servers.net.\n.\t\t\t7112\tIN\tNS\th.root-servers.net.\n.\t\t\t7112\tIN\tNS\tm.root-servers.net.\n.\t\t\t7112\tIN\tNS\tl.root-servers.net.\n.\t\t\t7112\tIN\tNS\td.root-servers.net.\n.\t\t\t7112\tIN\tNS\ta.root-servers.net.\n.\t\t\t7112\tIN\tNS\tg.root-servers.net.\n.\t\t\t7112\tIN\tNS\te.root-servers.net.\n.\t\t\t7112\tIN\tNS\tc.root-servers.net.\n;; Received 262 bytes from 127.0.0.53#53(127.0.0.53) in 0 ms\n\ncom.\t\t\t172800\tIN\tNS\tl.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tb.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tc.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\td.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\te.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tf.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tg.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\ta.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\th.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\ti.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tj.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tk.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tm.gtld-servers.net.\ncom.\t\t\t86400\tIN\tDS\t30909 8 2 E2D3C916F6DEEAC73294E8268FB5885044A833FC5459588F4A9184CF C41A5766\ncom.\t\t\t86400\tIN\tRRSIG\tDS 8 1 86400 20220525050000 20220512040000 47671 . IP0WlNuvPbnRjMfGp9OqPhC+i5mw4487jWFOZTgTwP23DePe+pRxfTVZ Q4IRq11HEAMKooV8XgVsUAFgbM4bP+pkQMYErEAtlTEPdjN13pCpRRZ9 33li168gd1Ml2ZAJUWftLBqabkwIV7I9Elkek0PYYk1iBquTo9oFTOd/ j4xtYgstpEVc8HSL9gT7bLdBgzVyoo4VgoHp5ejPnzXA+IHLIiNZ/V4I TMqiQsqkhphrXIeMHXaxvacU3zVUmwspkYDeWBBqLqBU8mnF3eDiWBnO oVYh2SmNS4REahgkHUozzjEWzeDxBabpr0Kld3DNLbCeZ6/w0PfoUzO2 V6HI3w==\n;; Received 1168 bytes from 192.5.5.241#53(f.root-servers.net) in 12 ms\n\ntest.com.\t\t172800\tIN\tNS\tns1.hosting.com.\ntest.com.\t\t172800\tIN\tNS\tns2.hosting.com.\ntest.com.\t\t172800\tIN\tNS\tns3.hosting.com.\nCK0POJMG874LJREF7EFN8430QVIT8BSM.com. 86400 IN NSEC3 1 1 0 - CK0Q1GIN43N1ARRC9OSM6QPQR81H5M9A NS SOA RRSIG DNSKEY NSEC3PARAM\nCK0POJMG874LJREF7EFN8430QVIT8BSM.com. 86400 IN RRSIG NSEC3 8 2 86400 20220519042349 20220512031349 37269 com. ovckMG+I/dsOxbSu5TzZMXqhQx2IRZLcrRWGtjjdmCbHB5z/WVAntDYB o/KFKWE2kjYy3X/bSatz6E2QrnT/B/EiNQUdfikWZ5NzzjrK8ofDrE70 g/DQ5JWy4/zKPzIFkU2mllUN4zOgWlo2jT8qnrLSfEQG5QSlXCdr2TAi IUk8QQmY8id8rvX/D27sYIrbR6LReGBzp1k5LfjNdMtL8A==\n9P65273NEARA1FQBRRO26V0EPVQ2LA54.com. 86400 IN NSEC3 1 1 0 - 9P65GSAAC7FOO9V3FCBMSCNFASB92T6C NS DS RRSIG\n9P65273NEARA1FQBRRO26V0EPVQ2LA54.com. 86400 IN RRSIG NSEC3 8 2 86400 20220517050851 20220510035851 37269 com. RaFbNWPef2xfX6hL168bYLlHv/S3abPKmZTo3UodL4yd/AR5X4QixQog e+vQuS0s10DcRJklIZFkk1FYPalqGbf2vq3PD3KawfwA6fbF3FCHEpAL 4ul436Mi+qgtGhovX74dTwvXl/TZM1przDD6j7nnhj2tAMAl97qw7m7t 3fClOy/nDwWAbu5sFY8A9rZkqM+E6idtkag9vtOlt117hA==\n;; Received 696 bytes from 192.35.51.30#53(f.gtld-servers.net) in 28 ms\n\ntest.com.\t\t3600\tIN\tA\t192.168.10.10\ntest.com.\t\t3600\tIN\tNS\tns2.hosting.com.\ntest.com.\t\t3600\tIN\tNS\tns1.hosting.com.\ntest.com.\t\t3600\tIN\tNS\tns3.hosting.com.\n;; Received 163 bytes from 216.74.36.1#53(ns3.hosting.com) in 156 ms\n",
+		"status": "finished"
+	},
+	"testId": "test"
+}
