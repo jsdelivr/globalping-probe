@@ -108,12 +108,12 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 				let output = '';
 
 				try {
-					output = this.rewrite(pStdout.join(''), options.trace);
-					const parsedResult = this.parse(output, options.trace);
-					const isValid = this.validatePartialResult(output, cmd, options);
+					output = this.rewrite(pStdout.join(''), cmdOptions.trace);
+					const parsedResult = this.parse(output, cmdOptions.trace);
+					const isValid = this.validatePartialResult(output, cmd, cmdOptions);
 
 					if (!isValid && !(parsedResult instanceof Error)) {
-						isResultPrivate = this.hasResultPrivateIp(parsedResult, options.target);
+						isResultPrivate = this.hasResultPrivateIp(parsedResult, cmdOptions.target);
 						return;
 					}
 				} catch (error: unknown) {
@@ -136,14 +136,14 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 				logger.error('Successful stdout is empty.', cmdResult);
 			}
 
-			const output = this.rewrite(cmdResult.stdout, options.trace);
-			const parsedResult = this.parse(output, options.trace);
+			const output = this.rewrite(cmdResult.stdout, cmdOptions.trace);
+			const parsedResult = this.parse(output, cmdOptions.trace);
 
 			if (parsedResult instanceof Error) {
 				throw parsedResult;
 			}
 
-			isResultPrivate = this.hasResultPrivateIp(parsedResult, options.target);
+			isResultPrivate = this.hasResultPrivateIp(parsedResult, cmdOptions.target);
 
 			result = parsedResult;
 		} catch (error: unknown) {
@@ -152,7 +152,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			if (error instanceof InternalError && error.expose) {
 				output = error.message;
 			} else if (isExecaError(error) && error.stdout.toString().length > 0) {
-				output = this.rewrite(error.stdout.toString(), options.trace);
+				output = this.rewrite(error.stdout.toString(), cmdOptions.trace);
 			} else {
 				logger.error(error);
 			}
@@ -167,11 +167,11 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			result = {
 				status: 'failed',
 				rawOutput: 'Private IP ranges are not allowed',
-				...(!options.trace ? { resolver: (result as DnsParseResponseClassic).resolver } : {}),
+				...(!cmdOptions.trace ? { resolver: (result as DnsParseResponseClassic).resolver } : {}),
 			};
 		}
 
-		buffer.pushResult(this.toJsonOutput(result as DnsParseResponseClassic | DnsParseResponseTrace, options.trace));
+		buffer.pushResult(this.toJsonOutput(result as DnsParseResponseClassic | DnsParseResponseTrace, cmdOptions.trace));
 	}
 
 	private validatePartialResult (rawOutput: string, cmd: ExecaChildProcess, options: DnsOptions): boolean {

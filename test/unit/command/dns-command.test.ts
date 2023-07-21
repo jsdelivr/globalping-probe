@@ -91,6 +91,7 @@ describe('dns command', () => {
 					resolver: '1.1.1.1',
 					protocol: 'UDP',
 					port: 90,
+					trace: false,
 					query: {
 						type: 'TXT',
 					},
@@ -110,6 +111,7 @@ describe('dns command', () => {
 					resolver: '1.1.1.1',
 					protocol: 'UDP',
 					port: 90,
+					trace: false,
 					query: {
 						type: 'A',
 					},
@@ -127,6 +129,7 @@ describe('dns command', () => {
 					resolver: '1.1.1.1',
 					protocol: 'UDP',
 					port: 90,
+					trace: false,
 					query: {
 						type: 'PTR',
 					},
@@ -185,7 +188,11 @@ describe('dns command', () => {
 				type: 'dns' as const,
 				target: 'cdn.jsdelivr.net',
 				trace: true,
-				query: {},
+				query: {
+					type: 'A',
+				},
+				protocol: 'UDP',
+				port: 53,
 				inProgressUpdates: true,
 			};
 
@@ -218,13 +225,17 @@ describe('dns command', () => {
 			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
-		it('should parse trace without progress messages - dns-trace-success', async () => {
+		it('should parse trace - dns-trace-success', async () => {
 			const testCase = 'dns-trace-success';
 			const options = {
 				type: 'dns' as const,
 				target: 'cdn.jsdelivr.net',
 				trace: true,
-				query: {},
+				query: {
+					type: 'A',
+				},
+				protocol: 'UDP',
+				port: 53,
 				inProgressUpdates: false,
 			};
 
@@ -248,14 +259,137 @@ describe('dns command', () => {
 			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
-		it('should parse dns - dns-success-linux', async () => {
+		it('should parse dns with progress messages - dns-success-linux', async () => {
 			const testCase = 'dns-success-linux';
 			const options = {
 				type: 'dns' as const,
 				target: 'google.com',
+				trace: false,
 				query: {
 					type: 'TXT',
 				},
+				protocol: 'UDP',
+				port: 53,
+				inProgressUpdates: true,
+			};
+
+			const rawOutput = getCmdMock(testCase);
+			const outputProgress = rawOutput.split('\n');
+			const expectedResult = getCmdMockResult(testCase);
+
+			const mockCmd = getExecaMock();
+
+			const dns = new DnsCommand((): any => mockCmd);
+			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+
+			for (const progressOutput of outputProgress) {
+				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+			}
+
+			mockCmd.resolve({ stdout: rawOutput });
+			await runPromise;
+
+			expect(mockSocket.emit.callCount).to.equal(2);
+
+			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
+				testId: 'test',
+				measurementId: 'measurement',
+				result: {
+					rawOutput: outputProgress[0],
+				},
+			}]);
+
+			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+		});
+
+		it('should work in case of private ip - dns-resolved-private-ip-linux', async () => {
+			const testCase = 'dns-resolved-private-ip-linux';
+			const options = {
+				type: 'dns' as const,
+				target: 'gitlab.test.com',
+				trace: false,
+				query: {
+					type: 'A',
+				},
+				protocol: 'UDP',
+				port: 53,
+				inProgressUpdates: true,
+			};
+
+			const rawOutput = getCmdMock(testCase);
+			const outputProgress = rawOutput.split('\n');
+			const expectedResult = getCmdMockResult(testCase);
+
+			const mockCmd = getExecaMock();
+
+			const dns = new DnsCommand((): any => mockCmd);
+			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+
+			for (const progressOutput of outputProgress) {
+				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+			}
+
+			mockCmd.resolve({ stdout: rawOutput });
+			await runPromise;
+
+			expect(mockSocket.emit.callCount).to.equal(2);
+
+			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
+				testId: 'test',
+				measurementId: 'measurement',
+				result: {
+					rawOutput: outputProgress[0],
+				},
+			}]);
+
+			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+		});
+
+		it('should work in case of private ip - dns-resolved-private-ip-linux', async () => {
+			const testCase = 'dns-resolved-private-ip-linux';
+			const options = {
+				type: 'dns' as const,
+				target: 'gitlab.test.com',
+				trace: false,
+				query: {
+					type: 'A',
+				},
+				protocol: 'UDP',
+				port: 53,
+				inProgressUpdates: false,
+			};
+
+			const rawOutput = getCmdMock(testCase);
+			const outputProgress = rawOutput.split('\n');
+			const expectedResult = getCmdMockResult(testCase);
+
+			const mockCmd = getExecaMock();
+
+			const dns = new DnsCommand((): any => mockCmd);
+			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+
+			for (const progressOutput of outputProgress) {
+				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+			}
+
+			mockCmd.resolve({ stdout: rawOutput });
+			await runPromise;
+
+			expect(mockSocket.emit.callCount).to.equal(1);
+			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+		});
+
+		it('should work in case of private ip with progress messages - dns-trace-resolved-private-ip-linux', async () => {
+			const testCase = 'dns-trace-resolved-private-ip-linux';
+			const options = {
+				type: 'dns' as const,
+				target: 'test.com',
+				trace: true,
+				query: {
+					type: 'A',
+				},
+				protocol: 'UDP',
+				port: 53,
 				inProgressUpdates: true,
 			};
 
@@ -294,9 +428,12 @@ describe('dns command', () => {
 				type: 'dns' as const,
 				target: 'google.com',
 				resolver: 'sdsa',
+				trace: false,
 				query: {
 					type: 'TXT',
 				},
+				protocol: 'UDP',
+				port: 53,
 				inProgressUpdates: false,
 			};
 
@@ -315,126 +452,17 @@ describe('dns command', () => {
 			expect(mockSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
 		});
 
-		it('should fail in case of private ip - dns-resolved-private-ip-error-linux', async () => {
-			const testCase = 'dns-resolved-private-ip-error-linux';
-			const options = {
-				type: 'dns' as const,
-				target: 'gitlab.test.com',
-				query: {
-					type: 'A',
-				},
-				inProgressUpdates: true,
-			};
-
-			const rawOutput = getCmdMock(testCase);
-			const outputProgress = rawOutput.split('\n');
-			const expectedResult = getCmdMockResult(testCase);
-
-			const mockCmd = getExecaMock();
-
-			const dns = new DnsCommand((): any => mockCmd);
-			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
-
-			for (const progressOutput of outputProgress) {
-				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
-
-			mockCmd.resolve({ stdout: rawOutput });
-			await runPromise;
-
-			expect(mockSocket.emit.callCount).to.equal(2);
-
-			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
-				testId: 'test',
-				measurementId: 'measurement',
-				result: {
-					rawOutput: outputProgress[0],
-				},
-			}]);
-
-			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
-		});
-
-		it('should fail in case of private ip without progress messages - dns-resolved-private-ip-error-linux', async () => {
-			const testCase = 'dns-resolved-private-ip-error-linux';
-			const options = {
-				type: 'dns' as const,
-				target: 'gitlab.test.com',
-				query: {
-					type: 'A',
-				},
-				inProgressUpdates: false,
-			};
-
-			const rawOutput = getCmdMock(testCase);
-			const outputProgress = rawOutput.split('\n');
-			const expectedResult = getCmdMockResult(testCase);
-
-			const mockCmd = getExecaMock();
-
-			const dns = new DnsCommand((): any => mockCmd);
-			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
-
-			for (const progressOutput of outputProgress) {
-				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
-
-			mockCmd.resolve({ stdout: rawOutput });
-			await runPromise;
-
-			expect(mockSocket.emit.callCount).to.equal(1);
-			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
-		});
-
-		it('should fail in case of private ip - dns-trace-resolved-private-ip-error-linux', async () => {
-			const testCase = 'dns-trace-resolved-private-ip-error-linux';
-			const options = {
-				type: 'dns' as const,
-				target: 'test.com',
-				trace: true,
-				query: {
-					type: 'A',
-				},
-				inProgressUpdates: true,
-			};
-
-			const rawOutput = getCmdMock(testCase);
-			const outputProgress = rawOutput.split('\n');
-			const expectedResult = getCmdMockResult(testCase);
-
-			const mockCmd = getExecaMock();
-
-			const dns = new DnsCommand((): any => mockCmd);
-			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
-
-			for (const progressOutput of outputProgress) {
-				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
-
-			mockCmd.resolve({ stdout: rawOutput });
-			await runPromise;
-
-			expect(mockSocket.emit.callCount).to.equal(2);
-
-			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
-				testId: 'test',
-				measurementId: 'measurement',
-				result: {
-					rawOutput: outputProgress[0],
-				},
-			}]);
-
-			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
-		});
-
 		it('should fail in case of connection refused - dns-connection-refused-error-linux', async () => {
 			const testCase = 'dns-connection-refused-error-linux';
 			const options = {
 				type: 'dns' as const,
 				target: 'test.com',
+				trace: false,
 				query: {
 					type: 'A',
 				},
+				protocol: 'UDP',
+				port: 53,
 				inProgressUpdates: true,
 			};
 
@@ -472,9 +500,46 @@ describe('dns command', () => {
 			const options = {
 				type: 'dns' as const,
 				target: 'test.com',
+				trace: false,
 				query: {
 					type: 'A',
 				},
+				protocol: 'UDP',
+				port: 53,
+				inProgressUpdates: false,
+			};
+
+			const rawOutput = getCmdMock(testCase);
+			const outputProgress = rawOutput.split('\n');
+			const expectedResult = getCmdMockResult(testCase);
+
+			const mockCmd = getExecaMock();
+
+			const dns = new DnsCommand((): any => mockCmd);
+			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+
+			for (const progressOutput of outputProgress) {
+				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+			}
+
+			mockCmd.resolve({ stdout: rawOutput });
+			await runPromise;
+
+			expect(mockSocket.emit.callCount).to.equal(1);
+			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+		});
+
+		it('should fail in case of connection refused with private ip with progress messages - dns-connection-refused-private-error-linux (PRIVATE IP)', async () => {
+			const testCase = 'dns-connection-refused-private-error-linux';
+			const options = {
+				type: 'dns' as const,
+				target: 'test.com',
+				trace: false,
+				query: {
+					type: 'A',
+				},
+				protocol: 'UDP',
+				port: 53,
 				inProgressUpdates: true,
 			};
 
@@ -505,37 +570,6 @@ describe('dns command', () => {
 			}]);
 
 			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
-		});
-
-		it('should fail in case of connection refused with private ip without progress messages - dns-connection-refused-private-error-linux (PRIVATE IP)', async () => {
-			const testCase = 'dns-connection-refused-private-error-linux';
-			const options = {
-				type: 'dns' as const,
-				target: 'test.com',
-				query: {
-					type: 'A',
-				},
-				inProgressUpdates: false,
-			};
-
-			const rawOutput = getCmdMock(testCase);
-			const outputProgress = rawOutput.split('\n');
-			const expectedResult = getCmdMockResult(testCase);
-
-			const mockCmd = getExecaMock();
-
-			const dns = new DnsCommand((): any => mockCmd);
-			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
-
-			for (const progressOutput of outputProgress) {
-				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
-
-			mockCmd.resolve({ stdout: rawOutput });
-			await runPromise;
-
-			expect(mockSocket.emit.callCount).to.equal(1);
-			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 	});
 });

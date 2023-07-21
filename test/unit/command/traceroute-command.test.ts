@@ -102,7 +102,7 @@ describe('trace command', () => {
 		});
 
 		describe('mock', () => {
-			it('should run and parse trace', async () => {
+			it('should run and parse trace with progress messages', async () => {
 				const options = {
 					type: 'traceroute' as TraceOptions['type'],
 					target: 'google.com',
@@ -141,7 +141,7 @@ describe('trace command', () => {
 				expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 			});
 
-			it('should run and parse trace without progress messages', async () => {
+			it('should run and parse trace', async () => {
 				const options = {
 					type: 'traceroute' as TraceOptions['type'],
 					target: 'google.com',

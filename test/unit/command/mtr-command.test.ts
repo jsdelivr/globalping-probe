@@ -150,7 +150,7 @@ describe('mtr command executor', () => {
 			sandbox.reset();
 		});
 
-		it('should run and parse mtr', async () => {
+		it('should run and parse mtr with progress messages', async () => {
 			const testCase = 'mtr-success-raw';
 			const options = {
 				type: 'mtr' as const,
@@ -187,7 +187,7 @@ describe('mtr command executor', () => {
 			expect(mockedSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
-		it('should run and parse mtr without progress messages', async () => {
+		it('should run and parse mtr', async () => {
 			const testCase = 'mtr-success-raw';
 			const options = {
 				type: 'mtr' as const,
@@ -214,7 +214,7 @@ describe('mtr command executor', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
-		it('should detect Private IP and stop', async () => {
+		it('should detect Private IP and stop with progress messages', async () => {
 			const testCase = 'mtr-fail-private-ip';
 			const options = {
 				type: 'mtr' as const,
@@ -234,7 +234,7 @@ describe('mtr command executor', () => {
 			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
 		});
 
-		it('should detect Private IP and stop without progress messages', async () => {
+		it('should detect Private IP and stop', async () => {
 			const testCase = 'mtr-fail-private-ip';
 			const options = {
 				type: 'mtr' as const,

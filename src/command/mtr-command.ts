@@ -111,7 +111,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		});
 
 		try {
-			await this.checkForPrivateDest(options.target);
+			await this.checkForPrivateDest(cmdOptions.target);
 			await cmd;
 			result = await this.parseResult(result.data, true);
 		} catch (error: unknown) {
