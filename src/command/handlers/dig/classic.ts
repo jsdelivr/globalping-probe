@@ -39,7 +39,7 @@ export const ClassicDigParser = {
 		let output = rawOutput;
 
 		if (lines.length <= 2) {
-			const ipMatchList = (rawOutput.match(IPV4_REG_EXP) ?? []).filter(ip => IPV4_REG_EXP.test(ip));
+			const ipMatchList = rawOutput.match(IPV4_REG_EXP) ?? [];
 
 			for (const ip of ipMatchList) {
 				if (isIpPrivate(ip)) {
