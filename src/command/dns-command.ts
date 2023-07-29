@@ -1,10 +1,10 @@
 import Joi from 'joi';
-import isIpPrivate from 'private-ip';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
 import tldjs from 'tldjs';
 import type { CommandInterface } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
+import { isIpPrivate } from '../lib/private-ip';
 import { InternalError } from '../lib/internal-error.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { scopedLogger } from '../lib/logger.js';
