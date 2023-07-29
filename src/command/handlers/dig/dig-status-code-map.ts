@@ -1,3 +1,5 @@
+// Based on https://www.iana.org/assignments/dns-parameters/dns-parameters.xhtml#table-dns-parameters-6
+
 export const statusNameToStatusCodeMap: Record<string, number> = {
 	noerror: 0,
 	formerr: 1,
