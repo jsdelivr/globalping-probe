@@ -1,6 +1,6 @@
 import config from 'config';
 import dns from 'node:dns';
-import { isIP } from 'is-ip';
+import { isIP } from 'node:net';
 import isIpPrivate from 'private-ip';
 import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
@@ -219,7 +219,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 	}
 
 	private async checkForPrivateDest (target: string): Promise<void> {
-		if (isIP(target)) {
+		if (isIP(target) !== 0) {
 			if (isIpPrivate(target)) {
 				throw new Error('private destination');
 			}
