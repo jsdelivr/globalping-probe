@@ -7,12 +7,15 @@ jobs:
   test:
     name: Build and test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ 16.x, 18.x ]
 
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: ${{ matrix.node-version }}
       - name: install and build
         run: npm ci && npm run build
       - name: lint and test
