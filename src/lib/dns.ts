@@ -1,6 +1,6 @@
 import dns from 'node:dns';
 import validator from 'validator';
-import isIpPrivate from 'private-ip';
+import { isIpPrivate } from './private-ip';
 
 export const getDnsServers = (getServers: () => string[] = dns.getServers): string[] => {
 	const servers = getServers();
