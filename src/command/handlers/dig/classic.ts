@@ -1,4 +1,4 @@
-import isIpPrivate from 'private-ip';
+import { isIpPrivate } from '../../../lib/private-ip';
 import { InternalError } from '../../../lib/internal-error.js';
 import {
 	SECTION_REG_EXP,
