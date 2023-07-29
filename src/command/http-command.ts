@@ -179,8 +179,10 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		const respond = (resolveStream: () => void) => {
 			result.resolvedAddress = stream.ip ?? '';
 
-			const { total, download } = this.parseStreamTimings(stream);
-			result.timings = { ...result.timings, total, download };
+			if (result.status === 'finished') {
+				const { total, download } = this.parseStreamTimings(stream);
+				result.timings = { ...result.timings, total, download };
+			}
 
 			let rawOutput;
 
@@ -311,8 +313,8 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			statusCode: input.statusCode || null,
 			statusCodeName: input.statusCodeName || null,
 			timings: {
-				total: 0,
-				download: 0,
+				total: null,
+				download: null,
 				firstByte: null,
 				dns: null,
 				tls: null,
