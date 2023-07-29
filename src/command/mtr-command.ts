@@ -1,11 +1,11 @@
 import config from 'config';
 import dns from 'node:dns';
 import { isIP } from 'is-ip';
-import isIpPrivate from 'private-ip';
 import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface } from '../types.js';
+import { isIpPrivate } from '../lib/private-ip';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBufferOverwrite } from '../helper/progress-buffer-overwrite.js';
 import { scopedLogger } from '../lib/logger.js';
