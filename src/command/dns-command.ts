@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
-import tldjs from 'tldjs';
+import tldts from 'tldts';
 import type { CommandInterface } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { isIpPrivate } from '../lib/private-ip';
@@ -215,9 +215,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 				.filter((answer: unknown) => isDnsSection(answer) ? isIpPrivate(answer.value as string) : false);
 		}
 
-		const isPublicHostname = tldjs.tldExists(target);
-
-		if (privateResults.length > 0 && !isPublicHostname) {
+		if (privateResults.length > 0 && !(tldts.parse(target).isIcann)) {
 			return true;
 		}
 
