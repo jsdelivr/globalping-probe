@@ -89,10 +89,4 @@ Your company can also become a [hardware probe sponsor!](https://docs.google.com
 
 ## Development
 
-You need to have the [main API](https://github.com/jsdelivr/globalping#development) running before running this!
-
-1. Clone repository.
-2. `npm install`
-3. `npm run dev`
-
-If you run into any errors due to failed scripts, try installing the [unbuffer package](https://command-not-found.com/unbuffer) on your local machine. WSL users will need to do this.
+Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
