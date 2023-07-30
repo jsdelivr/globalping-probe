@@ -8,11 +8,17 @@ export const getDnsServers = (getServers: () => string[] = dns.getServers): stri
 	return servers
 	// Filter out ipv6
 		.filter((addr: string) => {
+			if (isIPv6(addr)) {
+				return false;
+			}
+
 			const ipv6Match = /^\[(.*)]/g.exec(addr); // Nested with port
-			return (
-				!isIPv6(addr)
-				|| (ipv6Match && !isIP(ipv6Match[1] ?? ''))
-			);
+
+			if (ipv6Match && ipv6Match[1]) {
+				return !isIP(ipv6Match[1]);
+			}
+
+			return true;
 		})
 	// Hide private ips
 		.map((addr: string) => {
