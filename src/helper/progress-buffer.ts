@@ -1,6 +1,5 @@
 
 import type { Socket } from 'socket.io-client';
-import _ from 'lodash';
 import type { DnsParseResponseJson as DnsParseResponseClassicJson } from '../command/handlers/dig/classic.js';
 import type { DnsParseResponseJson as DnsParseResponseTraceJson } from '../command/handlers/dig/trace.js';
 import type { OutputJson as HttpOutputJson } from '../command/http-command.js';
@@ -61,7 +60,7 @@ export class ProgressBuffer {
 	private sendProgress () {
 		delete this.timer;
 
-		if (_.isEmpty(this.buffer)) {
+		if (Object.keys(this.buffer).length === 0) {
 			return;
 		}
 

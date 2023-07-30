@@ -1,8 +1,8 @@
 import config from 'config';
 import process from 'node:process';
-import _ from 'lodash';
 import got, { TimeoutError } from 'got';
 import { VERSION } from '../constants.js';
+import { random } from './random.js';
 import { scopedLogger } from './logger.js';
 
 type ReleaseInfo = {
@@ -11,7 +11,7 @@ type ReleaseInfo = {
 
 const logger = scopedLogger('self-update');
 const updateConfig = config.get<{releaseUrl: string; interval: number; maxDeviation: number}>('update');
-const updateInterval = updateConfig.interval + _.random(0, updateConfig.maxDeviation);
+const updateInterval = updateConfig.interval + random(0, updateConfig.maxDeviation);
 
 const checkForUpdates = () => {
 	got(updateConfig.releaseUrl, { timeout: { request: 15_000 } }).json<ReleaseInfo>().then((releaseInfo) => {

@@ -4,7 +4,6 @@ import http from 'node:http';
 import https from 'node:https';
 import http2 from 'http2-wrapper';
 import Joi from 'joi';
-import _ from 'lodash';
 import got, { type Response, type Request, type HTTPAlias, type DnsLookupIpVersion, type RequestError, HTTPError } from 'got';
 import type { Socket } from 'socket.io-client';
 import type { CommandInterface } from '../types.js';
@@ -158,10 +157,10 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 	return got.stream(url, options_);
 };
 
-const isTlsSocket = (socket: unknown): socket is TLSSocket => Boolean((socket as {getPeerCertificate?: unknown}).getPeerCertificate);
+const isTlsSocket = (socket: unknown): socket is TLSSocket => Boolean((socket as { getPeerCertificate?: unknown }).getPeerCertificate);
 
 export class HttpCommand implements CommandInterface<HttpOptions> {
-	constructor (private readonly cmd: typeof httpCmd) {}
+	constructor (private readonly cmd: typeof httpCmd) { }
 
 	async run (socket: Socket, measurementId: string, testId: string, options: HttpOptions): Promise<void> {
 		const { value: cmdOptions, error: validationError } = httpOptionsSchema.validate(options);
@@ -350,8 +349,14 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 	private parseResponse (resp: Response, cert: Cert | undefined) {
 		const result = getInitialResult();
 
-		// Headers
-		result.rawHeaders = _.chunk(resp.rawHeaders, 2)
+		result.rawHeaders = resp.rawHeaders
+			.reduce<[string, string][]>((acc, curr, index, rawHeaders) => {
+				if (index % 2 === 0) {
+					acc.push([ curr, rawHeaders[index + 1] || '' ]);
+				}
+
+				return acc;
+			}, [])
 			.map((g: string[]) => `${String(g[0])}: ${String(g[1])}`)
 			.filter((r: string) => !r.startsWith(':status:'))
 			.join('\n');
