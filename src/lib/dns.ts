@@ -1,5 +1,5 @@
 import dns from 'node:dns';
-import validator from 'validator';
+import { isIP, isIPv6 } from 'node:net';
 import { isIpPrivate } from './private-ip';
 
 export const getDnsServers = (getServers: () => string[] = dns.getServers): string[] => {
@@ -9,7 +9,10 @@ export const getDnsServers = (getServers: () => string[] = dns.getServers): stri
 	// Filter out ipv6
 		.filter((addr: string) => {
 			const ipv6Match = /^\[(.*)]/g.exec(addr); // Nested with port
-			return !(validator.isIP(addr, 6) || validator.isIP(ipv6Match?.[1] ?? ''));
+			return (
+				!isIPv6(addr)
+				|| (ipv6Match && !isIP(ipv6Match[1] ?? ''))
+			);
 		})
 	// Hide private ips
 		.map((addr: string) => {
