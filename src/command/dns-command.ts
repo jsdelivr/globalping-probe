@@ -4,7 +4,7 @@ import { execa, type ExecaChildProcess } from 'execa';
 import tldts from 'tldts';
 import type { CommandInterface } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
-import { isIpPrivate } from '../lib/private-ip';
+import { isIpPrivate } from '../lib/private-ip.js';
 import { InternalError } from '../lib/internal-error.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { scopedLogger } from '../lib/logger.js';

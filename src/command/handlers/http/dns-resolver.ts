@@ -1,5 +1,5 @@
 import dns, { type RecordWithTtl } from 'node:dns';
-import { isIpPrivate } from '../../../lib/private-ip';
+import { isIpPrivate } from '../../../lib/private-ip.js';
 
 export type IpFamily = 4 | 6;
 export type Options = {
