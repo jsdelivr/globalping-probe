@@ -115,6 +115,9 @@ describe('index module', () => {
 			reconnectionDelayMax: 500,
 		});
 
+		expect(ioStub.firstCall.args[1].query.version).to.match(/^\d+.\d+.\d+$/);
+		expect(ioStub.firstCall.args[1].query.nodeVersion).to.match(/^v\d+.\d+.\d+$/);
+
 		expect(statusManagerStub.sendStatus.callCount).to.equal(1);
 		expect(initStatusManagerStub.callCount).to.equal(1);
 		expect(initStatusManagerStub.firstCall.args).to.deep.equal([ mockSocket, pingCmdStub ]);

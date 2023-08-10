@@ -5,4 +5,6 @@ const pkg: {version: string} = JSON.parse(fs.readFileSync('./package.json').toSt
 
 export const VERSION = pkg.version;
 
+export const NODE_VERSION = process.version;
+
 export const PROGRESS_INTERVAL_TIME = 500;

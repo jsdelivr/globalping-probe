@@ -15,7 +15,7 @@ import { mtrCmd, MtrCommand } from './command/mtr-command.js';
 import { httpCmd, HttpCommand } from './command/http-command.js';
 import { run as runStatsAgent } from './lib/stats/client.js';
 import { initStatusManager } from './lib/status-manager.js';
-import { VERSION } from './constants.js';
+import { NODE_VERSION, VERSION } from './constants.js';
 
 // Run self-update checks
 import './lib/updater.js';
@@ -54,6 +54,7 @@ function connect () {
 		reconnectionDelayMax: 500,
 		query: {
 			version: VERSION,
+			nodeVersion: NODE_VERSION,
 		},
 	});
 
