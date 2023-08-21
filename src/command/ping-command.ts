@@ -67,64 +67,104 @@ export const pingCmd = (options: PingOptions): ExecaChildProcess => {
 export class PingCommand implements CommandInterface<PingOptions> {
 	constructor (private readonly cmd: typeof pingCmd) {}
 
-	async run (socket: Socket, measurementId: string, testId: string, options: PingOptions): Promise<void> {
-		const { value: cmdOptions, error: validationError } = pingOptionsSchema.validate(options);
+	// async run (socket: Socket, measurementId: string, testId: string, options: PingOptions): Promise<void> {
+	// 	const { value: cmdOptions, error: validationError } = pingOptionsSchema.validate(options);
 
-		if (validationError) {
-			throw new InvalidOptionsException('ping', validationError);
-		}
+	// 	if (validationError) {
+	// 		throw new InvalidOptionsException('ping', validationError);
+	// 	}
 
-		const buffer = new ProgressBuffer(socket, testId, measurementId);
-		let isResultPrivate = false;
-		let result: PingParseOutput;
+	// 	const buffer = new ProgressBuffer(socket, testId, measurementId);
+	// 	let isResultPrivate = false;
+	// 	let result: PingParseOutput;
 
-		const cmd = this.cmd(cmdOptions);
+	// 	const cmd = this.cmd(cmdOptions);
 
-		if (cmdOptions.inProgressUpdates) {
-			const pStdout: string[] = [];
-			cmd.stdout?.on('data', (data: Buffer) => {
-				pStdout.push(data.toString());
-				const isValid = this.validatePartialResult(pStdout.join(''), cmd);
+	// 	if (cmdOptions.inProgressUpdates) {
+	// 		const pStdout: string[] = [];
+	// 		cmd.stdout?.on('data', (data: Buffer) => {
+	// 			pStdout.push(data.toString());
+	// 			const isValid = this.validatePartialResult(pStdout.join(''), cmd);
 
-				if (!isValid) {
-					isResultPrivate = !isValid;
-					return;
-				}
+	// 			if (!isValid) {
+	// 				isResultPrivate = !isValid;
+	// 				return;
+	// 			}
 
-				buffer.pushProgress({ rawOutput: data.toString() });
+	// 			buffer.pushProgress({ rawOutput: data.toString() });
+	// 		});
+	// 	}
+
+	// 	try {
+	// 		const cmdResult = await cmd;
+
+	// 		if (cmdResult.stdout.length === 0) {
+	// 			logger.error('Successful stdout is empty.', cmdResult);
+	// 		}
+
+	// 		const parseResult = parse(cmdResult.stdout);
+	// 		result = parseResult;
+
+	// 		if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
+	// 			isResultPrivate = true;
+	// 		}
+	// 	} catch (error: unknown) {
+	// 		if (isExecaError(error) && error.stdout.toString().length > 0) {
+	// 			result = parse(error.stdout.toString());
+	// 		} else {
+	// 			logger.error(error);
+	// 			result = { status: 'failed', rawOutput: 'Test failed. Please try again.' };
+	// 		}
+	// 	}
+
+	// 	if (isResultPrivate) {
+	// 		result = {
+	// 			status: 'failed',
+	// 			rawOutput: 'Private IP ranges are not allowed',
+	// 		};
+	// 	}
+
+	// 	buffer.pushResult(this.toJsonOutput(result));
+	// }
+
+	async run (socket: Socket, measurementId: string, testId: string /* options: PingOptions */): Promise<void> {
+		setTimeout(() => {
+			socket.emit('probe:measurement:progress', {
+				testId,
+				measurementId,
+				result: {
+					rawOutput: 'PING google.com (142.250.75.14): 56 data bytes\n' },
 			});
-		}
+		}, 1000);
 
-		try {
-			const cmdResult = await cmd;
+		setTimeout(() => {
+			socket.emit('probe:measurement:progress', {
+				testId,
+				measurementId,
+				result: {
+					rawOutput: '64 bytes from 142.250.75.14: icmp_seq=0 ttl=117 time=16.807 ms\n64 bytes from 142.250.75.14: icmp_seq=1 ttl=117 time=16.450 ms\n64 bytes from 142.250.75.14: icmp_seq=2 ttl=117 time=16.647 ms\n64 bytes from 142.250.75.14: icmp_seq=3 ttl=117 time=16.149 ms\n64 bytes from 142.250.75.14: icmp_seq=4 ttl=117 time=20.132 ms\n64 bytes from 142.250.75.14: icmp_seq=5 ttl=117 time=17.220 ms\n64 bytes from 142.250.75.14: icmp_seq=6 ttl=117 time=16.413 ms\n64 bytes from 142.250.75.14: icmp_seq=7 ttl=117 time=17.925 ms\n64 bytes from 142.250.75.14: icmp_seq=8 ttl=117 time=15.885 ms\n64 bytes from 142.250.75.14: icmp_seq=9 ttl=117 time=19.105 ms\n64 bytes from 142.250.75.14: icmp_seq=10 ttl=117 time=19.169 ms\n64 bytes from 142.250.75.14: icmp_seq=11 ttl=117 time=16.734 ms\n64 bytes from 142.250.75.14: icmp_seq=12 ttl=117 time=16.031 ms\n64 bytes from 142.250.75.14: icmp_seq=13 ttl=117 time=16.824 ms\n64 bytes from 142.250.75.14: icmp_seq=14 ttl=117 time=16.649 ms\n64 bytes from 142.250.75.14: icmp_seq=15 ttl=117 time=17.173 ms',
+				},
+			});
+		}, 2000);
 
-			if (cmdResult.stdout.length === 0) {
-				logger.error('Successful stdout is empty.', cmdResult);
-			}
-
-			const parseResult = parse(cmdResult.stdout);
-			result = parseResult;
-
-			if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
-				isResultPrivate = true;
-			}
-		} catch (error: unknown) {
-			if (isExecaError(error) && error.stdout.toString().length > 0) {
-				result = parse(error.stdout.toString());
-			} else {
-				logger.error(error);
-				result = { status: 'failed', rawOutput: 'Test failed. Please try again.' };
-			}
-		}
-
-		if (isResultPrivate) {
-			result = {
-				status: 'failed',
-				rawOutput: 'Private IP ranges are not allowed',
-			};
-		}
-
-		buffer.pushResult(this.toJsonOutput(result));
+		setTimeout(() => {
+			socket.emit('probe:measurement:result', {
+				testId,
+				measurementId,
+				result: {
+					rawOutput: 'PING google.com (142.250.75.14): 56 data bytes\n64 bytes from 142.250.75.14: icmp_seq=0 ttl=117 time=16.807 ms\n64 bytes from 142.250.75.14: icmp_seq=1 ttl=117 time=16.450 ms\n64 bytes from 142.250.75.14: icmp_seq=2 ttl=117 time=16.647 ms\n64 bytes from 142.250.75.14: icmp_seq=3 ttl=117 time=16.149 ms\n64 bytes from 142.250.75.14: icmp_seq=4 ttl=117 time=20.132 ms\n64 bytes from 142.250.75.14: icmp_seq=5 ttl=117 time=17.220 ms\n64 bytes from 142.250.75.14: icmp_seq=6 ttl=117 time=16.413 ms\n64 bytes from 142.250.75.14: icmp_seq=7 ttl=117 time=17.925 ms\n64 bytes from 142.250.75.14: icmp_seq=8 ttl=117 time=15.885 ms\n64 bytes from 142.250.75.14: icmp_seq=9 ttl=117 time=19.105 ms\n64 bytes from 142.250.75.14: icmp_seq=10 ttl=117 time=19.169 ms\n64 bytes from 142.250.75.14: icmp_seq=11 ttl=117 time=16.734 ms\n64 bytes from 142.250.75.14: icmp_seq=12 ttl=117 time=16.031 ms\n64 bytes from 142.250.75.14: icmp_seq=13 ttl=117 time=16.824 ms\n64 bytes from 142.250.75.14: icmp_seq=14 ttl=117 time=16.649 ms\n64 bytes from 142.250.75.14: icmp_seq=15 ttl=117 time=17.173 ms\n\n--- google.com ping statistics ---\n16 packets transmitted, 16 packets received, 0.0% packet loss\nround-trip min/avg/max/stddev = 15.885/17.207/20.132/1.202 ms',
+					resolvedAddress: '142.250.75.14',
+					resolvedHostname: '142.250.75.14:',
+					timings: [],
+					stats: {
+						min: 15.885,
+						max: 20.132,
+						avg: 17.207,
+						loss: 0,
+					},
+				},
+			});
+		}, 3000);
 	}
 
 	private validatePartialResult (rawOutput: string, cmd: ExecaChildProcess): boolean {

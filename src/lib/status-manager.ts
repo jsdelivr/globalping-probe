@@ -49,13 +49,13 @@ export class StatusManager {
 	}
 
 	private async runTest () {
-		const result = await this.pingTest();
+		// const result = await this.pingTest();
 
-		if (result) {
-			this.updateStatus('ready');
-		} else {
-			this.updateStatus('ping-test-failed');
-		}
+		// if (result) {
+		this.updateStatus('ready');
+		// } else {
+		// 	this.updateStatus('ping-test-failed');
+		// }
 
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		this.timer = setTimeout(async () => {

@@ -3,6 +3,8 @@ import process from 'node:process';
 import throng from 'throng';
 import { io } from 'socket.io-client';
 import physicalCpuCount from 'physical-cpu-count';
+// @ts-ignore
+import range from 'ip-range-generator';
 import type { CommandInterface, MeasurementRequest } from './types.js';
 import { loadAll as loadAllDeps } from './lib/dependencies.js';
 import { scopedLogger } from './lib/logger.js';
@@ -18,10 +20,10 @@ import { initStatusManager } from './lib/status-manager.js';
 import { NODE_VERSION, VERSION } from './constants.js';
 
 // Run self-update checks
-import './lib/updater.js';
+// import './lib/updater.js';
 
 // Run scheduled restart
-import './lib/restart.js';
+// import './lib/restart.js';
 
 await loadAllDeps();
 
@@ -35,6 +37,13 @@ handlersMap.set('dns', new DnsCommand(dnsCmd));
 handlersMap.set('http', new HttpCommand(httpCmd));
 
 logger.info(`Start probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode.`);
+
+const generator = range('185.0.0.0', '186.0.0.0');
+const ips: string[] = [];
+
+for (let i = 0; i < 10000; i++) {
+	ips.push(generator.next().value);
+}
 
 function connect () {
 	const worker = {
@@ -55,10 +64,11 @@ function connect () {
 		query: {
 			version: VERSION,
 			nodeVersion: NODE_VERSION,
+			ip: ips[process.pid % ips.length],
 		},
 	});
 
-	runStatsAgent(socket, worker);
+	// runStatsAgent(socket, worker);
 	const statusManager = initStatusManager(socket, pingCmd);
 	const errorHandler = initErrorHandler(socket);
 
