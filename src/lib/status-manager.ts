@@ -20,12 +20,12 @@ export class StatusManager {
 	) {}
 
 	public async start () {
-		const hasRequiredDeps = await hasRequired();
+		// const hasRequiredDeps = await hasRequired();
 
-		if (!hasRequiredDeps) {
-			this.updateStatus('unbuffer-missing');
-			return;
-		}
+		// if (!hasRequiredDeps) {
+		// 	this.updateStatus('unbuffer-missing');
+		// 	return;
+		// }
 
 		await this.runTest();
 	}
