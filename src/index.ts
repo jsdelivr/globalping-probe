@@ -25,7 +25,7 @@ import { NODE_VERSION, VERSION } from './constants.js';
 // Run scheduled restart
 // import './lib/restart.js';
 
-await loadAllDeps();
+// await loadAllDeps();
 
 const logger = scopedLogger('general');
 const handlersMap = new Map<string, CommandInterface<any>>();
@@ -38,7 +38,8 @@ handlersMap.set('http', new HttpCommand(httpCmd));
 
 logger.info(`Start probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode.`);
 
-const generator = range('185.0.0.0', '186.0.0.0');
+const startIp = parseInt(process.env['IP'], 10);
+const generator = range(`${startIp}.0.0.0`, `${startIp + 1}.0.0.0`);
 const ips: string[] = [];
 
 for (let i = 0; i < 10000; i++) {
@@ -145,7 +146,7 @@ function connect () {
 
 if (process.env['NODE_ENV'] === 'development') {
 	// Run multiple clients in dev mode for easier debugging
-	throng({ worker: connect, count: physicalCpuCount })
+	throng({ worker: connect, count: 100 })
 		.catch((error) => {
 			logger.error(error);
 		});
