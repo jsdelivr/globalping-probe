@@ -1,4 +1,4 @@
-FROM node:18.14.2-bullseye-slim AS builder
+FROM node:18.17.1-bullseye-slim AS builder
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ COPY package.json package-lock.json tsconfig.json /app/
 
 RUN npm install && npm run build
 
-FROM node:18.14.2-bullseye-slim
+FROM node:18.17.1-bullseye-slim
 
 ARG node_env=production
 ENV NODE_ENV=$node_env
