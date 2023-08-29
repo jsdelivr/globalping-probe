@@ -3,8 +3,7 @@ import process from 'node:process';
 import throng from 'throng';
 import { io } from 'socket.io-client';
 import physicalCpuCount from 'physical-cpu-count';
-// @ts-ignore
-import range from 'ip-range-generator';
+import { getFakeIp } from './lib/fake-ip.js';
 import type { CommandInterface, MeasurementRequest } from './types.js';
 import { loadAll as loadAllDeps } from './lib/dependencies.js';
 import { scopedLogger } from './lib/logger.js';
@@ -20,12 +19,12 @@ import { initStatusManager } from './lib/status-manager.js';
 import { NODE_VERSION, VERSION } from './constants.js';
 
 // Run self-update checks
-// import './lib/updater.js';
+import './lib/updater.js';
 
 // Run scheduled restart
-// import './lib/restart.js';
+import './lib/restart.js';
 
-// await loadAllDeps();
+await loadAllDeps();
 
 const logger = scopedLogger('general');
 const handlersMap = new Map<string, CommandInterface<any>>();
@@ -37,14 +36,6 @@ handlersMap.set('dns', new DnsCommand(dnsCmd));
 handlersMap.set('http', new HttpCommand(httpCmd));
 
 logger.info(`Start probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode.`);
-
-const startIp = parseInt(process.env['IP'], 10);
-const generator = range(`${startIp}.0.0.0`, `${startIp + 1}.0.0.0`);
-const ips: string[] = [];
-
-for (let i = 0; i < 10000; i++) {
-	ips.push(generator.next().value);
-}
 
 function connect () {
 	const worker = {
@@ -65,11 +56,11 @@ function connect () {
 		query: {
 			version: VERSION,
 			nodeVersion: NODE_VERSION,
-			ip: ips[process.pid % ips.length],
+			...(process.env['FAKE_IP'] && { fakeIp: getFakeIp() }),
 		},
 	});
 
-	// runStatsAgent(socket, worker);
+	runStatsAgent(socket, worker);
 	const statusManager = initStatusManager(socket, pingCmd);
 	const errorHandler = initErrorHandler(socket);
 
@@ -146,7 +137,7 @@ function connect () {
 
 if (process.env['NODE_ENV'] === 'development') {
 	// Run multiple clients in dev mode for easier debugging
-	throng({ worker: connect, count: 100 })
+	throng({ worker: connect, count: physicalCpuCount })
 		.catch((error) => {
 			logger.error(error);
 		});

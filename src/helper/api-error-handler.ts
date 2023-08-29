@@ -30,8 +30,8 @@ class ErrorHandler {
 		const isFatalError = fatalConnectErrors.some(fatalError => error.message.startsWith(fatalError));
 
 		if (isFatalError) {
-			logger.error('Retrying in 1 minute. Probe temporarily disconnected.');
-			setTimeout(() => this.socket.connect(), 60 * 1000);
+			logger.error('Retrying in 1 hour. Probe temporarily disconnected.');
+			setTimeout(() => this.socket.connect(), 60 * 60 * 1000);
 		} else if (error.message.startsWith('ip limit')) {
 			logger.error(`Only 1 connection per IP address is allowed. Please make sure you don't have another probe running on IP ${error?.data?.ipAddress || ''}.`);
 			logger.error('Retrying in 1 minute. Probe temporarily disconnected.');

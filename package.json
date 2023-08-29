@@ -13,9 +13,9 @@
 	"dependencies": {
 		"config": "^3.3.9",
 		"execa": "^7.1.1",
+		"get-ip-range": "^4.0.1",
 		"got": "^12.6.0",
 		"http2-wrapper": "^2.2.0",
-		"ip-range-generator": "^1.0.1",
 		"joi": "^17.9.1",
 		"lodash": "^4.17.21",
 		"physical-cpu-count": "^2.0.0",

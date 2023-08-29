@@ -20,12 +20,12 @@ export class StatusManager {
 	) {}
 
 	public async start () {
-		// const hasRequiredDeps = await hasRequired();
+		const hasRequiredDeps = await hasRequired();
 
-		// if (!hasRequiredDeps) {
-		// 	this.updateStatus('unbuffer-missing');
-		// 	return;
-		// }
+		if (!hasRequiredDeps) {
+			this.updateStatus('unbuffer-missing');
+			return;
+		}
 
 		await this.runTest();
 	}
@@ -49,13 +49,13 @@ export class StatusManager {
 	}
 
 	private async runTest () {
-		// const result = await this.pingTest();
+		const result = await this.pingTest();
 
-		// if (result) {
-		this.updateStatus('ready');
-		// } else {
-		// 	this.updateStatus('ping-test-failed');
-		// }
+		if (result) {
+			this.updateStatus('ready');
+		} else {
+			this.updateStatus('ping-test-failed');
+		}
 
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		this.timer = setTimeout(async () => {
@@ -64,6 +64,10 @@ export class StatusManager {
 	}
 
 	private async pingTest () {
+		if (process.env['FAKE_IP']) {
+			return true;
+		}
+
 		const packets = config.get<number>('status.numberOfPackets');
 		const targets = [ 'ns1.registry.in', 'k.root-servers.net', 'ns1.dns.nl' ];
 		const results = await Promise.allSettled(targets.map(target => this.pingCmd({ type: 'ping', target, packets, inProgressUpdates: false })));
