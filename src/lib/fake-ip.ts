@@ -1,10 +1,10 @@
-import { getIPRange } from 'get-ip-range';
+import { expand } from 'cidr-tools';
 
 let fakeIps: string[] = [];
 
 const initFakeIps = () => {
-	const firstDigit = parseInt(process.env['FAKE_IP']!, 10);
-	fakeIps = getIPRange(`${firstDigit}.0.0.0/20`);
+	const firstDigit = parseInt(process.env['FAKE_PROBE_IP']!, 10);
+	fakeIps = expand(`${firstDigit}.0.0.0/20`);
 };
 
 export const getFakeIp = () => {
@@ -15,6 +15,6 @@ export const getFakeIp = () => {
 	return fakeIps[process.pid % fakeIps.length];
 };
 
-if (process.env['FAKE_IP']) {
+if (process.env['FAKE_PROBE_IP']) {
 	initFakeIps();
 }

@@ -64,7 +64,7 @@ export class StatusManager {
 	}
 
 	private async pingTest () {
-		if (process.env['FAKE_IP']) {
+		if (process.env['FAKE_PROBE_IP']) {
 			return true;
 		}
 
