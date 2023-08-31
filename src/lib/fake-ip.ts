@@ -3,8 +3,8 @@ import { expand } from 'cidr-tools';
 let fakeIps: string[] = [];
 
 const initFakeIps = () => {
-	const firstDigit = parseInt(process.env['FAKE_PROBE_IP']!, 10);
-	fakeIps = expand(`${firstDigit}.0.0.0/20`);
+	const secondDigit = parseInt(process.env['FAKE_PROBE_IP']!, 10);
+	fakeIps = expand(`100.${secondDigit}.0.0/20`);
 };
 
 export const getFakeIp = () => {
