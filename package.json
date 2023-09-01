@@ -14,7 +14,6 @@
 		"cidr-tools": "^6.4.1",
 		"config": "^3.3.9",
 		"execa": "^7.1.1",
-		"get-ip-range": "^4.0.1",
 		"got": "^12.6.0",
 		"http2-wrapper": "^2.2.0",
 		"joi": "^17.9.1",

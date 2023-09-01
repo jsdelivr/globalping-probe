@@ -64,10 +64,6 @@ export class StatusManager {
 	}
 
 	private async pingTest () {
-		if (process.env['FAKE_PROBE_IP']) {
-			return true;
-		}
-
 		const packets = config.get<number>('status.numberOfPackets');
 		const targets = [ 'ns1.registry.in', 'k.root-servers.net', 'ns1.dns.nl' ];
 		const results = await Promise.allSettled(targets.map(target => this.pingCmd({ type: 'ping', target, packets, inProgressUpdates: false })));
