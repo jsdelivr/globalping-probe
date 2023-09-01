@@ -1,18 +1,23 @@
-import { expand } from 'cidr-tools';
+// import { expand } from 'cidr-tools';
 
-let fakeIps: string[] = [];
+// let fakeIps: string[] = [];
 
 const initFakeIps = () => {
-	const secondDigit = parseInt(process.env['FAKE_PROBE_IP']!, 10);
-	fakeIps = expand(`100.${secondDigit}.0.0/20`);
+	// const secondOctet = parseInt(process.env['FAKE_PROBE_IP']!, 10);
+	// fakeIps = expand(`100.${secondOctet}.0.0/20`);
 };
 
 export const getFakeIp = () => {
-	if (fakeIps.length === 0) {
-		throw new Error('Fake ips are not initialized.');
-	}
+	const secondOctet = parseInt(process.env['FAKE_PROBE_IP']!, 10);
+	const thirdOctet = process.pid / 256 % 256;
+	const forthOctet = process.pid % 256;
 
-	return fakeIps[process.pid % fakeIps.length];
+	return `100.${secondOctet}.${thirdOctet}.${forthOctet}`;
+	// if (fakeIps.length === 0) {
+	// 	throw new Error('Fake ips are not initialized.');
+	// }
+
+	// return fakeIps[process.pid % fakeIps.length];
 };
 
 if (process.env['FAKE_PROBE_IP']) {
