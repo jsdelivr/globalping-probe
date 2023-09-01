@@ -137,7 +137,7 @@ function connect () {
 
 if (process.env['NODE_ENV'] === 'development') {
 	// Run multiple clients in dev mode for easier debugging
-	throng({ worker: connect, count: physicalCpuCount })
+	throng({ worker: connect, count: Number(process.env['PROBES_COUNT']) || physicalCpuCount })
 		.catch((error) => {
 			logger.error(error);
 		});
