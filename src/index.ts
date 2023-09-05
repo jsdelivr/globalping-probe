@@ -1,8 +1,9 @@
 import config from 'config';
 import process from 'node:process';
-import throng from 'throng';
 import { io } from 'socket.io-client';
 import physicalCpuCount from 'physical-cpu-count';
+import { Worker, isMainThread } from 'node:worker_threads';
+import { fileURLToPath } from 'url';
 import { getFakeIp } from './lib/fake-ip.js';
 import type { CommandInterface, MeasurementRequest } from './types.js';
 import { loadAll as loadAllDeps } from './lib/dependencies.js';
@@ -147,10 +148,21 @@ function connect () {
 
 if (process.env['NODE_ENV'] === 'development') {
 	// Run multiple clients in dev mode for easier debugging
-	throng({ worker: connect, count: Number(process.env['PROBES_COUNT']) || physicalCpuCount })
-		.catch((error) => {
-			logger.error(error);
-		});
+	const probesCount = Number(process.env['PROBES_COUNT']) || physicalCpuCount;
+
+	if (isMainThread) {
+		for (let i = 0; i < probesCount; i++) {
+			const __filename = fileURLToPath(import.meta.url);
+			const worker = new Worker(__filename);
+
+			worker.on('error', (error) => {
+				logger.error('Worker error:');
+				logger.error(error);
+			});
+		}
+	} else {
+		connect();
+	}
 } else {
 	connect();
 }
