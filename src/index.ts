@@ -14,6 +14,8 @@ import { pingCmd, PingCommand } from './command/ping-command.js';
 import { traceCmd, TracerouteCommand } from './command/traceroute-command.js';
 import { mtrCmd, MtrCommand } from './command/mtr-command.js';
 import { httpCmd, HttpCommand } from './command/http-command.js';
+import { FakePingCommand } from './command/fake-ping-command.js';
+import { FakeMtrCommand } from './command/fake-mtr-command.js';
 import { run as runStatsAgent } from './lib/stats/client.js';
 import { initStatusManager } from './lib/status-manager.js';
 import { NODE_VERSION, VERSION } from './constants.js';
@@ -34,6 +36,8 @@ handlersMap.set('traceroute', new TracerouteCommand(traceCmd));
 handlersMap.set('mtr', new MtrCommand(mtrCmd));
 handlersMap.set('dns', new DnsCommand(dnsCmd));
 handlersMap.set('http', new HttpCommand(httpCmd));
+handlersMap.set('fakePing', new FakePingCommand());
+handlersMap.set('fakeMtr', new FakeMtrCommand());
 
 logger.info(`Start probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode.`);
 
@@ -89,7 +93,13 @@ function connect () {
 			logger.debug(`'${measurement.type}' request ${measurementId} received.`);
 
 			socket.emit('probe:measurement:ack', null, async () => {
-				const handler = handlersMap.get(measurement.type);
+				let type: 'ping' | 'traceroute' | 'mtr' | 'dns' | 'http' | 'fakePing' | 'fakeMtr' = measurement.type;
+
+				if (process.env['NODE_ENV'] === 'development' && type === 'ping') { type = 'fakePing'; }
+
+				if (process.env['NODE_ENV'] === 'development' && type === 'mtr') { type = 'fakeMtr'; }
+
+				const handler = handlersMap.get(type);
 
 				if (!handler) {
 					return;
