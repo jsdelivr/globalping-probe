@@ -56,7 +56,7 @@ function connect () {
 		query: {
 			version: VERSION,
 			nodeVersion: NODE_VERSION,
-			...(process.env['FAKE_PROBE_IP'] && { fakeIp: getFakeIp() }),
+			...(process.env['FAKE_IP_FIRST_OCTET'] && { fakeIp: getFakeIp() }),
 		},
 	});
 

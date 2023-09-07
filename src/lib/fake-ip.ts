@@ -1,8 +1,8 @@
 export const getFakeIp = () => {
-	const octet1String = process.env['FAKE_PROBE_IP'];
+	const octet1String = process.env['FAKE_IP_FIRST_OCTET'];
 
 	if (!octet1String) {
-		throw new Error('FAKE_PROBE_IP is not specified');
+		throw new Error('FAKE_IP_FIRST_OCTET is not specified');
 	}
 
 	const octet1 = parseInt(octet1String, 10);
