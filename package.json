@@ -12,6 +12,7 @@
 	},
 	"dependencies": {
 		"config": "^3.3.9",
+		"config-mapper-env": "^2.0.0",
 		"execa": "^7.1.1",
 		"got": "^12.6.0",
 		"http2-wrapper": "^2.2.0",

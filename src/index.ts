@@ -3,6 +3,7 @@ import process from 'node:process';
 import throng from 'throng';
 import { io } from 'socket.io-client';
 import physicalCpuCount from 'physical-cpu-count';
+import { getFakeIp } from './lib/fake-ip.js';
 import type { CommandInterface, MeasurementRequest } from './types.js';
 import { loadAll as loadAllDeps } from './lib/dependencies.js';
 import { scopedLogger } from './lib/logger.js';
@@ -13,6 +14,8 @@ import { pingCmd, PingCommand } from './command/ping-command.js';
 import { traceCmd, TracerouteCommand } from './command/traceroute-command.js';
 import { mtrCmd, MtrCommand } from './command/mtr-command.js';
 import { httpCmd, HttpCommand } from './command/http-command.js';
+import { FakePingCommand } from './command/fake/fake-ping-command.js';
+import { FakeMtrCommand } from './command/fake/fake-mtr-command.js';
 import { run as runStatsAgent } from './lib/stats/client.js';
 import { initStatusManager } from './lib/status-manager.js';
 import { NODE_VERSION, VERSION } from './constants.js';
@@ -28,9 +31,9 @@ await loadAllDeps();
 const logger = scopedLogger('general');
 const handlersMap = new Map<string, CommandInterface<any>>();
 
-handlersMap.set('ping', new PingCommand(pingCmd));
+handlersMap.set('ping', process.env['FAKE_COMMANDS'] ? new FakePingCommand() : new PingCommand(pingCmd));
+handlersMap.set('mtr', process.env['FAKE_COMMANDS'] ? new FakeMtrCommand() : new MtrCommand(mtrCmd));
 handlersMap.set('traceroute', new TracerouteCommand(traceCmd));
-handlersMap.set('mtr', new MtrCommand(mtrCmd));
 handlersMap.set('dns', new DnsCommand(dnsCmd));
 handlersMap.set('http', new HttpCommand(httpCmd));
 
@@ -55,6 +58,7 @@ function connect () {
 		query: {
 			version: VERSION,
 			nodeVersion: NODE_VERSION,
+			...(process.env['FAKE_IP_FIRST_OCTET'] && { fakeIp: getFakeIp() }),
 		},
 	});
 
@@ -135,7 +139,7 @@ function connect () {
 
 if (process.env['NODE_ENV'] === 'development') {
 	// Run multiple clients in dev mode for easier debugging
-	throng({ worker: connect, count: physicalCpuCount })
+	throng({ worker: connect, count: Number(process.env['PROBES_COUNT']) || physicalCpuCount })
 		.catch((error) => {
 			logger.error(error);
 		});
