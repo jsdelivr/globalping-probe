@@ -172,10 +172,10 @@ describe('index module', () => {
 		expect(connectStub.calledOnce).to.be.true;
 	});
 
-	it('should reconnect after 1 hour delay on "connect_error" fatal errors', async () => {
+	it('should reconnect after 1 hour delay on "probe" type errors', async () => {
 		await import('../../src/index.js');
 
-		mockSocket.emit('connect_error', new Error('failed to collect probe metadata'));
+		mockSocket.emit('connect_error', new Error('ip limit'));
 		mockSocket.emit('connect_error', new Error('vpn detected'));
 		mockSocket.emit('connect_error', new Error('unresolvable geoip'));
 
@@ -185,10 +185,10 @@ describe('index module', () => {
 		expect(connectStub.callCount).to.equal(3);
 	});
 
-	it('should reconnect after 1 minute delay on "connect_error" with "ip limit"', async () => {
+	it('should reconnect after 1 minute delay on "api" type errors', async () => {
 		await import('../../src/index.js');
 
-		mockSocket.emit('connect_error', new Error('ip limit'));
+		mockSocket.emit('connect_error', new Error('failed to collect probe metadata'));
 
 		sandbox.clock.tick(1000 + 50);
 		expect(connectStub.callCount).to.equal(0);
