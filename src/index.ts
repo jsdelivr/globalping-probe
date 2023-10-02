@@ -18,6 +18,7 @@ import { FakePingCommand } from './command/fake/fake-ping-command.js';
 import { FakeMtrCommand } from './command/fake/fake-mtr-command.js';
 import { run as runStatsAgent } from './lib/stats/client.js';
 import { initStatusManager } from './lib/status-manager.js';
+import { logAdoptionCode } from './lib/log-adoption-code.js';
 import { NODE_VERSION, VERSION } from './constants.js';
 
 // Run self-update checks
@@ -108,7 +109,8 @@ function connect () {
 					worker.jobs.delete(measurementId);
 				}
 			});
-		});
+		})
+		.on('probe:adoption:code', (data: { code: string }) => logAdoptionCode(data.code));
 
 	process.on('SIGTERM', () => {
 		logger.debug('SIGTERM received.');
