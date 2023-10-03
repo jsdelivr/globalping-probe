@@ -19,7 +19,7 @@ import { FakeMtrCommand } from './command/fake/fake-mtr-command.js';
 import { run as runStatsAgent } from './lib/stats/client.js';
 import { initStatusManager } from './lib/status-manager.js';
 import { logAdoptionCode } from './lib/log-adoption-code.js';
-import { NODE_VERSION, VERSION } from './constants.js';
+import { ID, NODE_VERSION, VERSION } from './constants.js';
 
 // Run self-update checks
 import './lib/updater.js';
@@ -59,6 +59,7 @@ function connect () {
 		query: {
 			version: VERSION,
 			nodeVersion: NODE_VERSION,
+			id: ID,
 			...(process.env['FAKE_IP_FIRST_OCTET'] && { fakeIp: getFakeIp() }),
 		},
 	});

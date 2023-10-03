@@ -1,4 +1,4 @@
-import { scopedLogger } from './logger';
+import { scopedLogger } from './logger.js';
 
 const logger = scopedLogger('adoption-code');
 
