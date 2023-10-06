@@ -12,7 +12,7 @@ export type DnsSection = Record<string, unknown> | {
 };
 
 export type DnsParseLoopResponse = {
-	[key: string]: any;
+	[key: string]: unknown;
 	header?: string[];
 	answers: DnsSection[];
 	timings: {total: number};

@@ -73,12 +73,13 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 	constructor (private readonly cmd: typeof mtrCmd, readonly dnsResolver: DnsResolver = dns.promises.resolve) {}
 
 	async run (socket: Socket, measurementId: string, testId: string, options: MtrOptions): Promise<void> {
-		const { value: cmdOptions, error: validationError } = mtrOptionsSchema.validate(options);
+		const validationResult = mtrOptionsSchema.validate(options);
 
-		if (validationError) {
-			throw new InvalidOptionsException('mtr', validationError);
+		if (validationResult.error) {
+			throw new InvalidOptionsException('mtr', validationResult.error);
 		}
 
+		const { value: cmdOptions } = validationResult;
 		const buffer = new ProgressBufferOverwrite(socket, testId, measurementId);
 		const cmd = this.cmd(cmdOptions);
 		let result: ResultType = getResultInitState();

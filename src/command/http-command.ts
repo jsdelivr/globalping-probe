@@ -164,12 +164,13 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 	constructor (private readonly cmd: typeof httpCmd) {}
 
 	async run (socket: Socket, measurementId: string, testId: string, options: HttpOptions): Promise<void> {
-		const { value: cmdOptions, error: validationError } = httpOptionsSchema.validate(options);
+		const validationResult = httpOptionsSchema.validate(options);
 
-		if (validationError) {
-			throw new InvalidOptionsException('http', validationError);
+		if (validationResult.error) {
+			throw new InvalidOptionsException('http', validationResult.error);
 		}
 
+		const { value: cmdOptions } = validationResult;
 		const buffer = new ProgressBuffer(socket, testId, measurementId);
 		const stream = this.cmd(cmdOptions);
 

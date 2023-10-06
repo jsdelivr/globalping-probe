@@ -88,12 +88,13 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 	constructor (private readonly cmd: typeof dnsCmd) {}
 
 	async run (socket: Socket, measurementId: string, testId: string, options: DnsOptions): Promise<void> {
-		const { value: cmdOptions, error: validationError } = dnsOptionsSchema.validate(options);
+		const validationResult = dnsOptionsSchema.validate(options);
 
-		if (validationError) {
-			throw new InvalidOptionsException('dns', validationError);
+		if (validationResult.error) {
+			throw new InvalidOptionsException('dns', validationResult.error);
 		}
 
+		const { value: cmdOptions } = validationResult;
 		const buffer = new ProgressBuffer(socket, testId, measurementId);
 		let isResultPrivate = false;
 		let result: Partial<DnsParseResponseClassic | DnsParseResponseTrace> = {};

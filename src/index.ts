@@ -31,7 +31,7 @@ import './lib/restart.js';
 await loadAllDeps();
 
 const logger = scopedLogger('general');
-const handlersMap = new Map<string, CommandInterface<any>>();
+const handlersMap = new Map<string, CommandInterface<unknown>>();
 
 handlersMap.set('ping', process.env['FAKE_COMMANDS'] ? new FakePingCommand() : new PingCommand(pingCmd));
 handlersMap.set('mtr', process.env['FAKE_COMMANDS'] ? new FakeMtrCommand() : new MtrCommand(mtrCmd));
