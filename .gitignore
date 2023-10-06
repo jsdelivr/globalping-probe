@@ -4,4 +4,5 @@
 node_modules/
 coverage/
 dist/
+config/local*
 .eslintcache
