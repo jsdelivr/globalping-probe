@@ -1,4 +1,5 @@
 import config from 'config';
+import { randomUUID } from 'node:crypto';
 import process from 'node:process';
 import throng from 'throng';
 import { io } from 'socket.io-client';
@@ -18,7 +19,8 @@ import { FakePingCommand } from './command/fake/fake-ping-command.js';
 import { FakeMtrCommand } from './command/fake/fake-mtr-command.js';
 import { run as runStatsAgent } from './lib/stats/client.js';
 import { initStatusManager } from './lib/status-manager.js';
-import { NODE_VERSION, VERSION } from './constants.js';
+import { logAdoptionCode } from './lib/log-adoption-code.js';
+import { VERSION } from './constants.js';
 
 // Run self-update checks
 import './lib/updater.js';
@@ -57,7 +59,8 @@ function connect () {
 		reconnectionDelayMax: 500,
 		query: {
 			version: VERSION,
-			nodeVersion: NODE_VERSION,
+			nodeVersion: process.version,
+			uuid: randomUUID(),
 			...(process.env['FAKE_IP_FIRST_OCTET'] && { fakeIp: getFakeIp() }),
 		},
 	});
@@ -108,7 +111,8 @@ function connect () {
 					worker.jobs.delete(measurementId);
 				}
 			});
-		});
+		})
+		.on('probe:adoption:code', (data: { code: string }) => logAdoptionCode(data.code));
 
 	process.on('SIGTERM', () => {
 		logger.debug('SIGTERM received.');
