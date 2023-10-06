@@ -1,5 +1,5 @@
 import type { Socket } from 'socket.io-client';
-import type { CommandInterface } from '../../types';
+import type { CommandInterface } from '../../types.js';
 
 export class FakePingCommand implements CommandInterface<object> {
 	async run (socket: Socket, measurementId: string, testId: string): Promise<void> {

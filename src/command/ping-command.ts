@@ -68,12 +68,13 @@ export class PingCommand implements CommandInterface<PingOptions> {
 	constructor (private readonly cmd: typeof pingCmd) {}
 
 	async run (socket: Socket, measurementId: string, testId: string, options: PingOptions): Promise<void> {
-		const { value: cmdOptions, error: validationError } = pingOptionsSchema.validate(options);
+		const validationResult = pingOptionsSchema.validate(options);
 
-		if (validationError) {
-			throw new InvalidOptionsException('ping', validationError);
+		if (validationResult.error) {
+			throw new InvalidOptionsException('ping', validationResult.error);
 		}
 
+		const { value: cmdOptions } = validationResult;
 		const buffer = new ProgressBuffer(socket, testId, measurementId);
 		let isResultPrivate = false;
 		let result: PingParseOutput;
