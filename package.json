@@ -57,7 +57,7 @@
 		"build": "tsc && npm run copy:sh",
 		"coverage": "npm run clean && NODE_ENV=test c8 mocha",
 		"clean": "rimraf coverage",
-		"copy:sh": "cp -r src/sh dist/sh",
+		"copy:sh": "cp -r src/sh dist/sh; chmod +x dist/sh/*",
 		"dev": "NODE_ENV=development tsx src/index.ts",
 		"watch": "NODE_ENV=development tsx watch src/index.ts",
 		"lint": "npm run lint:js && npm run lint:types",
@@ -67,6 +67,7 @@
 		"lint:types": "tsc --noEmit",
 		"prepare": "husky install || echo 'Failed to install husky'",
 		"test": "npm run lint:js && npm run test:mocha",
+		"test:dist": "node test/dist.js",
 		"test:mocha": "NODE_ENV=test mocha",
 		"test:mocha:dev": "TS_NODE_TRANSPILE_ONLY=true NODE_ENV=test mocha"
 	},
