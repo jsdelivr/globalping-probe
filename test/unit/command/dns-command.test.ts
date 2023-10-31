@@ -1,14 +1,15 @@
 import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { Socket } from 'socket.io-client';
-import { getCmdMock, getCmdMockResult, getExecaMock } from '../../utils.js';
+import { CommandTester, getCmdMock, getCmdMockResult, getExecaMock, makeSnapshotTests, setupSnapshots, wrapIt } from '../../utils.js';
 import {
 	DnsCommand,
 	argBuilder,
-	type DnsOptions,
+	type DnsOptions, dnsCmd,
 } from '../../../src/command/dns-command.js';
 
 describe('dns command', () => {
+	wrapIt();
 	const sandbox = sinon.createSandbox();
 	const mockSocket = sandbox.createStubInstance(Socket);
 
@@ -684,6 +685,75 @@ describe('dns command', () => {
 			}]);
 
 			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+		});
+	});
+
+	describe('snapshots', function () {
+		const tester = new CommandTester<DnsOptions>(cmd => new DnsCommand(cmd), dnsCmd, mockSocket);
+
+		before(() => {
+			setupSnapshots(import.meta.url);
+		});
+
+		this.timeout(10000);
+
+		makeSnapshotTests(tester, {
+			target: 'www.jsdelivr.com',
+			query: [
+				{ type: 'A' },
+				{ type: 'AAAA' },
+			],
+			resolver: '8.8.8.8',
+			trace: [ false, true ],
+		});
+
+		makeSnapshotTests(tester, {
+			target: 'kolarik.sk',
+			query: [
+				{ type: 'DNSKEY' },
+				{ type: 'DS' },
+				{ type: 'MX' },
+				{ type: 'NS' },
+				{ type: 'RRSIG' },
+				{ type: 'SOA' },
+				{ type: 'TXT' },
+			],
+			resolver: '8.8.8.8',
+			trace: [ false, true ],
+		});
+
+		makeSnapshotTests(tester, {
+			target: 'cloudflare.com',
+			query: [
+				{ type: 'NSEC' },
+			],
+			resolver: '8.8.8.8',
+			trace: [ false, true ],
+		});
+
+		makeSnapshotTests(tester, {
+			target: 'cdn.jsdelivr.net',
+			query: [
+				{ type: 'CNAME' },
+			],
+			resolver: '8.8.8.8',
+			trace: [ false, true ],
+		});
+
+		makeSnapshotTests(tester, {
+			target: '1.1.1.1',
+			query: [
+				{ type: 'PTR' },
+			],
+			resolver: '8.8.8.8',
+			trace: [ false, true ],
+		});
+
+		makeSnapshotTests(tester, {
+			target: 'www.jsdelivr.com',
+			query: [{ type: 'ANY' }],
+			resolver: [ '1.1.1.1', '8.8.8.8', 'a.root-servers.net' ],
+			trace: [ false, true ],
 		});
 	});
 });
