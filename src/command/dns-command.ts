@@ -73,6 +73,7 @@ export const argBuilder = (options: DnsOptions): string[] => {
 		'+timeout=3',
 		'+tries=2',
 		'+nocookie',
+		'+nosplit',
 		'+nsid',
 		traceArg,
 		protocolArg,
