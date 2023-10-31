@@ -1,0 +1,18 @@
+{
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		"moduleResolution": "node",
+		"paths": {
+			"chai": [
+				"./plugins/oas"
+			]
+		},
+		"sourceMap": true,
+		"exactOptionalPropertyTypes": false,
+		"noImplicitReturns": false,
+		"strict": false
+	},
+	"include": [
+		"**/*"
+	]
+}

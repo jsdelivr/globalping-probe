@@ -3,9 +3,11 @@
 	"compilerOptions": {
 		"outDir": "./dist",
 		"moduleResolution": "node",
-		"paths": { "node-dig-dns": [
-			"./@types/node-dig-dns.d.ts"
-		] },
+		"paths": {
+			"node-dig-dns": [
+				"./@types/node-dig-dns.d.ts"
+			]
+		},
 		"sourceMap": true
 	},
 	"include": [

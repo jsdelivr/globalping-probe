@@ -11,9 +11,9 @@ type MeasurementRequest = {
 	measurement: PingOptions | DnsOptions | TraceOptions | MtrOptions | HttpOptions;
 };
 
-type CommandInterface<OPT> = {
+interface CommandInterface<OPT> {
 	run(socket: Socket, measurementId: string, testId: string, options: OPT): Promise<void>;
-};
+}
 
 type Probe = {
 	location: ProbeLocation;

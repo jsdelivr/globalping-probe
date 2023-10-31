@@ -8,6 +8,9 @@
 		"loader=ts-node/esm",
 		"loader=testdouble"
 	],
+	"require": [
+		"./test/hooks.ts"
+	],
 	"spec": [
 		"test/**/*.test.ts"
 	]
