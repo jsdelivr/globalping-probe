@@ -199,14 +199,14 @@
 						"name": "com.",
 						"ttl": 86400,
 						"type": "DS",
-						"value": "C41A5766"
+						"value": "30909 8 2 E2D3C916F6DEEAC73294E8268FB5885044A833FC5459588F4A9184CF C41A5766"
 					},
 					{
 						"class": "IN",
 						"name": "com.",
 						"ttl": 86400,
 						"type": "RRSIG",
-						"value": "V6HI3w=="
+						"value": "DS 8 1 86400 20220525050000 20220512040000 47671 . IP0WlNuvPbnRjMfGp9OqPhC+i5mw4487jWFOZTgTwP23DePe+pRxfTVZ Q4IRq11HEAMKooV8XgVsUAFgbM4bP+pkQMYErEAtlTEPdjN13pCpRRZ9 33li168gd1Ml2ZAJUWftLBqabkwIV7I9Elkek0PYYk1iBquTo9oFTOd/ j4xtYgstpEVc8HSL9gT7bLdBgzVyoo4VgoHp5ejPnzXA+IHLIiNZ/V4I TMqiQsqkhphrXIeMHXaxvacU3zVUmwspkYDeWBBqLqBU8mnF3eDiWBnO oVYh2SmNS4REahgkHUozzjEWzeDxBabpr0Kld3DNLbCeZ6/w0PfoUzO2 V6HI3w=="
 					}
 				],
 				"resolver": "f.root-servers.net",
@@ -242,28 +242,28 @@
 						"name": "CK0POJMG874LJREF7EFN8430QVIT8BSM.com.",
 						"ttl": 86400,
 						"type": "NSEC3",
-						"value": "NSEC3PARAM"
+						"value": "1 1 0 - CK0Q1GIN43N1ARRC9OSM6QPQR81H5M9A NS SOA RRSIG DNSKEY NSEC3PARAM"
 					},
 					{
 						"class": "IN",
 						"name": "CK0POJMG874LJREF7EFN8430QVIT8BSM.com.",
 						"ttl": 86400,
 						"type": "RRSIG",
-						"value": "IUk8QQmY8id8rvX/D27sYIrbR6LReGBzp1k5LfjNdMtL8A=="
+						"value": "NSEC3 8 2 86400 20220519042349 20220512031349 37269 com. ovckMG+I/dsOxbSu5TzZMXqhQx2IRZLcrRWGtjjdmCbHB5z/WVAntDYB o/KFKWE2kjYy3X/bSatz6E2QrnT/B/EiNQUdfikWZ5NzzjrK8ofDrE70 g/DQ5JWy4/zKPzIFkU2mllUN4zOgWlo2jT8qnrLSfEQG5QSlXCdr2TAi IUk8QQmY8id8rvX/D27sYIrbR6LReGBzp1k5LfjNdMtL8A=="
 					},
 					{
 						"class": "IN",
 						"name": "9P65273NEARA1FQBRRO26V0EPVQ2LA54.com.",
 						"ttl": 86400,
 						"type": "NSEC3",
-						"value": "RRSIG"
+						"value": "1 1 0 - 9P65GSAAC7FOO9V3FCBMSCNFASB92T6C NS DS RRSIG"
 					},
 					{
 						"class": "IN",
 						"name": "9P65273NEARA1FQBRRO26V0EPVQ2LA54.com.",
 						"ttl": 86400,
 						"type": "RRSIG",
-						"value": "3fClOy/nDwWAbu5sFY8A9rZkqM+E6idtkag9vtOlt117hA=="
+						"value": "NSEC3 8 2 86400 20220517050851 20220510035851 37269 com. RaFbNWPef2xfX6hL168bYLlHv/S3abPKmZTo3UodL4yd/AR5X4QixQog e+vQuS0s10DcRJklIZFkk1FYPalqGbf2vq3PD3KawfwA6fbF3FCHEpAL 4ul436Mi+qgtGhovX74dTwvXl/TZM1przDD6j7nnhj2tAMAl97qw7m7t 3fClOy/nDwWAbu5sFY8A9rZkqM+E6idtkag9vtOlt117hA=="
 					}
 				],
 				"resolver": "f.gtld-servers.net",

@@ -100,7 +100,7 @@
 						"type": "NSEC",
 						"ttl": 300,
 						"class": "IN",
-						"value": "CAA"
+						"value": "\\000.cloudflare.com. A NS SOA HINFO MX TXT AAAA LOC SRV NAPTR CERT SSHFP RRSIG NSEC DNSKEY TLSA SMIMEA HIP CDS CDNSKEY OPENPGPKEY TYPE64 TYPE65 URI CAA"
 					}
 				],
 				"timings": {
@@ -137,14 +137,14 @@
 						"type": "DNSKEY",
 						"ttl": 21600,
 						"class": "IN",
-						"value": "IZ3hyLAds1cAe/Y8ZQNQ230599K46LJyUK/S00MFAA60KfEt+/66ej60QGIKAYN/QnhGyjDMj16MXlDTZJBROA=="
+						"value": "256 3 13 IZ3hyLAds1cAe/Y8ZQNQ230599K46LJyUK/S00MFAA60KfEt+/66ej60QGIKAYN/QnhGyjDMj16MXlDTZJBROA=="
 					},
 					{
 						"name": "kolarik.sk.",
 						"type": "DNSKEY",
 						"ttl": 21600,
 						"class": "IN",
-						"value": "0QFYtCy6ZAvVRjWOXfIPYodoQ6FVgtq9S4PyYED+QyMFq8b3dxjSnFJBXMe5FeoWcpNdxqdCQ132CXT1N+DYow=="
+						"value": "257 3 13 0QFYtCy6ZAvVRjWOXfIPYodoQ6FVgtq9S4PyYED+QyMFq8b3dxjSnFJBXMe5FeoWcpNdxqdCQ132CXT1N+DYow=="
 					}
 				],
 				"timings": {
@@ -181,7 +181,7 @@
 						"type": "DS",
 						"ttl": 3600,
 						"class": "IN",
-						"value": "C26BD5EFDD56F7BBC32F7B925D60E4103903922C1FFEF33735F7607443EF3D8A"
+						"value": "37645 13 2 C26BD5EFDD56F7BBC32F7B925D60E4103903922C1FFEF33735F7607443EF3D8A"
 					}
 				],
 				"timings": {
@@ -218,50 +218,35 @@
 						"type": "MX",
 						"ttl": 600,
 						"class": "IN",
-						"value": {
-							"priority": 10,
-							"server": "aspmx.l.google.com."
-						}
+						"value": "10 aspmx.l.google.com."
 					},
 					{
 						"name": "kolarik.sk.",
 						"type": "MX",
 						"ttl": 600,
 						"class": "IN",
-						"value": {
-							"priority": 20,
-							"server": "alt1.aspmx.l.google.com."
-						}
+						"value": "20 alt1.aspmx.l.google.com."
 					},
 					{
 						"name": "kolarik.sk.",
 						"type": "MX",
 						"ttl": 600,
 						"class": "IN",
-						"value": {
-							"priority": 20,
-							"server": "alt2.aspmx.l.google.com."
-						}
+						"value": "20 alt2.aspmx.l.google.com."
 					},
 					{
 						"name": "kolarik.sk.",
 						"type": "MX",
 						"ttl": 600,
 						"class": "IN",
-						"value": {
-							"priority": 30,
-							"server": "aspmx2.googlemail.com."
-						}
+						"value": "30 aspmx2.googlemail.com."
 					},
 					{
 						"name": "kolarik.sk.",
 						"type": "MX",
 						"ttl": 600,
 						"class": "IN",
-						"value": {
-							"priority": 30,
-							"server": "aspmx3.googlemail.com."
-						}
+						"value": "30 aspmx3.googlemail.com."
 					}
 				],
 				"timings": {
@@ -342,7 +327,7 @@
 						"type": "RRSIG",
 						"ttl": 600,
 						"class": "IN",
-						"value": "358/a5uqMaLGdS/TWzqX2gFhV2md43tasozVSvkayxQXxmAx1mKPtWl0ieU6rtFIUKLpzSbFjrWWwqJ8IwZ7cA=="
+						"value": "A 13 2 600 20231112090814 20231029073814 41805 kolarik.sk. 358/a5uqMaLGdS/TWzqX2gFhV2md43tasozVSvkayxQXxmAx1mKPtWl0ieU6rtFIUKLpzSbFjrWWwqJ8IwZ7cA=="
 					}
 				],
 				"timings": {
@@ -584,7 +569,7 @@
 						"type": "HINFO",
 						"ttl": 3600,
 						"class": "IN",
-						"value": "\"\""
+						"value": "\"RFC8482\" \"\""
 					}
 				],
 				"timings": {
