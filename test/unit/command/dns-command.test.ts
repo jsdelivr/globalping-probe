@@ -704,7 +704,6 @@ describe('dns command', () => {
 				{ type: 'AAAA' },
 			],
 			resolver: '8.8.8.8',
-			trace: [ false, true ],
 		});
 
 		makeSnapshotTests(tester, {
@@ -719,7 +718,6 @@ describe('dns command', () => {
 				{ type: 'TXT' },
 			],
 			resolver: '8.8.8.8',
-			trace: [ false, true ],
 		});
 
 		makeSnapshotTests(tester, {
@@ -728,7 +726,6 @@ describe('dns command', () => {
 				{ type: 'NSEC' },
 			],
 			resolver: '8.8.8.8',
-			trace: [ false, true ],
 		});
 
 		makeSnapshotTests(tester, {
@@ -737,7 +734,6 @@ describe('dns command', () => {
 				{ type: 'CNAME' },
 			],
 			resolver: '8.8.8.8',
-			trace: [ false, true ],
 		});
 
 		makeSnapshotTests(tester, {
@@ -746,14 +742,12 @@ describe('dns command', () => {
 				{ type: 'PTR' },
 			],
 			resolver: '8.8.8.8',
-			trace: [ false, true ],
 		});
 
 		makeSnapshotTests(tester, {
 			target: 'www.jsdelivr.com',
 			query: [{ type: 'ANY' }],
 			resolver: [ '1.1.1.1', '8.8.8.8', 'a.root-servers.net' ],
-			trace: [ false, true ],
 		});
 	});
 });
