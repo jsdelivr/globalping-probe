@@ -36,6 +36,8 @@ export type DnsOptions = {
 	};
 };
 
+export type DnsParseResponseJson = DnsParseResponseClassicJson | DnsParseResponseTraceJson;
+
 const logger = scopedLogger('dns-command');
 
 const isTrace = (output: unknown): output is DnsParseResponseTrace => Array.isArray((output as DnsParseResponseTrace).hops);
@@ -71,6 +73,7 @@ export const argBuilder = (options: DnsOptions): string[] => {
 		'+timeout=3',
 		'+tries=2',
 		'+nocookie',
+		'+nosplit',
 		'+nsid',
 		traceArg,
 		protocolArg,
@@ -193,7 +196,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 	private toJsonOutput (
 		result: DnsParseResponseClassic | DnsParseResponseTrace,
 		trace: boolean,
-	): DnsParseResponseClassicJson | DnsParseResponseTraceJson {
+	): DnsParseResponseJson {
 		if (trace) {
 			return TraceDigParser.toJsonOutput({
 				...result,

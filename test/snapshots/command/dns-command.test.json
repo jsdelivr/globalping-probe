@@ -1,0 +1,611 @@
+{
+	"should work with {target: '1.1.1.1', query: {type: 'PTR'}, resolver: '8.8.8.8'}: payload": {
+		"command": "unbuffer dig -x 1.1.1.1 @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -x 1.1.1.1 \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -x 1.1.1.1 @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 36616\n;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;1.1.1.1.in-addr.arpa.\t\tIN\tPTR\n\n;; ANSWER SECTION:\n1.1.1.1.in-addr.arpa.\t327\tIN\tPTR\tone.one.one.one.\n\n;; Query time: 0 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:15 CET 2023\n;; MSG SIZE  rcvd: 91\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: '1.1.1.1', query: {type: 'PTR'}, resolver: '8.8.8.8'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"rawOutput": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -x 1.1.1.1 @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 36616\n;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;1.1.1.1.in-addr.arpa.\t\tIN\tPTR\n\n;; ANSWER SECTION:\n1.1.1.1.in-addr.arpa.\t327\tIN\tPTR\tone.one.one.one.\n\n;; Query time: 0 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:15 CET 2023\n;; MSG SIZE  rcvd: 91\n",
+				"answers": [
+					{
+						"name": "1.1.1.1.in-addr.arpa.",
+						"type": "PTR",
+						"ttl": 327,
+						"class": "IN",
+						"value": "one.one.one.one."
+					}
+				],
+				"timings": {
+					"total": 0
+				},
+				"resolver": "8.8.8.8"
+			}
+		}
+	],
+	"should work with {target: 'cdn.jsdelivr.net', query: {type: 'CNAME'}, resolver: '8.8.8.8'}: payload": {
+		"command": "unbuffer dig -t CNAME cdn.jsdelivr.net @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -t CNAME cdn.jsdelivr.net \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t CNAME cdn.jsdelivr.net @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 49812\n;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;cdn.jsdelivr.net.\t\tIN\tCNAME\n\n;; ANSWER SECTION:\ncdn.jsdelivr.net.\t103\tIN\tCNAME\tcdn.jsdelivr.net.cdn.cloudflare.net.\n\n;; Query time: 10 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:15 CET 2023\n;; MSG SIZE  rcvd: 104\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: 'cdn.jsdelivr.net', query: {type: 'CNAME'}, resolver: '8.8.8.8'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"rawOutput": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t CNAME cdn.jsdelivr.net @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 49812\n;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;cdn.jsdelivr.net.\t\tIN\tCNAME\n\n;; ANSWER SECTION:\ncdn.jsdelivr.net.\t103\tIN\tCNAME\tcdn.jsdelivr.net.cdn.cloudflare.net.\n\n;; Query time: 10 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:15 CET 2023\n;; MSG SIZE  rcvd: 104\n",
+				"answers": [
+					{
+						"name": "cdn.jsdelivr.net.",
+						"type": "CNAME",
+						"ttl": 103,
+						"class": "IN",
+						"value": "cdn.jsdelivr.net.cdn.cloudflare.net."
+					}
+				],
+				"timings": {
+					"total": 10
+				},
+				"resolver": "8.8.8.8"
+			}
+		}
+	],
+	"should work with {target: 'cloudflare.com', query: {type: 'NSEC'}, resolver: '8.8.8.8'}: payload": {
+		"command": "unbuffer dig -t NSEC cloudflare.com @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -t NSEC cloudflare.com \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t NSEC cloudflare.com @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 63376\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;cloudflare.com.\t\t\tIN\tNSEC\n\n;; ANSWER SECTION:\ncloudflare.com.\t\t300\tIN\tNSEC\t\\000.cloudflare.com. A NS SOA HINFO MX TXT AAAA LOC SRV NAPTR CERT SSHFP RRSIG NSEC DNSKEY TLSA SMIMEA HIP CDS CDNSKEY OPENPGPKEY TYPE64 TYPE65 URI CAA\n\n;; Query time: 20 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 100\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: 'cloudflare.com', query: {type: 'NSEC'}, resolver: '8.8.8.8'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"rawOutput": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t NSEC cloudflare.com @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 63376\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;cloudflare.com.\t\t\tIN\tNSEC\n\n;; ANSWER SECTION:\ncloudflare.com.\t\t300\tIN\tNSEC\t\\000.cloudflare.com. A NS SOA HINFO MX TXT AAAA LOC SRV NAPTR CERT SSHFP RRSIG NSEC DNSKEY TLSA SMIMEA HIP CDS CDNSKEY OPENPGPKEY TYPE64 TYPE65 URI CAA\n\n;; Query time: 20 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 100\n",
+				"answers": [
+					{
+						"name": "cloudflare.com.",
+						"type": "NSEC",
+						"ttl": 300,
+						"class": "IN",
+						"value": "\\000.cloudflare.com. A NS SOA HINFO MX TXT AAAA LOC SRV NAPTR CERT SSHFP RRSIG NSEC DNSKEY TLSA SMIMEA HIP CDS CDNSKEY OPENPGPKEY TYPE64 TYPE65 URI CAA"
+					}
+				],
+				"timings": {
+					"total": 20
+				},
+				"resolver": "8.8.8.8"
+			}
+		}
+	],
+	"should work with {target: 'kolarik.sk', query: {type: 'DNSKEY'}, resolver: '8.8.8.8'}: payload": {
+		"command": "unbuffer dig -t DNSKEY kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -t DNSKEY kolarik.sk \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t DNSKEY kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 29010\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;kolarik.sk.\t\t\tIN\tDNSKEY\n\n;; ANSWER SECTION:\nkolarik.sk.\t\t21600\tIN\tDNSKEY\t256 3 13 IZ3hyLAds1cAe/Y8ZQNQ230599K46LJyUK/S00MFAA60KfEt+/66ej60QGIKAYN/QnhGyjDMj16MXlDTZJBROA==\nkolarik.sk.\t\t21600\tIN\tDNSKEY\t257 3 13 0QFYtCy6ZAvVRjWOXfIPYodoQ6FVgtq9S4PyYED+QyMFq8b3dxjSnFJBXMe5FeoWcpNdxqdCQ132CXT1N+DYow==\n\n;; Query time: 40 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 212\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: 'kolarik.sk', query: {type: 'DNSKEY'}, resolver: '8.8.8.8'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"rawOutput": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t DNSKEY kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 29010\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;kolarik.sk.\t\t\tIN\tDNSKEY\n\n;; ANSWER SECTION:\nkolarik.sk.\t\t21600\tIN\tDNSKEY\t256 3 13 IZ3hyLAds1cAe/Y8ZQNQ230599K46LJyUK/S00MFAA60KfEt+/66ej60QGIKAYN/QnhGyjDMj16MXlDTZJBROA==\nkolarik.sk.\t\t21600\tIN\tDNSKEY\t257 3 13 0QFYtCy6ZAvVRjWOXfIPYodoQ6FVgtq9S4PyYED+QyMFq8b3dxjSnFJBXMe5FeoWcpNdxqdCQ132CXT1N+DYow==\n\n;; Query time: 40 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 212\n",
+				"answers": [
+					{
+						"name": "kolarik.sk.",
+						"type": "DNSKEY",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "256 3 13 IZ3hyLAds1cAe/Y8ZQNQ230599K46LJyUK/S00MFAA60KfEt+/66ej60QGIKAYN/QnhGyjDMj16MXlDTZJBROA=="
+					},
+					{
+						"name": "kolarik.sk.",
+						"type": "DNSKEY",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "257 3 13 0QFYtCy6ZAvVRjWOXfIPYodoQ6FVgtq9S4PyYED+QyMFq8b3dxjSnFJBXMe5FeoWcpNdxqdCQ132CXT1N+DYow=="
+					}
+				],
+				"timings": {
+					"total": 40
+				},
+				"resolver": "8.8.8.8"
+			}
+		}
+	],
+	"should work with {target: 'kolarik.sk', query: {type: 'DS'}, resolver: '8.8.8.8'}: payload": {
+		"command": "unbuffer dig -t DS kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -t DS kolarik.sk \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t DS kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 64724\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;kolarik.sk.\t\t\tIN\tDS\n\n;; ANSWER SECTION:\nkolarik.sk.\t\t3600\tIN\tDS\t37645 13 2 C26BD5EFDD56F7BBC32F7B925D60E4103903922C1FFEF33735F7607443EF3D8A\n\n;; Query time: 10 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 100\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: 'kolarik.sk', query: {type: 'DS'}, resolver: '8.8.8.8'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"rawOutput": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t DS kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 64724\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;kolarik.sk.\t\t\tIN\tDS\n\n;; ANSWER SECTION:\nkolarik.sk.\t\t3600\tIN\tDS\t37645 13 2 C26BD5EFDD56F7BBC32F7B925D60E4103903922C1FFEF33735F7607443EF3D8A\n\n;; Query time: 10 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 100\n",
+				"answers": [
+					{
+						"name": "kolarik.sk.",
+						"type": "DS",
+						"ttl": 3600,
+						"class": "IN",
+						"value": "37645 13 2 C26BD5EFDD56F7BBC32F7B925D60E4103903922C1FFEF33735F7607443EF3D8A"
+					}
+				],
+				"timings": {
+					"total": 10
+				},
+				"resolver": "8.8.8.8"
+			}
+		}
+	],
+	"should work with {target: 'kolarik.sk', query: {type: 'MX'}, resolver: '8.8.8.8'}: payload": {
+		"command": "unbuffer dig -t MX kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -t MX kolarik.sk \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t MX kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 13276\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 5, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;kolarik.sk.\t\t\tIN\tMX\n\n;; ANSWER SECTION:\nkolarik.sk.\t\t600\tIN\tMX\t10 aspmx.l.google.com.\nkolarik.sk.\t\t600\tIN\tMX\t20 alt1.aspmx.l.google.com.\nkolarik.sk.\t\t600\tIN\tMX\t20 alt2.aspmx.l.google.com.\nkolarik.sk.\t\t600\tIN\tMX\t30 aspmx2.googlemail.com.\nkolarik.sk.\t\t600\tIN\tMX\t30 aspmx3.googlemail.com.\n\n;; Query time: 20 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 185\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: 'kolarik.sk', query: {type: 'MX'}, resolver: '8.8.8.8'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"rawOutput": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t MX kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 13276\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 5, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;kolarik.sk.\t\t\tIN\tMX\n\n;; ANSWER SECTION:\nkolarik.sk.\t\t600\tIN\tMX\t10 aspmx.l.google.com.\nkolarik.sk.\t\t600\tIN\tMX\t20 alt1.aspmx.l.google.com.\nkolarik.sk.\t\t600\tIN\tMX\t20 alt2.aspmx.l.google.com.\nkolarik.sk.\t\t600\tIN\tMX\t30 aspmx2.googlemail.com.\nkolarik.sk.\t\t600\tIN\tMX\t30 aspmx3.googlemail.com.\n\n;; Query time: 20 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 185\n",
+				"answers": [
+					{
+						"name": "kolarik.sk.",
+						"type": "MX",
+						"ttl": 600,
+						"class": "IN",
+						"value": "10 aspmx.l.google.com."
+					},
+					{
+						"name": "kolarik.sk.",
+						"type": "MX",
+						"ttl": 600,
+						"class": "IN",
+						"value": "20 alt1.aspmx.l.google.com."
+					},
+					{
+						"name": "kolarik.sk.",
+						"type": "MX",
+						"ttl": 600,
+						"class": "IN",
+						"value": "20 alt2.aspmx.l.google.com."
+					},
+					{
+						"name": "kolarik.sk.",
+						"type": "MX",
+						"ttl": 600,
+						"class": "IN",
+						"value": "30 aspmx2.googlemail.com."
+					},
+					{
+						"name": "kolarik.sk.",
+						"type": "MX",
+						"ttl": 600,
+						"class": "IN",
+						"value": "30 aspmx3.googlemail.com."
+					}
+				],
+				"timings": {
+					"total": 20
+				},
+				"resolver": "8.8.8.8"
+			}
+		}
+	],
+	"should work with {target: 'kolarik.sk', query: {type: 'NS'}, resolver: '8.8.8.8'}: payload": {
+		"command": "unbuffer dig -t NS kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -t NS kolarik.sk \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t NS kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 51306\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;kolarik.sk.\t\t\tIN\tNS\n\n;; ANSWER SECTION:\nkolarik.sk.\t\t600\tIN\tNS\tns1.websupport.sk.\nkolarik.sk.\t\t600\tIN\tNS\tns2.websupport.sk.\n\n;; Query time: 30 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 99\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: 'kolarik.sk', query: {type: 'NS'}, resolver: '8.8.8.8'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"rawOutput": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t NS kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 51306\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;kolarik.sk.\t\t\tIN\tNS\n\n;; ANSWER SECTION:\nkolarik.sk.\t\t600\tIN\tNS\tns1.websupport.sk.\nkolarik.sk.\t\t600\tIN\tNS\tns2.websupport.sk.\n\n;; Query time: 30 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 99\n",
+				"answers": [
+					{
+						"name": "kolarik.sk.",
+						"type": "NS",
+						"ttl": 600,
+						"class": "IN",
+						"value": "ns1.websupport.sk."
+					},
+					{
+						"name": "kolarik.sk.",
+						"type": "NS",
+						"ttl": 600,
+						"class": "IN",
+						"value": "ns2.websupport.sk."
+					}
+				],
+				"timings": {
+					"total": 30
+				},
+				"resolver": "8.8.8.8"
+			}
+		}
+	],
+	"should work with {target: 'kolarik.sk', query: {type: 'RRSIG'}, resolver: '8.8.8.8'}: payload": {
+		"command": "unbuffer dig -t RRSIG kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -t RRSIG kolarik.sk \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t RRSIG kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 34192\n;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;kolarik.sk.\t\t\tIN\tRRSIG\n\n;; ANSWER SECTION:\nkolarik.sk.\t\t600\tIN\tRRSIG\tA 13 2 600 20231112090814 20231029073814 41805 kolarik.sk. 358/a5uqMaLGdS/TWzqX2gFhV2md43tasozVSvkayxQXxmAx1mKPtWl0ieU6rtFIUKLpzSbFjrWWwqJ8IwZ7cA==\n\n;; Query time: 20 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 158\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: 'kolarik.sk', query: {type: 'RRSIG'}, resolver: '8.8.8.8'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"rawOutput": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t RRSIG kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 34192\n;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;kolarik.sk.\t\t\tIN\tRRSIG\n\n;; ANSWER SECTION:\nkolarik.sk.\t\t600\tIN\tRRSIG\tA 13 2 600 20231112090814 20231029073814 41805 kolarik.sk. 358/a5uqMaLGdS/TWzqX2gFhV2md43tasozVSvkayxQXxmAx1mKPtWl0ieU6rtFIUKLpzSbFjrWWwqJ8IwZ7cA==\n\n;; Query time: 20 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 158\n",
+				"answers": [
+					{
+						"name": "kolarik.sk.",
+						"type": "RRSIG",
+						"ttl": 600,
+						"class": "IN",
+						"value": "A 13 2 600 20231112090814 20231029073814 41805 kolarik.sk. 358/a5uqMaLGdS/TWzqX2gFhV2md43tasozVSvkayxQXxmAx1mKPtWl0ieU6rtFIUKLpzSbFjrWWwqJ8IwZ7cA=="
+					}
+				],
+				"timings": {
+					"total": 20
+				},
+				"resolver": "8.8.8.8"
+			}
+		}
+	],
+	"should work with {target: 'kolarik.sk', query: {type: 'SOA'}, resolver: '8.8.8.8'}: payload": {
+		"command": "unbuffer dig -t SOA kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -t SOA kolarik.sk \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t SOA kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 46446\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;kolarik.sk.\t\t\tIN\tSOA\n\n;; ANSWER SECTION:\nkolarik.sk.\t\t21600\tIN\tSOA\tns1.websupport.sk. admin.websupport.sk. 1603997229 7200 2048 1048576 2560\n\n;; Query time: 20 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 109\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: 'kolarik.sk', query: {type: 'SOA'}, resolver: '8.8.8.8'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"rawOutput": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t SOA kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 46446\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;kolarik.sk.\t\t\tIN\tSOA\n\n;; ANSWER SECTION:\nkolarik.sk.\t\t21600\tIN\tSOA\tns1.websupport.sk. admin.websupport.sk. 1603997229 7200 2048 1048576 2560\n\n;; Query time: 20 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 109\n",
+				"answers": [
+					{
+						"name": "kolarik.sk.",
+						"type": "SOA",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "ns1.websupport.sk. admin.websupport.sk. 1603997229 7200 2048 1048576 2560"
+					}
+				],
+				"timings": {
+					"total": 20
+				},
+				"resolver": "8.8.8.8"
+			}
+		}
+	],
+	"should work with {target: 'kolarik.sk', query: {type: 'TXT'}, resolver: '8.8.8.8'}: payload": {
+		"command": "unbuffer dig -t TXT kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -t TXT kolarik.sk \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t TXT kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 60644\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 3, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;kolarik.sk.\t\t\tIN\tTXT\n\n;; ANSWER SECTION:\nkolarik.sk.\t\t600\tIN\tTXT\t\"v=spf1 a mx include:_spf.websupport.sk ?all\"\nkolarik.sk.\t\t600\tIN\tTXT\t\"spf2.0/pra a mx include:_sid.websupport.sk ?all\"\nkolarik.sk.\t\t600\tIN\tTXT\t\"google-site-verification=zVH6A0sahZukskzSLoZku0wLEKQru3FD4eshUynjz3E\"\n\n;; Query time: 20 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 249\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: 'kolarik.sk', query: {type: 'TXT'}, resolver: '8.8.8.8'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"rawOutput": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t TXT kolarik.sk @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 60644\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 3, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;kolarik.sk.\t\t\tIN\tTXT\n\n;; ANSWER SECTION:\nkolarik.sk.\t\t600\tIN\tTXT\t\"v=spf1 a mx include:_spf.websupport.sk ?all\"\nkolarik.sk.\t\t600\tIN\tTXT\t\"spf2.0/pra a mx include:_sid.websupport.sk ?all\"\nkolarik.sk.\t\t600\tIN\tTXT\t\"google-site-verification=zVH6A0sahZukskzSLoZku0wLEKQru3FD4eshUynjz3E\"\n\n;; Query time: 20 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 249\n",
+				"answers": [
+					{
+						"name": "kolarik.sk.",
+						"type": "TXT",
+						"ttl": 600,
+						"class": "IN",
+						"value": "\"v=spf1 a mx include:_spf.websupport.sk ?all\""
+					},
+					{
+						"name": "kolarik.sk.",
+						"type": "TXT",
+						"ttl": 600,
+						"class": "IN",
+						"value": "\"spf2.0/pra a mx include:_sid.websupport.sk ?all\""
+					},
+					{
+						"name": "kolarik.sk.",
+						"type": "TXT",
+						"ttl": 600,
+						"class": "IN",
+						"value": "\"google-site-verification=zVH6A0sahZukskzSLoZku0wLEKQru3FD4eshUynjz3E\""
+					}
+				],
+				"timings": {
+					"total": 20
+				},
+				"resolver": "8.8.8.8"
+			}
+		}
+	],
+	"should work with {target: 'www.jsdelivr.com', query: {type: 'A'}, resolver: '8.8.8.8'}: payload": {
+		"command": "unbuffer dig -t A www.jsdelivr.com @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -t A www.jsdelivr.com \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t A www.jsdelivr.com @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 39607\n;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;www.jsdelivr.com.\t\tIN\tA\n\n;; ANSWER SECTION:\nwww.jsdelivr.com.\t300\tIN\tA\t104.21.23.24\nwww.jsdelivr.com.\t300\tIN\tA\t172.67.208.113\n\n;; Query time: 10 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 90\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: 'www.jsdelivr.com', query: {type: 'A'}, resolver: '8.8.8.8'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"rawOutput": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t A www.jsdelivr.com @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 39607\n;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;www.jsdelivr.com.\t\tIN\tA\n\n;; ANSWER SECTION:\nwww.jsdelivr.com.\t300\tIN\tA\t104.21.23.24\nwww.jsdelivr.com.\t300\tIN\tA\t172.67.208.113\n\n;; Query time: 10 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 90\n",
+				"answers": [
+					{
+						"name": "www.jsdelivr.com.",
+						"type": "A",
+						"ttl": 300,
+						"class": "IN",
+						"value": "104.21.23.24"
+					},
+					{
+						"name": "www.jsdelivr.com.",
+						"type": "A",
+						"ttl": 300,
+						"class": "IN",
+						"value": "172.67.208.113"
+					}
+				],
+				"timings": {
+					"total": 10
+				},
+				"resolver": "8.8.8.8"
+			}
+		}
+	],
+	"should work with {target: 'www.jsdelivr.com', query: {type: 'AAAA'}, resolver: '8.8.8.8'}: payload": {
+		"command": "unbuffer dig -t AAAA www.jsdelivr.com @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -t AAAA www.jsdelivr.com \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t AAAA www.jsdelivr.com @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 11863\n;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;www.jsdelivr.com.\t\tIN\tAAAA\n\n;; ANSWER SECTION:\nwww.jsdelivr.com.\t300\tIN\tAAAA\t2606:4700:3037::ac43:d071\nwww.jsdelivr.com.\t300\tIN\tAAAA\t2606:4700:3035::6815:1718\n\n;; Query time: 20 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 114\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: 'www.jsdelivr.com', query: {type: 'AAAA'}, resolver: '8.8.8.8'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"rawOutput": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t AAAA www.jsdelivr.com @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 11863\n;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;www.jsdelivr.com.\t\tIN\tAAAA\n\n;; ANSWER SECTION:\nwww.jsdelivr.com.\t300\tIN\tAAAA\t2606:4700:3037::ac43:d071\nwww.jsdelivr.com.\t300\tIN\tAAAA\t2606:4700:3035::6815:1718\n\n;; Query time: 20 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:14 CET 2023\n;; MSG SIZE  rcvd: 114\n",
+				"answers": [
+					{
+						"name": "www.jsdelivr.com.",
+						"type": "AAAA",
+						"ttl": 300,
+						"class": "IN",
+						"value": "2606:4700:3037::ac43:d071"
+					},
+					{
+						"name": "www.jsdelivr.com.",
+						"type": "AAAA",
+						"ttl": 300,
+						"class": "IN",
+						"value": "2606:4700:3035::6815:1718"
+					}
+				],
+				"timings": {
+					"total": 20
+				},
+				"resolver": "8.8.8.8"
+			}
+		}
+	],
+	"should work with {target: 'www.jsdelivr.com', query: {type: 'ANY'}, resolver: '1.1.1.1'}: payload": {
+		"command": "unbuffer dig -t ANY www.jsdelivr.com @1.1.1.1 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -t ANY www.jsdelivr.com \"@1.1.1.1\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t ANY www.jsdelivr.com @1.1.1.1 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOTIMP, id: 25429\n;; flags: qr rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 1232\n; NSID: 33 31 6d 31 32 30 (\"31m120\")\n;; QUESTION SECTION:\n;www.jsdelivr.com.\t\tIN\tANY\n\n;; Query time: 10 msec\n;; SERVER: 1.1.1.1#53(1.1.1.1)\n;; WHEN: Wed Nov 01 16:45:15 CET 2023\n;; MSG SIZE  rcvd: 55\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: 'www.jsdelivr.com', query: {type: 'ANY'}, resolver: '1.1.1.1'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"statusCodeName": "NOTIMP",
+				"statusCode": 4,
+				"rawOutput": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t ANY www.jsdelivr.com @1.1.1.1 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOTIMP, id: 25429\n;; flags: qr rd ra; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 1232\n; NSID: 33 31 6d 31 32 30 (\"31m120\")\n;; QUESTION SECTION:\n;www.jsdelivr.com.\t\tIN\tANY\n\n;; Query time: 10 msec\n;; SERVER: 1.1.1.1#53(1.1.1.1)\n;; WHEN: Wed Nov 01 16:45:15 CET 2023\n;; MSG SIZE  rcvd: 55\n",
+				"answers": [],
+				"timings": {
+					"total": 10
+				},
+				"resolver": "1.1.1.1"
+			}
+		}
+	],
+	"should work with {target: 'www.jsdelivr.com', query: {type: 'ANY'}, resolver: '8.8.8.8'}: payload": {
+		"command": "unbuffer dig -t ANY www.jsdelivr.com @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -t ANY www.jsdelivr.com \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t ANY www.jsdelivr.com @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 18801\n;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;www.jsdelivr.com.\t\tIN\tANY\n\n;; ANSWER SECTION:\nwww.jsdelivr.com.\t3600\tIN\tHINFO\t\"RFC8482\" \"\"\n\n;; Query time: 10 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:15 CET 2023\n;; MSG SIZE  rcvd: 79\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: 'www.jsdelivr.com', query: {type: 'ANY'}, resolver: '8.8.8.8'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"rawOutput": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t ANY www.jsdelivr.com @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 18801\n;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 70 72 67 (\"gpdns-prg\")\n;; QUESTION SECTION:\n;www.jsdelivr.com.\t\tIN\tANY\n\n;; ANSWER SECTION:\nwww.jsdelivr.com.\t3600\tIN\tHINFO\t\"RFC8482\" \"\"\n\n;; Query time: 10 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8)\n;; WHEN: Wed Nov 01 16:45:15 CET 2023\n;; MSG SIZE  rcvd: 79\n",
+				"answers": [
+					{
+						"name": "www.jsdelivr.com.",
+						"type": "HINFO",
+						"ttl": 3600,
+						"class": "IN",
+						"value": "\"RFC8482\" \"\""
+					}
+				],
+				"timings": {
+					"total": 10
+				},
+				"resolver": "8.8.8.8"
+			}
+		}
+	],
+	"should work with {target: 'www.jsdelivr.com', query: {type: 'ANY'}, resolver: 'a.root-servers.net'}: payload": {
+		"command": "unbuffer dig -t ANY www.jsdelivr.com @a.root-servers.net -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -t ANY www.jsdelivr.com \"@a.root-servers.net\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t ANY www.jsdelivr.com @a.root-servers.net -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 16335\n;; flags: qr rd; QUERY: 1, ANSWER: 0, AUTHORITY: 13, ADDITIONAL: 27\n;; WARNING: recursion requested but not available\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 4096\n; NSID: 61 31 2e 66 72 2d 70 61 72 2e 72 6f 6f 74 (\"a1.fr-par.root\")\n;; QUESTION SECTION:\n;www.jsdelivr.com.\t\tIN\tANY\n\n;; AUTHORITY SECTION:\ncom.\t\t\t172800\tIN\tNS\te.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tb.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tj.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tm.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\ti.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tf.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\ta.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tg.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\th.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tl.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tk.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tc.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\td.gtld-servers.net.\n\n;; ADDITIONAL SECTION:\ne.gtld-servers.net.\t172800\tIN\tA\t192.12.94.30\ne.gtld-servers.net.\t172800\tIN\tAAAA\t2001:502:1ca1::30\nb.gtld-servers.net.\t172800\tIN\tA\t192.33.14.30\nb.gtld-servers.net.\t172800\tIN\tAAAA\t2001:503:231d::2:30\nj.gtld-servers.net.\t172800\tIN\tA\t192.48.79.30\nj.gtld-servers.net.\t172800\tIN\tAAAA\t2001:502:7094::30\nm.gtld-servers.net.\t172800\tIN\tA\t192.55.83.30\nm.gtld-servers.net.\t172800\tIN\tAAAA\t2001:501:b1f9::30\ni.gtld-servers.net.\t172800\tIN\tA\t192.43.172.30\ni.gtld-servers.net.\t172800\tIN\tAAAA\t2001:503:39c1::30\nf.gtld-servers.net.\t172800\tIN\tA\t192.35.51.30\nf.gtld-servers.net.\t172800\tIN\tAAAA\t2001:503:d414::30\na.gtld-servers.net.\t172800\tIN\tA\t192.5.6.30\na.gtld-servers.net.\t172800\tIN\tAAAA\t2001:503:a83e::2:30\ng.gtld-servers.net.\t172800\tIN\tA\t192.42.93.30\ng.gtld-servers.net.\t172800\tIN\tAAAA\t2001:503:eea3::30\nh.gtld-servers.net.\t172800\tIN\tA\t192.54.112.30\nh.gtld-servers.net.\t172800\tIN\tAAAA\t2001:502:8cc::30\nl.gtld-servers.net.\t172800\tIN\tA\t192.41.162.30\nl.gtld-servers.net.\t172800\tIN\tAAAA\t2001:500:d937::30\nk.gtld-servers.net.\t172800\tIN\tA\t192.52.178.30\nk.gtld-servers.net.\t172800\tIN\tAAAA\t2001:503:d2d::30\nc.gtld-servers.net.\t172800\tIN\tA\t192.26.92.30\nc.gtld-servers.net.\t172800\tIN\tAAAA\t2001:503:83eb::30\nd.gtld-servers.net.\t172800\tIN\tA\t192.31.80.30\nd.gtld-servers.net.\t172800\tIN\tAAAA\t2001:500:856e::30\n\n;; Query time: 20 msec\n;; SERVER: 198.41.0.4#53(198.41.0.4)\n;; WHEN: Wed Nov 01 16:45:15 CET 2023\n;; MSG SIZE  rcvd: 859\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: 'www.jsdelivr.com', query: {type: 'ANY'}, resolver: 'a.root-servers.net'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"rawOutput": "\n; <<>> DiG 9.16.1-Ubuntu <<>> -t ANY www.jsdelivr.com @a.root-servers.net -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 16335\n;; flags: qr rd; QUERY: 1, ANSWER: 0, AUTHORITY: 13, ADDITIONAL: 27\n;; WARNING: recursion requested but not available\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 4096\n; NSID: 61 31 2e 66 72 2d 70 61 72 2e 72 6f 6f 74 (\"a1.fr-par.root\")\n;; QUESTION SECTION:\n;www.jsdelivr.com.\t\tIN\tANY\n\n;; AUTHORITY SECTION:\ncom.\t\t\t172800\tIN\tNS\te.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tb.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tj.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tm.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\ti.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tf.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\ta.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tg.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\th.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tl.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tk.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\tc.gtld-servers.net.\ncom.\t\t\t172800\tIN\tNS\td.gtld-servers.net.\n\n;; ADDITIONAL SECTION:\ne.gtld-servers.net.\t172800\tIN\tA\t192.12.94.30\ne.gtld-servers.net.\t172800\tIN\tAAAA\t2001:502:1ca1::30\nb.gtld-servers.net.\t172800\tIN\tA\t192.33.14.30\nb.gtld-servers.net.\t172800\tIN\tAAAA\t2001:503:231d::2:30\nj.gtld-servers.net.\t172800\tIN\tA\t192.48.79.30\nj.gtld-servers.net.\t172800\tIN\tAAAA\t2001:502:7094::30\nm.gtld-servers.net.\t172800\tIN\tA\t192.55.83.30\nm.gtld-servers.net.\t172800\tIN\tAAAA\t2001:501:b1f9::30\ni.gtld-servers.net.\t172800\tIN\tA\t192.43.172.30\ni.gtld-servers.net.\t172800\tIN\tAAAA\t2001:503:39c1::30\nf.gtld-servers.net.\t172800\tIN\tA\t192.35.51.30\nf.gtld-servers.net.\t172800\tIN\tAAAA\t2001:503:d414::30\na.gtld-servers.net.\t172800\tIN\tA\t192.5.6.30\na.gtld-servers.net.\t172800\tIN\tAAAA\t2001:503:a83e::2:30\ng.gtld-servers.net.\t172800\tIN\tA\t192.42.93.30\ng.gtld-servers.net.\t172800\tIN\tAAAA\t2001:503:eea3::30\nh.gtld-servers.net.\t172800\tIN\tA\t192.54.112.30\nh.gtld-servers.net.\t172800\tIN\tAAAA\t2001:502:8cc::30\nl.gtld-servers.net.\t172800\tIN\tA\t192.41.162.30\nl.gtld-servers.net.\t172800\tIN\tAAAA\t2001:500:d937::30\nk.gtld-servers.net.\t172800\tIN\tA\t192.52.178.30\nk.gtld-servers.net.\t172800\tIN\tAAAA\t2001:503:d2d::30\nc.gtld-servers.net.\t172800\tIN\tA\t192.26.92.30\nc.gtld-servers.net.\t172800\tIN\tAAAA\t2001:503:83eb::30\nd.gtld-servers.net.\t172800\tIN\tA\t192.31.80.30\nd.gtld-servers.net.\t172800\tIN\tAAAA\t2001:500:856e::30\n\n;; Query time: 20 msec\n;; SERVER: 198.41.0.4#53(198.41.0.4)\n;; WHEN: Wed Nov 01 16:45:15 CET 2023\n;; MSG SIZE  rcvd: 859\n",
+				"answers": [],
+				"timings": {
+					"total": 20
+				},
+				"resolver": "198.41.0.4"
+			}
+		}
+	]
+}

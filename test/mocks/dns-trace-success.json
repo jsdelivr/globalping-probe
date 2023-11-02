@@ -201,14 +201,14 @@
 						"type": "DS",
 						"ttl": 86400,
 						"class": "IN",
-						"value": "8BD973EE"
+						"value": "35886 8 2 7862B27F5F516EBE19680444D4CE5E762981931842C465F00236401D 8BD973EE"
 					},
 					{
 						"name": "net.",
 						"type": "RRSIG",
 						"ttl": 86400,
 						"class": "IN",
-						"value": "nStNJg=="
+						"value": "DS 8 1 86400 20220509170000 20220426160000 47671 . IbbmgURsOFU02lEF33VZIt90+xd+DSAy6n+LowQlVMbxAxB6BsF5nNi1 n0Xsfixgxk06JOsQOLeMnTSX6xGZ5baCHa8pWGlS2CZ3wpmWt9Fg5Y/r Vqpneq9sBXuvcyLZ4OOzxqY8Xvqnj5EBqx2wegOxqOzbw4I2MLPeFWS4 hRvHcodnVkAHaWbDWLi3olY+8nIdWMLRdMxA1VkzliQn0MOPNn6mhKeG HTh3uOo7FSm+adbefRhC6X8QDoSFQ6VKYhd3mVJ7HGJ2JsvpVsJlG5Ff WNBztAw7W5Tg9aIVxPwfl3tNvlkpyvDqgurJLXVqmB7F+t3f3+8QKDMb nStNJg=="
 					}
 				],
 				"timings": {
@@ -279,28 +279,28 @@
 						"type": "NSEC3",
 						"ttl": 86400,
 						"class": "IN",
-						"value": "NSEC3PARAM"
+						"value": "1 1 0 - A1RTLNPGULOGN7B9A62SHJE1U3TTP8DR NS SOA RRSIG DNSKEY NSEC3PARAM"
 					},
 					{
 						"name": "A1RT98BS5QGC9NFI51S9HCI47ULJG6JH.net.",
 						"type": "RRSIG",
 						"ttl": 86400,
 						"class": "IN",
-						"value": "QKqFhOv3D/NZtRua5mWeuy78rB3MIZQmGQ7rwapaz4h4eg=="
+						"value": "NSEC3 8 2 86400 20220503055829 20220426044829 45728 net. kqtegTsTwSJ9OJ/4UpoKnOzaSfaEaSxd03SERi2nhwhL1Dd/xjXF+Oy+ gB2NxI8IHBdT0Za1PadKRYefjjI+phvYB2Z2s7LqLE5iLju+2R6mVMQu TfkTO8GJWxBDMcXdcX2cjTxSan7y8m4kbzeGvqFHwiWtodDnT2lFQBvg QKqFhOv3D/NZtRua5mWeuy78rB3MIZQmGQ7rwapaz4h4eg=="
 					},
 					{
 						"name": "GBMGFDMMHIENHS2RNSDAQ541H88GB5IO.net.",
 						"type": "NSEC3",
 						"ttl": 86400,
 						"class": "IN",
-						"value": "RRSIG"
+						"value": "1 1 0 - GBMKRB78QIII3C3NIFGFSK27G1IBHMM0 NS DS RRSIG"
 					},
 					{
 						"name": "GBMGFDMMHIENHS2RNSDAQ541H88GB5IO.net.",
 						"type": "RRSIG",
 						"ttl": 86400,
 						"class": "IN",
-						"value": "NO9LoUolBGhvxHSQfhwCyAi0slPURsAkC4DBUS1WrpipCQ=="
+						"value": "NSEC3 8 2 86400 20220430055643 20220423044643 45728 net. JIFFMnHeaG97gcZYao5JGWkTJ4zGKDAKrfLOi9KrKVmBroFmnjfOytBo NgTxIl17GlLW2kaq1doKHpDHUu8y4u/56OdJmeBgL+OYqGbQjmICztpK dU+p9eoXUPLMkDFTqrwFhN1dm51Q9sle4MiDHMeLHBrs76jlpBcR+PQn NO9LoUolBGhvxHSQfhwCyAi0slPURsAkC4DBUS1WrpipCQ=="
 					}
 				],
 				"timings": {

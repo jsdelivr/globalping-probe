@@ -1,7 +1,4 @@
-export type DnsValueType = string | {
-	priority: number;
-	server: string;
-};
+export type DnsValueType = string;
 
 export type DnsSection = Record<string, unknown> | {
 	name: string;
@@ -45,20 +42,6 @@ export const SharedDigParser = {
 	},
 
 	parseValue (values: string[]): DnsValueType {
-		const type = String(values[3]).toUpperCase();
-
-		if (type === 'SOA') {
-			return String(values.slice(4)).replace(/,/g, ' ');
-		}
-
-		if (type === 'MX') {
-			return { priority: Number(values[4]), server: String(values[5]) };
-		}
-
-		if (type === 'TXT') {
-			return String(values.slice(4).join(' '));
-		}
-
-		return String(values[values.length - 1]);
+		return String(values.slice(4).join(' '));
 	},
 };
