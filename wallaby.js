@@ -9,12 +9,19 @@ export default function wallaby () {
 			'src/**/*.ts',
 			'config/*',
 			'test/mocks/**/*',
+			'test/plugins/**/*',
 			'test/utils.ts',
+			'test/hooks.ts',
+			'test/snapshots/**/*.json',
 			'package.json',
 		],
 		tests: [
 			'test/unit/**/*.test.ts',
 		],
+		setup (w) {
+			const path = require('path');
+			w.testFramework.addFile(path.resolve(process.cwd(), 'test/hooks.js'));
+		},
 		env: {
 			type: 'node',
 			params: {
