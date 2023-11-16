@@ -284,22 +284,6 @@ describe('http command', () => {
 				},
 			};
 
-			const expectedResult = {
-				measurementId: 'measurement',
-				result: {
-					status: 'finished',
-					headers: {
-						test: 'abc',
-					},
-					rawHeaders: 'test: abc',
-					rawBody: '200 Ok',
-					rawOutput: 'HTTP/1.1 200\ntest: abc\n\n200 Ok',
-					statusCode: 200,
-					statusCodeName: 'OK',
-				},
-				testId: 'test',
-			};
-
 			const http = new HttpCommand(httpCmd);
 			await http.run(mockedSocket as any, 'measurement', 'test', options);
 
@@ -315,13 +299,34 @@ describe('http command', () => {
 				},
 			}]);
 
-			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
-			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.status', expectedResult.result.status);
-			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
-			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
-			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawOutput', expectedResult.result.rawOutput);
-			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.statusCode', expectedResult.result.statusCode);
-			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.statusCodeName', expectedResult.result.statusCodeName);
+			expect(mockedSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', {
+				testId: 'test',
+				measurementId: 'measurement',
+				result: {
+					status: 'finished',
+					resolvedAddress: '127.0.0.1',
+					headers: { test: 'abc' },
+					rawHeaders: 'test: abc',
+					rawBody: '200 Ok',
+					rawOutput: 'HTTP/1.1 200\ntest: abc\n\n200 Ok',
+					truncated: false,
+					statusCode: 200,
+					statusCodeName: 'OK',
+					timings: {
+						total: 0,
+						download: 0,
+						firstByte: 0,
+						dns: 0,
+						tls: null,
+						tcp: 0,
+					},
+					tls: {
+						authorized: undefined,
+						issuer: {},
+						subject: { alt: undefined },
+					},
+				},
+			}]);
 		});
 
 		it('should respond with 200', async () => {
@@ -343,33 +348,42 @@ describe('http command', () => {
 				},
 			};
 
-			const expectedResult = {
-				measurementId: 'measurement',
-				result: {
-					status: 'finished',
-					headers: {
-						test: 'abc',
-					},
-					rawHeaders: 'test: abc',
-					rawBody: '200 Ok',
-					rawOutput: 'HTTP/1.1 200\ntest: abc\n\n200 Ok',
-					statusCode: 200,
-					statusCodeName: 'OK',
-				},
-				testId: 'test',
-			};
-
 			const http = new HttpCommand(httpCmd);
 			await http.run(mockedSocket as any, 'measurement', 'test', options);
 
 			expect(mockedSocket.emit.callCount).to.equal(1);
-			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
-			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.status', expectedResult.result.status);
-			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
-			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
-			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawOutput', expectedResult.result.rawOutput);
-			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.statusCode', expectedResult.result.statusCode);
-			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.statusCodeName', expectedResult.result.statusCodeName);
+
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([
+				'probe:measurement:result',
+				{
+					testId: 'test',
+					measurementId: 'measurement',
+					result: {
+						status: 'finished',
+						resolvedAddress: '127.0.0.1',
+						headers: { test: 'abc' },
+						rawHeaders: 'test: abc',
+						rawBody: '200 Ok',
+						rawOutput: 'HTTP/1.1 200\ntest: abc\n\n200 Ok',
+						truncated: false,
+						statusCode: 200,
+						statusCodeName: 'OK',
+						timings: {
+							total: 0,
+							download: 0,
+							firstByte: 0,
+							dns: 0,
+							tls: null,
+							tcp: 0,
+						},
+						tls: {
+							authorized: undefined,
+							issuer: {},
+							subject: { alt: undefined },
+						},
+					},
+				},
+			]);
 		});
 
 		it('should respond with 400 with progress messages', async () => {
@@ -391,21 +405,6 @@ describe('http command', () => {
 				},
 			};
 
-			const expectedResult = {
-				measurementId: 'measurement',
-				result: {
-					status: 'finished',
-					headers: {
-						test: 'abc',
-					},
-					rawHeaders: 'test: abc',
-					rawBody: '400 Bad Request',
-					rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request',
-					statusCode: 400,
-				},
-				testId: 'test',
-			};
-
 			const http = new HttpCommand(httpCmd);
 			await http.run(mockedSocket as any, 'measurement', 'test', options);
 
@@ -421,11 +420,34 @@ describe('http command', () => {
 				},
 			}]);
 
-			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
-			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.status', expectedResult.result.status);
-			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
-			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawOutput', expectedResult.result.rawOutput);
-			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
+			expect(mockedSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', {
+				testId: 'test',
+				measurementId: 'measurement',
+				result: {
+					status: 'finished',
+					resolvedAddress: '127.0.0.1',
+					headers: { test: 'abc' },
+					rawHeaders: 'test: abc',
+					rawBody: '400 Bad Request',
+					rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request',
+					truncated: false,
+					statusCode: 400,
+					statusCodeName: 'Bad Request',
+					timings: {
+						total: 0,
+						download: 0,
+						firstByte: 0,
+						dns: 0,
+						tls: null,
+						tcp: 0,
+					},
+					tls: {
+						authorized: undefined,
+						issuer: {},
+						subject: { alt: undefined },
+					},
+				},
+			}]);
 		});
 
 		it('should respond with 400', async () => {
@@ -442,30 +464,39 @@ describe('http command', () => {
 				},
 			};
 
-			const expectedResult = {
-				measurementId: 'measurement',
-				result: {
-					status: 'finished',
-					headers: {
-						test: 'abc',
-					},
-					rawHeaders: 'test: abc',
-					rawBody: '400 Bad Request',
-					rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request',
-					statusCode: 400,
-				},
-				testId: 'test',
-			};
-
 			const http = new HttpCommand(httpCmd);
 			await http.run(mockedSocket as any, 'measurement', 'test', options);
 
 			expect(mockedSocket.emit.callCount).to.equal(1);
-			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
-			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.status', expectedResult.result.status);
-			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
-			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawOutput', expectedResult.result.rawOutput);
-			expect(mockedSocket.emit.firstCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
+
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', {
+				testId: 'test',
+				measurementId: 'measurement',
+				result: {
+					status: 'finished',
+					resolvedAddress: '127.0.0.1',
+					headers: { test: 'abc' },
+					rawHeaders: 'test: abc',
+					rawBody: '400 Bad Request',
+					rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request',
+					truncated: false,
+					statusCode: 400,
+					statusCodeName: 'Bad Request',
+					timings: {
+						total: 0,
+						download: 0,
+						firstByte: 0,
+						dns: 0,
+						tls: null,
+						tcp: 0,
+					},
+					tls: {
+						authorized: undefined,
+						issuer: {},
+						subject: { alt: undefined },
+					},
+				},
+			}]);
 		});
 
 		it('should respond with 400 (missing path slash)', async () => {
@@ -487,21 +518,6 @@ describe('http command', () => {
 				},
 			};
 
-			const expectedResult = {
-				measurementId: 'measurement',
-				result: {
-					status: 'finished',
-					headers: {
-						test: 'abc',
-					},
-					rawHeaders: 'test: abc',
-					rawBody: '400 Bad Request',
-					rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request',
-					statusCode: 400,
-				},
-				testId: 'test',
-			};
-
 			const http = new HttpCommand(httpCmd);
 			await http.run(mockedSocket as any, 'measurement', 'test', options);
 
@@ -517,10 +533,34 @@ describe('http command', () => {
 				},
 			}]);
 
-			expect(mockedSocket.emit.lastCall.args[0]).to.equal('probe:measurement:result');
-			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.status', expectedResult.result.status);
-			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawBody', expectedResult.result.rawBody);
-			expect(mockedSocket.emit.lastCall.args[1]).to.have.nested.property('result.rawHeaders', expectedResult.result.rawHeaders);
+			expect(mockedSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', {
+				testId: 'test',
+				measurementId: 'measurement',
+				result: {
+					status: 'finished',
+					resolvedAddress: '127.0.0.1',
+					headers: { test: 'abc' },
+					rawHeaders: 'test: abc',
+					rawBody: '400 Bad Request',
+					rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request',
+					truncated: false,
+					statusCode: 400,
+					statusCodeName: 'Bad Request',
+					timings: {
+						total: 0,
+						download: 0,
+						firstByte: 0,
+						dns: 0,
+						tls: null,
+						tcp: 0,
+					},
+					tls: {
+						authorized: undefined,
+						issuer: {},
+						subject: { alt: undefined },
+					},
+				},
+			}]);
 		});
 
 		it('should ensure keepAlive header is disabled', () => {
@@ -633,6 +673,7 @@ describe('http command', () => {
 					rawHeaders: 'test: abc',
 					rawBody: 'abcdefghijklmno',
 					rawOutput: 'HTTP/1.1 200\ntest: abc\n\nabcdefghijklmno',
+					truncated: false,
 					statusCode: 200,
 					statusCodeName: 'OK',
 					tls: null,
@@ -718,6 +759,7 @@ describe('http command', () => {
 					rawHeaders: 'test: abc',
 					rawBody: 'abcdefghijklmno',
 					rawOutput: 'HTTP/1.1 200\ntest: abc\n\nabcdefghijklmno',
+					truncated: false,
 					statusCode: 200,
 					statusCodeName: 'OK',
 					tls: null,
@@ -790,6 +832,7 @@ describe('http command', () => {
 					rawHeaders: 'test: abc',
 					rawBody: 'abcdefghijklmno',
 					rawOutput: 'HTTP/1.1 200\ntest: abc\n\nabcdefghijklmno',
+					truncated: false,
 					statusCode: 200,
 					statusCodeName: 'OK',
 					timings: {
@@ -878,6 +921,7 @@ describe('http command', () => {
 					rawHeaders: 'test: abc',
 					rawBody: null,
 					rawOutput: 'HTTP/1.1 200\ntest: abc',
+					truncated: false,
 					statusCode: 200,
 					statusCodeName: 'OK',
 					tls: null,
@@ -985,6 +1029,7 @@ describe('http command', () => {
 					rawHeaders: 'test: abc',
 					rawBody: null,
 					rawOutput: 'HTTP/2 200\ntest: abc',
+					truncated: false,
 					statusCode: 200,
 					statusCodeName: 'OK',
 				},
@@ -1056,6 +1101,7 @@ describe('http command', () => {
 					rawBody: null,
 					rawHeaders: 'test: abc',
 					rawOutput: 'HTTP/1.1 404\ntest: abc\n\nResponse code 404 (Not Found) - ERR_NON_2XX_3XX_RESPONSE',
+					truncated: false,
 					resolvedAddress: null,
 					status: 'finished',
 					statusCode: 404,
@@ -1123,6 +1169,7 @@ describe('http command', () => {
 					},
 					tls: null,
 					rawOutput: 'Invalid URL - ERR_INVALID_URL',
+					truncated: false,
 					statusCode: null,
 					statusCodeName: null,
 				},
@@ -1184,6 +1231,7 @@ describe('http command', () => {
 					},
 					tls: null,
 					rawOutput: 'cache error - ERR_CACHE_ACCESS',
+					truncated: false,
 					statusCode: null,
 					statusCodeName: null,
 				},
@@ -1245,6 +1293,7 @@ describe('http command', () => {
 					},
 					tls: null,
 					rawOutput: 'cache error - ERR_CACHE_ACCESS',
+					truncated: false,
 					statusCode: null,
 					statusCodeName: null,
 				},
@@ -1322,6 +1371,7 @@ describe('http command', () => {
 					resolvedAddress: '1.1.1.1',
 					headers: { test: 'abc' },
 					rawHeaders: 'test: abc',
+					truncated: true,
 					statusCode: 200,
 					statusCodeName: 'OK',
 					timings: {
@@ -1418,6 +1468,7 @@ describe('http command', () => {
 				measurementId: 'measurement',
 				result: {
 					status: 'finished',
+					truncated: true,
 					resolvedAddress: '1.1.1.1',
 					headers: { test: 'abc' },
 					rawHeaders: 'test: abc',
@@ -1512,6 +1563,7 @@ describe('http command', () => {
 					status: 'finished',
 					resolvedAddress: '1.1.1.1',
 					headers: { test: 'abc' },
+					truncated: true,
 					rawHeaders: 'test: abc',
 					statusCode: 200,
 					statusCodeName: 'OK',

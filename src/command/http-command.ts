@@ -51,6 +51,7 @@ type Output = {
 	headers: Record<string, string>;
 	rawHeaders: string;
 	rawBody: string;
+	truncated: boolean;
 	statusCode: number;
 	statusCodeName: string;
 	timings: Record<string, number>;
@@ -65,6 +66,7 @@ export type OutputJson = {
 	headers: Record<string, string>;
 	rawHeaders: string | null;
 	rawBody: string | null;
+	truncated: boolean;
 	statusCode: number | null;
 	statusCodeName: string | null;
 	timings: Record<string, number | null>;
@@ -86,6 +88,7 @@ const getInitialResult = () => ({
 	headers: {},
 	rawHeaders: '',
 	rawBody: '',
+	truncated: false,
 	statusCode: 0,
 	statusCodeName: '',
 	httpVersion: '',
@@ -204,6 +207,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				rawHeaders: result.rawHeaders,
 				rawBody: result.rawBody,
 				rawOutput,
+				truncated: result.truncated,
 				statusCode: result.statusCode,
 				statusCodeName: result.statusCodeName,
 				timings: result.timings,
@@ -237,6 +241,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 			if (dataString.length > remainingSize) {
 				dataString = dataString.substring(0, remainingSize);
+				result.truncated = true;
 				stream.destroy(new Error('Exceeded the download.'));
 			}
 
@@ -311,6 +316,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			rawHeaders: input.rawHeaders || null,
 			rawBody: input.rawBody || null,
 			rawOutput: input.rawOutput,
+			truncated: input.truncated,
 			statusCode: input.statusCode || null,
 			statusCodeName: input.statusCodeName || null,
 			timings: {
