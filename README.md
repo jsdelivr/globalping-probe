@@ -80,7 +80,7 @@ Connect the probe to your switch or router, and you are done! No need to set up 
 The hardware probe package includes everything you need to get started:
 - ARM-based mini computer in a metal housing
 - Power supply
-- SD ard with pre-installed OS and probe container
+- SD card with pre-installed OS and probe container
 - Ethernet patch cable
 
 To request a probe, become GitHub Sponsor and [fill out this form](https://docs.google.com/forms/d/e/1FAIpQLSetKnI7CheDuwgl8QeARu2XzhXTXmek0GdKkpN5MW7WV3pVtw/viewform).
