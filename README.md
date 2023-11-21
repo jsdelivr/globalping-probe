@@ -1,38 +1,38 @@
 <img width="1000" alt="Globalping Probe Header" src="https://user-images.githubusercontent.com/1834071/163672135-c96edfe9-7b66-4fe9-92e7-6d225e05f5f3.png">
 
+# Globalping Probe
+The [Globalping platform](https://github.com/jsdelivr/globalping) relies on a globally distributed network of community-hosted probes, allowing anyone to run network testing commands like ping or traceroute from any location.
 
+## Join the Globalping probe community
+Globalping thrives on the contribution of its community – with your support, we can continuously enhance the platform and provide improved, reliable measurement results to all users free of charge.
+We'd be happy to welcome you to our community by hosting a probe!
 
-## Join the Globalping Probe Community - [Learn more about it](https://github.com/jsdelivr/globalping)
+### Set up a virtual probe
+To join the Globalping probe network, all you need to do is run our Docker container, which works on both x86 and ARM architectures. 
+Use the following command:
 
-To join the Globalping probe network all you have to do is run our container.
+> [!TIP]
+> For automation, consider using our [universal installation script for Linux servers](https://gist.github.com/jimaek/7b8312c2c37f9002a5cc0108ebfd43e1) and adapt it as needed.
 
-```
-docker run -d --log-driver local --network host --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
-```
-The container will work on both x86 and ARM architectures.
-
-Once you connect you will become part of the global community that powers the [Globalping Platform](https://github.com/jsdelivr/globalping)
-
----
-#### Podman alternative
-Note that you also need to [install a service](https://linuxhandbook.com/autostart-podman-containers/) to make sure the container starts on boot. Additionally check the logs of the container to ensure it started successfully, podman can sometimes break things by requiring additional permissions.
+### Podman alternative
+For users opting for Podman, [follow the instructions here](https://linuxhandbook.com/autostart-podman-containers/) to make sure the container automatically starts on boot. Also, check the container logs to see if it started successfully, as Podman may still require additional permissions.
+Run the container with the following command:
 ```
 sudo podman run --cap-add=NET_RAW -d --network host --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
 ```
----
-For automation purposes consider using this template of a [universal installation script for Linux servers](https://gist.github.com/jimaek/7b8312c2c37f9002a5cc0108ebfd43e1).
 
 ## Where to run
+You can run the virtual probe on anything that can run a Docker container, supporting x86 and ARM architectures. This includes any Linux server hosted with a cloud provider, your home server, or even a Raspberry Pi lying around at your office. 
 
-You can run it on anything that can run a docker container. Any kind of linux server hosted with a cloud provider, your home server or even a Raspberry Pi that you have lying around. There is nothing to configure, simply run the container.
-The only requirement is a stable internet connection.
+No configuration is needed; just run the container with a stable internet connection.
 
-## Updating
+## How to update 
+You don't need to worry about updates as the probe automatically updates to the latest version, pulled directly from GitHub.
 
-You don't need to worry about updates. Our probe will automatically update to the latest version as they become available. It will be pulled directly from GitHub and installed within the container. The container itself won't get updated, only the code it's running. 
-Pulling a fresh version of the container on a regular basis is recommended but completely optional.
+### Optional: Container update
+As the automatic update doesn’t update the container, but only the code it’s running, we recommend you pull a fresh version of the container regularly.
 
-To update the container all you have to do is
+To update the container, run the following:
 
 ```
 docker pull ghcr.io/jsdelivr/globalping-probe
@@ -42,51 +42,54 @@ docker run -d --log-driver local --network host --restart=always --name globalpi
 ```
 
 ## Limitations
-
-- You can run only 1 probe per IP address
-- We will disconnect probes that we can't reliably resolve to a physical location
-- We block probes from IPs associated with annonymous proxies, Tor and VPN services.
+- You can run only one (1) probe per IP address.
+- We disconnect probes that we can't reliably resolve to a physical location.
+- We block probes from IPs associated with anonymous proxies, Tor, and VPN services.
 
 
 ## Security
+- Probes only connect to our API over a secure connection; they don't open ports on your device or accept any incoming connections.
+- We use regularly updated lists and databases of [domains](https://github.com/jsdelivr/globalping/blob/master/src/lib/malware/domain.ts) and [IP addresses](https://github.com/jsdelivr/globalping/blob/master/src/lib/malware/ip.ts) associated with malware or potentially dangerous content and ban them on the API level.
+- We block private IP addresses as targets.
+- We rate-limit all users on the API level to prevent network abuse.
 
-- The probe doesn't open any ports or accept any incoming connections. It can only connect to our API over a secure connection.
-- We use regularly updated lists and databases of [domains](https://github.com/jsdelivr/globalping/blob/master/src/lib/malware/domain.ts) and [IP addresses](https://github.com/jsdelivr/globalping/blob/master/src/lib/malware/ip.ts) that are associated with malware or potentially dangerous content and completely ban them on the API level.
-- We block private IPs from being used as targets
-- We rate-limit all users on the API level to avoid the abuse of our network
+## Adjusting the number of tests
+The amount of measurement tests your probe can process scales with the available CPU cores and average CPU load over the past few minutes. Our code is very lightweight and doesn't take up too many resources, so in most cases, **we recommend running our probe as is**.
 
-## Scaling tests
+However, if you still want to control resource usage, add the docker parameter `--cpuset-cpus="0-2"` to your `docker run` command and set the number of CPUs within the quotes.
 
-The amount of tests that your probe is able to process will scale according to the amount of available CPU cores and average CPU load over the past few minutes. Our code is very lightweight and won't use too many of your resources, so in most cases we recommend running our probe as is. 
-But if you're worried you can use this docker parameter `--cpuset-cpus="0-2"` to limit the number of available cores.
+## Running multiple probes 
+We'd love to work with you if you can host probes in multiple regions, especially in places we have not yet covered. We're happy to list anyone who can **host at least six probes** as donors on GitHub and our website.
 
-## Sponsors
-
-If you can host our probes in multiple global regions, espesially locations we don't already have, then we would love to work together and list you as a sponsor on our website. Please note that in most cases we ask for at least 6 installed probes to get listed as a sponsor.
-
-To get started or if you have any questions make sure to get in contact with us dak@prospectone.io
+To get started or if you have any questions, contact us at dak@prospectone.io
 
 ## Hardware Probes
-
 <img src="https://user-images.githubusercontent.com/1834071/183153051-5c741c3c-5e8c-4372-ba12-82a602cb7cb6.png" alt="globalping probe" height="200px" align="right"/>
 
-All GitHub Sponsors that contribute $10+ per month are eligible to receive a hardware probe to install in your home or office. 
+As a GitHub Sponsor contributing $10+ per month, you can request a hardware probe and install it at home or in your office.
 
-Installing our hardware probe simplifies the whole process and removes the need of having a computer running 24/7. 
-Just connect the probe to your switch or router via an ethernet cable and you are done!
+### How does it work?
+Connect the probe to your switch or router, and you are done! No need to set up the Docker container yourself or have a computer running 24/7.
 
-The package includes everything you need to get started:
-- An ARM based mini computer in a metal housing
-- Quality power supply
-- SD Card with OS and probe container pre-installed
-- Ethernet patch cable 
+The hardware probe package includes everything you need to get started:
+- ARM-based mini computer in a metal housing
+- Power supply
+- SD Card with pre-installed OS and probe container
+- Ethernet patch cable
 
-Learn more about it on our website! [Get a probe](https://www.jsdelivr.com/globalping)
+To request a probe, become GitHub Sponsor and [fill out this form](https://docs.google.com/forms/d/e/1FAIpQLSetKnI7CheDuwgl8QeARu2XzhXTXmek0GdKkpN5MW7WV3pVtw/viewform).
 
-You can also explore the firmware itself and build your own version if you wish - [Hardware probe firmware](https://github.com/jsdelivr/globalping-hwprobe)
+> [!TIP]
+> You can also explore the hardware probe's firmware and build your own version. Learn more [here](https://github.com/jsdelivr/globalping-hwprobe).
 
-Your company can also become a [hardware probe sponsor!](https://docs.google.com/document/d/1xIe-BaZ-6mmkjN1yMH5Kauw3FTXADrB79w4pnJ4SLa4/edit?usp=sharing)
+### Become a hardware probe provider
+We offer companies to sponsor co-branded hardware probes to hand out at conferences or ship to your users with your own stickers and swag included.
+
+Learn more about [becoming a hardware probe provider](https://docs.google.com/document/d/1xIe-BaZ-6mmkjN1yMH5Kauw3FTXADrB79w4pnJ4SLa4/edit?usp=sharing).
+
+## Support and feedback
+
+If you are stuck or want to give us your feedback, please [open a new issue](https://github.com/jsdelivr/globalping-probe/issues).
 
 ## Development
-
 Please refer to [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
