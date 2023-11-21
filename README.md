@@ -9,7 +9,13 @@ We'd be happy to welcome you to our community by hosting a probe!
 
 ### Set up a virtual probe
 To join the Globalping probe network, all you need to do is run our Docker container, which works on both x86 and ARM architectures. 
+
 Use the following command:
+
+
+```
+docker run -d --log-driver local --network host --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
+```
 
 > [!TIP]
 > For automation, consider using our [universal installation script for Linux servers](https://gist.github.com/jimaek/7b8312c2c37f9002a5cc0108ebfd43e1) and adapt it as needed.
