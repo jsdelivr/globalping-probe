@@ -50,11 +50,11 @@ docker run -d --log-driver local --network host --restart=always --name globalpi
 ## Limitations
 - You can run only one (1) probe per IP address.
 - We disconnect probes that we can't reliably resolve to a physical location.
-- We block probes from IPs associated with anonymous proxies, Tor, and VPN services.
+- We block probes from IP addresses associated with anonymous proxies, Tor, and VPN services.
 
 
 ## Security
-- Probes only connect to our API over a secure connection; they don't open ports on your device or accept any incoming connections.
+- The probe only connects to our API over a secure connection; it doesn't open ports on your device or accepts any incoming connections.
 - We use regularly updated lists and databases of [domains](https://github.com/jsdelivr/globalping/blob/master/src/lib/malware/domain.ts) and [IP addresses](https://github.com/jsdelivr/globalping/blob/master/src/lib/malware/ip.ts) associated with malware or potentially dangerous content and ban them on the API level.
 - We block private IP addresses as targets.
 - We rate-limit all users on the API level to prevent network abuse.
@@ -62,7 +62,7 @@ docker run -d --log-driver local --network host --restart=always --name globalpi
 ## Adjusting the number of tests
 The amount of measurement tests your probe can process scales with the available CPU cores and average CPU load over the past few minutes. Our code is very lightweight and doesn't take up too many resources, so in most cases, **we recommend running our probe as is**.
 
-However, if you still want to control resource usage, add the docker parameter `--cpuset-cpus="0-2"` to your `docker run` command and set the number of CPUs within the quotes.
+However, if you still want to control resource usage, add the docker parameter `--cpuset-cpus="0-2"` to your `docker run` command and set the number of CPUs within the quotes.
 
 ## Running multiple probes 
 We'd love to work with you if you can host probes in multiple regions, especially in places we have not yet covered. We're happy to list anyone who can **host at least six probes** as donors on GitHub and our website.
@@ -80,7 +80,7 @@ Connect the probe to your switch or router, and you are done! No need to set up 
 The hardware probe package includes everything you need to get started:
 - ARM-based mini computer in a metal housing
 - Power supply
-- SD Card with pre-installed OS and probe container
+- SD ard with pre-installed OS and probe container
 - Ethernet patch cable
 
 To request a probe, become GitHub Sponsor and [fill out this form](https://docs.google.com/forms/d/e/1FAIpQLSetKnI7CheDuwgl8QeARu2XzhXTXmek0GdKkpN5MW7WV3pVtw/viewform).
