@@ -33,7 +33,7 @@ You can run the virtual probe on anything that can run a Docker container, suppo
 No configuration is needed; just run the container with a stable internet connection.
 
 ## How to update 
-You don't need to worry about updates as the probe automatically updates to the latest version, pulled directly from GitHub.
+You don't need to worry about updates: The probe automatically updates to the latest version as soon as it becomes available. It's pulled directly from GitHub and installed within the container.
 
 ### Optional: Container update
 As the automatic update doesn’t update the container, but only the code it’s running, we recommend you pull a fresh version of the container regularly.
