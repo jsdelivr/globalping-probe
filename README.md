@@ -35,8 +35,11 @@ No configuration is needed; just run the container with a stable internet connec
 ## How to update 
 You don't need to worry about updates: The probe automatically updates to the latest version as soon as it becomes available. It's pulled directly from GitHub and installed within the container.
 
+> [!NOTE]
+> The container itself isn't updated automatically, only the code it runs.
+
 ### Optional: Container update
-As the automatic update doesn’t update the container, but only the code it’s running, we recommend you pull a fresh version of the container regularly.
+As the automatic update doesn’t update the container, we recommend you pull a fresh version of the container regularly.
 
 To update the container, run the following:
 
