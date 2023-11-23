@@ -1,6 +1,6 @@
 import { PassThrough } from 'node:stream';
 import nock from 'nock';
-import { type Request, type PlainResponse, HTTPError, CacheError, RequestError } from 'got';
+import { type Request, type PlainResponse, HTTPError, CacheError, RequestError, Response } from 'got';
 import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { Socket } from 'socket.io-client';
@@ -267,8 +267,9 @@ describe('http command', () => {
 	describe('with real httpCmd', () => {
 		it('should respond with 200', async () => {
 			nock('http://google.com').get('/200?abc=def').reply(200, function () {
-				const request = this.req as typeof this.req & {response: {httpVersion: string}};
+				const request = this.req as typeof this.req & {response: Response & {socket: { getPeerCertificate }}};
 				request.response.httpVersion = '1.1';
+				request.response.socket.getPeerCertificate = false;
 				return '200 Ok';
 			}, { test: 'abc' });
 
@@ -320,19 +321,16 @@ describe('http command', () => {
 						tls: null,
 						tcp: 0,
 					},
-					tls: {
-						authorized: undefined,
-						issuer: {},
-						subject: { alt: undefined },
-					},
+					tls: null,
 				},
 			}]);
 		});
 
 		it('should respond with 200', async () => {
 			nock('http://google.com').get('/200?abc=def').reply(200, function () {
-				const request = this.req as typeof this.req & {response: {httpVersion: string}};
+				const request = this.req as typeof this.req & {response: Response & {socket: { getPeerCertificate }}};
 				request.response.httpVersion = '1.1';
+				request.response.socket.getPeerCertificate = false;
 				return '200 Ok';
 			}, { test: 'abc' });
 
@@ -376,11 +374,7 @@ describe('http command', () => {
 							tls: null,
 							tcp: 0,
 						},
-						tls: {
-							authorized: undefined,
-							issuer: {},
-							subject: { alt: undefined },
-						},
+						tls: null,
 					},
 				},
 			]);
@@ -388,8 +382,9 @@ describe('http command', () => {
 
 		it('should respond with 400 with progress messages', async () => {
 			nock('http://google.com').get('/400').times(3).reply(400, function () {
-				const request = this.req as typeof this.req & {response: {httpVersion: string}};
+				const request = this.req as typeof this.req & {response: Response & {socket: { getPeerCertificate }}};
 				request.response.httpVersion = '1.1';
+				request.response.socket.getPeerCertificate = false;
 				return '400 Bad Request';
 			}, { test: 'abc' });
 
@@ -441,11 +436,7 @@ describe('http command', () => {
 						tls: null,
 						tcp: 0,
 					},
-					tls: {
-						authorized: undefined,
-						issuer: {},
-						subject: { alt: undefined },
-					},
+					tls: null,
 				},
 			}]);
 		});
@@ -490,19 +481,16 @@ describe('http command', () => {
 						tls: null,
 						tcp: 0,
 					},
-					tls: {
-						authorized: undefined,
-						issuer: {},
-						subject: { alt: undefined },
-					},
+					tls: null,
 				},
 			}]);
 		});
 
 		it('should respond with 400 (missing path slash)', async () => {
 			nock('http://google.com').get('/400').times(3).reply(400, function () {
-				const request = this.req as typeof this.req & {response: {httpVersion: string}};
+				const request = this.req as typeof this.req & {response: Response & {socket: { getPeerCertificate }}};
 				request.response.httpVersion = '1.1';
+				request.response.socket.getPeerCertificate = false;
 				return '400 Bad Request';
 			}, { test: 'abc' });
 
@@ -554,11 +542,7 @@ describe('http command', () => {
 						tls: null,
 						tcp: 0,
 					},
-					tls: {
-						authorized: undefined,
-						issuer: {},
-						subject: { alt: undefined },
-					},
+					tls: null,
 				},
 			}]);
 		});
