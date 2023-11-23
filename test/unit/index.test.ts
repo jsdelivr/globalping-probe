@@ -55,6 +55,8 @@ describe('index module', () => {
 		await td.replaceEsm('socket.io-client', { io: ioStub });
 		await td.replaceEsm('../../src/command/ping-command.ts', { PingCommand: PingCommandStub, pingCmd: pingCmdStub });
 		await td.replaceEsm('../../src/lib/status-manager.ts', { initStatusManager: initStatusManagerStub, getStatusManager: getStatusManagerStub });
+		process.env['GP_HOST_HW'] = 'true';
+		process.env['GP_HOST_DEVICE'] = 'v1';
 	});
 
 	beforeEach(() => {
@@ -118,6 +120,8 @@ describe('index module', () => {
 
 		expect(ioStub.firstCall.args[1].query.version).to.match(/^\d+.\d+.\d+$/);
 		expect(ioStub.firstCall.args[1].query.nodeVersion).to.match(/^v\d+.\d+.\d+$/);
+		expect(ioStub.firstCall.args[1].query.isHardware).to.deep.equal('true');
+		expect(ioStub.firstCall.args[1].query.hardwareDevice).to.deep.equal('v1');
 
 		expect(statusManagerStub.sendStatus.callCount).to.equal(1);
 		expect(initStatusManagerStub.callCount).to.equal(1);

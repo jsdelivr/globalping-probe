@@ -62,6 +62,8 @@ function connect () {
 			version: VERSION,
 			nodeVersion: process.version,
 			uuid: randomUUID(),
+			isHardware: process.env['GP_HOST_HW'],
+			hardwareDevice: process.env['GP_HOST_DEVICE'],
 			...(process.env['FAKE_IP_FIRST_OCTET'] && { fakeIp: getFakeIp() }),
 		},
 	});
