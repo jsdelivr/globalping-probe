@@ -55,8 +55,9 @@ function connect () {
 
 	const socket = io(`${config.get<string>('api.host')}/probes`, {
 		transports: [ 'websocket' ],
-		reconnectionDelay: 100,
-		reconnectionDelayMax: 500,
+		reconnectionDelay: 2000,
+		reconnectionDelayMax: 8000,
+		randomizationFactor: 0.75,
 		query: {
 			version: VERSION,
 			nodeVersion: process.version,

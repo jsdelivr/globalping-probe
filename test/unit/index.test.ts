@@ -111,8 +111,9 @@ describe('index module', () => {
 
 		expect(ioStub.firstCall.args[1]).to.deep.include({
 			transports: [ 'websocket' ],
-			reconnectionDelay: 100,
-			reconnectionDelayMax: 500,
+			reconnectionDelay: 2000,
+			reconnectionDelayMax: 8000,
+			randomizationFactor: 0.75,
 		});
 
 		expect(ioStub.firstCall.args[1].query.version).to.match(/^\d+.\d+.\d+$/);
