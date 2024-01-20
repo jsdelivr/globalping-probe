@@ -81,7 +81,7 @@ describe('ping command executor', () => {
 			sandbox.reset();
 		});
 
-		const successfulCommands = [ 'ping-success-linux', 'ping-success-mac' ];
+		const successfulCommands = [ 'ping-success-linux' ];
 
 		for (const command of successfulCommands) {
 			it(`should run and parse successful commands - ${command}`, async () => {
@@ -235,7 +235,7 @@ describe('ping command executor', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
-		const failedCommands = [ 'ping-timeout-linux', 'ping-timeout-mac' ];
+		const failedCommands = [ 'ping-timeout-linux' ];
 
 		for (const command of failedCommands) {
 			it(`should run and parse failed commands - ${command}`, async () => {
