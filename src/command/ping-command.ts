@@ -52,7 +52,7 @@ export const argBuilder = (options: PingOptions): string[] => {
 		'-4',
 		'-O',
 		[ '-c', options.packets.toString() ],
-		[ '-i', '0.2' ],
+		[ '-i', '0.5' ],
 		[ '-w', '10' ],
 		options.target,
 	].flat();
