@@ -1,5 +1,6 @@
 PING google.com (172.217.20.206) 56(84) bytes of data.
 64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=1 ttl=37 time=8.05 ms
+no answer yet for icmp_seq=2
 64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=3 ttl=37 time=8.05 ms
 
 --- google.com ping statistics ---

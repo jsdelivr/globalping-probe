@@ -15,6 +15,6 @@
 			"rcv": 0,
 			"drop": 15
 		},
-		"rawOutput": "PING 123.21.43.124 (123.21.43.124) 56(84) bytes of data.\n\n--- 123.21.43.124 ping statistics ---\n15 packets transmitted, 0 received, 100% packet loss, time 2909ms"
+		"rawOutput": "PING 123.21.43.124 (123.21.43.124) 56(84) bytes of data.\nno answer yet for icmp_seq=1\nno answer yet for icmp_seq=2\nno answer yet for icmp_seq=3\nno answer yet for icmp_seq=4\nno answer yet for icmp_seq=5\nno answer yet for icmp_seq=6\nno answer yet for icmp_seq=7\nno answer yet for icmp_seq=8\nno answer yet for icmp_seq=9\nno answer yet for icmp_seq=10\nno answer yet for icmp_seq=11\nno answer yet for icmp_seq=12\nno answer yet for icmp_seq=13\nno answer yet for icmp_seq=14\nno answer yet for icmp_seq=15\n\n--- 123.21.43.124 ping statistics ---\n15 packets transmitted, 0 received, 100% packet loss, time 2909ms\n"
 	}
 }

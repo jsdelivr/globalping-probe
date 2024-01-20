@@ -1,4 +1,19 @@
 PING 123.21.43.124 (123.21.43.124) 56(84) bytes of data.
+no answer yet for icmp_seq=1
+no answer yet for icmp_seq=2
+no answer yet for icmp_seq=3
+no answer yet for icmp_seq=4
+no answer yet for icmp_seq=5
+no answer yet for icmp_seq=6
+no answer yet for icmp_seq=7
+no answer yet for icmp_seq=8
+no answer yet for icmp_seq=9
+no answer yet for icmp_seq=10
+no answer yet for icmp_seq=11
+no answer yet for icmp_seq=12
+no answer yet for icmp_seq=13
+no answer yet for icmp_seq=14
+no answer yet for icmp_seq=15
 
 --- 123.21.43.124 ping statistics ---
 15 packets transmitted, 0 received, 100% packet loss, time 2909ms

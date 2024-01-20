@@ -50,6 +50,7 @@ const logger = scopedLogger('ping-command');
 export const argBuilder = (options: PingOptions): string[] => {
 	const args = [
 		'-4',
+		'-O',
 		[ '-c', options.packets.toString() ],
 		[ '-i', '0.2' ],
 		[ '-w', '10' ],

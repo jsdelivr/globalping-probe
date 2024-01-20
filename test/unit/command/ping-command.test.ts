@@ -23,6 +23,7 @@ describe('ping command executor', () => {
 			const joinedArgs = args.join(' ');
 
 			expect(args[0]).to.equal('-4');
+			expect(args[1]).to.equal('-O');
 			expect(args[args.length - 1]).to.equal(options.target);
 			expect(joinedArgs).to.contain(`-c ${options.packets}`);
 			expect(joinedArgs).to.contain('-i 0.2');
@@ -262,6 +263,31 @@ describe('ping command executor', () => {
 				expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
 			});
 		}
+
+		it(`should run and parse results with timeouts`, async () => {
+			const command = 'ping-slow-linux';
+			const rawOutput = getCmdMock(command);
+			const expectedResult = getCmdMockResult(command);
+			const options = {
+				type: 'ping' as PingOptions['type'],
+				target: 'google.com',
+				packets: 3,
+				inProgressUpdates: true,
+			};
+
+			const execaError = execaSync('unknown-command', [], { reject: false });
+			execaError.stdout = rawOutput;
+			const mockedCmd = getExecaMock();
+
+			const ping = new PingCommand((): any => mockedCmd);
+			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+			mockedCmd.reject(execaError);
+			await runPromise;
+
+			expect(mockedSocket.emit.calledOnce).to.be.true;
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
+		});
 
 		it('should fail in case of output without header', async () => {
 			const mockedCmd = getExecaMock();
