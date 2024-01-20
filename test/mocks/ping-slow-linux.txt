@@ -1,0 +1,10 @@
+PING google.com (172.217.20.206) 56(84) bytes of data.
+no answer yet for icmp_seq=1
+64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=1 ttl=37 time=507.99 ms
+no answer yet for icmp_seq=2
+no answer yet for icmp_seq=3
+64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=3 ttl=37 time=507.95 ms
+
+--- google.com ping statistics ---
+3 packets transmitted, 2 received, 33.33% packet loss, time 1404ms
+rtt min/avg/max/mdev = 507.950/507.970/507.990/0.073 ms

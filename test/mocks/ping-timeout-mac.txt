@@ -1,6 +1,0 @@
-PING 172.13.23.43 (172.13.23.43): 56 data bytes
-Request timeout for icmp_seq 0
-Request timeout for icmp_seq 1
-
---- 172.13.23.43 ping statistics ---
-3 packets transmitted, 0 packets received, 100.0% packet loss
