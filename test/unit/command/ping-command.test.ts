@@ -26,7 +26,7 @@ describe('ping command executor', () => {
 			expect(args[1]).to.equal('-O');
 			expect(args[args.length - 1]).to.equal(options.target);
 			expect(joinedArgs).to.contain(`-c ${options.packets}`);
-			expect(joinedArgs).to.contain('-i 0.2');
+			expect(joinedArgs).to.contain('-i 0.5');
 			expect(joinedArgs).to.contain('-w 10');
 		});
 
