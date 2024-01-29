@@ -42,7 +42,7 @@ const logger = scopedLogger('dns-command');
 
 const isTrace = (output: unknown): output is DnsParseResponseTrace => Array.isArray((output as DnsParseResponseTrace).hops);
 
-const allowedTypes = [ 'A', 'AAAA', 'ANY', 'CNAME', 'DNSKEY', 'DS', 'MX', 'NS', 'NSEC', 'PTR', 'RRSIG', 'SOA', 'TXT', 'SRV' ];
+const allowedTypes = [ 'A', 'AAAA', 'ANY', 'CNAME', 'DNSKEY', 'DS', 'HTTPS', 'MX', 'NS', 'NSEC', 'PTR', 'RRSIG', 'SOA', 'TXT', 'SRV' ];
 const allowedProtocols = [ 'UDP', 'TCP' ];
 
 const dnsOptionsSchema = Joi.object<DnsOptions>({

@@ -707,6 +707,14 @@ describe('dns command', () => {
 		});
 
 		makeSnapshotTests(tester, {
+			target: 'www.jsdelivr.com',
+			query: [
+				{ type: 'HTTPS' },
+			],
+			resolver: '8.8.8.8',
+		});
+
+		makeSnapshotTests(tester, {
 			target: 'kolarik.sk',
 			query: [
 				{ type: 'DNSKEY' },
