@@ -25,4 +25,8 @@ jobs:
         run: |
           npm run lint
           npm run coverage
+      - name: test dist
+        run: |
+          rm -rf node_modules
+          npm ci --omit=dev
           npm run test:dist
