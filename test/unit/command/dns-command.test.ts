@@ -702,6 +702,7 @@ describe('dns command', () => {
 			query: [
 				{ type: 'A' },
 				{ type: 'AAAA' },
+				{ type: 'HTTPS' },
 			],
 			resolver: '8.8.8.8',
 		});
