@@ -702,13 +702,6 @@ describe('dns command', () => {
 			query: [
 				{ type: 'A' },
 				{ type: 'AAAA' },
-			],
-			resolver: '8.8.8.8',
-		});
-
-		makeSnapshotTests(tester, {
-			target: 'www.jsdelivr.com',
-			query: [
 				{ type: 'HTTPS' },
 			],
 			resolver: '8.8.8.8',

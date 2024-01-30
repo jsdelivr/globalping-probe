@@ -607,5 +607,42 @@
 				"resolver": "198.41.0.4"
 			}
 		}
+	],
+	"should work with {target: 'www.jsdelivr.com', query: {type: 'HTTPS'}, resolver: '8.8.8.8'}: payload": {
+		"command": "unbuffer dig -t HTTPS www.jsdelivr.com @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -t HTTPS www.jsdelivr.com \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.18.12-0ubuntu0.22.04.3-Ubuntu <<>> -t HTTPS www.jsdelivr.com @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 56257\n;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 61 72 6e (\"gpdns-arn\")\n;; QUESTION SECTION:\n;www.jsdelivr.com.\t\tIN\tHTTPS\n\n;; ANSWER SECTION:\nwww.jsdelivr.com.\t300\tIN\tHTTPS\t1 . alpn=\"h3,h2\" ipv4hint=104.21.23.24,172.67.208.113 ipv6hint=2606:4700:3035::6815:1718,2606:4700:3037::ac43:d071\n\n;; Query time: 27 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8) (UDP)\n;; WHEN: Tue Jan 30 09:18:43 UTC 2024\n;; MSG SIZE  rcvd: 131\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: 'www.jsdelivr.com', query: {type: 'HTTPS'}, resolver: '8.8.8.8'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"rawOutput": "\n; <<>> DiG 9.18.12-0ubuntu0.22.04.3-Ubuntu <<>> -t HTTPS www.jsdelivr.com @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 56257\n;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 61 72 6e (\"gpdns-arn\")\n;; QUESTION SECTION:\n;www.jsdelivr.com.\t\tIN\tHTTPS\n\n;; ANSWER SECTION:\nwww.jsdelivr.com.\t300\tIN\tHTTPS\t1 . alpn=\"h3,h2\" ipv4hint=104.21.23.24,172.67.208.113 ipv6hint=2606:4700:3035::6815:1718,2606:4700:3037::ac43:d071\n\n;; Query time: 27 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8) (UDP)\n;; WHEN: Tue Jan 30 09:18:43 UTC 2024\n;; MSG SIZE  rcvd: 131\n",
+				"answers": [
+					{
+						"name": "www.jsdelivr.com.",
+						"type": "HTTPS",
+						"ttl": 300,
+						"class": "IN",
+						"value": "1 . alpn=\"h3,h2\" ipv4hint=104.21.23.24,172.67.208.113 ipv6hint=2606:4700:3035::6815:1718,2606:4700:3037::ac43:d071"
+					}
+				],
+				"timings": {
+					"total": 27
+				},
+				"resolver": "UDP"
+			}
+		}
 	]
 }
