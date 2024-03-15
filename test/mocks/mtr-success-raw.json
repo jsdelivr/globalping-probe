@@ -23,12 +23,6 @@
 				"timings": [
 					{
 						"rtt": 0
-					},
-					{
-						"rtt": null
-					},
-					{
-						"rtt": null
 					}
 				],
 				"asn": [],
@@ -49,17 +43,7 @@
 					"jMax": 0,
 					"jAvg": 0
 				},
-				"timings": [
-					{
-						"rtt": null
-					},
-					{
-						"rtt": null
-					},
-					{
-						"rtt": null
-					}
-				],
+				"timings": [],
 				"asn": [],
 				"resolvedAddress": null,
 				"resolvedHostname": null
@@ -109,17 +93,7 @@
 					"jMax": 0,
 					"jAvg": 0
 				},
-				"timings": [
-					{
-						"rtt": null
-					},
-					{
-						"rtt": null
-					},
-					{
-						"rtt": null
-					}
-				],
+				"timings": [],
 				"asn": [],
 				"resolvedAddress": null,
 				"resolvedHostname": null

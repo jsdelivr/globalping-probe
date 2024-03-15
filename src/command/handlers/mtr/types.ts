@@ -1,7 +1,6 @@
 export type HopTimesType = {
 	seq?: string;
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	rtt: number | null;
+	rtt?: number;
 };
 
 export type HopStatsType = {

@@ -21,12 +21,6 @@
 				"timings": [
 					{
 						"rtt": 2.27
-					},
-					{
-						"rtt": null
-					},
-					{
-						"rtt": null
 					}
 				],
 				"resolvedAddress": "192.168.0.1",
@@ -47,17 +41,7 @@
 					"jAvg": 0
 				},
 				"asn": [],
-				"timings": [
-					{
-						"rtt": null
-					},
-					{
-						"rtt": null
-					},
-					{
-						"rtt": null
-					}
-				]
+				"timings": []
 			},
 			{
 				"stats": {
@@ -103,17 +87,7 @@
 					"jAvg": 0
 				},
 				"asn": [],
-				"timings": [
-					{
-						"rtt": null
-					},
-					{
-						"rtt": null
-					},
-					{
-						"rtt": null
-					}
-				]
+				"timings": []
 			},
 			{
 				"stats": {
