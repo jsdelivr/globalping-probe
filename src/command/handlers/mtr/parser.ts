@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import type {
 	HopStatsType,
 	HopType,
@@ -181,7 +182,7 @@ export const MtrParser = {
 						break;
 					}
 
-					entry.timings.push({ seq, rtt: null });
+					entry.timings.push({ seq });
 					break;
 				}
 
@@ -241,6 +242,8 @@ export const MtrParser = {
 			for (const t of hop.timings) {
 				delete t.seq;
 			}
+
+			hop.timings = hop.timings.filter(hop => !_.isEmpty(hop));
 		}
 
 		return hops;
