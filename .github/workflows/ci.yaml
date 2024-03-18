@@ -14,3 +14,5 @@ jobs:
     with:
       ref: ${{ github.ref }}
       publish: false
+    secrets:
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}

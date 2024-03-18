@@ -60,3 +60,5 @@ jobs:
     with:
       ref: v${{ needs.release.outputs.new_release_version }}
       publish: true
+    secrets:
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
