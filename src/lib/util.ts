@@ -1,3 +1,5 @@
+import os from 'node:os';
+
 /*
  * Turns promise into callback fn
  */
@@ -28,3 +30,11 @@ export const callbackify = (
 	cb(undefined, result);
 }) as (...args: unknown[]) => never;
 
+export const isV1HardwareDevice = () => {
+	const cpus = os.cpus();
+
+	return cpus.length === 4
+		&& cpus.every(cpu => cpu.model === 'ARMv7 Processor rev 5 (v7l)')
+		&& /^globalping-probe-\w{4}$/.test(os.hostname())
+		&& os.totalmem() < 550 * 1e6;
+};

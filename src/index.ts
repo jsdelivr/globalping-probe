@@ -20,7 +20,16 @@ import { FakeMtrCommand } from './command/fake/fake-mtr-command.js';
 import { run as runStatsAgent } from './lib/stats/client.js';
 import { initStatusManager } from './lib/status-manager.js';
 import { logAdoptionCode } from './lib/log-adoption-code.js';
+import { isV1HardwareDevice } from './lib/util.js';
 import { VERSION } from './constants.js';
+
+// Set the expected variables on HW probes with older firmware
+// https://github.com/jsdelivr/globalping-hwprobe/issues/27
+// https://github.com/jsdelivr/globalping-probe/issues/206
+if (isV1HardwareDevice()) {
+	process.env['GP_HOST_HW'] = 'true';
+	process.env['GP_HOST_DEVICE'] = 'v1';
+}
 
 // Run self-update checks
 import './lib/updater.js';
