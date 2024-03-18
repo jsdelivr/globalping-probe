@@ -28,7 +28,7 @@ jobs:
       - name: Install git :)
         run: apt update && apt install -y git
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Mark the working directory as safe
         run: git config --global --add safe.directory ${GITHUB_WORKSPACE}
@@ -43,7 +43,7 @@ jobs:
 
       - name: Release
         id: semantic
-        uses: cycjimmy/semantic-release-action@v3
+        uses: cycjimmy/semantic-release-action@v4
         with:
           extra_plugins: |
             @semantic-release/git
