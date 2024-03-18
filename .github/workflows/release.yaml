@@ -11,7 +11,7 @@ jobs:
     name: Release new version
 
     runs-on: ubuntu-latest
-    container: node:18.13-bullseye-slim
+    container: node:18.19.1-bullseye-slim
 
     needs: test
 
@@ -28,7 +28,7 @@ jobs:
       - name: Install git :)
         run: apt update && apt install -y git
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Mark the working directory as safe
         run: git config --global --add safe.directory ${GITHUB_WORKSPACE}
@@ -43,7 +43,7 @@ jobs:
 
       - name: Release
         id: semantic
-        uses: cycjimmy/semantic-release-action@v3
+        uses: cycjimmy/semantic-release-action@v4
         with:
           extra_plugins: |
             @semantic-release/git
@@ -60,3 +60,5 @@ jobs:
     with:
       ref: v${{ needs.release.outputs.new_release_version }}
       publish: true
+    secrets:
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
