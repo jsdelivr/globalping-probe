@@ -32,4 +32,4 @@ RUN apt-get update -y && apt-get install --no-install-recommends -y expect ca-ce
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
-CMD ["/entrypoint.sh"]
+CMD ["/bin/bash", "/entrypoint.sh"]
