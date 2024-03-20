@@ -43,6 +43,14 @@ type Cert = {
 		CN: string;
 	};
 	subjectaltname?: string;
+	pubkey?: Buffer;
+	fingerprint: string;
+	fingerprint256: string;
+	fingerprint512: string;
+	asn1Curve?: string;
+	nistCurve?: string;
+	modulus?: string;
+	exponent?: string;
 };
 
 type Output = {
@@ -391,6 +399,11 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 					...cert.subject,
 					alt: cert.subjectaltname,
 				},
+				type: cert.asn1Curve || cert.nistCurve ? 'ECC' : cert.modulus || cert.exponent ? 'RSA' : null,
+				pubkey: cert.pubkey ? cert.pubkey.toString('hex').toUpperCase().match(/.{1,2}/g)!.join(':') : null,
+				fingerprint: cert.fingerprint,
+				fingerprint256: cert.fingerprint256,
+				fingerprint512: cert.fingerprint512,
 			};
 		}
 
