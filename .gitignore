@@ -4,6 +4,10 @@
 node_modules/
 coverage/
 dist/
-test/e2e/cases/globalping/
+test/e2e/
+test/plugins/oas
+migrations/
+public/
+seeds/
 config/local*
 .eslintcache
