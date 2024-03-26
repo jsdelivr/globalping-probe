@@ -10,6 +10,35 @@ jobs:
     strategy:
       matrix:
         node-version: [ 16.x, 18.x, 20.x ]
+    
+    env:
+      NODE_ENV: test
+
+    services:
+      redis:
+        image: redis/redis-stack-server:latest
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      mariadb:
+        image: mariadb:10.11.5
+        ports:
+          - 3306:3306
+        env:
+          MARIADB_DATABASE: directus-test
+          MARIADB_USER: directus
+          MARIADB_PASSWORD: password
+          MARIADB_RANDOM_ROOT_PASSWORD: 1
+        options: >-
+          --health-cmd "mysqladmin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v4
@@ -25,6 +54,9 @@ jobs:
         run: |
           npm run lint
           npm run coverage
+      - name: e2e tests
+        run: |
+          npm run test:e2e
       - name: test dist
         run: |
           rm -rf node_modules
