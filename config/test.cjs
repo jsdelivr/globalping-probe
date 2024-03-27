@@ -1,4 +1,7 @@
 module.exports = {
+	server: {
+		processes: 2,
+	},
 	redis: {
 		url: 'redis://localhost:6379',
 		socket: {
