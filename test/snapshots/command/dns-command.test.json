@@ -1,4 +1,132 @@
 {
+	"should work with {target: '.', query: {type: 'ANY'}, resolver: '8.8.8.8'}: payload": {
+		"command": "unbuffer dig -t ANY . @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -t ANY . \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.18.18-0ubuntu0.22.04.2-Ubuntu <<>> -t ANY . @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 44640\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 14, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 68 65 6d (\"gpdns-hem\")\n;; QUESTION SECTION:\n;.\t\t\t\tIN\tANY\n\n;; ANSWER SECTION:\n.\t\t\t15070\tIN\tNS\ta.root-servers.net.\n.\t\t\t15070\tIN\tNS\tb.root-servers.net.\n.\t\t\t15070\tIN\tNS\tc.root-servers.net.\n.\t\t\t15070\tIN\tNS\td.root-servers.net.\n.\t\t\t15070\tIN\tNS\te.root-servers.net.\n.\t\t\t15070\tIN\tNS\tf.root-servers.net.\n.\t\t\t15070\tIN\tNS\tg.root-servers.net.\n.\t\t\t15070\tIN\tNS\th.root-servers.net.\n.\t\t\t15070\tIN\tNS\ti.root-servers.net.\n.\t\t\t15070\tIN\tNS\tj.root-servers.net.\n.\t\t\t15070\tIN\tNS\tk.root-servers.net.\n.\t\t\t15070\tIN\tNS\tl.root-servers.net.\n.\t\t\t15070\tIN\tNS\tm.root-servers.net.\n.\t\t\t15070\tIN\tRRSIG\tNS 8 0 518400 20240410170000 20240328160000 30903 . XY2pZ3+Yhfv8fWzXr0ed40ZxJnUsniDzwqntUEF0jCTyfbq1lluUcBQrAv2BF/MUNm2WJw5dyz9V1B8SENYM5bcnyj5LfKLqMzF9jLydFSyNTghUmZuRme2cEbbR3vsR3/9bHO9oR1QDh5BRKZLqvzAXGt8rX/U7YJg/gAzst9OCsEDXlfGgn9GcwP5RIgBGj9vCAD3a5+PvRUf/mhHSPDd7p3KONCigm3ye+02Pjd/5gC0eNCOJcMGCzBJ+O+G3tnQ4S6J17Z1nex5adRL21pwUOVjDAGsZME+w3A2/uqhSy1gVj3vda1URGZTffWWqb5910MQqHNpp1x1Ay1BTkA==\n\n;; Query time: 0 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8) (TCP)\n;; WHEN: Fri Mar 29 14:13:13 UTC 2024\n;; MSG SIZE  rcvd: 538\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: '.', query: {type: 'ANY'}, resolver: '8.8.8.8'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"rawOutput": "\n; <<>> DiG 9.18.18-0ubuntu0.22.04.2-Ubuntu <<>> -t ANY . @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 44640\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 14, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 68 65 6d (\"gpdns-hem\")\n;; QUESTION SECTION:\n;.\t\t\t\tIN\tANY\n\n;; ANSWER SECTION:\n.\t\t\t15070\tIN\tNS\ta.root-servers.net.\n.\t\t\t15070\tIN\tNS\tb.root-servers.net.\n.\t\t\t15070\tIN\tNS\tc.root-servers.net.\n.\t\t\t15070\tIN\tNS\td.root-servers.net.\n.\t\t\t15070\tIN\tNS\te.root-servers.net.\n.\t\t\t15070\tIN\tNS\tf.root-servers.net.\n.\t\t\t15070\tIN\tNS\tg.root-servers.net.\n.\t\t\t15070\tIN\tNS\th.root-servers.net.\n.\t\t\t15070\tIN\tNS\ti.root-servers.net.\n.\t\t\t15070\tIN\tNS\tj.root-servers.net.\n.\t\t\t15070\tIN\tNS\tk.root-servers.net.\n.\t\t\t15070\tIN\tNS\tl.root-servers.net.\n.\t\t\t15070\tIN\tNS\tm.root-servers.net.\n.\t\t\t15070\tIN\tRRSIG\tNS 8 0 518400 20240410170000 20240328160000 30903 . XY2pZ3+Yhfv8fWzXr0ed40ZxJnUsniDzwqntUEF0jCTyfbq1lluUcBQrAv2BF/MUNm2WJw5dyz9V1B8SENYM5bcnyj5LfKLqMzF9jLydFSyNTghUmZuRme2cEbbR3vsR3/9bHO9oR1QDh5BRKZLqvzAXGt8rX/U7YJg/gAzst9OCsEDXlfGgn9GcwP5RIgBGj9vCAD3a5+PvRUf/mhHSPDd7p3KONCigm3ye+02Pjd/5gC0eNCOJcMGCzBJ+O+G3tnQ4S6J17Z1nex5adRL21pwUOVjDAGsZME+w3A2/uqhSy1gVj3vda1URGZTffWWqb5910MQqHNpp1x1Ay1BTkA==\n\n;; Query time: 0 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8) (TCP)\n;; WHEN: Fri Mar 29 14:13:13 UTC 2024\n;; MSG SIZE  rcvd: 538\n",
+				"answers": [
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 15070,
+						"class": "IN",
+						"value": "a.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 15070,
+						"class": "IN",
+						"value": "b.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 15070,
+						"class": "IN",
+						"value": "c.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 15070,
+						"class": "IN",
+						"value": "d.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 15070,
+						"class": "IN",
+						"value": "e.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 15070,
+						"class": "IN",
+						"value": "f.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 15070,
+						"class": "IN",
+						"value": "g.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 15070,
+						"class": "IN",
+						"value": "h.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 15070,
+						"class": "IN",
+						"value": "i.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 15070,
+						"class": "IN",
+						"value": "j.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 15070,
+						"class": "IN",
+						"value": "k.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 15070,
+						"class": "IN",
+						"value": "l.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 15070,
+						"class": "IN",
+						"value": "m.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "RRSIG",
+						"ttl": 15070,
+						"class": "IN",
+						"value": "NS 8 0 518400 20240410170000 20240328160000 30903 . XY2pZ3+Yhfv8fWzXr0ed40ZxJnUsniDzwqntUEF0jCTyfbq1lluUcBQrAv2BF/MUNm2WJw5dyz9V1B8SENYM5bcnyj5LfKLqMzF9jLydFSyNTghUmZuRme2cEbbR3vsR3/9bHO9oR1QDh5BRKZLqvzAXGt8rX/U7YJg/gAzst9OCsEDXlfGgn9GcwP5RIgBGj9vCAD3a5+PvRUf/mhHSPDd7p3KONCigm3ye+02Pjd/5gC0eNCOJcMGCzBJ+O+G3tnQ4S6J17Z1nex5adRL21pwUOVjDAGsZME+w3A2/uqhSy1gVj3vda1URGZTffWWqb5910MQqHNpp1x1Ay1BTkA=="
+					}
+				],
+				"timings": {
+					"total": 0
+				},
+				"resolver": "TCP"
+			}
+		}
+	],
 	"should work with {target: '1.1.1.1', query: {type: 'PTR'}, resolver: '8.8.8.8'}: payload": {
 		"command": "unbuffer dig -x 1.1.1.1 @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
 		"escapedCommand": "unbuffer dig -x 1.1.1.1 \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
@@ -107,6 +235,183 @@
 					"total": 20
 				},
 				"resolver": "8.8.8.8"
+			}
+		}
+	],
+	"should work with {target: 'com', query: {type: 'ANY'}, resolver: '8.8.8.8'}: payload": {
+		"command": "unbuffer dig -t ANY com @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -t ANY com \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.18.18-0ubuntu0.22.04.2-Ubuntu <<>> -t ANY com @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 59746\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 21, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 68 65 6d (\"gpdns-hem\")\n;; QUESTION SECTION:\n;com.\t\t\t\tIN\tANY\n\n;; ANSWER SECTION:\ncom.\t\t\t900\tIN\tSOA\ta.gtld-servers.net. nstld.verisign-grs.com. 1711721573 1800 900 604800 86400\ncom.\t\t\t900\tIN\tRRSIG\tSOA 13 1 900 20240405141253 20240329130253 4534 com. VBJQHfJkV2trLEb9R8FQmORbiXmkTvh8TF1DtRejoVea9D/28IyK3B1S0F/7gw0Lji4e2Knc6XVB9xMzBT1xSQ==\ncom.\t\t\t21600\tIN\tNS\tc.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\tf.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\tj.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\tk.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\th.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\tg.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\tl.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\ta.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\td.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\tm.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\ti.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\te.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\tb.gtld-servers.net.\ncom.\t\t\t21600\tIN\tRRSIG\tNS 13 1 172800 20240403042457 20240327031457 4534 com. BTthlIO4wotddrVE6K6IKlLYizK4q2lqjRXEwaBMuGT3ay183goxYEDJgY6fgL0dplgSEeihnqIP4Aihf/7Onw==\ncom.\t\t\t21600\tIN\tDNSKEY\t256 3 13 5i9qjJgyH+9MBz7VO269/srLQB/xRRllyUoVq8oLBZshPe4CGzDSFGnXAM3L/QPzB9ULpJuuy7jcxmBZ5Ebo7A==\ncom.\t\t\t21600\tIN\tDNSKEY\t257 3 13 tx8EZRAd2+K/DJRV0S+hbBzaRPS/G6JVNBitHzqpsGlz8huE61Ms9ANe6NSDLKJtiTBqfTJWDAywEp1FCsEINQ==\ncom.\t\t\t21600\tIN\tRRSIG\tDNSKEY 13 1 86400 20240412140235 20240328135735 19718 com. pdvNVFw7YYg074DdzOpmfqwkcJ6GfsUCXcHWu7SJ1PQ87PsL/Zx1Fvxi9zzIW730C+7+zn1Htaeg/X6c3yJVrg==\ncom.\t\t\t21600\tIN\tNSEC3PARAM 1 0 0 -\ncom.\t\t\t21600\tIN\tRRSIG\tNSEC3PARAM 13 1 86400 20240403042457 20240327031457 4534 com. AWXEeJpPUZ0lUqG+MBmKm6C5aHeJthc55eR5Y5nybJ071AcJj7Kcws/0IwdjckE3mwUoYt4kV4AbN7RJiP2URg==\n\n;; Query time: 119 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8) (TCP)\n;; WHEN: Fri Mar 29 14:13:13 UTC 2024\n;; MSG SIZE  rcvd: 897\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: 'com', query: {type: 'ANY'}, resolver: '8.8.8.8'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"rawOutput": "\n; <<>> DiG 9.18.18-0ubuntu0.22.04.2-Ubuntu <<>> -t ANY com @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 59746\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 21, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 512\n; NSID: 67 70 64 6e 73 2d 68 65 6d (\"gpdns-hem\")\n;; QUESTION SECTION:\n;com.\t\t\t\tIN\tANY\n\n;; ANSWER SECTION:\ncom.\t\t\t900\tIN\tSOA\ta.gtld-servers.net. nstld.verisign-grs.com. 1711721573 1800 900 604800 86400\ncom.\t\t\t900\tIN\tRRSIG\tSOA 13 1 900 20240405141253 20240329130253 4534 com. VBJQHfJkV2trLEb9R8FQmORbiXmkTvh8TF1DtRejoVea9D/28IyK3B1S0F/7gw0Lji4e2Knc6XVB9xMzBT1xSQ==\ncom.\t\t\t21600\tIN\tNS\tc.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\tf.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\tj.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\tk.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\th.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\tg.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\tl.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\ta.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\td.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\tm.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\ti.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\te.gtld-servers.net.\ncom.\t\t\t21600\tIN\tNS\tb.gtld-servers.net.\ncom.\t\t\t21600\tIN\tRRSIG\tNS 13 1 172800 20240403042457 20240327031457 4534 com. BTthlIO4wotddrVE6K6IKlLYizK4q2lqjRXEwaBMuGT3ay183goxYEDJgY6fgL0dplgSEeihnqIP4Aihf/7Onw==\ncom.\t\t\t21600\tIN\tDNSKEY\t256 3 13 5i9qjJgyH+9MBz7VO269/srLQB/xRRllyUoVq8oLBZshPe4CGzDSFGnXAM3L/QPzB9ULpJuuy7jcxmBZ5Ebo7A==\ncom.\t\t\t21600\tIN\tDNSKEY\t257 3 13 tx8EZRAd2+K/DJRV0S+hbBzaRPS/G6JVNBitHzqpsGlz8huE61Ms9ANe6NSDLKJtiTBqfTJWDAywEp1FCsEINQ==\ncom.\t\t\t21600\tIN\tRRSIG\tDNSKEY 13 1 86400 20240412140235 20240328135735 19718 com. pdvNVFw7YYg074DdzOpmfqwkcJ6GfsUCXcHWu7SJ1PQ87PsL/Zx1Fvxi9zzIW730C+7+zn1Htaeg/X6c3yJVrg==\ncom.\t\t\t21600\tIN\tNSEC3PARAM 1 0 0 -\ncom.\t\t\t21600\tIN\tRRSIG\tNSEC3PARAM 13 1 86400 20240403042457 20240327031457 4534 com. AWXEeJpPUZ0lUqG+MBmKm6C5aHeJthc55eR5Y5nybJ071AcJj7Kcws/0IwdjckE3mwUoYt4kV4AbN7RJiP2URg==\n\n;; Query time: 119 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8) (TCP)\n;; WHEN: Fri Mar 29 14:13:13 UTC 2024\n;; MSG SIZE  rcvd: 897\n",
+				"answers": [
+					{
+						"name": "com.",
+						"type": "SOA",
+						"ttl": 900,
+						"class": "IN",
+						"value": "a.gtld-servers.net. nstld.verisign-grs.com. 1711721573 1800 900 604800 86400"
+					},
+					{
+						"name": "com.",
+						"type": "RRSIG",
+						"ttl": 900,
+						"class": "IN",
+						"value": "SOA 13 1 900 20240405141253 20240329130253 4534 com. VBJQHfJkV2trLEb9R8FQmORbiXmkTvh8TF1DtRejoVea9D/28IyK3B1S0F/7gw0Lji4e2Knc6XVB9xMzBT1xSQ=="
+					},
+					{
+						"name": "com.",
+						"type": "NS",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "c.gtld-servers.net."
+					},
+					{
+						"name": "com.",
+						"type": "NS",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "f.gtld-servers.net."
+					},
+					{
+						"name": "com.",
+						"type": "NS",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "j.gtld-servers.net."
+					},
+					{
+						"name": "com.",
+						"type": "NS",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "k.gtld-servers.net."
+					},
+					{
+						"name": "com.",
+						"type": "NS",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "h.gtld-servers.net."
+					},
+					{
+						"name": "com.",
+						"type": "NS",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "g.gtld-servers.net."
+					},
+					{
+						"name": "com.",
+						"type": "NS",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "l.gtld-servers.net."
+					},
+					{
+						"name": "com.",
+						"type": "NS",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "a.gtld-servers.net."
+					},
+					{
+						"name": "com.",
+						"type": "NS",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "d.gtld-servers.net."
+					},
+					{
+						"name": "com.",
+						"type": "NS",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "m.gtld-servers.net."
+					},
+					{
+						"name": "com.",
+						"type": "NS",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "i.gtld-servers.net."
+					},
+					{
+						"name": "com.",
+						"type": "NS",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "e.gtld-servers.net."
+					},
+					{
+						"name": "com.",
+						"type": "NS",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "b.gtld-servers.net."
+					},
+					{
+						"name": "com.",
+						"type": "RRSIG",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "NS 13 1 172800 20240403042457 20240327031457 4534 com. BTthlIO4wotddrVE6K6IKlLYizK4q2lqjRXEwaBMuGT3ay183goxYEDJgY6fgL0dplgSEeihnqIP4Aihf/7Onw=="
+					},
+					{
+						"name": "com.",
+						"type": "DNSKEY",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "256 3 13 5i9qjJgyH+9MBz7VO269/srLQB/xRRllyUoVq8oLBZshPe4CGzDSFGnXAM3L/QPzB9ULpJuuy7jcxmBZ5Ebo7A=="
+					},
+					{
+						"name": "com.",
+						"type": "DNSKEY",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "257 3 13 tx8EZRAd2+K/DJRV0S+hbBzaRPS/G6JVNBitHzqpsGlz8huE61Ms9ANe6NSDLKJtiTBqfTJWDAywEp1FCsEINQ=="
+					},
+					{
+						"name": "com.",
+						"type": "RRSIG",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "DNSKEY 13 1 86400 20240412140235 20240328135735 19718 com. pdvNVFw7YYg074DdzOpmfqwkcJ6GfsUCXcHWu7SJ1PQ87PsL/Zx1Fvxi9zzIW730C+7+zn1Htaeg/X6c3yJVrg=="
+					},
+					{
+						"name": "com.",
+						"type": "NSEC3PARAM",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "1 0 0 -"
+					},
+					{
+						"name": "com.",
+						"type": "RRSIG",
+						"ttl": 21600,
+						"class": "IN",
+						"value": "NSEC3PARAM 13 1 86400 20240403042457 20240327031457 4534 com. AWXEeJpPUZ0lUqG+MBmKm6C5aHeJthc55eR5Y5nybJ071AcJj7Kcws/0IwdjckE3mwUoYt4kV4AbN7RJiP2URg=="
+					}
+				],
+				"timings": {
+					"total": 119
+				},
+				"resolver": "TCP"
 			}
 		}
 	],
