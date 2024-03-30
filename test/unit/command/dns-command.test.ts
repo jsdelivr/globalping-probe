@@ -750,5 +750,17 @@ describe('dns command', () => {
 			query: [{ type: 'ANY' }],
 			resolver: [ '1.1.1.1', '8.8.8.8', 'a.root-servers.net' ],
 		});
+
+		makeSnapshotTests(tester, {
+			target: '.',
+			query: [{ type: 'ANY' }],
+			resolver: '8.8.8.8',
+		});
+
+		makeSnapshotTests(tester, {
+			target: 'com',
+			query: [{ type: 'ANY' }],
+			resolver: '8.8.8.8',
+		});
 	});
 });
