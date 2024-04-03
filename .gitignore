@@ -4,5 +4,7 @@
 node_modules/
 coverage/
 dist/
+test/e2e/globalping/
 config/local*
+config/e2e-api-local*
 .eslintcache
