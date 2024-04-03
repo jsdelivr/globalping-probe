@@ -1,16 +1,45 @@
-name: Run tests
+name: Test code
 
 on:
   workflow_call: {}
 
 jobs:
   test:
-    name: Build and test
-    runs-on: self-hosted
+    name: Run tests
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [ 16.x, 18.x, 20.x ]
-    
+
+    env:
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: install and build
+        run: |
+          sudo apt-get update
+          sudo apt-get install expect
+          npm ci && npm run build
+      - name: lint and test
+        run: |
+          npm run lint
+          npm run coverage
+      - name: test dist
+        run: |
+          rm -rf node_modules
+          npm ci --omit=dev
+          npm run test:dist
+  e2etest:
+    name: Run e2e tests
+    runs-on: self-hosted
+    strategy:
+      matrix:
+        node-version: [ 20.x ]
+
     env:
       NODE_ENV: test
 
@@ -48,15 +77,6 @@ jobs:
       - name: install and build
         run: |
           npm ci && npm run build
-      - name: lint and test
-        run: |
-          npm run lint
-          npm run coverage
       - name: e2e tests
         run: |
           npm run test:e2e
-      - name: test dist
-        run: |
-          rm -rf node_modules
-          npm ci --omit=dev
-          npm run test:dist

@@ -5,6 +5,7 @@ on:
 
 jobs:
   test:
+    name: Test code
     uses: ./.github/workflows/_tests.yaml
 
   release:

@@ -1,4 +1,4 @@
-name: Run tests
+name: CI
 
 on:
   push:
@@ -8,8 +8,10 @@ on:
 
 jobs:
   test-code:
+    name: Test code
     uses: ./.github/workflows/_tests.yaml
   test-docker:
+    name: Test docker
     uses: ./.github/workflows/_docker.yaml
     with:
       ref: ${{ github.ref }}
