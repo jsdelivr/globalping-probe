@@ -2,12 +2,12 @@ FROM node:18.19.1-bullseye-slim AS builder
 
 WORKDIR /app
 
+COPY package.json package-lock.json tsconfig.json /app/
+RUN npm ci --include=dev
 COPY src /app/src
 COPY config /app/config
 COPY @types /app/@types
-COPY package.json package-lock.json tsconfig.json /app/
-
-RUN npm install && npm run build
+RUN npm run build
 
 FROM node:18.19.1-bullseye-slim
 
