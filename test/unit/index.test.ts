@@ -90,7 +90,7 @@ describe('index module', () => {
 
 	it('should load unbuffer and ignore measurement requests until get location data', async () => {
 		statusManagerStub.getStatus.returns('initializing');
-		await import('../../src/index.js');
+		await import('../../src/probe.js');
 		mockSocket.emit('connect');
 		await sandbox.clock.nextAsync();
 
@@ -103,7 +103,7 @@ describe('index module', () => {
 	});
 
 	it('should initialize and connect to the API server', async () => {
-		await import('../../src/index.js');
+		await import('../../src/probe.js');
 		mockSocket.emit('connect');
 		mockSocket.emit('api:connect:location', fakeLocation);
 
@@ -133,7 +133,7 @@ describe('index module', () => {
 	it('should disconnect on "connect_error"', async () => {
 		const exitStub = sandbox.stub(process, 'exit');
 
-		await import('../../src/index.js');
+		await import('../../src/probe.js');
 		mockSocket.emit('connect_error', new Error());
 		mockSocket.emit('connect_error', { message: 'failed to collect probe metadata' });
 		mockSocket.emit('connect_error', { message: 'vpn detected' });
@@ -145,14 +145,14 @@ describe('index module', () => {
 	it('should exit on "connect_error" for invalid probe version', async () => {
 		const exitStub = sandbox.stub(process, 'exit');
 
-		await import('../../src/index.js');
+		await import('../../src/probe.js');
 		mockSocket.emit('connect_error', { message: 'invalid probe version' });
 
 		expect(exitStub.calledOnce).to.be.true;
 	});
 
 	it('should start measurement request', async () => {
-		await import('../../src/index.js');
+		await import('../../src/probe.js');
 		mockSocket.emit('connect');
 		mockSocket.emit('api:connect:location', fakeLocation);
 		await sandbox.clock.nextAsync();
@@ -170,7 +170,7 @@ describe('index module', () => {
 	});
 
 	it('should reconnect on "disconnect" event from API', async () => {
-		await import('../../src/index.js');
+		await import('../../src/probe.js');
 
 		mockSocket.emit('disconnect');
 		expect(connectStub.notCalled).to.be.true;
@@ -179,7 +179,7 @@ describe('index module', () => {
 	});
 
 	it('should reconnect after 1 hour delay on "probe" type errors', async () => {
-		await import('../../src/index.js');
+		await import('../../src/probe.js');
 
 		mockSocket.emit('connect_error', new Error('ip limit'));
 		mockSocket.emit('connect_error', new Error('vpn detected'));
@@ -192,7 +192,7 @@ describe('index module', () => {
 	});
 
 	it('should reconnect after 1 minute delay on "api" type errors', async () => {
-		await import('../../src/index.js');
+		await import('../../src/probe.js');
 
 		mockSocket.emit('connect_error', new Error('failed to collect probe metadata'));
 
@@ -203,7 +203,7 @@ describe('index module', () => {
 	});
 
 	it('should reconnect after 1 second delay on "connect_error" with other messages', async () => {
-		await import('../../src/index.js');
+		await import('../../src/probe.js');
 
 		mockSocket.emit('connect_error', new Error('some message'));
 
@@ -214,7 +214,7 @@ describe('index module', () => {
 
 	it('should exit on SIGTERM if there are no active measurements', async () => {
 		const exitStub = sandbox.stub(process, 'exit');
-		await import('../../src/index.js');
+		await import('../../src/probe.js');
 
 		process.once('SIGTERM', () => {
 			sandbox.clock.tick(150);
@@ -228,7 +228,7 @@ describe('index module', () => {
 
 	it('should exit on SIGTERM if there are active measurements', async () => {
 		const exitStub = sandbox.stub(process, 'exit');
-		await import('../../src/index.js');
+		await import('../../src/probe.js');
 		mockSocket.emit('connect');
 		mockSocket.emit('probe:measurement:request', { id: '123', measurement: { type: 'ping' } });
 
@@ -245,7 +245,7 @@ describe('index module', () => {
 	it('should exit on "probe:sigkill" event', async () => {
 		const exitStub = sandbox.stub(process, 'exit');
 
-		await import('../../src/index.js');
+		await import('../../src/probe.js');
 		mockSocket.emit('probe:sigkill');
 
 		expect(exitStub.calledOnce).to.be.true;
