@@ -12,6 +12,6 @@
 		"./test/hooks.ts"
 	],
 	"spec": [
-		"test/**/*.test.ts"
+		"test/unit/**/*.test.ts"
 	]
 }

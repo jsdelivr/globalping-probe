@@ -1,4 +1,5 @@
 /* eslint-disable quote-props */
+import config from 'config';
 import process from 'node:process';
 import { expect } from 'chai';
 import * as td from 'testdouble';
@@ -109,7 +110,7 @@ describe('index module', () => {
 		await sandbox.clock.nextAsync();
 
 		expect(ioStub.calledOnce).to.be.true;
-		expect(ioStub.firstCall.args[0]).to.equal('ws://api.globalping.io/probes');
+		expect(ioStub.firstCall.args[0]).to.equal(`${config.get('api.host')}/probes`);
 
 		expect(ioStub.firstCall.args[1]).to.deep.include({
 			transports: [ 'websocket' ],
