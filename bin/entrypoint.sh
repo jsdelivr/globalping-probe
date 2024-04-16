@@ -3,38 +3,58 @@
 update-ca-certificates
 
 function run_probe() {
-  node /app/dist/index.js
-  return
+	node /app/dist/index.js
+	return
 }
 
-echo "Checking for the latest version"
+function try_update() {
+	echo "Checking for the latest version"
 
-response=$(curl -XGET -s "https://api.github.com/repos/jsdelivr/globalping-probe/releases/latest")
-latestVersion=$(jq -r ".tag_name" <<<"${response}" | sed 's/v//')
-latestBundle=$(jq -r ".assets[] .browser_download_url" <<<"${response}")
+	response=$(curl -XGET -Lf -sS "https://api.github.com/repos/jsdelivr/globalping-probe/releases/latest")
 
-currentVersion=$(jq -r ".version" "/app/package.json")
+	if [ $? != 0 ]; then
+		echo "Failed to fetch the latest version data"
+		return
+	fi
 
-echo "Current version $currentVersion"
-echo "Latest version $latestVersion"
+	latestVersion=$(jq -r ".tag_name" <<<"${response}" | sed 's/v//')
+	latestBundle=$(jq -r ".assets[] .browser_download_url" <<<"${response}")
 
-if [ "$(printf '%s\n' "$latestVersion" "$currentVersion" | sort -V | head -n1)" != "$latestVersion" ]; then
-  if [ "$latestVersion" != "$currentVersion" ]; then
-    loadedTarball="globalping-probe-${latestVersion}"
+	currentVersion=$(jq -r ".version" "/app/package.json")
 
-    echo "Start self-update process"
+	echo "Current version $currentVersion"
+	echo "Latest version $latestVersion"
 
-    curl -Ls -XGET "${latestBundle}" -o "/tmp/${loadedTarball}.tar.gz"
-    tar -xzf "/tmp/${loadedTarball}.tar.gz" --one-top-level="/tmp/${loadedTarball}"
+	if [ "$(printf '%s\n' "$latestVersion" "$currentVersion" | sort -V | head -n1)" != "$latestVersion" ]; then
+		if [ "$latestVersion" != "$currentVersion" ]; then
+			loadedTarball="globalping-probe-${latestVersion}"
 
-    rm -rf "/app"
-    mv "/tmp/${loadedTarball}" "/app"
-    cd "/app" || exit
+			echo "Start self-update process"
 
-    rm -rf "/tmp/${loadedTarball}.tar.gz"
+			curl -XGET -Lf -sS "${latestBundle}" -o "/tmp/${loadedTarball}.tar.gz"
 
-    echo "Self-update finished"
-  fi
-fi
+			if [ $? != 0 ]; then
+				echo "Failed to fetch the release tarball"
+				return
+			fi
 
+			tar -xzf "/tmp/${loadedTarball}.tar.gz" --one-top-level="/tmp/${loadedTarball}"
+
+			if [ $? != 0 ]; then
+				echo "Failed to extract the release tarball"
+				return
+			fi
+
+			rm -rf "/app"
+			mv "/tmp/${loadedTarball}" "/app"
+			cd "/app" || exit
+
+			rm -rf "/tmp/${loadedTarball}.tar.gz"
+
+			echo "Self-update finished"
+		fi
+	fi
+}
+
+try_update
 run_probe
