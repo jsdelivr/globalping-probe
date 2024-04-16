@@ -17,10 +17,7 @@ ENV NODE_ENV=$node_env
 
 WORKDIR /app
 
-COPY --from=builder /app/dist /app/dist
-COPY --from=builder /app/config /app/config
 COPY --from=builder /app/package.json /app/package-lock.json /app/
-COPY bin/entrypoint.sh /entrypoint.sh
 
 RUN apt-get update -y && apt-get install --no-install-recommends -y expect ca-certificates iputils-ping traceroute dnsutils jq tini mtr curl \
     && apt-get clean && apt-get autoremove -y \
@@ -30,6 +27,10 @@ RUN apt-get update -y && apt-get install --no-install-recommends -y expect ca-ce
     && rm -rf /opt /root/.npm /usr/share/man /usr/lib/arm-linux-gnueabihf/perl-base /usr/include /usr/local/include /usr/local/lib/node_modules/npm/docs \
     && rm -rf /tmp/v8-compile-cache-0 /sbin/debugfs /sbin/e2fsck /sbin/ldconfig /usr/bin/perl* \
     && cd /app && npm install npm@10.5.2 -g && npm install --omit=dev --omit=optional
+
+COPY --from=builder /app/dist /app/dist
+COPY --from=builder /app/config /app/config
+COPY bin/entrypoint.sh /entrypoint.sh
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
