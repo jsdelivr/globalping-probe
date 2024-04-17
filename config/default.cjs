@@ -3,7 +3,7 @@ module.exports = {
 		host: 'ws://api.globalping.io',
 	},
 	update: {
-		releaseUrl: 'https://api.github.com/repos/jsdelivr/globalping-probe/releases/latest',
+		releaseUrl: 'https://data.jsdelivr.com/v1/packages/gh/jsdelivr/globalping-probe/resolved',
 		interval: 300,
 		maxDeviation: 300,
 	},
