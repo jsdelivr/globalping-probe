@@ -13,7 +13,7 @@ module.exports = {
 			npmPublish: false,
 		}],
 		[ '@semantic-release/exec', {
-			prepareCmd: 'tar -czf globalping-probe.bundle.tar.gz dist/ config/ node_modules/ package.json',
+			prepareCmd: 'tar -czf globalping-probe.bundle.tar.gz bin/ dist/ config/ node_modules/ package.json',
 		}],
 		[ '@semantic-release/git', {
 			assets: [ 'package.json', 'package-lock.json' ],
