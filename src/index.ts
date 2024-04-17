@@ -1,10 +1,34 @@
-import { execSync } from 'node:child_process';
 import os from 'node:os';
+import path from 'node:path';
+import * as fs from 'node:fs';
+import { execSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const WANTED_VERSION = 'v18.19.1';
 const MIN_NODE_UPDATE_MEMORY = 1e9;
+const dirname = path.dirname(fileURLToPath(import.meta.url));
 
-function update () {
+function updateEntrypoint () {
+	const currentEntrypointPath = path.join(dirname, '../../entrypoint.sh');
+	const newEntrypointPath = path.join(dirname, '../bin/entrypoint.sh');
+
+	if (!fs.existsSync(currentEntrypointPath) || !fs.existsSync(newEntrypointPath)) {
+		return;
+	}
+
+	const currentEntrypoint = fs.readFileSync(currentEntrypointPath, 'utf8');
+	const newEntrypoint = fs.readFileSync(newEntrypointPath, 'utf8');
+
+	if (currentEntrypoint === newEntrypoint) {
+		return;
+	}
+
+	console.log('Entrypoint change detected. Updating and restarting.');
+	fs.writeFileSync(currentEntrypointPath, `cp ${newEntrypointPath} ${currentEntrypointPath} && exit\n`);
+	process.exit(0);
+}
+
+function updateNode () {
 	console.log(`[${new Date().toISOString()}] Current node.js version ${process.version}`);
 	console.log(`[${new Date().toISOString()}] Wanted node.js version ${WANTED_VERSION}`);
 
@@ -34,5 +58,6 @@ function update () {
 	}
 }
 
-update();
+updateEntrypoint();
+updateNode();
 import('./probe.js');
