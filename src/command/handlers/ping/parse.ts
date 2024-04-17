@@ -53,7 +53,7 @@ export default function parse (rawOutput: string): PingParseOutput {
 }
 
 function parseStatsLine (line: string): PingTimings | undefined {
-	const parsed = /^\d+ bytes from (?<host>.*) .*: (?:icmp_)?seq=\d+ ttl=(?<ttl>\d+) time=(?<time>\d*(?:\.\d+)?) ms/.exec(line);
+	const parsed = /^\d+ bytes from (?<host>.*?)( \(.*\))?: (?:icmp_)?seq=\d+ ttl=(?<ttl>\d+) time=(?<time>\d*(?:\.\d+)?) ms/.exec(line);
 
 	if (!parsed?.groups) {
 		return;
