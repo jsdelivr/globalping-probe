@@ -52,7 +52,6 @@ jobs:
         with:
           context: .
           platforms: linux/amd64,linux/arm,linux/arm64,
-          provenance: false
           push: ${{ inputs.publish }}
           tags: ${{ steps.meta1.outputs.tags }}
           labels: ${{ steps.meta1.outputs.labels }}
@@ -78,7 +77,6 @@ jobs:
         with:
           context: .
           platforms: linux/amd64,linux/arm,linux/arm64,
-          provenance: false
           push: ${{ inputs.publish }}
           tags: ${{ steps.meta2.outputs.tags }}
           labels: ${{ steps.meta2.outputs.labels }}
