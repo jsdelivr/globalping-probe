@@ -36,7 +36,7 @@ describe('updater module', () => {
 		await sandbox.clock.tickAsync(650 * 1000);
 
 		expect(gotStub.firstCall.args).to.deep.equal([
-			'https://api.github.com/repos/jsdelivr/globalping-probe/releases/latest',
+			'https://data.jsdelivr.com/v1/packages/gh/jsdelivr/globalping-probe/resolved',
 			{ timeout: { request: 15_000 } },
 		]);
 

@@ -23,6 +23,11 @@ function updateEntrypoint () {
 		return;
 	}
 
+	// Changing the script while it's running might result in unexpected behavior
+	// as bash continues reading the (changed) file from the original byte offset.
+	// By replacing the file with just one command here, we cause the execution
+	// to stop (the new file is shorter than the current offset), and we copy
+	// the update after the restart (and then restart again for the same reason).
 	console.log('Entrypoint change detected. Updating and restarting.');
 	fs.writeFileSync(currentEntrypointPath, `cp ${newEntrypointPath} ${currentEntrypointPath} && exit\n`);
 	process.exit(0);
