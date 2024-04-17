@@ -82,7 +82,7 @@ describe('ping command executor', () => {
 			sandbox.reset();
 		});
 
-		const successfulCommands = [ 'ping-success-linux' ];
+		const successfulCommands = [ 'ping-success-linux', 'ping-no-source-ip-linux' ];
 
 		for (const command of successfulCommands) {
 			it(`should run and parse successful commands - ${command}`, async () => {
