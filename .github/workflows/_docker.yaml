@@ -1,5 +1,3 @@
-name: Publish Docker image
-
 on:
   workflow_call:
     inputs:
