@@ -1,6 +1,6 @@
 module.exports = {
 	redis: {
-		url: 'redis://localhost:6379',
+		url: 'redis://localhost:16379',
 		socket: {
 			tls: false,
 		},
@@ -11,7 +11,7 @@ module.exports = {
 			user: 'directus',
 			password: 'password',
 			database: 'directus-test',
-			port: 3306,
+			port: 13306,
 			multipleStatements: true,
 		},
 	},
