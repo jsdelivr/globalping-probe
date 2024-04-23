@@ -4,6 +4,8 @@ import * as fs from 'node:fs';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
+import { isV1HardwareDevice } from './lib/util.js';
+
 const WANTED_VERSION = 'v18.19.1';
 const MIN_NODE_UPDATE_MEMORY = 1e9;
 const dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -43,6 +45,13 @@ function updateNode () {
 
 	if (os.totalmem() < MIN_NODE_UPDATE_MEMORY) {
 		console.log(`Total system memory ${os.totalmem()} below the required threshold. Not updating.`);
+
+		if (isV1HardwareDevice() || process.env['GP_HOST_HW']) {
+			logUpdateFirmwareMessage();
+		} else {
+			logUpdateContainerMessage();
+		}
+
 		return;
 	}
 
@@ -61,6 +70,33 @@ function updateNode () {
 		console.error(`Failed to update node.js:`);
 		console.error(e);
 	}
+}
+
+function logUpdateFirmwareMessage () {
+	console.log(`
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@     WARNING: PROBE FIRMWARE OUTDATED, PLEASE UPDATE     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+Current probe firmware is out of date and we couldn't update it automatically.
+Please update it manually using the guide from GitHub:
+https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware
+	`);
+
+	setTimeout(logUpdateFirmwareMessage, 10 * 60 * 1000);
+}
+
+function logUpdateContainerMessage () {
+	console.log(`
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@     WARNING: PROBE CONTAINER OUTDATED, PLEASE UPDATE    @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+Current probe container is out of date and we couldn't update it automatically.
+Please either:
+- update it manually: https://github.com/jsdelivr/globalping-probe#optional-container-update
+- increase container RAM to >1GB
+	`);
+
+	setTimeout(logUpdateContainerMessage, 10 * 60 * 1000);
 }
 
 updateEntrypoint();
