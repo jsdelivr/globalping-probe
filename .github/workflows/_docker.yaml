@@ -17,7 +17,7 @@ on:
 jobs:
   publish:
     name: Publish Docker image
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     permissions:
       contents: read
