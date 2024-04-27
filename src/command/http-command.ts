@@ -51,6 +51,8 @@ type Cert = {
 	nistCurve?: string;
 	modulus?: string;
 	exponent?: string;
+	serialNumber: string;
+	bits?: number;
 };
 
 type Output = {
@@ -399,11 +401,11 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 					...cert.subject,
 					alt: cert.subjectaltname,
 				},
-				publicKeyType: cert.asn1Curve || cert.nistCurve ? 'ECC' : cert.modulus || cert.exponent ? 'RSA' : null,
-				publicKey: cert.pubkey ? cert.pubkey.toString('hex').toUpperCase().match(/.{1,2}/g)!.join(':') : null,
-				fingerprint: cert.fingerprint,
+				keyType: cert.asn1Curve || cert.nistCurve ? 'EC' : cert.modulus || cert.exponent ? 'RSA' : null,
+				keyBits: cert.bits || null,
+				serialNumber: cert.serialNumber.match(/.{2}/g)!.join(':'),
 				fingerprint256: cert.fingerprint256,
-				fingerprint512: cert.fingerprint512,
+				publicKey: cert.pubkey ? cert.pubkey.toString('hex').toUpperCase().match(/.{2}/g)!.join(':') : null,
 			};
 		}
 
