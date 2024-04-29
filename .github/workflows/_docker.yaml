@@ -58,7 +58,7 @@ jobs:
           build-args: |
             node_env=production
           cache-from: type=local,src=/home/docker/nfs-cache
-          cache-to: type=local,src=/home/docker/nfs-cache
+          cache-to: type=local,dest=/home/docker/nfs-cache
 
       - name: Log to ghcr.io
         uses: docker/login-action@v3
@@ -85,4 +85,4 @@ jobs:
           build-args: |
             node_env=production
           cache-from: type=local,src=/home/docker/nfs-cache
-          cache-to: type=local,src=/home/docker/nfs-cache
+          cache-to: type=local,dest=/home/docker/nfs-cache
