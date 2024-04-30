@@ -13,7 +13,7 @@ module.exports = {
 			npmPublish: false,
 		}],
 		[ '@semantic-release/exec', {
-			prepareCmd: 'tar -czf globalping-probe.bundle.tar.gz bin/ dist/ config/ node_modules/ package.json',
+			prepareCmd: `mkdir -p node_modules/nvm/versions/node/v18.19.1/bin; echo 'set -e; export NVM_DIR=/app-nvm; mkdir -p $NVM_DIR; cp -r /app/node_modules/nvm/* $NVM_DIR; rm -rf $NVM_DIR/versions/node/; \\. $NVM_DIR/nvm.sh; nvm install v18.19.1; ln -sf $(nvm which v18.19.1) /usr/local/bin/node && exit' > node_modules/nvm/versions/node/v18.19.1/bin/node; chmod +x node_modules/nvm/versions/node/v18.19.1/bin/node; tar -czf globalping-probe.bundle.tar.gz bin/ dist/ config/ node_modules/ package.json`,
 		}],
 		[ '@semantic-release/git', {
 			assets: [ 'package.json', 'package-lock.json' ],
