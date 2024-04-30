@@ -30,7 +30,7 @@ describe('updater module', () => {
 	it('should check for an update and call process.exit if there is a newer version', async () => {
 		const killStub = sandbox.stub(process, 'kill');
 		await td.replaceEsm('../../../src/constants.ts', { ...constants, VERSION: '0.6.0' });
-		gotStub.returns({ json: async () => ({ tag_name: 'v0.7.0' }) });
+		gotStub.returns({ json: async () => ({ version: 'v0.7.0' }) });
 
 		await import('../../../src/lib/updater.js');
 		await sandbox.clock.tickAsync(650 * 1000);
@@ -46,7 +46,7 @@ describe('updater module', () => {
 	it('should check for an update and call do nothing if there is no newer version', async () => {
 		const killStub = sandbox.stub(process, 'kill');
 		await td.replaceEsm('../../../src/constants.ts', { ...constants, VERSION: '0.7.0' });
-		gotStub.returns({ json: async () => ({ tag_name: 'v0.7.0' }) });
+		gotStub.returns({ json: async () => ({ version: 'v0.7.0' }) });
 
 		await import('../../../src/lib/updater.js');
 		await sandbox.clock.tickAsync(650 * 1000);

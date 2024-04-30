@@ -6,7 +6,7 @@ import { VERSION } from '../constants.js';
 import { scopedLogger } from './logger.js';
 
 type ReleaseInfo = {
-	tag_name: string;
+	version: string;
 };
 
 const logger = scopedLogger('self-update');
@@ -15,7 +15,7 @@ const updateInterval = updateConfig.interval + _.random(0, updateConfig.maxDevia
 
 const checkForUpdates = () => {
 	got(updateConfig.releaseUrl, { timeout: { request: 15_000 } }).json<ReleaseInfo>().then((releaseInfo) => {
-		const latestVersion = releaseInfo.tag_name.replace(/^v/, '');
+		const latestVersion = releaseInfo.version.replace(/^v/, '');
 		const isUpdateAvailable = latestVersion.localeCompare(VERSION, undefined, { numeric: true, sensitivity: 'base' }) > 0;
 
 		if (!isUpdateAvailable) {
