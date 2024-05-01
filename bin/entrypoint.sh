@@ -18,6 +18,11 @@ function try_update() {
 	fi
 
 	latestVersion=$(jq -r ".version" <<<"${response}" | sed 's/v//')
+
+	if [ -f /app-dev/latest-version.txt ]; then
+		latestVersion=$(cat /app-dev/latest-version.txt)
+	fi
+
 	latestBundleA="https://cdn.jsdelivr.net/globalping-probe/v$latestVersion/globalping-probe.bundle.tar.gz"
 	latestBundleB="https://fastly.jsdelivr.net/globalping-probe/v$latestVersion/globalping-probe.bundle.tar.gz"
 
