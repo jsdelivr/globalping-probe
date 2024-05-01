@@ -56,13 +56,29 @@ function updateNode () {
 	}
 
 	try {
-		execSync(`\\. $NVM_DIR/nvm.sh && nvm install ${WANTED_VERSION}`, { env: { NVM_DIR: '/app/node_modules/nvm' }, stdio: 'inherit' });
+		const NODE_MODULES_NVM = '/app/node_modules/nvm';
+		const NVM_DIR = '/nvm';
 
-		const newNodePath = execSync(`\\. $NVM_DIR/nvm.sh && nvm which ${WANTED_VERSION}`, { env: { NVM_DIR: '/app/node_modules/nvm' } }).toString().trim();
+		// Copy nvm outside of node_modules so that we don't delete it during the next self-update.
+		execSync(`cp -r ${NODE_MODULES_NVM} /`);
+
+		// Install the requested version.
+		execSync(`\\. $NVM_DIR/nvm.sh && nvm install ${WANTED_VERSION} && nvm alias default ${WANTED_VERSION}`, { env: { NVM_DIR }, stdio: 'inherit' });
+
+		// Symlink the new version to the default location to make the change permanent.
+		const newNodePath = execSync(`\\. $NVM_DIR/nvm.sh && nvm which ${WANTED_VERSION}`, { env: { NVM_DIR } }).toString().trim();
 		const oldNodePath = execSync('which node').toString().trim();
 
 		console.log(`[${new Date().toISOString()}] Linking "${oldNodePath.trim()}" -> "${newNodePath}"`);
 		execSync(`ln -sf "${newNodePath.trim()}" "${oldNodePath}"`);
+
+		// Attempt to uninstall the previous version.
+		try {
+			execSync(`\\. $NVM_DIR/nvm.sh && nvm uninstall ${process.version} && nvm cache clear`, { env: { NVM_DIR }, stdio: 'inherit' });
+		} catch (e) {
+			console.error(`Failed to uninstall ${process.version}:`);
+			console.error(e);
+		}
 
 		console.log(`[${new Date().toISOString()}] Restarting`);
 		process.exit(0);
