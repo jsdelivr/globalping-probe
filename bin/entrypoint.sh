@@ -61,6 +61,11 @@ function try_update() {
 
 			rm -rf "/tmp/${loadedTarball}.tar.gz"
 
+			if [ -f /app/bin/patch.sh ]; then
+				echo "Running the patch script"
+				bash /app/bin/patch.sh
+			fi
+
 			echo "Self-update finished"
 		fi
 	fi
