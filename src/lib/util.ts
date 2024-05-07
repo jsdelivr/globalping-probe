@@ -30,7 +30,7 @@ export const callbackify = (
 	cb(undefined, result);
 }) as (...args: unknown[]) => never;
 
-export const isV1HardwareDevice = () => {
+export const looksLikeV1HardwareDevice = () => {
 	const cpus = os.cpus();
 
 	return cpus.length === 4
