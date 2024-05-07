@@ -2,12 +2,12 @@ import { expect } from 'chai';
 import * as td from 'testdouble';
 import * as sinon from 'sinon';
 
-describe('isV1HardwareDevice', () => {
+describe('looksLikeV1HardwareDevice', () => {
 	const sandbox = sinon.createSandbox();
 	const cpusStub = sinon.stub();
 	const hostnameStub = sinon.stub();
 	const totalmemStub = sinon.stub();
-	let isV1HardwareDevice: () => boolean;
+	let looksLikeV1HardwareDevice: () => boolean;
 
 	const mockRealHardwareValues = () => {
 		// Based on https://github.com/jsdelivr/globalping-hwprobe/issues/37#issuecomment-2002039986
@@ -37,7 +37,7 @@ describe('isV1HardwareDevice', () => {
 			totalmem: totalmemStub,
 		});
 
-		({ isV1HardwareDevice } = await import('../../../src/lib/util.js'));
+		({ looksLikeV1HardwareDevice } = await import('../../../src/lib/util.js'));
 	});
 
 	afterEach(() => {
@@ -51,7 +51,7 @@ describe('isV1HardwareDevice', () => {
 
 	it('should return true for HW probes', () => {
 		mockRealHardwareValues();
-		expect(isV1HardwareDevice()).to.be.true;
+		expect(looksLikeV1HardwareDevice()).to.be.true;
 	});
 
 	it('should return false for different CPUs', () => {
@@ -72,20 +72,20 @@ describe('isV1HardwareDevice', () => {
 			},
 		]);
 
-		expect(isV1HardwareDevice()).to.be.false;
+		expect(looksLikeV1HardwareDevice()).to.be.false;
 	});
 
 	it('should return false for different hostnames', () => {
 		mockRealHardwareValues();
 		hostnameStub.returns('gp-probe');
 
-		expect(isV1HardwareDevice()).to.be.false;
+		expect(looksLikeV1HardwareDevice()).to.be.false;
 	});
 
 	it('should return false for unexpected memory values', () => {
 		mockRealHardwareValues();
 		totalmemStub.returns(1000 * 1e6);
 
-		expect(isV1HardwareDevice()).to.be.false;
+		expect(looksLikeV1HardwareDevice()).to.be.false;
 	});
 });
