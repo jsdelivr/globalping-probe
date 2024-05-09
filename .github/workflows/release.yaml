@@ -38,7 +38,7 @@ jobs:
         run: git config --global --add safe.directory ${GITHUB_WORKSPACE}
 
       - name: Build
-        run: su node -c 'npm install && npm run build && npm exec husky uninstall'
+        run: su node -c 'npm install && npm run build && git config --unset core.hooksPath'
 
       - name: Prune dev dependencies
         run: su node -c 'npm install --omit=dev --omit=optional'
