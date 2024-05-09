@@ -11,19 +11,19 @@
 		"url": "git+https://github.com/jsdelivr/globalping-probe.git"
 	},
 	"dependencies": {
-		"config": "^3.3.9",
+		"config": "^3.3.11",
 		"config-mapper-env": "^2.0.0",
 		"execa": "^7.2.0",
 		"got": "^12.6.1",
-		"http2-wrapper": "^2.2.0",
-		"joi": "^17.11.0",
+		"http2-wrapper": "^2.2.1",
+		"joi": "^17.13.1",
 		"lodash": "^4.17.21",
 		"nvm": "github:nvm-sh/nvm",
 		"physical-cpu-count": "^2.0.0",
-		"socket.io-client": "^4.7.2",
+		"socket.io-client": "^4.7.5",
 		"throng": "^5.0.0",
-		"tldts": "^6.0.15",
-		"winston": "^3.10.0"
+		"tldts": "^6.0.19",
+		"winston": "^3.13.0"
 	},
 	"devDependencies": {
 		"@commitlint/cli": "^19.3.0",
