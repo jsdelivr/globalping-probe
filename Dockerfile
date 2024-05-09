@@ -1,4 +1,4 @@
-FROM node:18.19.1-bullseye-slim AS builder
+FROM node:20.13.0-bullseye-slim AS builder
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ COPY config /app/config
 COPY @types /app/@types
 RUN npm run build
 
-FROM node:18.19.1-bullseye-slim
+FROM node:20.13.0-bullseye-slim
 
 ARG node_env=production
 ENV NODE_ENV=$node_env
