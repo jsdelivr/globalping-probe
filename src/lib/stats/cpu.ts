@@ -1,21 +1,24 @@
 import os from 'node:os';
 
-export type CpuUsage = {
-	usage: number;
-	idle: number;
+export type CpuUsageInternal = {
+	load: Array<{
+		usage: number;
+		idle: number;
+	}>
 };
 
 export type CpuUsageResponse = {
-	count: number;
-	load: CpuUsage[];
+	load: Array<{
+		usage: number;
+	}>;
 };
 
-export const getCurrentCpu = (): CpuUsageResponse => {
+export const getCurrentCpu = (): CpuUsageInternal => {
 	const cpus = os.cpus();
 
-	const coreCount = cpus.length;
 	const load = cpus.map((cpu) => {
 		const total = Object.values(cpu.times).reduce((a, b) => a + b, 0);
+
 		return {
 			usage: total - cpu.times.idle,
 			idle: cpu.times.idle,
@@ -23,7 +26,6 @@ export const getCurrentCpu = (): CpuUsageResponse => {
 	});
 
 	return {
-		count: coreCount,
 		load,
 	};
 };
@@ -32,7 +34,6 @@ export const getCpuUsage = async (): Promise<CpuUsageResponse> => {
 	const startCpu = getCurrentCpu();
 
 	const result: CpuUsageResponse = {
-		count: startCpu.count,
 		load: [],
 	};
 
@@ -45,12 +46,10 @@ export const getCpuUsage = async (): Promise<CpuUsageResponse> => {
 				const endLoad = endCpu.load[i]!;
 
 				const idleDiff = endLoad.idle - startLoad.idle || 0;
-				const usageDiff = endLoad.usage - startLoad.usage || 0;
 				const totalDiff = (endLoad.usage + endLoad.idle) - (startLoad.usage + startLoad.idle);
 
 				result.load[i] = {
 					usage: (10_000 - Math.round(10_000 * idleDiff / totalDiff)) / 100,
-					idle: (10_000 - Math.round(10_000 * usageDiff / totalDiff)) / 100,
 				};
 			}
 

@@ -1,4 +1,5 @@
 import config from 'config';
+import os from 'node:os';
 import { randomUUID } from 'node:crypto';
 import process from 'node:process';
 import throng from 'throng';
@@ -20,13 +21,13 @@ import { FakeMtrCommand } from './command/fake/fake-mtr-command.js';
 import { run as runStatsAgent } from './lib/stats/client.js';
 import { initStatusManager } from './lib/status-manager.js';
 import { logAdoptionCode } from './lib/log-adoption-code.js';
-import { isV1HardwareDevice } from './lib/util.js';
+import { getAvailableDiskSpace, getTotalDiskSize, looksLikeV1HardwareDevice } from './lib/util.js';
 import { VERSION } from './constants.js';
 
 // Set the expected variables on HW probes with older firmware
 // https://github.com/jsdelivr/globalping-hwprobe/issues/27
 // https://github.com/jsdelivr/globalping-probe/issues/206
-if (isV1HardwareDevice()) {
+if (looksLikeV1HardwareDevice()) {
 	process.env['GP_HOST_HW'] = 'true';
 	process.env['GP_HOST_DEVICE'] = 'v1';
 }
@@ -70,6 +71,9 @@ function connect () {
 		query: {
 			version: VERSION,
 			nodeVersion: process.version,
+			totalMemory: os.totalmem(),
+			totalDiskSize: getTotalDiskSize(),
+			availableDiskSpace: getAvailableDiskSpace(),
 			uuid: randomUUID(),
 			isHardware: process.env['GP_HOST_HW'],
 			hardwareDevice: process.env['GP_HOST_DEVICE'],

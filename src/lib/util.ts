@@ -1,4 +1,5 @@
 import os from 'node:os';
+import { execSync } from 'node:child_process';
 
 /*
  * Turns promise into callback fn
@@ -30,7 +31,25 @@ export const callbackify = (
 	cb(undefined, result);
 }) as (...args: unknown[]) => never;
 
-export const isV1HardwareDevice = () => {
+export const getAvailableDiskSpace = () => {
+	try {
+		return parseInt(execSync('df --block-size=MB --output=avail / | tail -1').toString());
+	} catch (e) {
+		console.error(e);
+		return 0;
+	}
+};
+
+export const getTotalDiskSize = () => {
+	try {
+		return parseInt(execSync('df --block-size=MB --output=size / | tail -1').toString());
+	} catch (e) {
+		console.error(e);
+		return 0;
+	}
+};
+
+export const looksLikeV1HardwareDevice = () => {
 	const cpus = os.cpus();
 
 	return cpus.length === 4

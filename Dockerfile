@@ -1,8 +1,7 @@
-FROM node:18.19.1-bullseye-slim AS builder
+FROM node:20.13.0-bullseye-slim AS builder
 
 WORKDIR /app
 
-RUN npm install npm@10.5.2 -g
 COPY package.json package-lock.json tsconfig.json /app/
 RUN npm ci --include=dev
 COPY src /app/src
@@ -10,7 +9,7 @@ COPY config /app/config
 COPY @types /app/@types
 RUN npm run build
 
-FROM node:18.19.1-bullseye-slim
+FROM node:20.13.0-bullseye-slim
 
 ARG node_env=production
 ENV NODE_ENV=$node_env
@@ -26,7 +25,7 @@ RUN apt-get update -y && apt-get install --no-install-recommends -y expect ca-ce
     && rm -rf /var/cache/{apt,debconf,fontconfig,ldconfig}/* \
     && rm -rf /opt /root/.npm /usr/share/man /usr/lib/arm-linux-gnueabihf/perl-base /usr/include /usr/local/include /usr/local/lib/node_modules/npm/docs \
     && rm -rf /tmp/v8-compile-cache-0 /sbin/debugfs /sbin/e2fsck /sbin/ldconfig /usr/bin/perl* \
-    && cd /app && npm install npm@10.5.2 -g && npm install --omit=dev --omit=optional
+    && cd /app && npm install --omit=dev --omit=optional
 
 COPY --from=builder /app/dist /app/dist
 COPY --from=builder /app/config /app/config
