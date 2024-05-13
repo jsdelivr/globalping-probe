@@ -30,6 +30,7 @@ describe('dns command', () => {
 					type: 'TXT',
 				},
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const args = argBuilder(options);
@@ -46,6 +47,46 @@ describe('dns command', () => {
 			expect(args).to.include('+trace');
 		});
 
+		describe('ipVersion', () => {
+			it('should set -4 flag', () => {
+				const options = {
+					type: 'dns' as DnsOptions['type'],
+					target: 'google.com',
+					resolver: '1.1.1.1',
+					protocol: 'udp',
+					port: 90,
+					trace: false,
+					query: {
+						type: 'TXT',
+					},
+					inProgressUpdates: false,
+					ipVersion: 4,
+				};
+
+				const args = argBuilder(options);
+				expect(args).to.include('-4');
+			});
+
+			it('should set -6 flag', () => {
+				const options = {
+					type: 'dns' as DnsOptions['type'],
+					target: 'google.com',
+					resolver: '64:ff9b:1::1a2b:3c4d',
+					protocol: 'udp',
+					port: 90,
+					trace: false,
+					query: {
+						type: 'TXT',
+					},
+					inProgressUpdates: false,
+					ipVersion: 6,
+				};
+
+				const args = argBuilder(options);
+				expect(args).to.include('-6');
+			});
+		});
+
 		describe('trace', () => {
 			it('should not add the flag', () => {
 				const options = {
@@ -59,6 +100,7 @@ describe('dns command', () => {
 						type: 'TXT',
 					},
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -77,6 +119,7 @@ describe('dns command', () => {
 						type: 'TXT',
 					},
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -97,6 +140,7 @@ describe('dns command', () => {
 						type: 'TXT',
 					},
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -117,6 +161,7 @@ describe('dns command', () => {
 						type: 'A',
 					},
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -135,6 +180,7 @@ describe('dns command', () => {
 						type: 'PTR',
 					},
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -155,6 +201,7 @@ describe('dns command', () => {
 						type: 'TXT',
 					},
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -174,6 +221,7 @@ describe('dns command', () => {
 						type: 'TXT',
 					},
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -195,6 +243,7 @@ describe('dns command', () => {
 				protocol: 'UDP',
 				port: 53,
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -229,6 +278,7 @@ describe('dns command', () => {
 				protocol: 'UDP',
 				port: 53,
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -272,6 +322,7 @@ describe('dns command', () => {
 				protocol: 'UDP',
 				port: 53,
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -309,6 +360,7 @@ describe('dns command', () => {
 				protocol: 'UDP',
 				port: 53,
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -352,6 +404,7 @@ describe('dns command', () => {
 				protocol: 'UDP',
 				port: 53,
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -386,6 +439,7 @@ describe('dns command', () => {
 				protocol: 'UDP',
 				port: 53,
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -429,6 +483,7 @@ describe('dns command', () => {
 				protocol: 'UDP',
 				port: 53,
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -472,6 +527,7 @@ describe('dns command', () => {
 				protocol: 'UDP',
 				port: 53,
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -506,6 +562,7 @@ describe('dns command', () => {
 				protocol: 'UDP',
 				port: 53,
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -550,6 +607,7 @@ describe('dns command', () => {
 				protocol: 'UDP',
 				port: 53,
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -579,6 +637,7 @@ describe('dns command', () => {
 				protocol: 'UDP',
 				port: 53,
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -622,6 +681,7 @@ describe('dns command', () => {
 				protocol: 'UDP',
 				port: 53,
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const rawOutput = getCmdMock(testCase);
@@ -656,6 +716,7 @@ describe('dns command', () => {
 				protocol: 'UDP',
 				port: 53,
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const rawOutput = getCmdMock(testCase);

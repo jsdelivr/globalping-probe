@@ -34,6 +34,7 @@ export type DnsOptions = {
 	query: {
 		type: string;
 	};
+	ipVersion: number;
 };
 
 export type DnsParseResponseJson = DnsParseResponseClassicJson | DnsParseResponseTraceJson;
@@ -44,6 +45,7 @@ const isTrace = (output: unknown): output is DnsParseResponseTrace => Array.isAr
 
 const allowedTypes = [ 'A', 'AAAA', 'ANY', 'CNAME', 'DNSKEY', 'DS', 'HTTPS', 'MX', 'NS', 'NSEC', 'PTR', 'RRSIG', 'SOA', 'TXT', 'SRV' ];
 const allowedProtocols = [ 'UDP', 'TCP' ];
+const allowedIpVersions = [ 4, 6 ];
 
 const dnsOptionsSchema = Joi.object<DnsOptions>({
 	type: Joi.string().valid('dns'),
@@ -55,6 +57,15 @@ const dnsOptionsSchema = Joi.object<DnsOptions>({
 	trace: Joi.boolean().optional().default(false),
 	query: Joi.object({
 		type: Joi.string().valid(...allowedTypes).optional().default('A'),
+	}),
+	ipVersion: Joi.when(Joi.ref('resolver'), {
+		is: Joi.string().domain(),
+		then: Joi.valid(...allowedIpVersions).default(4),
+		otherwise: Joi.when(Joi.ref('resolver'), {
+			is: Joi.string().ip({ version: [ 'ipv6' ], cidr: 'forbidden' }),
+			then: Joi.valid(6).default(6),
+			otherwise: Joi.valid(4).default(4),
+		}),
 	}),
 });
 
@@ -69,7 +80,7 @@ export const argBuilder = (options: DnsOptions): string[] => {
 		options.target,
 		resolverArg,
 		[ '-p', String(options.port) ],
-		'-4',
+		`-${options.ipVersion}`,
 		'+timeout=3',
 		'+tries=2',
 		'+nocookie',

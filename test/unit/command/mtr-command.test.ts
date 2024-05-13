@@ -34,6 +34,7 @@ describe('mtr command executor', () => {
 				port: 80,
 				packets: 1,
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const args = argBuilder(options);
@@ -50,6 +51,38 @@ describe('mtr command executor', () => {
 			expect(joinedArgs).to.contain(`-P ${options.port}`);
 		});
 
+		describe('ipVersion', () => {
+			it('should set -4 flag', () => {
+				const options = {
+					type: 'mtr' as MtrOptions['type'],
+					target: 'google.com',
+					protocol: 'tcp',
+					port: 80,
+					packets: 1,
+					inProgressUpdates: false,
+					ipVersion: 4,
+				};
+
+				const args = argBuilder(options);
+				expect(args[0]).to.equal('-4');
+			});
+
+			it('should set -6 flag', () => {
+				const options = {
+					type: 'mtr' as MtrOptions['type'],
+					target: 'google.com',
+					protocol: 'tcp',
+					port: 80,
+					packets: 1,
+					inProgressUpdates: false,
+					ipVersion: 6,
+				};
+
+				const args = argBuilder(options);
+				expect(args[0]).to.equal('-6');
+			});
+		});
+
 		describe('protocol', () => {
 			it('should set --udp flag (UDP)', () => {
 				const options = {
@@ -59,6 +92,7 @@ describe('mtr command executor', () => {
 					port: 80,
 					packets: 1,
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -74,6 +108,7 @@ describe('mtr command executor', () => {
 					port: 80,
 					packets: 1,
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -89,6 +124,7 @@ describe('mtr command executor', () => {
 					port: 80,
 					packets: 1,
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -106,6 +142,7 @@ describe('mtr command executor', () => {
 					port: 90,
 					packets: 1,
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -122,6 +159,7 @@ describe('mtr command executor', () => {
 					port: 90,
 					packets: 2,
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -137,6 +175,7 @@ describe('mtr command executor', () => {
 					port: 90,
 					packets: 5,
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -160,6 +199,7 @@ describe('mtr command executor', () => {
 				type: 'mtr' as const,
 				target: 'jsdelivr.net',
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const expectedResult = getCmdMockResult(testCase);
@@ -197,6 +237,7 @@ describe('mtr command executor', () => {
 				type: 'mtr' as const,
 				target: 'jsdelivr.net',
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const expectedResult = getCmdMockResult(testCase);
@@ -224,6 +265,7 @@ describe('mtr command executor', () => {
 				type: 'mtr' as const,
 				target: 'jsdelivr.net',
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const expectedResult = getCmdMockResult(testCase);
@@ -238,13 +280,13 @@ describe('mtr command executor', () => {
 			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
 		});
 
-		it('should detect Private IP and stop', async () => {
 		it('should detect Private IPv6 and stop with progress messages', async () => {
 			const testCase = 'mtr-fail-private-ip';
 			const options = {
 				type: 'mtr' as const,
 				target: 'jsdelivr.net',
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const expectedResult = getCmdMockResult(testCase);
@@ -265,6 +307,7 @@ describe('mtr command executor', () => {
 				type: 'mtr' as const,
 				target: 'jsdelivr.net',
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const expectedResult = getCmdMockResult(testCase);
@@ -285,6 +328,7 @@ describe('mtr command executor', () => {
 				type: 'mtr' as const,
 				target: 'jsdelivr.net',
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const expectedResult = getCmdMockResult(testCase);

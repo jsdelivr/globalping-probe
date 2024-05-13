@@ -104,6 +104,7 @@ describe('http command', () => {
 						query: '',
 					},
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const url = urlBuilder(options);
@@ -122,6 +123,7 @@ describe('http command', () => {
 						query: '',
 					},
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const url = urlBuilder(options);
@@ -143,6 +145,7 @@ describe('http command', () => {
 						query: '',
 					},
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const url = urlBuilder(options);
@@ -161,6 +164,7 @@ describe('http command', () => {
 						query: '',
 					},
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const url = urlBuilder(options);
@@ -179,6 +183,7 @@ describe('http command', () => {
 						query: '',
 					},
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const url = urlBuilder(options);
@@ -199,6 +204,7 @@ describe('http command', () => {
 						query: '',
 					},
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const url = urlBuilder(options);
@@ -217,6 +223,7 @@ describe('http command', () => {
 						query: '',
 					},
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const url = urlBuilder(options);
@@ -237,6 +244,7 @@ describe('http command', () => {
 						query: 'abc=def',
 					},
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const url = urlBuilder(options);
@@ -255,6 +263,7 @@ describe('http command', () => {
 						query: '?abc=def',
 					},
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const url = urlBuilder(options);
@@ -283,6 +292,7 @@ describe('http command', () => {
 					path: '/200',
 					query: 'abc=def',
 				},
+				ipVersion: 4,
 			};
 
 			const http = new HttpCommand(httpCmd);
@@ -344,6 +354,7 @@ describe('http command', () => {
 					path: '/200',
 					query: 'abc=def',
 				},
+				ipVersion: 4,
 			};
 
 			const http = new HttpCommand(httpCmd);
@@ -398,6 +409,7 @@ describe('http command', () => {
 					path: '/400',
 					query: '',
 				},
+				ipVersion: 4,
 			};
 
 			const http = new HttpCommand(httpCmd);
@@ -453,6 +465,7 @@ describe('http command', () => {
 					path: '/400',
 					query: '',
 				},
+				ipVersion: 4,
 			};
 
 			const http = new HttpCommand(httpCmd);
@@ -504,6 +517,7 @@ describe('http command', () => {
 					path: '400',
 					query: '',
 				},
+				ipVersion: 4,
 			};
 
 			const http = new HttpCommand(httpCmd);
@@ -559,6 +573,7 @@ describe('http command', () => {
 					query: '',
 				},
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const returnedOptions = httpCmd(options).options;
@@ -580,6 +595,7 @@ describe('http command', () => {
 					path: '/',
 					query: '',
 				},
+				ipVersion: 4,
 			};
 
 			const response: StreamResponse = {
@@ -677,6 +693,7 @@ describe('http command', () => {
 					path: '/',
 					query: '',
 				},
+				ipVersion: 4,
 			};
 
 			const response: StreamResponse = {
@@ -763,6 +780,7 @@ describe('http command', () => {
 					path: '/',
 					query: '',
 				},
+				ipVersion: 4,
 			};
 
 			const response: StreamResponse = {
@@ -843,6 +861,7 @@ describe('http command', () => {
 					query: '',
 				},
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const response: StreamResponse = {
@@ -925,6 +944,7 @@ describe('http command', () => {
 					query: '',
 				},
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const cert = {
@@ -1043,6 +1063,7 @@ describe('http command', () => {
 					query: '',
 				},
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const cert = {
@@ -1167,6 +1188,7 @@ describe('http command', () => {
 					query: '',
 				},
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const response: StreamResponse = {
@@ -1250,6 +1272,7 @@ describe('http command', () => {
 					query: '',
 				},
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const response = {
@@ -1307,6 +1330,7 @@ describe('http command', () => {
 					query: '',
 				},
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const response: StreamResponse = {
@@ -1369,6 +1393,7 @@ describe('http command', () => {
 					query: '',
 				},
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const response: StreamResponse = {
@@ -1431,6 +1456,7 @@ describe('http command', () => {
 					path: '/npm/jquery',
 					query: '',
 				},
+				ipVersion: 4,
 			};
 
 			const response: StreamResponse = {
@@ -1517,6 +1543,7 @@ describe('http command', () => {
 					path: '/npm/jquery',
 					query: '',
 				},
+				ipVersion: 4,
 			};
 
 			const response: StreamResponse = {
@@ -1610,6 +1637,7 @@ describe('http command', () => {
 					path: '/npm/jquery',
 					query: '',
 				},
+				ipVersion: 4,
 			};
 
 			const response: StreamResponse = {
