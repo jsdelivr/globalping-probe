@@ -7,9 +7,11 @@ export const buildResolver = (ipList: string[]): ResolverType => (): Promise<str
 
 class NativeResolverMock {
 	public resolve4: ResolverType;
+	public resolve6: ResolverType;
 
 	constructor () {
 		this.resolve4 = buildResolver([ '1.1.1.1' ]);
+		this.resolve6 = buildResolver([ '2606:4700:4700::1111' ]);
 	}
 }
 
@@ -52,7 +54,7 @@ describe('http helper', () => {
 			expect(response).to.be.instanceof(Error);
 		});
 
-		it('should filter out private ip, return public ip', async () => {
+		it('should filter out private ipv4, return public ipv4', async () => {
 			const data = {
 				ipList: [ '192.168.0.1', '1.1.1.1' ],
 				hostname: 'abc.com',
@@ -70,6 +72,26 @@ describe('http helper', () => {
 			) as [string, number];
 
 			expect(response).to.deep.equal([ '1.1.1.1', 4 ]);
+		});
+
+		it('should filter out private ipv6, return public ipv6', async () => {
+			const data = {
+				ipList: [ '64:ff9b:1::1a2b:3c4d', '2606:4700:4700::1111' ],
+				hostname: 'abc.com',
+				options: {
+					family: 6 as IpFamily,
+				},
+			};
+
+			const resolver = buildResolver(data.ipList);
+			const lookup = dnsLookup(undefined, resolver);
+
+			const response = await lookup(
+				data.hostname,
+				data.options,
+			) as [string, number];
+
+			expect(response).to.deep.equal([ '2606:4700:4700::1111', 6 ]);
 		});
 
 		it('should pass - callbackify', (done) => {
@@ -95,7 +117,7 @@ describe('http helper', () => {
 			);
 		});
 
-		it('should use native resolver if not provided', async () => {
+		it('should use native ipv4 resolver if not provided', async () => {
 			const data = {
 				hostname: 'abc.com',
 				options: {
@@ -111,6 +133,24 @@ describe('http helper', () => {
 			) as [string, number];
 
 			expect(response).to.deep.equal([ '1.1.1.1', 4 ]);
+		});
+
+		it('should use native ipv6 resolver if not provided', async () => {
+			const data = {
+				hostname: 'abc.com',
+				options: {
+					family: 6 as IpFamily,
+				},
+			};
+
+			const lookup = dnsLookup(undefined);
+
+			const response = await lookup(
+				data.hostname,
+				data.options,
+			) as [string, number];
+
+			expect(response).to.deep.equal([ '2606:4700:4700::1111', 6 ]);
 		});
 	});
 });
