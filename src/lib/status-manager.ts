@@ -12,6 +12,8 @@ const INTERVAL_TIME = 10 * 60 * 1000; // 10 mins
 
 export class StatusManager {
 	private status: 'initializing' | 'ready' | 'unbuffer-missing' | 'ping-test-failed' | 'sigterm' = 'initializing';
+	private isIPv4Supported: boolean = false;
+	private isIPv6Supported: boolean = false;
 	private timer?: NodeJS.Timeout;
 
 	constructor (
@@ -39,23 +41,53 @@ export class StatusManager {
 		return this.status;
 	}
 
+	public getIsIPv4Supported () {
+		return this.isIPv4Supported;
+	}
+
+	public getIsIPv6Supported () {
+		return this.isIPv6Supported;
+	}
+
 	public updateStatus (status: StatusManager['status']) {
 		this.status = status;
 		this.sendStatus();
+	}
+
+	public updateIsIPv4Supported (isIPv4Supported : boolean) {
+		this.isIPv4Supported = isIPv4Supported;
+		this.sendIsIPv4Supported();
+	}
+
+	public updateIsIPv6Supported (isIPv6Supported : boolean) {
+		this.isIPv6Supported = isIPv6Supported;
+		this.sendIsIPv6Supported();
 	}
 
 	public sendStatus () {
 		this.socket.emit('probe:status:update', this.status);
 	}
 
-	private async runTest () {
-		const result = await this.pingTest();
+	public sendIsIPv4Supported () {
+		this.socket.emit('probe:isIPv4Supported:update', this.isIPv4Supported);
+	}
 
-		if (result) {
+	public sendIsIPv6Supported () {
+		this.socket.emit('probe:isIPv6Supported:update', this.isIPv6Supported);
+	}
+
+	private async runTest () {
+		const resultIPv4 = await this.pingTest(4);
+		const resultIPv6 = await this.pingTest(6);
+
+		if (resultIPv4 || resultIPv6) {
 			this.updateStatus('ready');
 		} else {
 			this.updateStatus('ping-test-failed');
 		}
+
+		this.updateIsIPv4Supported(resultIPv4);
+		this.updateIsIPv6Supported(resultIPv6);
 
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		this.timer = setTimeout(async () => {
@@ -63,10 +95,10 @@ export class StatusManager {
 		}, INTERVAL_TIME);
 	}
 
-	private async pingTest () {
+	private async pingTest (ipVersion: number) {
 		const packets = config.get<number>('status.numberOfPackets');
 		const targets = [ 'ns1.registry.in', 'k.root-servers.net', 'ns1.dns.nl' ];
-		const results = await Promise.allSettled(targets.map(target => this.pingCmd({ type: 'ping', target, packets, inProgressUpdates: false })));
+		const results = await Promise.allSettled(targets.map(target => this.pingCmd({ type: 'ping', ipVersion, target, packets, inProgressUpdates: false })));
 
 		const fulfilledPromises = results.filter((promise): promise is PromiseFulfilledResult<ExecaReturnValue> => promise.status === 'fulfilled');
 		const cmdResults = fulfilledPromises.map(promise => promise.value).map(result => parse(result.stdout));
