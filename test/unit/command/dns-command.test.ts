@@ -348,6 +348,45 @@ describe('dns command', () => {
 			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
+		it('should parse dns - ipv6-resolver-dns-success', async () => {
+			const testCase = 'ipv6-dns-success';
+			const options = {
+				type: 'dns' as const,
+				target: 'google.com',
+				trace: false,
+				query: {
+					type: 'A',
+				},
+				protocol: 'UDP',
+				port: 53,
+				inProgressUpdates: false,
+				ipVersion: 6,
+				resolver: '2606:4700:4700::1111',
+			};
+
+			const rawOutput = getCmdMock(testCase);
+			const outputProgress = rawOutput.split('\n');
+			const expectedResult = getCmdMockResult(testCase);
+
+			const mockCmd = getExecaMock();
+
+			const dns = new DnsCommand((): any => mockCmd);
+			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+
+			for (const progressOutput of outputProgress) {
+				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+			}
+
+			mockCmd.resolve({ stdout: rawOutput });
+			await runPromise;
+
+			expect(mockSocket.emit.callCount).to.equal(1);
+
+			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+
+			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+		});
+
 		it('should parse dns with progress messages - dns-success-linux', async () => {
 			const testCase = 'dns-success-linux';
 			const options = {

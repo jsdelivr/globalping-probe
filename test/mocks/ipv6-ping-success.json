@@ -1,0 +1,33 @@
+{
+	"testId": "test",
+	"measurementId": "measurement",
+	"result": {
+		"status": "finished",
+		"rawOutput": "PING google.com(hem08s10-in-x0e.1e100.net (2a00:1450:4026:808::200e)) 56 data bytes\r\n64 bytes from hem08s10-in-x0e.1e100.net (2a00:1450:4026:808::200e): icmp_seq=1 ttl=57 time=1.47 ms\r\n64 bytes from hem08s10-in-x0e.1e100.net (2a00:1450:4026:808::200e): icmp_seq=2 ttl=57 time=1.14 ms\r\n64 bytes from hem08s10-in-x0e.1e100.net (2a00:1450:4026:808::200e): icmp_seq=3 ttl=57 time=1.07 ms\r\n\r\n--- google.com ping statistics ---\r\n3 packets transmitted, 3 received, 0% packet loss, time 1003ms\r\nrtt min/avg/max/mdev = 1.072/1.224/1.466/0.172 ms\r\n",
+		"resolvedAddress": "2a00:1450:4026:808::200e",
+		"resolvedHostname": "hem08s10-in-x0e.1e100.net",
+		"timings": [
+			{
+				"ttl": 57,
+				"rtt": 1.47
+			},
+			{
+				"ttl": 57,
+				"rtt": 1.14
+			},
+			{
+				"ttl": 57,
+				"rtt": 1.07
+			}
+		],
+		"stats": {
+			"min": 1.072,
+			"max": 1.466,
+			"avg": 1.224,
+			"total": 3,
+			"loss": 0,
+			"rcv": 3,
+			"drop": 0
+		}
+	}
+}
