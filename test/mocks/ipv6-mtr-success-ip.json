@@ -1,0 +1,317 @@
+{
+	"measurementId": "measurement",
+	"result": {
+		"hops": [
+			{
+				"asn": [],
+				"resolvedAddress": "fe80::",
+				"resolvedHostname": null,
+				"stats": {
+					"avg": 4.7,
+					"drop": 0,
+					"jAvg": 3,
+					"jMax": 5,
+					"jMin": 1,
+					"loss": 0,
+					"max": 5.156,
+					"min": 4.109,
+					"rcv": 3,
+					"stDev": 0.5,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 5.156
+					},
+					{
+						"rtt": 4.109
+					},
+					{
+						"rtt": 4.967
+					}
+				]
+			},
+			{
+				"asn": [
+					123
+				],
+				"resolvedAddress": "2a01:4f9:0:c001::1536",
+				"resolvedHostname": "10942.your-cloud.host",
+				"stats": {
+					"avg": 0.7,
+					"drop": 0,
+					"jAvg": 0.7,
+					"jMax": 0.8,
+					"jMin": 0.6,
+					"loss": 0,
+					"max": 1.173,
+					"min": 0.401,
+					"rcv": 3,
+					"stDev": 0.3,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 1.173
+					},
+					{
+						"rtt": 0.401
+					},
+					{
+						"rtt": 0.578
+					}
+				]
+			},
+			{
+				"asn": [
+					123
+				],
+				"resolvedAddress": "2a01:4f9:0:c001::1501",
+				"resolvedHostname": "2a01:4f9:0:c001::1501",
+				"stats": {
+					"avg": 16.4,
+					"drop": 0,
+					"jAvg": 13.3,
+					"jMax": 17.2,
+					"jMin": 9.4,
+					"loss": 0,
+					"max": 20.648,
+					"min": 11.273,
+					"rcv": 3,
+					"stDev": 3.9,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 11.273
+					},
+					{
+						"rtt": 20.648
+					},
+					{
+						"rtt": 17.218
+					}
+				]
+			},
+			{
+				"asn": [
+					123
+				],
+				"resolvedAddress": "2a01:4f9:0:c001::a039",
+				"resolvedHostname": "2a01:4f9:0:c001::a039",
+				"stats": {
+					"avg": 1.3,
+					"drop": 0,
+					"jAvg": 0.8,
+					"jMax": 1.5,
+					"jMin": 0.2,
+					"loss": 0,
+					"max": 1.491,
+					"min": 1.115,
+					"rcv": 3,
+					"stDev": 0.2,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 1.115
+					},
+					{
+						"rtt": 1.268
+					},
+					{
+						"rtt": 1.491
+					}
+				]
+			},
+			{
+				"asn": [
+					123
+				],
+				"resolvedAddress": "2a01:4f8:0:3::6d1",
+				"resolvedHostname": "spine15.cloud1.hel1.hetzner.com",
+				"stats": {
+					"avg": 0.6,
+					"drop": 0,
+					"jAvg": 0.4,
+					"jMax": 0.6,
+					"jMin": 0.1,
+					"loss": 0,
+					"max": 0.757,
+					"min": 0.582,
+					"rcv": 3,
+					"stDev": 0.1,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 0.757
+					},
+					{
+						"rtt": 0.609
+					},
+					{
+						"rtt": 0.582
+					}
+				]
+			},
+			{
+				"asn": [
+					123
+				],
+				"resolvedAddress": "2a01:4f8:0:3::6b9",
+				"resolvedHostname": "core31.hel1.hetzner.com",
+				"stats": {
+					"avg": 0.7,
+					"drop": 0,
+					"jAvg": 0.4,
+					"jMax": 0.7,
+					"jMin": 0.2,
+					"loss": 0,
+					"max": 0.828,
+					"min": 0.66,
+					"rcv": 3,
+					"stDev": 0.1,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 0.828
+					},
+					{
+						"rtt": 0.66
+					},
+					{
+						"rtt": 0.708
+					}
+				]
+			},
+			{
+				"asn": [
+					123
+				],
+				"resolvedAddress": "2a01:4f8:0:3::2b9",
+				"resolvedHostname": "juniper4.dc1.hel1.hetzner.com",
+				"stats": {
+					"avg": 0.9,
+					"drop": 0,
+					"jAvg": 0.7,
+					"jMax": 0.9,
+					"jMin": 0.5,
+					"loss": 0,
+					"max": 1.122,
+					"min": 0.655,
+					"rcv": 3,
+					"stDev": 0.2,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 1.122
+					},
+					{
+						"rtt": 0.655
+					},
+					{
+						"rtt": 0.871
+					}
+				]
+			},
+			{
+				"asn": [
+					123
+				],
+				"resolvedAddress": "2001:4860:1:1::3212",
+				"resolvedHostname": "2001:4860:1:1::3212",
+				"stats": {
+					"avg": 1.8,
+					"drop": 0,
+					"jAvg": 0.9,
+					"jMax": 1.7,
+					"jMin": 0.1,
+					"loss": 0,
+					"max": 1.92,
+					"min": 1.704,
+					"rcv": 3,
+					"stDev": 0.1,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 1.92
+					},
+					{
+						"rtt": 1.774
+					},
+					{
+						"rtt": 1.704
+					}
+				]
+			},
+			{
+				"asn": [
+					123
+				],
+				"resolvedAddress": "2a00:1450:80d2::1",
+				"resolvedHostname": "2a00:1450:80d2::1",
+				"stats": {
+					"avg": 1.3,
+					"drop": 0,
+					"jAvg": 0.8,
+					"jMax": 1.2,
+					"jMin": 0.3,
+					"loss": 0,
+					"max": 1.478,
+					"min": 1.195,
+					"rcv": 3,
+					"stDev": 0.1,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 1.478
+					},
+					{
+						"rtt": 1.195
+					},
+					{
+						"rtt": 1.245
+					}
+				]
+			},
+			{
+				"asn": [
+					123
+				],
+				"resolvedAddress": "2a00:1450:4026:808::200f",
+				"resolvedHostname": "hem08s10-in-x0f.1e100.net",
+				"stats": {
+					"avg": 1.3,
+					"drop": 1,
+					"jAvg": 0.5,
+					"jMax": 0.5,
+					"jMin": 0.5,
+					"loss": 33.3,
+					"max": 1.562,
+					"min": 1.103,
+					"rcv": 2,
+					"stDev": 0.2,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 1.562
+					},
+					{
+						"rtt": 1.103
+					}
+				]
+			}
+		],
+		"rawOutput": "Host                                                                   Loss% Drop Rcv  Avg  StDev  Javg \n 1. AS??? _gateway (fe80::)                                             0.0%    0   3  4.7    0.53.0\n 2. AS123 10942.your-cloud.host (2a01:4f9:0:c001::1536)                 0.0%    0   3  0.7    0.3   0.7\n 3. AS123 2a01:4f9:0:c001::1501 (2a01:4f9:0:c001::1501)                 0.0%    0   3 16.4    3.9  13.3\n 4. AS123 2a01:4f9:0:c001::a039 (2a01:4f9:0:c001::a039)                 0.0%    0   3  1.3    0.2   0.8\n 5. AS123 spine15.cloud1.hel1.hetzner.com (2a01:4f8:0:3::6d1)           0.0%    0   3  0.6    0.1   0.4\n 6. AS123 core31.hel1.hetzner.com (2a01:4f8:0:3::6b9)                   0.0%    0   3  0.7    0.1   0.4\n 7. AS123 juniper4.dc1.hel1.hetzner.com (2a01:4f8:0:3::2b9)             0.0%    0   3  0.9    0.2   0.7\n 8. AS123 2001:4860:1:1::3212 (2001:4860:1:1::3212)0.0%    0   3  1.8    0.1   0.9\n 9. AS123 2a00:1450:80d2::1 (2a00:1450:80d2::1)                         0.0%    0   3  1.3    0.1   0.8\n10. AS123 hem08s10-in-x0f.1e100.net (2a00:1450:4026:808::200f)         33.3%    1   2  1.3    0.2   0.5\n",
+		"resolvedAddress": "2a00:1450:4026:808::200f",
+		"resolvedHostname": "hem08s10-in-x0f.1e100.net",
+		"status": "finished"
+	},
+	"testId": "test"
+}

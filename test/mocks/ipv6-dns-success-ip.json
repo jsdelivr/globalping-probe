@@ -1,0 +1,23 @@
+{
+	"measurementId": "measurement",
+	"result": {
+		"answers": [
+			{
+				"class": "IN",
+				"name": "e.0.0.2.0.0.0.0.0.0.0.0.0.0.0.0.2.0.8.0.6.2.0.4.0.5.4.1.0.0.a.2.ip6.arpa.",
+				"ttl": 85385,
+				"type": "PTR",
+				"value": "hem09s02-in-x0e.1e100.net."
+			}
+		],
+		"rawOutput": "; <<>> DiG 9.18.18-0ubuntu0.22.04.2-Ubuntu <<>> -x 2a00:1450:4026:802::200e @2606:4700:4700::1111 -p 53 -6 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;;->>HEADER<<- opcode: QUERY, status: NOERROR, id: 47787\n;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 1232\n; NSID: 37 39 6d 32 31 37 (\"79m217\")\n;; QUESTION SECTION:\n;e.0.0.2.0.0.0.0.0.0.0.0.0.0.0.0.2.0.8.0.6.2.0.4.0.5.4.1.0.0.a.2.ip6.arpa. IN PTR\n\n;; ANSWER SECTION:\ne.0.0.2.0.0.0.0.0.0.0.0.0.0.0.0.2.0.8.0.6.2.0.4.0.5.4.1.0.0.a.2.ip6.arpa. 85385 IN PTR hem09s02-in-x0e.1e100.net.\n\n;; Query time: 0 msec\n;; SERVER: 2606:4700:4700::1111#53(2606:4700:4700::1111) (UDP)\n;; WHEN: Tue May 14 17:36:02 UTC 2024\n;; MSG SIZE  rcvd: 150\n",
+		"resolver": "UDP",
+		"status": "finished",
+		"statusCode": 0,
+		"statusCodeName": "NOERROR",
+		"timings": {
+			"total": 0
+		}
+	},
+	"testId": "test"
+}

@@ -3,7 +3,7 @@
 	"measurementId": "measurement",
 	"result": {
 		"status": "finished",
-		"rawOutput": "PING google.com(hem08s10-in-x0e.1e100.net (2a00:1450:4026:808::200e)) 56 data bytes\r\n64 bytes from hem08s10-in-x0e.1e100.net (2a00:1450:4026:808::200e): icmp_seq=1 ttl=57 time=1.47 ms\r\n64 bytes from hem08s10-in-x0e.1e100.net (2a00:1450:4026:808::200e): icmp_seq=2 ttl=57 time=1.14 ms\r\n64 bytes from hem08s10-in-x0e.1e100.net (2a00:1450:4026:808::200e): icmp_seq=3 ttl=57 time=1.07 ms\r\n\r\n--- google.com ping statistics ---\r\n3 packets transmitted, 3 received, 0% packet loss, time 1003ms\r\nrtt min/avg/max/mdev = 1.072/1.224/1.466/0.172 ms\r\n",
+		"rawOutput": "PING google.com(hem08s10-in-x0e.1e100.net (2a00:1450:4026:808::200e)) 56 data bytes\n64 bytes from hem08s10-in-x0e.1e100.net (2a00:1450:4026:808::200e): icmp_seq=1 ttl=57 time=1.47 ms\n64 bytes from hem08s10-in-x0e.1e100.net (2a00:1450:4026:808::200e): icmp_seq=2 ttl=57 time=1.14 ms\n64 bytes from hem08s10-in-x0e.1e100.net (2a00:1450:4026:808::200e): icmp_seq=3 ttl=57 time=1.07 ms\n\n--- google.com ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 1003ms\nrtt min/avg/max/mdev = 1.072/1.224/1.466/0.172 ms\n",
 		"resolvedAddress": "2a00:1450:4026:808::200e",
 		"resolvedHostname": "hem08s10-in-x0e.1e100.net",
 		"timings": [

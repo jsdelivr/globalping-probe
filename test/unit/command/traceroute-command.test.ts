@@ -220,7 +220,38 @@ describe('trace command', () => {
 
 				const testCase = 'ipv6-trace-success';
 				const rawOutput = getCmdMock(testCase);
-				const outputProgress = rawOutput.split('\r\n');
+				const outputProgress = rawOutput.split('\n');
+				const expectedResult = getCmdMockResult(testCase);
+
+				const mockCmd = getExecaMock();
+
+				const ping = new TracerouteCommand((): any => mockCmd);
+				const runPromise = ping.run(mockSocket as any, 'measurement', 'test', options);
+
+				for (const progressOutput of outputProgress) {
+					mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+				}
+
+				mockCmd.resolve({ stdout: rawOutput });
+				await runPromise;
+
+				expect(mockSocket.emit.callCount).to.equal(1);
+				expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+			});
+
+			it('should run and parse trace - ipv6-trace-success-ip', async () => {
+				const options = {
+					type: 'traceroute' as TraceOptions['type'],
+					target: '2a00:1450:4026:808::200f',
+					port: 53,
+					protocol: 'UDP',
+					inProgressUpdates: false,
+					ipVersion: 6,
+				};
+
+				const testCase = 'ipv6-trace-success-ip';
+				const rawOutput = getCmdMock(testCase);
+				const outputProgress = rawOutput.split('\n');
 				const expectedResult = getCmdMockResult(testCase);
 
 				const mockCmd = getExecaMock();
