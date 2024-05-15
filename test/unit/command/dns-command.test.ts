@@ -349,7 +349,7 @@ describe('dns command', () => {
 		});
 
 		it('should parse dns - ipv6-resolver-dns-success', async () => {
-			const testCase = 'ipv6-dns-success';
+			const testCase = 'ipv6-resolver-dns-success';
 			const options = {
 				type: 'dns' as const,
 				target: 'google.com',

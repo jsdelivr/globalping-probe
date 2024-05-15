@@ -287,14 +287,14 @@
 				"resolvedHostname": "hem08s10-in-x0f.1e100.net",
 				"stats": {
 					"avg": 1.3,
-					"drop": 1,
-					"jAvg": 0.5,
-					"jMax": 0.5,
+					"drop": 0,
+					"jAvg": 0.8,
+					"jMax": 1.1,
 					"jMin": 0.5,
-					"loss": 33.3,
+					"loss": 0,
 					"max": 1.562,
 					"min": 1.103,
-					"rcv": 2,
+					"rcv": 3,
 					"stDev": 0.2,
 					"total": 3
 				},
@@ -304,11 +304,14 @@
 					},
 					{
 						"rtt": 1.103
+					},
+					{
+						"rtt": 1.11
 					}
 				]
 			}
 		],
-		"rawOutput": "Host                                                                   Loss% Drop Rcv  Avg  StDev  Javg \n 1. AS??? _gateway (fe80::)                                             0.0%    0   3  4.7    0.53.0\n 2. AS123 10942.your-cloud.host (2a01:4f9:0:c001::1536)                 0.0%    0   3  0.7    0.3   0.7\n 3. AS123 2a01:4f9:0:c001::1501 (2a01:4f9:0:c001::1501)                 0.0%    0   3 16.4    3.9  13.3\n 4. AS123 2a01:4f9:0:c001::a039 (2a01:4f9:0:c001::a039)                 0.0%    0   3  1.3    0.2   0.8\n 5. AS123 spine15.cloud1.hel1.hetzner.com (2a01:4f8:0:3::6d1)           0.0%    0   3  0.6    0.1   0.4\n 6. AS123 core31.hel1.hetzner.com (2a01:4f8:0:3::6b9)                   0.0%    0   3  0.7    0.1   0.4\n 7. AS123 juniper4.dc1.hel1.hetzner.com (2a01:4f8:0:3::2b9)             0.0%    0   3  0.9    0.2   0.7\n 8. AS123 2001:4860:1:1::3212 (2001:4860:1:1::3212)0.0%    0   3  1.8    0.1   0.9\n 9. AS123 2a00:1450:80d2::1 (2a00:1450:80d2::1)                         0.0%    0   3  1.3    0.1   0.8\n10. AS123 hem08s10-in-x0f.1e100.net (2a00:1450:4026:808::200f)         33.3%    1   2  1.3    0.2   0.5\n",
+		"rawOutput": "Host                                                                   Loss% Drop Rcv  Avg  StDev  Javg \n 1. AS??? _gateway (fe80::)                                             0.0%    0   3  4.7    0.5   3.0\n 2. AS123 10942.your-cloud.host (2a01:4f9:0:c001::1536)                 0.0%    0   3  0.7    0.3   0.7\n 3. AS123 2a01:4f9:0:c001::1501 (2a01:4f9:0:c001::1501)                 0.0%    0   3 16.4    3.9  13.3\n 4. AS123 2a01:4f9:0:c001::a039 (2a01:4f9:0:c001::a039)                 0.0%    0   3  1.3    0.2   0.8\n 5. AS123 spine15.cloud1.hel1.hetzner.com (2a01:4f8:0:3::6d1)           0.0%    0   3  0.6    0.1   0.4\n 6. AS123 core31.hel1.hetzner.com (2a01:4f8:0:3::6b9)                   0.0%    0   3  0.7    0.1   0.4\n 7. AS123 juniper4.dc1.hel1.hetzner.com (2a01:4f8:0:3::2b9)             0.0%    0   3  0.9    0.2   0.7\n 8. AS123 2001:4860:1:1::3212 (2001:4860:1:1::3212)                     0.0%    0   3  1.8    0.1   0.9\n 9. AS123 2a00:1450:80d2::1 (2a00:1450:80d2::1)                         0.0%    0   3  1.3    0.1   0.8\n10. AS123 hem08s10-in-x0f.1e100.net (2a00:1450:4026:808::200f)          0.0%    0   3  1.3    0.2   0.8\n",
 		"resolvedAddress": "2a00:1450:4026:808::200f",
 		"resolvedHostname": "hem08s10-in-x0f.1e100.net",
 		"status": "finished"

@@ -5,30 +5,31 @@
 		"status": "finished",
 		"resolvedAddress": "2a00:1450:4026:802::200e",
 		"resolvedHostname": "hem09s02-in-x0e.1e100.net",
+		"rawOutput": "Host                                                                   Loss% Drop Rcv  Avg  StDev  Javg \n 1. AS??? _gateway (fe80::)                                             0.0%    0   3  3.9    0.5   2.5\n 2. AS123 10942.your-cloud.host (2a01:4f9:0:c001::1536)                 0.0%    0   3  0.7    0.3   0.6\n 3. AS123 2a01:4f9:0:c001::1501 (2a01:4f9:0:c001::1501)                 0.0%    0   3 32.4   20.7  36.5\n 4. AS123 2a01:4f9:0:c001::a01d (2a01:4f9:0:c001::a01d)                 0.0%    0   3  1.1    0.3   0.7\n 5. AS123 spine16.cloud1.hel1.hetzner.com (2a01:4f8:0:3::6e5)           0.0%    0   3  0.5    0.2   0.4\n 6. AS123 core31.hel1.hetzner.com (2a01:4f8:0:3::6c1)                   0.0%    0   3  0.6    0.2   0.4\n 7. AS123 juniper4.dc1.hel1.hetzner.com (2a01:4f8:0:3::2b9)             0.0%    0   3  1.8    1.5   2.0\n 8. AS123 2a01:4f8:0:e0f0::14a (2a01:4f8:0:e0f0::14a)                   0.0%    0   3  1.7    0.3   1.0\n 9. AS123 2a00:1450:80d2::1 (2a00:1450:80d2::1)                         0.0%    0   3  1.3    0.1   0.8\n10. AS123 2001:4860:0:1::3e56 (2001:4860:0:1::3e56)                    66.7%    2   1  2.1    0.0   2.1\n11. AS123 2001:4860:0:1::8320 (2001:4860:0:1::8320)                     0.0%    0   3  2.4    0.5   1.7\n12. AS123 2001:4860:0:1::82df (2001:4860:0:1::82df)                     0.0%    0   3  2.4    1.6   2.3\n13. AS123 2001:4860:0:1::43e1 (2001:4860:0:1::43e1)                     0.0%    0   3  2.5    0.2   1.3\n14. AS123 hem09s02-in-x0e.1e100.net (2a00:1450:4026:802::200e)          0.0%    0   3  1.3    0.1   0.8\n",
 		"hops": [
 			{
 				"stats": {
-					"min": 3.423,
-					"max": 8.644,
-					"avg": 5.8,
-					"total": 3,
-					"loss": 0,
-					"rcv": 3,
+					"avg": 3.9,
 					"drop": 0,
-					"stDev": 2.2,
-					"jMin": 5.2,
-					"jMax": 5.2,
-					"jAvg": 5.2
+					"jAvg": 2.5,
+					"jMax": 3.7,
+					"jMin": 1.3,
+					"loss": 0,
+					"max": 4.609,
+					"min": 3.323,
+					"rcv": 3,
+					"stDev": 0.5,
+					"total": 3
 				},
 				"timings": [
 					{
-						"rtt": 8.644
+						"rtt": 4.609
 					},
 					{
-						"rtt": 3.423
+						"rtt": 3.323
 					},
 					{
-						"rtt": 5.248
+						"rtt": 3.73
 					}
 				],
 				"asn": [],
@@ -39,30 +40,123 @@
 				"asn": [
 					123
 				],
-				"resolvedAddress": "2a01:4f8:0:3::6e5",
-				"resolvedHostname": "spine16.cloud1.hel1.hetzner.com",
+				"resolvedAddress": "2a01:4f9:0:c001::1536",
+				"resolvedHostname": "10942.your-cloud.host",
 				"stats": {
 					"avg": 0.7,
 					"drop": 0,
+					"jAvg": 0.6,
+					"jMax": 0.7,
+					"jMin": 0.5,
+					"loss": 0,
+					"max": 1.111,
+					"min": 0.417,
+					"rcv": 3,
+					"stDev": 0.3,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 1.111
+					},
+					{
+						"rtt": 0.417
+					},
+					{
+						"rtt": 0.479
+					}
+				]
+			},
+			{
+				"asn": [
+					123
+				],
+				"resolvedAddress": "2a01:4f9:0:c001::1501",
+				"resolvedHostname": "2a01:4f9:0:c001::1501",
+				"stats": {
+					"avg": 32.4,
+					"drop": 0,
+					"jAvg": 36.5,
+					"jMax": 60.9,
+					"jMin": 12.1,
+					"loss": 0,
+					"max": 60.871,
+					"min": 12.148,
+					"rcv": 3,
+					"stDev": 20.7,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 24.235
+					},
+					{
+						"rtt": 12.148
+					},
+					{
+						"rtt": 60.871
+					}
+				]
+			},
+			{
+				"asn": [
+					123
+				],
+				"resolvedAddress": "2a01:4f9:0:c001::a01d",
+				"resolvedHostname": "2a01:4f9:0:c001::a01d",
+				"stats": {
+					"avg": 1.1,
+					"drop": 0,
+					"jAvg": 0.7,
+					"jMax": 1,
+					"jMin": 0.5,
+					"loss": 0,
+					"max": 1.5,
+					"min": 0.96,
+					"rcv": 3,
+					"stDev": 0.3,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 1.5
+					},
+					{
+						"rtt": 0.969
+					},
+					{
+						"rtt": 0.96
+					}
+				]
+			},
+			{
+				"asn": [
+					123
+				],
+				"resolvedAddress": "2a01:4f8:0:3::6e5",
+				"resolvedHostname": "spine16.cloud1.hel1.hetzner.com",
+				"stats": {
+					"avg": 0.5,
+					"drop": 0,
 					"jAvg": 0.4,
-					"jMax": 0.5,
+					"jMax": 0.4,
 					"jMin": 0.4,
 					"loss": 0,
-					"max": 0.949,
-					"min": 0.453,
+					"max": 0.806,
+					"min": 0.354,
 					"rcv": 3,
 					"stDev": 0.2,
 					"total": 3
 				},
 				"timings": [
 					{
-						"rtt": 0.949
+						"rtt": 0.806
 					},
 					{
-						"rtt": 0.589
+						"rtt": 0.418
 					},
 					{
-						"rtt": 0.453
+						"rtt": 0.354
 					}
 				]
 			},
@@ -73,27 +167,58 @@
 				"resolvedAddress": "2a01:4f8:0:3::6c1",
 				"resolvedHostname": "core31.hel1.hetzner.com",
 				"stats": {
-					"avg": 0.7,
+					"avg": 0.6,
 					"drop": 0,
-					"jAvg": 0.6,
-					"jMax": 0.7,
-					"jMin": 0.5,
+					"jAvg": 0.4,
+					"jMax": 0.5,
+					"jMin": 0.3,
 					"loss": 0,
-					"max": 0.947,
-					"min": 0.487,
+					"max": 0.83,
+					"min": 0.472,
 					"rcv": 3,
 					"stDev": 0.2,
 					"total": 3
 				},
 				"timings": [
 					{
-						"rtt": 0.947
+						"rtt": 0.83
 					},
 					{
-						"rtt": 0.487
+						"rtt": 0.575
 					},
 					{
-						"rtt": 0.674
+						"rtt": 0.472
+					}
+				]
+			},
+			{
+				"asn": [
+					123
+				],
+				"resolvedAddress": "2a01:4f8:0:3::2b9",
+				"resolvedHostname": "juniper4.dc1.hel1.hetzner.com",
+				"stats": {
+					"avg": 1.8,
+					"drop": 0,
+					"jAvg": 2,
+					"jMax": 3.2,
+					"jMin": 0.8,
+					"loss": 0,
+					"max": 3.931,
+					"min": 0.743,
+					"rcv": 3,
+					"stDev": 1.5,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 3.931
+					},
+					{
+						"rtt": 0.743
+					},
+					{
+						"rtt": 0.755
 					}
 				]
 			},
@@ -102,29 +227,178 @@
 					123
 				],
 				"resolvedAddress": "2a01:4f8:0:e0f0::14a",
-				"resolvedHostname": "2a01:4f8:0:e0f0::14a",
+				"resolvedHostname": null,
 				"stats": {
-					"avg": 3,
+					"avg": 1.7,
 					"drop": 0,
-					"jAvg": 2.9,
-					"jMax": 4.2,
-					"jMin": 1.7,
+					"jAvg": 1,
+					"jMax": 1.5,
+					"jMin": 0.5,
 					"loss": 0,
-					"max": 5.832,
-					"min": 1.647,
+					"max": 2.12,
+					"min": 1.499,
 					"rcv": 3,
-					"stDev": 2,
+					"stDev": 0.3,
 					"total": 3
 				},
 				"timings": [
 					{
-						"rtt": 5.832
+						"rtt": 2.12
 					},
 					{
-						"rtt": 1.647
+						"rtt": 1.619
 					},
 					{
-						"rtt": 1.656
+						"rtt": 1.499
+					}
+				]
+			},
+			{
+				"asn": [
+					123
+				],
+				"resolvedAddress": "2a00:1450:80d2::1",
+				"resolvedHostname": "2a00:1450:80d2::1",
+				"stats": {
+					"avg": 1.3,
+					"drop": 0,
+					"jAvg": 0.8,
+					"jMax": 1.4,
+					"jMin": 0.3,
+					"loss": 0,
+					"max": 1.449,
+					"min": 1.147,
+					"rcv": 3,
+					"stDev": 0.1,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 1.449
+					},
+					{
+						"rtt": 1.147
+					},
+					{
+						"rtt": 1.366
+					}
+				]
+			},
+			{
+				"asn": [
+					123
+				],
+				"resolvedAddress": "2001:4860:0:1::3e56",
+				"resolvedHostname": null,
+				"stats": {
+					"avg": 2.1,
+					"drop": 2,
+					"jAvg": 2.1,
+					"jMax": 2.1,
+					"jMin": 2.1,
+					"loss": 66.7,
+					"max": 2.059,
+					"min": 2.059,
+					"rcv": 1,
+					"stDev": 0,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 2.059
+					}
+				]
+			},
+			{
+				"asn": [
+					123
+				],
+				"resolvedAddress": "2001:4860:0:1::8320",
+				"resolvedHostname": "2001:4860:0:1::8320",
+				"stats": {
+					"avg": 2.4,
+					"drop": 0,
+					"jAvg": 1.7,
+					"jMax": 3.1,
+					"jMin": 0.3,
+					"loss": 0,
+					"max": 3.138,
+					"min": 1.933,
+					"rcv": 3,
+					"stDev": 0.5,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 2.258
+					},
+					{
+						"rtt": 1.933
+					},
+					{
+						"rtt": 3.138
+					}
+				]
+			},
+			{
+				"asn": [
+					123
+				],
+				"resolvedAddress": "2001:4860:0:1::82df",
+				"resolvedHostname": "2001:4860:0:1::82df",
+				"stats": {
+					"avg": 2.4,
+					"drop": 0,
+					"jAvg": 2.3,
+					"jMax": 3.4,
+					"jMin": 1.2,
+					"loss": 0,
+					"max": 4.636,
+					"min": 1.207,
+					"rcv": 3,
+					"stDev": 1.6,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 4.636
+					},
+					{
+						"rtt": 1.279
+					},
+					{
+						"rtt": 1.207
+					}
+				]
+			},
+			{
+				"asn": [
+					123
+				],
+				"resolvedAddress": "2001:4860:0:1::43e1",
+				"resolvedHostname": "2001:4860:0:1::43e1",
+				"stats": {
+					"avg": 2.5,
+					"drop": 0,
+					"jAvg": 1.3,
+					"jMax": 2.2,
+					"jMin": 0.5,
+					"loss": 0,
+					"max": 2.807,
+					"min": 2.236,
+					"rcv": 3,
+					"stDev": 0.2,
+					"total": 3
+				},
+				"timings": [
+					{
+						"rtt": 2.807
+					},
+					{
+						"rtt": 2.349
+					},
+					{
+						"rtt": 2.236
 					}
 				]
 			},
@@ -136,27 +410,29 @@
 				"resolvedHostname": "hem09s02-in-x0e.1e100.net",
 				"stats": {
 					"avg": 1.3,
-					"drop": 1,
-					"jAvg": 0.3,
-					"jMax": 0.3,
+					"drop": 0,
+					"jAvg": 0.8,
+					"jMax": 1.2,
 					"jMin": 0.3,
-					"loss": 33.3,
-					"max": 1.475,
-					"min": 1.207,
-					"rcv": 2,
+					"loss": 0,
+					"max": 1.524,
+					"min": 1.204,
+					"rcv": 3,
 					"stDev": 0.1,
 					"total": 3
 				},
 				"timings": [
 					{
-						"rtt": 1.475
+						"rtt": 1.524
 					},
 					{
-						"rtt": 1.207
+						"rtt": 1.204
+					},
+					{
+						"rtt": 1.217
 					}
 				]
 			}
-		],
-		"rawOutput": "Host                                                                  Loss% Drop Rcv Avg  StDev  Javg \n1. AS??? _gateway (fe80::)                                             0.0%    0   3 5.8    2.2   5.2\n2. AS123 spine16.cloud1.hel1.hetzner.com (2a01:4f8:0:3::6e5)           0.0%    0   3 0.7    0.2   0.4\n3. AS123 core31.hel1.hetzner.com (2a01:4f8:0:3::6c1)                   0.0%    0   3 0.7    0.2   0.6\n4. AS123 2a01:4f8:0:e0f0::14a (2a01:4f8:0:e0f0::14a)                   0.0%    0   3 3.0    2.0   2.9\n5. AS123 hem09s02-in-x0e.1e100.net (2a00:1450:4026:802::200e)         33.3%    1   2 1.3    0.1   0.3\n"
+		]
 	}
 }
