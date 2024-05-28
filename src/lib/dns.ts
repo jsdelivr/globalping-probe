@@ -1,6 +1,6 @@
 import dns from 'node:dns';
-import { isIpPrivate } from './private-ip.js';
 import { isIPv6 } from 'node:net';
+import { isIpPrivate } from './private-ip.js';
 
 export const getDnsServers = (getServers: () => string[] = dns.getServers): string[] => {
 	const servers = getServers();
