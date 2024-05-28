@@ -77,8 +77,10 @@ export class StatusManager {
 	}
 
 	private async runTest () {
-		const resultIPv4 = await this.pingTest(4);
-		const resultIPv6 = await this.pingTest(6);
+		const [ resultIPv4, resultIPv6 ] = await Promise.all([
+			this.pingTest(4),
+			this.pingTest(6),
+		]);
 
 		if (resultIPv4 || resultIPv6) {
 			this.updateStatus('ready');
