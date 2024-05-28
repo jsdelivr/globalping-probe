@@ -8,7 +8,7 @@ import { isIpPrivate } from '../lib/private-ip.js';
 import { scopedLogger } from '../lib/logger.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 
-const reHost = /(\S+)\s+\((?:((?:\d+\.){3}\d+)|([\da-fA-F:]+(?:::)?[\da-fA-F:]+))\)/; // /(\S+)\s+\((?:((?:\d+\.){3}\d+)|([\da-fA-F:]))\)/;
+const reHost = /(\S+)\s+\(((?:\d+\.){3}\d+|[\da-fA-F:]+)\)/;
 const reRtt = /(\d+(?:\.?\d+)?)\s+ms(!\S*)?/g;
 
 export type TraceOptions = {
@@ -230,7 +230,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 
 		return {
 			host: hostMatch[0] ?? '',
-			resolvedAddress: hostMatch[2] !== undefined ? hostMatch[2] : (hostMatch.length >= 3 ? hostMatch[3] : ''),
+			resolvedAddress: hostMatch[2],
 		};
 	}
 
@@ -240,7 +240,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 
 		return {
 			resolvedHostname: hostMatch?.[1] ?? '*',
-			resolvedAddress: hostMatch?.[2] !== undefined ? hostMatch?.[2] : (hostMatch && hostMatch.length >= 3 ? (hostMatch?.[3] ?? '*') : '*'),
+			resolvedAddress: hostMatch?.[2] ?? '*',
 			timings: rttList.map(rtt => ({ rtt })),
 		};
 	}
