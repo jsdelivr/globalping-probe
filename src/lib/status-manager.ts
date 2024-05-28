@@ -84,6 +84,7 @@ export class StatusManager {
 			this.updateStatus('ready');
 		} else {
 			this.updateStatus('ping-test-failed');
+			logger.warn(`Both ping tests failed due to bad internet connection. Retrying in 10 minutes. Probe temporarily disconnected.`);
 		}
 
 		this.updateIsIPv4Supported(resultIPv4);
@@ -114,7 +115,7 @@ export class StatusManager {
 		});
 
 		const isPassingTest = successfulResults.length >= 2;
-		const testPassText = isPassingTest ? '. Test pass' : '';
+		const testPassText = isPassingTest ? `. IPv${ipVersion} tests pass` : '';
 
 		const rejectedPromises = results.filter((promise): promise is PromiseRejectedResult => promise.status === 'rejected');
 		rejectedPromises.forEach((promise) => {
@@ -122,18 +123,18 @@ export class StatusManager {
 
 			if (reason?.exitCode === 1) {
 				const output = (reason).stdout || (reason).stderr || '';
-				logger.warn(`Quality control ping test result is unsuccessful: ${output}${testPassText}.`);
+				logger.warn(`IPv${ipVersion} ping test unsuccessful: ${output}${testPassText}.`);
 			} else {
-				logger.warn(`Quality control ping test result is unsuccessful${testPassText}:`, reason);
+				logger.warn(`IPv${ipVersion} ping test unsuccessful${testPassText}:`, reason);
 			}
 		});
 
 		Object.entries(nonSuccessfulResults).forEach(([ target, result ]) => {
-			logger.warn(`Quality control ping test result is unsuccessful: ${target} ${result.stats?.loss?.toString() || ''}% packet loss${testPassText}.`);
+			logger.warn(`IPv${ipVersion} ping test unsuccessful: ${target} ${result.stats?.loss?.toString() || ''}% packet loss${testPassText}.`);
 		});
 
 		if (!isPassingTest) {
-			logger.warn('Quality control ping tests failed due to bad internet connection. Retrying in 10 minutes. Probe temporarily disconnected.');
+			logger.warn(`IPv${ipVersion} ping tests failed. Retrying in 10 minutes. Probe marked as not supporting IPv${ipVersion}.`);
 		}
 
 		return isPassingTest;
