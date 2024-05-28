@@ -10,6 +10,6 @@ export const getDnsServers = (getServers: () => string[] = dns.getServers): stri
 		.map((addr: string) => {
 			let ip = addr.replace('[', '').replace(/]:\d{1,5}$/, ''); // removes port number if it is ipv6
 			ip = isIPv6(ip) ? ip : ip.replace(/:\d{1,5}$/, ''); // removes port number if it is not ipv6
-			return isIpPrivate(ip) ? 'private' : addr;
+			return isIpPrivate(ip) ? 'private' : ip;
 		});
 };
