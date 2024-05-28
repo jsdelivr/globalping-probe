@@ -8,8 +8,8 @@
 		"status": "finished",
 		"hops": [
 			{
-				"resolvedAddress": null,
-				"resolvedHostname": null,
+				"resolvedAddress": "fe80::",
+				"resolvedHostname": "fe80::",
 				"timings": [
 					{
 						"rtt": 6.087

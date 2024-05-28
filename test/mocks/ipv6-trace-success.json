@@ -7,8 +7,8 @@
 		"resolvedHostname": "hem08s10-in-x0e.1e100.net",
 		"hops": [
 			{
-				"resolvedAddress": null,
-				"resolvedHostname": null,
+				"resolvedAddress": "fe80::",
+				"resolvedHostname": "fe80::",
 				"timings": [
 					{
 						"rtt": 8.385

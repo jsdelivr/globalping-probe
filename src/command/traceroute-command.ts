@@ -8,7 +8,7 @@ import { isIpPrivate } from '../lib/private-ip.js';
 import { scopedLogger } from '../lib/logger.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 
-const reHost = /(\S+)\s+\(((?:\d+\.){3}\d+|[\da-fA-F:]+)\)/;
+const reHost = /(\S+?)(?:%\w+)?\s+\(((?:\d+\.){3}\d+|[\da-fA-F:]+)(?:%\w+)?\)/;
 const reRtt = /(\d+(?:\.?\d+)?)\s+ms(!\S*)?/g;
 
 export type TraceOptions = {
