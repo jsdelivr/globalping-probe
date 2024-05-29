@@ -123,11 +123,11 @@ export class StatusManager {
 		rejectedPromises.forEach((promise) => {
 			const reason = promise.reason as ExecaError;
 
-			if (reason?.exitCode === 1) {
+			if (!reason.exitCode) {
+				logger.warn(`IPv${ipVersion} ping test unsuccessful${testPassText}:`, reason);
+			} else {
 				const output = (reason).stdout || (reason).stderr || '';
 				logger.warn(`IPv${ipVersion} ping test unsuccessful: ${output}${testPassText}.`);
-			} else {
-				logger.warn(`IPv${ipVersion} ping test unsuccessful${testPassText}:`, reason);
 			}
 		});
 
