@@ -8,13 +8,17 @@ import {
 	type MtrOptions,
 } from '../../../src/command/mtr-command.js';
 
-const dnsResolver = (isPrivate: boolean) => async (_addr: string, type = 'A') => {
+const dnsResolver = (isPrivate: boolean, isIPv6?: boolean) => async (_addr: string, type = 'A') => {
 	if (type === 'TXT') {
 		return [ '123 | abc | abc' ];
 	}
 
 	if (isPrivate) {
 		return [ '192.168.0.1' ];
+	}
+
+	if (isIPv6) {
+		return [ '64:ff9b:1::1a2b:3c4d' ];
 	}
 
 	return [ '1.1.1.1' ];
@@ -30,6 +34,7 @@ describe('mtr command executor', () => {
 				port: 80,
 				packets: 1,
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const args = argBuilder(options);
@@ -46,6 +51,38 @@ describe('mtr command executor', () => {
 			expect(joinedArgs).to.contain(`-P ${options.port}`);
 		});
 
+		describe('ipVersion', () => {
+			it('should set -4 flag', () => {
+				const options = {
+					type: 'mtr' as MtrOptions['type'],
+					target: 'google.com',
+					protocol: 'tcp',
+					port: 80,
+					packets: 1,
+					inProgressUpdates: false,
+					ipVersion: 4,
+				};
+
+				const args = argBuilder(options);
+				expect(args[0]).to.equal('-4');
+			});
+
+			it('should set -6 flag', () => {
+				const options = {
+					type: 'mtr' as MtrOptions['type'],
+					target: 'google.com',
+					protocol: 'tcp',
+					port: 80,
+					packets: 1,
+					inProgressUpdates: false,
+					ipVersion: 6,
+				};
+
+				const args = argBuilder(options);
+				expect(args[0]).to.equal('-6');
+			});
+		});
+
 		describe('protocol', () => {
 			it('should set --udp flag (UDP)', () => {
 				const options = {
@@ -55,6 +92,7 @@ describe('mtr command executor', () => {
 					port: 80,
 					packets: 1,
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -70,6 +108,7 @@ describe('mtr command executor', () => {
 					port: 80,
 					packets: 1,
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -85,6 +124,7 @@ describe('mtr command executor', () => {
 					port: 80,
 					packets: 1,
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -102,6 +142,7 @@ describe('mtr command executor', () => {
 					port: 90,
 					packets: 1,
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -118,6 +159,7 @@ describe('mtr command executor', () => {
 					port: 90,
 					packets: 2,
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -133,6 +175,7 @@ describe('mtr command executor', () => {
 					port: 90,
 					packets: 5,
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -156,6 +199,7 @@ describe('mtr command executor', () => {
 				type: 'mtr' as const,
 				target: 'jsdelivr.net',
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const expectedResult = getCmdMockResult(testCase);
@@ -193,6 +237,7 @@ describe('mtr command executor', () => {
 				type: 'mtr' as const,
 				target: 'jsdelivr.net',
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const expectedResult = getCmdMockResult(testCase);
@@ -214,12 +259,69 @@ describe('mtr command executor', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
-		it('should detect Private IP and stop with progress messages', async () => {
+		it('should run and parse mtr - ipv6-mtr-success-raw', async () => {
+			const testCase = 'ipv6-mtr-success-raw';
+			const options = {
+				type: 'mtr' as const,
+				target: 'google.com',
+				inProgressUpdates: false,
+				ipVersion: 6,
+			};
+
+			const expectedResult = getCmdMockResult(testCase);
+			const rawOutput = getCmdMock(testCase);
+			const rawOutputLines = rawOutput.split('\n');
+			const mockCmd = getExecaMock();
+
+			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(false));
+			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+
+			for (const progressOutput of rawOutputLines) {
+				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+			}
+
+			mockCmd.resolve(rawOutput);
+			await runPromise;
+
+			expect(mockedSocket.emit.callCount).to.equal(1);
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+		});
+
+		it('should run and parse mtr - ipv6-mtr-success-ip', async () => {
+			const testCase = 'ipv6-mtr-success-ip';
+			const options = {
+				type: 'mtr' as const,
+				target: '2a00:1450:4026:808::200f',
+				inProgressUpdates: false,
+				ipVersion: 6,
+			};
+
+			const expectedResult = getCmdMockResult(testCase);
+			const rawOutput = getCmdMock(testCase);
+			const rawOutputLines = rawOutput.split('\n');
+			const mockCmd = getExecaMock();
+
+			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(false));
+			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+
+			for (const progressOutput of rawOutputLines) {
+				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+			}
+
+			mockCmd.resolve(rawOutput);
+			await runPromise;
+
+			expect(mockedSocket.emit.callCount).to.equal(1);
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+		});
+
+		it('should detect Private IPv4 and stop with progress messages', async () => {
 			const testCase = 'mtr-fail-private-ip';
 			const options = {
 				type: 'mtr' as const,
 				target: 'jsdelivr.net',
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const expectedResult = getCmdMockResult(testCase);
@@ -234,18 +336,61 @@ describe('mtr command executor', () => {
 			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
 		});
 
-		it('should detect Private IP and stop', async () => {
+		it('should detect Private IPv6 and stop with progress messages', async () => {
+			const testCase = 'mtr-fail-private-ip';
+			const options = {
+				type: 'mtr' as const,
+				target: 'jsdelivr.net',
+				inProgressUpdates: true,
+				ipVersion: 6,
+			};
+
+			const expectedResult = getCmdMockResult(testCase);
+			const mockCmd = getExecaMock();
+
+			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(true, true));
+			await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+
+			expect(mockCmd.kill.called).to.be.true;
+			expect(mockedSocket.emit.calledOnce).to.be.true;
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
+		});
+
+		it('should detect Private IPv4 and stop', async () => {
 			const testCase = 'mtr-fail-private-ip';
 			const options = {
 				type: 'mtr' as const,
 				target: 'jsdelivr.net',
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const expectedResult = getCmdMockResult(testCase);
 			const mockCmd = getExecaMock();
 
 			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(true));
+			await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+
+			expect(mockCmd.kill.called).to.be.true;
+			expect(mockedSocket.emit.calledOnce).to.be.true;
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
+		});
+
+		it('should detect Private IPv6 and stop', async () => {
+			const testCase = 'mtr-fail-private-ip';
+			const options = {
+				type: 'mtr' as const,
+				target: 'jsdelivr.net',
+				inProgressUpdates: false,
+				ipVersion: 4,
+			};
+
+			const expectedResult = getCmdMockResult(testCase);
+			const mockCmd = getExecaMock();
+
+			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(true, true));
 			await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
 
 			expect(mockCmd.kill.called).to.be.true;

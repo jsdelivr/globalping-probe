@@ -27,6 +27,7 @@ export type HttpOptions = {
 		query: string;
 		headers?: Record<string, string>;
 	};
+	ipVersion: number;
 };
 
 type Cert = {
@@ -107,6 +108,7 @@ const getInitialResult = () => ({
 
 const allowedHttpProtocols = [ 'HTTP', 'HTTPS', 'HTTP2' ];
 const allowedHttpMethods = [ 'GET', 'HEAD' ];
+const allowedIpVersions = [ 4, 6 ];
 
 export const httpOptionsSchema = Joi.object<HttpOptions>({
 	type: Joi.string().valid('http').insensitive().required(),
@@ -122,6 +124,15 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 		query: Joi.string().allow('').optional().default(''),
 		headers: Joi.object().default({}),
 	}).required(),
+	ipVersion: Joi.when(Joi.ref('target'), {
+		is: Joi.string().domain(),
+		then: Joi.valid(...allowedIpVersions).default(4),
+		otherwise: Joi.when(Joi.ref('target'), {
+			is: Joi.string().ip({ version: [ 'ipv6' ], cidr: 'forbidden' }),
+			then: Joi.valid(6).default(6),
+			otherwise: Joi.valid(4).default(4),
+		}),
+	}),
 });
 
 export const urlBuilder = (options: HttpOptions): string => {
@@ -134,7 +145,7 @@ export const urlBuilder = (options: HttpOptions): string => {
 	return url;
 };
 
-export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Request => {
+export const httpCmd =	(options: HttpOptions, resolverFn?: ResolverType): Request => {
 	const url = urlBuilder(options);
 	const dnsResolver = callbackify(dnsLookup(options.resolver, resolverFn), true);
 
@@ -143,7 +154,7 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 		followRedirect: false,
 		cache: false,
 		dnsLookup: dnsResolver,
-		dnsLookupIpVersion: 4 as DnsLookupIpVersion,
+		dnsLookupIpVersion: (options.ipVersion ?? 4) as DnsLookupIpVersion,
 		http2: options.protocol === 'HTTP2',
 		timeout: {
 			request: 10_000,

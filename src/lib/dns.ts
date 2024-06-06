@@ -6,14 +6,10 @@ export const getDnsServers = (getServers: () => string[] = dns.getServers): stri
 	const servers = getServers();
 
 	return servers
-		// Filter out ipv6
-		.filter((addr: string) => {
-			const ipv6Match = /^\[(.*)]/g.exec(addr); // Nested with port
-			return !isIPv6(addr) && !isIPv6(ipv6Match?.[1] ?? '');
-		})
 		// Hide private ips
 		.map((addr: string) => {
-			const ip = addr.replace(/:\d{1,5}$/, '');
-			return isIpPrivate(ip) ? 'private' : addr;
+			let ip = addr.replace('[', '').replace(/]:\d{1,5}$/, ''); // removes port number if it is ipv6
+			ip = isIPv6(ip) ? ip : ip.replace(/:\d{1,5}$/, ''); // removes port number if it is not ipv6
+			return isIpPrivate(ip) ? 'private' : ip;
 		});
 };

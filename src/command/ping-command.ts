@@ -14,13 +14,25 @@ export type PingOptions = {
 	inProgressUpdates: boolean;
 	target: string;
 	packets: number;
+	ipVersion: number;
 };
+
+const allowedIpVersions = [ 4, 6 ];
 
 const pingOptionsSchema = Joi.object<PingOptions>({
 	type: Joi.string().valid('ping'),
 	inProgressUpdates: Joi.boolean(),
 	target: Joi.string(),
 	packets: Joi.number().min(1).max(16).default(3),
+	ipVersion: Joi.when(Joi.ref('target'), {
+		is: Joi.string().domain(),
+		then: Joi.valid(...allowedIpVersions).default(4),
+		otherwise: Joi.when(Joi.ref('target'), {
+			is: Joi.string().ip({ version: [ 'ipv6' ], cidr: 'forbidden' }),
+			then: Joi.valid(6).default(6),
+			otherwise: Joi.valid(4).default(4),
+		}),
+	}),
 });
 
 /* eslint-disable @typescript-eslint/ban-types */
@@ -49,7 +61,7 @@ const logger = scopedLogger('ping-command');
 
 export const argBuilder = (options: PingOptions): string[] => {
 	const args = [
-		'-4',
+		`-${options.ipVersion}`,
 		'-O',
 		[ '-c', options.packets.toString() ],
 		[ '-i', '0.5' ],

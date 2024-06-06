@@ -17,6 +17,7 @@ describe('trace command', () => {
 				port: 80,
 				protocol: 'TCP',
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const args = argBuilder(options);
@@ -32,6 +33,36 @@ describe('trace command', () => {
 			expect(joinedArgs).to.contain(`-p ${options.port}`);
 		});
 
+		describe('ipVersion', () => {
+			it('should set -4 flag', () => {
+				const options = {
+					type: 'traceroute' as TraceOptions['type'],
+					target: 'google.com',
+					port: 80,
+					protocol: 'TCP',
+					inProgressUpdates: false,
+					ipVersion: 4,
+				};
+
+				const args = argBuilder(options);
+				expect(args[0]).to.equal('-4');
+			});
+
+			it('should set -6 flag', () => {
+				const options = {
+					type: 'traceroute' as TraceOptions['type'],
+					target: 'google.com',
+					port: 80,
+					protocol: 'TCP',
+					inProgressUpdates: false,
+					ipVersion: 6,
+				};
+
+				const args = argBuilder(options);
+				expect(args[0]).to.equal('-6');
+			});
+		});
+
 		describe('port', () => {
 			it('should set -p 90 flag (TCP)', () => {
 				const options = {
@@ -40,6 +71,7 @@ describe('trace command', () => {
 					port: 90,
 					protocol: 'TCP',
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -54,6 +86,7 @@ describe('trace command', () => {
 					port: 90,
 					protocol: 'UDP',
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -70,6 +103,7 @@ describe('trace command', () => {
 					port: 90,
 					protocol: 'TCP',
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -84,6 +118,7 @@ describe('trace command', () => {
 					port: 90,
 					protocol: 'UDP',
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -109,6 +144,7 @@ describe('trace command', () => {
 					port: 53,
 					protocol: 'UDP',
 					inProgressUpdates: true,
+					ipVersion: 4,
 				};
 
 				const testCase = 'trace-success-linux';
@@ -148,9 +184,72 @@ describe('trace command', () => {
 					port: 53,
 					protocol: 'UDP',
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const testCase = 'trace-success-linux';
+				const rawOutput = getCmdMock(testCase);
+				const outputProgress = rawOutput.split('\n');
+				const expectedResult = getCmdMockResult(testCase);
+
+				const mockCmd = getExecaMock();
+
+				const ping = new TracerouteCommand((): any => mockCmd);
+				const runPromise = ping.run(mockSocket as any, 'measurement', 'test', options);
+
+				for (const progressOutput of outputProgress) {
+					mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+				}
+
+				mockCmd.resolve({ stdout: rawOutput });
+				await runPromise;
+
+				expect(mockSocket.emit.callCount).to.equal(1);
+				expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+			});
+
+			it('should run and parse trace - ipv6-trace-success', async () => {
+				const options = {
+					type: 'traceroute' as TraceOptions['type'],
+					target: 'google.com',
+					port: 53,
+					protocol: 'UDP',
+					inProgressUpdates: false,
+					ipVersion: 6,
+				};
+
+				const testCase = 'ipv6-trace-success';
+				const rawOutput = getCmdMock(testCase);
+				const outputProgress = rawOutput.split('\n');
+				const expectedResult = getCmdMockResult(testCase);
+
+				const mockCmd = getExecaMock();
+
+				const ping = new TracerouteCommand((): any => mockCmd);
+				const runPromise = ping.run(mockSocket as any, 'measurement', 'test', options);
+
+				for (const progressOutput of outputProgress) {
+					mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+				}
+
+				mockCmd.resolve({ stdout: rawOutput });
+				await runPromise;
+
+				expect(mockSocket.emit.callCount).to.equal(1);
+				expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+			});
+
+			it('should run and parse trace - ipv6-trace-success-ip', async () => {
+				const options = {
+					type: 'traceroute' as TraceOptions['type'],
+					target: '2a00:1450:4026:808::200f',
+					port: 53,
+					protocol: 'UDP',
+					inProgressUpdates: false,
+					ipVersion: 6,
+				};
+
+				const testCase = 'ipv6-trace-success-ip';
 				const rawOutput = getCmdMock(testCase);
 				const outputProgress = rawOutput.split('\n');
 				const expectedResult = getCmdMockResult(testCase);
@@ -178,6 +277,7 @@ describe('trace command', () => {
 					port: 53,
 					protocol: 'UDP',
 					inProgressUpdates: true,
+					ipVersion: 4,
 				};
 
 				const testCase = 'trace-private-ip-linux';
@@ -209,6 +309,7 @@ describe('trace command', () => {
 					port: 53,
 					protocol: 'UDP',
 					inProgressUpdates: true,
+					ipVersion: 4,
 				};
 
 				const testCase = 'trace-private-ip-linux';
@@ -234,6 +335,7 @@ describe('trace command', () => {
 					port: 53,
 					protocol: 'UDP',
 					inProgressUpdates: true,
+					ipVersion: 4,
 				};
 
 				const testCase = 'trace-private-ip-linux';

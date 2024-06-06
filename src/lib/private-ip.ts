@@ -27,6 +27,7 @@ privateBlockList.addSubnet('::1', 128, 'ipv6');
 privateBlockList.addSubnet('64:ff9b:1::', 48, 'ipv6');
 privateBlockList.addSubnet('100::', 64, 'ipv6');
 privateBlockList.addSubnet('2001::', 32, 'ipv6');
+privateBlockList.addSubnet('2001:10::', 28, 'ipv6');
 privateBlockList.addSubnet('2001:20::', 28, 'ipv6');
 privateBlockList.addSubnet('2001:db8::', 32, 'ipv6');
 privateBlockList.addSubnet('2002::', 16, 'ipv6');

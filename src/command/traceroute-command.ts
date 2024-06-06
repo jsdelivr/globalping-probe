@@ -8,7 +8,7 @@ import { isIpPrivate } from '../lib/private-ip.js';
 import { scopedLogger } from '../lib/logger.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 
-const reHost = /(\S+)\s+\((?:((?:\d+\.){3}\d+)|([\da-fA-F:]))\)/;
+const reHost = /(\S+?)(?:%\w+)?\s+\(((?:\d+\.){3}\d+|[\da-fA-F:]+)(?:%\w+)?\)/;
 const reRtt = /(\d+(?:\.?\d+)?)\s+ms(!\S*)?/g;
 
 export type TraceOptions = {
@@ -17,6 +17,7 @@ export type TraceOptions = {
 	target: string;
 	protocol: string;
 	port: number;
+	ipVersion: number;
 };
 
 type ParsedLine = {
@@ -48,20 +49,31 @@ type ParsedOutputJson = {
 
 const logger = scopedLogger('traceroute-command');
 
+const allowedIpVersions = [ 4, 6 ];
+
 const traceOptionsSchema = Joi.object<TraceOptions>({
 	type: Joi.string().valid('traceroute'),
 	inProgressUpdates: Joi.boolean(),
 	target: Joi.string(),
 	protocol: Joi.string(),
 	port: Joi.number(),
+	ipVersion: Joi.when(Joi.ref('target'), {
+		is: Joi.string().domain(),
+		then: Joi.valid(...allowedIpVersions).default(4),
+		otherwise: Joi.when(Joi.ref('target'), {
+			is: Joi.string().ip({ version: [ 'ipv6' ], cidr: 'forbidden' }),
+			then: Joi.valid(6).default(6),
+			otherwise: Joi.valid(4).default(4),
+		}),
+	}),
 });
 
 export const argBuilder = (options: TraceOptions): string[] => {
 	const port = options.protocol === 'TCP' ? [ '-p', `${options.port}` ] : [];
 
 	const args = [
-		// Ipv4
-		'-4',
+		// Ipv4 or IPv6
+		`-${options.ipVersion}`,
 		// Max ttl
 		[ '-m', '20' ],
 		// Max timeout

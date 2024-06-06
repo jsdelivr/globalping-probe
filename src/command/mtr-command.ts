@@ -25,11 +25,13 @@ export type MtrOptions = {
 	protocol: string;
 	port: number;
 	packets: number;
+	ipVersion: number;
 };
 
 type DnsResolver = (addr: string, rrtype?: string) => Promise<string[]>;
 
 const logger = scopedLogger('mtr-command');
+const allowedIpVersions = [ 4, 6 ];
 
 const mtrOptionsSchema = Joi.object<MtrOptions>({
 	type: Joi.string().valid('mtr'),
@@ -38,6 +40,15 @@ const mtrOptionsSchema = Joi.object<MtrOptions>({
 	protocol: Joi.string().lowercase().insensitive(),
 	packets: Joi.number().min(1).max(16).default(3),
 	port: Joi.number(),
+	ipVersion: Joi.when(Joi.ref('target'), {
+		is: Joi.string().domain(),
+		then: Joi.valid(...allowedIpVersions).default(4),
+		otherwise: Joi.when(Joi.ref('target'), {
+			is: Joi.string().ip({ version: [ 'ipv6' ], cidr: 'forbidden' }),
+			then: Joi.valid(6).default(6),
+			otherwise: Joi.valid(4).default(4),
+		}),
+	}),
 });
 
 export const getResultInitState = (): ResultType => ({ status: 'finished', hops: [], rawOutput: '', data: [] });
@@ -48,8 +59,8 @@ export const argBuilder = (options: MtrOptions): string[] => {
 	const packetsArg = String(options.packets);
 
 	const args = [
-		// Ipv4
-		'-4',
+		// Ipv4 or IPv6
+		`-${options.ipVersion}`,
 		intervalArg,
 		[ '--gracetime', '3' ],
 		[ '--max-ttl', '30' ],

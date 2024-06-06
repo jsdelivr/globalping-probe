@@ -17,6 +17,7 @@ describe('ping command executor', () => {
 				target: 'google.com',
 				packets: 1,
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const args = argBuilder(options);
@@ -30,6 +31,34 @@ describe('ping command executor', () => {
 			expect(joinedArgs).to.contain('-w 10');
 		});
 
+		describe('ipVersion', () => {
+			it('should set -4 flag', () => {
+				const options = {
+					type: 'ping' as PingOptions['type'],
+					target: 'google.com',
+					packets: 1,
+					inProgressUpdates: false,
+					ipVersion: 4,
+				};
+
+				const args = argBuilder(options);
+				expect(args[0]).to.equal('-4');
+			});
+
+			it('should set -6 flag', () => {
+				const options = {
+					type: 'ping' as PingOptions['type'],
+					target: 'google.com',
+					packets: 1,
+					inProgressUpdates: false,
+					ipVersion: 6,
+				};
+
+				const args = argBuilder(options);
+				expect(args[0]).to.equal('-6');
+			});
+		});
+
 		describe('packets', () => {
 			it('should set -c 2 flag', () => {
 				const options = {
@@ -37,6 +66,7 @@ describe('ping command executor', () => {
 					target: 'google.com',
 					packets: 2,
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -50,6 +80,7 @@ describe('ping command executor', () => {
 					target: 'google.com',
 					packets: 5,
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -65,6 +96,7 @@ describe('ping command executor', () => {
 					target: 'abc.com',
 					packets: 2,
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const args = argBuilder(options);
@@ -94,6 +126,7 @@ describe('ping command executor', () => {
 					target: 'google.com',
 					packets: 3,
 					inProgressUpdates: true,
+					ipVersion: 4,
 				};
 
 				const mockedCmd = getExecaMock();
@@ -131,6 +164,7 @@ describe('ping command executor', () => {
 					target: 'google.com',
 					packets: 3,
 					inProgressUpdates: false,
+					ipVersion: 4,
 				};
 
 				const mockedCmd = getExecaMock();
@@ -151,6 +185,36 @@ describe('ping command executor', () => {
 			});
 		}
 
+		it(`should run and parse successful command without progress updates - ipv6-ping-success`, async () => {
+			const testCase = 'ipv6-ping-success';
+			const rawOutput = getCmdMock(testCase);
+			const outputProgress = rawOutput.split('\n');
+			const expectedResult = getCmdMockResult(testCase);
+			const options = {
+				type: 'ping' as PingOptions['type'],
+				target: 'google.com',
+				packets: 3,
+				inProgressUpdates: false,
+				ipVersion: 6,
+			};
+
+			const mockedCmd = getExecaMock();
+
+			const ping = new PingCommand((): any => mockedCmd);
+
+			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+
+			for (const progressOutput of outputProgress) {
+				mockedCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+			}
+
+			mockedCmd.resolve({ stdout: rawOutput });
+			await runPromise;
+
+			expect(mockedSocket.emit.callCount).to.equal(1);
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+		});
+
 		it('should run and fail private ip command on the progress step', async () => {
 			const command = 'ping-private-ip-linux';
 			const rawOutput = getCmdMock(command);
@@ -161,6 +225,7 @@ describe('ping command executor', () => {
 				target: 'google.com',
 				packets: 3,
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const mockedCmd = getExecaMock();
@@ -191,6 +256,7 @@ describe('ping command executor', () => {
 				target: 'google.com',
 				packets: 3,
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const mockedCmd = getExecaMock();
@@ -216,6 +282,7 @@ describe('ping command executor', () => {
 				target: 'google.com',
 				packets: 3,
 				inProgressUpdates: false,
+				ipVersion: 4,
 			};
 
 			const mockedCmd = getExecaMock();
@@ -247,6 +314,7 @@ describe('ping command executor', () => {
 					target: 'google.com',
 					packets: 3,
 					inProgressUpdates: true,
+					ipVersion: 4,
 				};
 
 				const execaError = execaSync('unknown-command', [], { reject: false });
@@ -273,6 +341,7 @@ describe('ping command executor', () => {
 				target: 'google.com',
 				packets: 3,
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const execaError = execaSync('unknown-command', [], { reject: false });
@@ -297,6 +366,7 @@ describe('ping command executor', () => {
 				target: 'google.com',
 				packets: 3,
 				inProgressUpdates: true,
+				ipVersion: 4,
 			};
 
 			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
