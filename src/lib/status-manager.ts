@@ -1,5 +1,5 @@
 import config from 'config';
-import type { ExecaChildProcess, ExecaError, ExecaReturnValue } from 'execa';
+import type { ExecaChildProcess, ExecaError } from 'execa';
 import type { Socket } from 'socket.io-client';
 import parse, { PingParseOutput } from '../command/handlers/ping/parse.js';
 import type { PingOptions } from '../command/ping-command.js';
@@ -103,26 +103,29 @@ export class StatusManager {
 		const targets = [ 'ns1.registry.in', 'k.root-servers.net', 'ns1.dns.nl' ];
 		const results = await Promise.allSettled(targets.map(target => this.pingCmd({ type: 'ping', ipVersion, target, packets, inProgressUpdates: false })));
 
-		const fulfilledPromises = results.filter((promise): promise is PromiseFulfilledResult<ExecaReturnValue> => promise.status === 'fulfilled');
-		const cmdResults = fulfilledPromises.map(promise => promise.value).map(result => parse(result.stdout));
-		const nonSuccessfulResults: Record<string, PingParseOutput> = {};
-		const successfulResults = cmdResults.filter((result, index) => {
-			const isSuccessful = result.status === 'finished' && result.stats?.loss === 0;
+		const rejectedResults: Array<{ target: string, reason: ExecaError }> = [];
+		const successfulResults: Array<{ target: string, result: PingParseOutput }> = [];
+		const unSuccessfulResults: Array<{ target: string, result: PingParseOutput }> = [];
 
-			if (!isSuccessful) {
-				nonSuccessfulResults[targets[index]!] = result;
+		for (const [ index, result ] of results.entries()) {
+			if (result.status === 'rejected') {
+				rejectedResults.push({ target: targets[index]!, reason: result.reason as ExecaError });
+			} else {
+				const parsed = parse(result.value.stdout);
+				const isSuccessful = parsed.stats?.loss === 0;
+
+				if (isSuccessful) {
+					successfulResults.push({ target: targets[index]!, result: parsed });
+				} else {
+					unSuccessfulResults.push({ target: targets[index]!, result: parsed });
+				}
 			}
-
-			return isSuccessful;
-		});
+		}
 
 		const isPassingTest = successfulResults.length >= 2;
 		const testPassText = isPassingTest ? `. IPv${ipVersion} tests pass` : '';
 
-		const rejectedPromises = results.filter((promise): promise is PromiseRejectedResult => promise.status === 'rejected');
-		rejectedPromises.forEach((promise) => {
-			const reason = promise.reason as ExecaError;
-
+		rejectedResults.forEach(({ reason }) => {
 			if (!reason.exitCode) {
 				logger.warn(`IPv${ipVersion} ping test unsuccessful${testPassText}:`, reason);
 			} else {
@@ -131,8 +134,8 @@ export class StatusManager {
 			}
 		});
 
-		Object.entries(nonSuccessfulResults).forEach(([ target, result ]) => {
-			logger.warn(`IPv${ipVersion} ping test unsuccessful: ${target} ${result.stats?.loss?.toString() || ''}% packet loss${testPassText}.`);
+		unSuccessfulResults.forEach(({ target, result }) => {
+			logger.warn(`IPv${ipVersion} ping test unsuccessful for ${target}: ${result.stats?.loss?.toString() || ''}% packet loss${testPassText}.`);
 		});
 
 		if (!isPassingTest) {
