@@ -14,7 +14,7 @@ Use the following command:
 
 
 ```
-docker run -d --log-driver local --network host --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
+docker run -d --log-driver local --network host --restart=always --name globalping-probe globalping/globalping-probe
 ```
 
 > [!TIP]
@@ -24,7 +24,7 @@ docker run -d --log-driver local --network host --restart=always --name globalpi
 For users opting for Podman, [follow the instructions here](https://linuxhandbook.com/autostart-podman-containers/) to make sure the container automatically starts on boot. Also, check the container logs to see if it started successfully, as Podman may still require additional permissions.
 Run the container with the following command:
 ```
-sudo podman run --cap-add=NET_RAW -d --network host --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
+sudo podman run --cap-add=NET_RAW -d --network host --restart=always --name globalping-probe globalping/globalping-probe
 ```
 
 ## Where to run
@@ -44,10 +44,10 @@ As the automatic update doesn’t update the container, we recommend you pull a 
 To update the container, run the following:
 
 ```
-docker pull ghcr.io/jsdelivr/globalping-probe
+docker pull globalping/globalping-probe
 docker stop globalping-probe
 docker rm globalping-probe
-docker run -d --log-driver local --network host --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
+docker run -d --log-driver local --network host --restart=always --name globalping-probe globalping/globalping-probe
 ```
 
 ## Limitations
