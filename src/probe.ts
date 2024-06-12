@@ -49,7 +49,11 @@ handlersMap.set('traceroute', new TracerouteCommand(traceCmd));
 handlersMap.set('dns', new DnsCommand(dnsCmd));
 handlersMap.set('http', new HttpCommand(httpCmd));
 
-logger.info(`Start probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode.`);
+if (process.env['GP_HOST_FIRMWARE']) {
+	logger.info(`Hardware probe running firmware version ${process.env['GP_HOST_FIRMWARE'].substring(1)}.`);
+}
+
+logger.info(`Starting probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode.`);
 
 function connect () {
 	const worker = {
@@ -77,6 +81,7 @@ function connect () {
 			uuid: randomUUID(),
 			isHardware: process.env['GP_HOST_HW'],
 			hardwareDevice: process.env['GP_HOST_DEVICE'],
+			hardwareDeviceFirmware: process.env['GP_HOST_FIRMWARE'],
 			...(process.env['FAKE_IP_FIRST_OCTET'] && { fakeIp: getFakeIp() }),
 		},
 	});
