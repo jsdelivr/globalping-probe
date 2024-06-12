@@ -10,7 +10,7 @@ module.exports = {
 			host: 'localhost',
 			user: 'directus',
 			password: 'password',
-			database: 'directus-test',
+			database: 'dashboard-globalping-test',
 			port: 13306,
 			multipleStatements: true,
 		},
