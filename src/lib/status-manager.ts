@@ -22,6 +22,9 @@ export class StatusManager {
 	) {}
 
 	public async start () {
+		// Remove the previous timer if any
+		clearTimeout(this.timer);
+
 		const hasRequiredDeps = await hasRequired();
 
 		if (!hasRequiredDeps) {
