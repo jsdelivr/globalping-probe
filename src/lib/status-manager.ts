@@ -138,7 +138,11 @@ export class StatusManager {
 		});
 
 		unSuccessfulResults.forEach(({ target, result }) => {
-			logger.warn(`IPv${ipVersion} ping test unsuccessful for ${target}: ${result.stats?.loss?.toString() || ''}% packet loss${testPassText}.`);
+			if (result.stats?.loss) {
+				logger.warn(`IPv${ipVersion} ping test unsuccessful for ${target}: ${result.stats.loss.toString()}% packet loss${testPassText}.`, { result });
+			} else {
+				logger.warn(`IPv${ipVersion} ping test unsuccessful for ${target}: ${testPassText}.`, { result });
+			}
 		});
 
 		if (!isPassingTest) {
