@@ -1,5 +1,6 @@
 import config from 'config';
 import os from 'node:os';
+import net from 'node:net';
 import { randomUUID } from 'node:crypto';
 import process from 'node:process';
 import throng from 'throng';
@@ -23,6 +24,13 @@ import { initStatusManager } from './lib/status-manager.js';
 import { logAdoptionCode } from './lib/log-adoption-code.js';
 import { getAvailableDiskSpace, getTotalDiskSize, looksLikeV1HardwareDevice } from './lib/util.js';
 import { VERSION } from './constants.js';
+
+// The default value (250 ms) is too low for clients that are far from our servers
+// See https://github.com/nodejs/node/issues/52216 for more details
+// Supported (but also needed) only since node v18.18.0
+if (net.setDefaultAutoSelectFamilyAttemptTimeout) {
+	net.setDefaultAutoSelectFamilyAttemptTimeout(1000);
+}
 
 // Set the expected variables on HW probes with older firmware
 // https://github.com/jsdelivr/globalping-hwprobe/issues/27
