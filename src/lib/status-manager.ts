@@ -3,6 +3,7 @@ import type { ExecaChildProcess, ExecaError } from 'execa';
 import type { Socket } from 'socket.io-client';
 import parse, { PingParseOutput } from '../command/handlers/ping/parse.js';
 import type { PingOptions } from '../command/ping-command.js';
+import { isExecaError } from '../helper/execa-error-check.js';
 import { hasRequired } from './dependencies.js';
 import { scopedLogger } from './logger.js';
 
@@ -111,10 +112,14 @@ export class StatusManager {
 		const unSuccessfulResults: Array<{ target: string, result: PingParseOutput }> = [];
 
 		for (const [ index, result ] of results.entries()) {
-			if (result.status === 'rejected') {
+			if (result.status === 'rejected' && (!isExecaError(result.reason) || !result.reason?.stdout?.toString()?.length)) {
 				rejectedResults.push({ target: targets[index]!, reason: result.reason as ExecaError });
 			} else {
-				const parsed = parse(result.value.stdout);
+				const stdout = result.status === 'fulfilled'
+					? result.value.stdout
+					: (isExecaError(result.reason) && result.reason?.stdout?.toString()) || '';
+
+				const parsed = parse(stdout);
 				const isSuccessful = parsed.stats?.loss === 0;
 
 				if (isSuccessful) {
@@ -139,9 +144,9 @@ export class StatusManager {
 
 		unSuccessfulResults.forEach(({ target, result }) => {
 			if (result.stats?.loss) {
-				logger.warn(`IPv${ipVersion} ping test unsuccessful for ${target}: ${result.stats.loss.toString()}% packet loss${testPassText}.`, { result });
+				logger.warn(`IPv${ipVersion} ping test unsuccessful for ${target}: ${result.stats.loss.toString()}% packet loss${testPassText}.`);
 			} else {
-				logger.warn(`IPv${ipVersion} ping test unsuccessful for ${target}: ${testPassText}.`, { result });
+				logger.warn(`IPv${ipVersion} ping test unsuccessful for ${target}: ${result.rawOutput}${testPassText}.`);
 			}
 		});
 
