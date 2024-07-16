@@ -12,6 +12,7 @@ import { loadAll as loadAllDeps } from './lib/dependencies.js';
 import { scopedLogger } from './lib/logger.js';
 import { initErrorHandler } from './helper/api-error-handler.js';
 import { apiConnectLocationHandler } from './helper/api-connect-handler.js';
+import { apiConnectAltIpsHandler } from './helper/alt-ips-handler.js';
 import { dnsCmd, DnsCommand } from './command/dns-command.js';
 import { pingCmd, PingCommand } from './command/ping-command.js';
 import { traceCmd, TracerouteCommand } from './command/traceroute-command.js';
@@ -110,6 +111,7 @@ function connect () {
 		.on('disconnect', errorHandler.handleDisconnect)
 		.on('connect_error', errorHandler.connectError)
 		.on('api:connect:location', apiConnectLocationHandler(socket))
+		.on('api:connect:alt-ips-token', apiConnectAltIpsHandler)
 		.on('probe:measurement:request', (data: MeasurementRequest) => {
 			const status = statusManager.getStatus();
 
@@ -141,7 +143,7 @@ function connect () {
 				}
 			});
 		})
-		.on('probe:adoption:code', (data: { code: string }) => logAdoptionCode(data.code));
+		.on('probe:adoption:code', logAdoptionCode);
 
 	process.on('SIGTERM', () => {
 		logger.debug('SIGTERM received.');
