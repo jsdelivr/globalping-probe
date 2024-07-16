@@ -16,15 +16,20 @@ export const apiConnectAltIpsHandler = async ({ token, socketId }: { token: stri
 		.map('address')
 		.value();
 
+	console.log('uniqIps', uniqIps);
 	await Promise.all(uniqIps.map(ip => sendToken(ip, token, socketId)));
 };
 
 const sendToken = async (ip: string, token: string, socketId: string) => {
-	const data = await got.post(`${config.get<string>('api.httpHost')}/alternative-ip`, {
-		localAddress: ip,
-		json: {
-			token,
-			socketId,
-		},
-	});
+	try {
+		await got.post(`${config.get<string>('api.httpHost')}/alternative-ip`, {
+			localAddress: ip,
+			json: {
+				token,
+				socketId,
+			},
+		});
+	} catch (e) {
+		console.log(e.message);
+	}
 };
