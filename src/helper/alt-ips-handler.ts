@@ -2,7 +2,7 @@ import os from 'node:os';
 import config from 'config';
 import _ from 'lodash';
 import { scopedLogger } from '../lib/logger.js';
-import got from 'got';
+import got, { type RequestError } from 'got';
 
 const logger = scopedLogger('api:connect:alt-ips-token');
 
@@ -28,8 +28,13 @@ const sendToken = async (ip: string, token: string, socketId: string) => {
 				token,
 				socketId,
 			},
+			retry: {
+				limit: 1,
+				methods: [ 'POST' ],
+				statusCodes: [ 504 ],
+			},
 		});
 	} catch (e) {
-		console.log(e.message);
+		logger.error((e as RequestError).message);
 	}
 };
