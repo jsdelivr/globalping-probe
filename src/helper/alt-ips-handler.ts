@@ -13,17 +13,24 @@ export const apiConnectAltIpsHandler = async ({ token, socketId }: { token: stri
 		.flatten()
 		.uniqBy('address')
 		.filter(address => !address.internal)
-		.map('address')
+		// .map('address')
 		.value();
 
 	console.log('uniqIps', uniqIps);
-	await Promise.all(uniqIps.map(ip => sendToken(ip, token, socketId)));
+
+	await Promise.all(uniqIps.map(({ address, family }) => sendToken(
+		address,
+		family === 'IPv6' ? 6 : 4,
+		token,
+		socketId,
+	)));
 };
 
-const sendToken = async (ip: string, token: string, socketId: string) => {
+const sendToken = async (ip: string, dnsLookupIpVersion: 4 | 6, token: string, socketId: string) => {
 	try {
 		await got.post(`${config.get<string>('api.httpHost')}/alternative-ip`, {
 			localAddress: ip,
+			dnsLookupIpVersion,
 			json: {
 				token,
 				socketId,
