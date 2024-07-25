@@ -21,10 +21,14 @@ export const apiConnectAltIpsHandler = async ({ token, socketId, ip }: { token: 
 	const results = await Promise.allSettled(addresses.map(({ address, family }) => sendToken(address, family === 'IPv6' ? 6 : 4, token, socketId)));
 
 	results.forEach((result) => {
-		if (result.status === 'rejected') {
-			logger.error(result.reason instanceof RequestError ? result.reason.message : result);
-		} else {
+		if (result.status === 'fulfilled') {
 			allIps.push(result.value);
+		} else {
+			if (!(result.reason instanceof RequestError)) {
+				logger.error(result.reason);
+			} else if (result.reason.code !== '400') {
+				logger.error(result.reason.message);
+			}
 		}
 	});
 
