@@ -12,6 +12,7 @@ export default function wallaby () {
 			'test/plugins/**/*',
 			'test/utils.ts',
 			'test/hooks.ts',
+			'test/setup.ts',
 			'test/snapshots/**/*.json',
 			'package.json',
 		],
@@ -20,7 +21,10 @@ export default function wallaby () {
 		],
 		setup (w) {
 			const path = require('path');
-			w.testFramework.addFile(path.resolve(process.cwd(), 'test/hooks.js'));
+			w.testFramework.files.unshift(path.resolve(process.cwd(), 'test/hooks.js'));
+			w.testFramework.files.unshift(path.resolve(process.cwd(), 'test/setup.js'));
+			const mocha = w.testFramework;
+			mocha.timeout(5000);
 		},
 		env: {
 			type: 'node',
