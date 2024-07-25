@@ -26,7 +26,7 @@ export const apiConnectAltIpsHandler = async ({ token, socketId, ip }: { token: 
 		} else {
 			if (!(result.reason instanceof RequestError)) {
 				logger.error(result.reason);
-			} else if (result.reason.code !== '400') {
+			} else if (result.reason.response?.statusCode !== 400) {
 				logger.error(result.reason.message);
 			}
 		}
