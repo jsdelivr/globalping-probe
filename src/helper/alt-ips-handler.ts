@@ -14,8 +14,8 @@ export const apiConnectAltIpsHandler = async ({ token, socketId, ip }: { token: 
 		.flatten()
 		.uniqBy('address')
 		.filter(address => !address.internal)
-		.filter(address => !address.address.startsWith('fe80:'))
-		.filter(address => !address.address.startsWith('169.254.'))
+		.filter(address => !address.address.startsWith('fe80:')) // filter out link-local addresses
+		.filter(address => !address.address.startsWith('169.254.')) // filter out link-local addresses
 		.value();
 
 	const results = await Promise.allSettled(addresses.map(({ address, family }) => sendToken(address, family === 'IPv6' ? 6 : 4, token, socketId)));
