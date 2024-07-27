@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { scopedLogger } from '../lib/logger.js';
 import got, { RequestError } from 'got';
 
-const logger = scopedLogger('api:connect:alt-ips-token');
+const logger = scopedLogger('api:connect:alt-ips-handler');
 
 export const apiConnectAltIpsHandler = async ({ token, socketId, ip }: { token: string, socketId: string, ip: string }): Promise<void> => {
 	const allIps = [ ip ];
