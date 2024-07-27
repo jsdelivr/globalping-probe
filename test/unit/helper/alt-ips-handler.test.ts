@@ -89,15 +89,15 @@ describe('apiConnectAltIpsHandler', async () => {
 		const reqs = [];
 		const nockRequest = nock('https://api.globalping.io/v1').persist()
 			.post('/alternative-ip', (body) => {
-				expect(body).to.deep.equal({ token: '1111111', socketId: '22222222222222222222' });
+				expect(body).to.deep.equal({ token: 'token', socketId: 'socketId' });
 				return true;
 			}).reply(200, function () {
 				reqs.push(this.req);
 			});
 
 		await apiConnectAltIpsHandler({
-			token: '1111111',
-			socketId: '22222222222222222222',
+			token: 'token',
+			socketId: 'socketId',
 			ip: '3.3.3.3',
 		});
 
