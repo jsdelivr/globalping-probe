@@ -3,9 +3,6 @@
 	"extension": [
 		"ts"
 	],
-	"file": [
-		"test/setup.ts"
-	],
 	"node-option": [
 		"experimental-specifier-resolution=node",
 		"loader=ts-node/esm",
