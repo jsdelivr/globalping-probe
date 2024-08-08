@@ -58,12 +58,12 @@ const traceOptionsSchema = Joi.object<TraceOptions>({
 	protocol: Joi.string(),
 	port: Joi.number(),
 	ipVersion: Joi.when(Joi.ref('target'), {
-		is: Joi.string().domain(),
-		then: Joi.valid(...allowedIpVersions).default(4),
+		is: Joi.string().ip({ version: [ 'ipv4' ], cidr: 'forbidden' }).required(),
+		then: Joi.valid(4).default(4),
 		otherwise: Joi.when(Joi.ref('target'), {
-			is: Joi.string().ip({ version: [ 'ipv6' ], cidr: 'forbidden' }),
+			is: Joi.string().ip({ version: [ 'ipv6' ], cidr: 'forbidden' }).required(),
 			then: Joi.valid(6).default(6),
-			otherwise: Joi.valid(4).default(4),
+			otherwise: Joi.valid(...allowedIpVersions).default(4),
 		}),
 	}),
 });
