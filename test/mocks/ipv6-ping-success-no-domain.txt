@@ -1,0 +1,8 @@
+PING 2606:4700:4700::1111(2606:4700:4700::1111) 56 data bytes
+64 bytes from 2606:4700:4700::1111: icmp_seq=1 ttl=57 time=1.47 ms
+64 bytes from 2606:4700:4700::1111: icmp_seq=2 ttl=57 time=1.14 ms
+64 bytes from 2606:4700:4700::1111: icmp_seq=3 ttl=57 time=1.07 ms
+
+--- google.com ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 1003ms
+rtt min/avg/max/mdev = 1.072/1.224/1.466/0.172 ms
