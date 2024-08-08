@@ -114,7 +114,7 @@ describe('ping command executor', () => {
 			sandbox.reset();
 		});
 
-		const successfulCommands = [ 'ping-success-linux', 'ping-no-source-ip-linux' ];
+		const successfulCommands = [ 'ping-success-linux', 'ping-success-linux-no-domain', 'ping-no-source-ip-linux' ];
 
 		for (const command of successfulCommands) {
 			it(`should run and parse successful commands - ${command}`, async () => {
@@ -193,6 +193,36 @@ describe('ping command executor', () => {
 			const options = {
 				type: 'ping' as PingOptions['type'],
 				target: 'google.com',
+				packets: 3,
+				inProgressUpdates: false,
+				ipVersion: 6,
+			};
+
+			const mockedCmd = getExecaMock();
+
+			const ping = new PingCommand((): any => mockedCmd);
+
+			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+
+			for (const progressOutput of outputProgress) {
+				mockedCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
+			}
+
+			mockedCmd.resolve({ stdout: rawOutput });
+			await runPromise;
+
+			expect(mockedSocket.emit.callCount).to.equal(1);
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+		});
+
+		it(`should run and parse successful command without progress updates - ipv6-ping-success-no-domain`, async () => {
+			const testCase = 'ipv6-ping-success-no-domain';
+			const rawOutput = getCmdMock(testCase);
+			const outputProgress = rawOutput.split('\n');
+			const expectedResult = getCmdMockResult(testCase);
+			const options = {
+				type: 'ping' as PingOptions['type'],
+				target: '2606:4700:4700::1111',
 				packets: 3,
 				inProgressUpdates: false,
 				ipVersion: 6,

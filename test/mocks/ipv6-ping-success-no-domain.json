@@ -1,0 +1,33 @@
+{
+	"testId": "test",
+	"measurementId": "measurement",
+	"result": {
+		"status": "finished",
+		"rawOutput": "PING 2606:4700:4700::1111(2606:4700:4700::1111) 56 data bytes\n64 bytes from 2606:4700:4700::1111: icmp_seq=1 ttl=57 time=1.47 ms\n64 bytes from 2606:4700:4700::1111: icmp_seq=2 ttl=57 time=1.14 ms\n64 bytes from 2606:4700:4700::1111: icmp_seq=3 ttl=57 time=1.07 ms\n\n--- google.com ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 1003ms\nrtt min/avg/max/mdev = 1.072/1.224/1.466/0.172 ms\n",
+		"resolvedAddress": "2606:4700:4700::1111",
+		"resolvedHostname": "2606:4700:4700::1111",
+		"timings": [
+			{
+				"ttl": 57,
+				"rtt": 1.47
+			},
+			{
+				"ttl": 57,
+				"rtt": 1.14
+			},
+			{
+				"ttl": 57,
+				"rtt": 1.07
+			}
+		],
+		"stats": {
+			"min": 1.072,
+			"max": 1.466,
+			"avg": 1.224,
+			"total": 3,
+			"loss": 0,
+			"rcv": 3,
+			"drop": 0
+		}
+	}
+}
