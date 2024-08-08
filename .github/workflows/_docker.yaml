@@ -13,6 +13,17 @@ on:
     secrets:
       DOCKERHUB_TOKEN:
         required: true
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Release commit reference
+        required: true
+        type: string
+      publish:
+        description: Publish image to the registry
+        default: true
+        required: true
+        type: boolean
 
 jobs:
   publish:
