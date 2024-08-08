@@ -1,0 +1,9 @@
+{
+	"testId": "test",
+	"measurementId": "measurement",
+	"result": {
+		"status": "failed",
+		"rawOutput": "Private IP ranges are not allowed",
+		"hops": []
+	}
+}
