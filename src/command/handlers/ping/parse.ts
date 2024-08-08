@@ -38,7 +38,7 @@ export default function parse (rawOutput: string): PingParseOutput {
 	const resolvedAddress = String(header?.groups?.['addr']);
 	const timeLines = lines.slice(1).map(l => parseStatsLine(l)).filter(Boolean) as PingTimings[];
 
-	const resolvedHostname = (/(?<=from\s).*?(?=\s\(|:\s)/.exec((lines[1] ?? '')))?.[0];
+	const resolvedHostname = (/(?<=from\s).*?(?=\s\(|:\s)/i.exec((lines[1] ?? '')))?.[0];
 	const summaryHeaderIndex = lines.findIndex(l => /^---\s(.*)\sstatistics ---/.test(l));
 	const summary = parseSummary(lines.slice(summaryHeaderIndex + 1));
 
@@ -78,10 +78,13 @@ function parseSummary (lines: string[]): PingStats {
 	}
 
 	if (packets) {
-		const packetsMatch = /(?<total>\d+)\spackets\stransmitted,\s(?<rcv>\d+)\s(received|packets received),\s(?<loss>\d*(?:\.\d+)?)%\spacket\sloss/.exec(packets);
-		stats.total = Number.parseInt(packetsMatch?.groups?.['total'] ?? '-1', 10);
-		stats.loss = Number.parseFloat(packetsMatch?.groups?.['loss'] ?? '-1');
-		stats.rcv = Number.parseInt(packetsMatch?.groups?.['rcv'] ?? '-1', 10);
+		const totalMatch = /\b(?<total>\d+)\spackets\stransmitted/.exec(packets);
+		const rcvMatch = /\b(?<rcv>\d+)\s(received|packets received)/.exec(packets);
+		const lossMatch = /\b(?<loss>\d*(?:\.\d+)?)%\spacket\sloss/.exec(packets);
+
+		stats.total = Number.parseInt(totalMatch?.groups?.['total'] ?? '-1', 10);
+		stats.rcv = Number.parseInt(rcvMatch?.groups?.['rcv'] ?? '-1', 10);
+		stats.loss = Number.parseFloat(lossMatch?.groups?.['loss'] ?? '-1');
 		stats.drop = stats.total - stats.rcv;
 	}
 

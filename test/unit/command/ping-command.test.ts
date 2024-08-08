@@ -114,7 +114,7 @@ describe('ping command executor', () => {
 			sandbox.reset();
 		});
 
-		const successfulCommands = [ 'ping-success-linux', 'ping-success-linux-no-domain', 'ping-no-source-ip-linux' ];
+		const successfulCommands = [ 'ping-success-linux', 'ping-success-linux-no-domain', 'ping-no-source-ip-linux', 'ping-unreachable-linux' ];
 
 		for (const command of successfulCommands) {
 			it(`should run and parse successful commands - ${command}`, async () => {
