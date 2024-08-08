@@ -113,24 +113,24 @@ const allowedIpVersions = [ 4, 6 ];
 export const httpOptionsSchema = Joi.object<HttpOptions>({
 	type: Joi.string().valid('http').insensitive().required(),
 	inProgressUpdates: Joi.boolean().required(),
-	target: Joi.alternatives().try(Joi.string().ip(), Joi.string().domain()).required(),
+	target: Joi.string(),
 	resolver: Joi.string().ip(),
 	protocol: Joi.string().valid(...allowedHttpProtocols).insensitive().default('HTTPS'),
 	port: Joi.number(),
 	request: Joi.object({
 		method: Joi.string().valid(...allowedHttpMethods).insensitive().default('HEAD'),
-		host: Joi.string().domain(),
+		host: Joi.string(),
 		path: Joi.string().optional().default('/'),
 		query: Joi.string().allow('').optional().default(''),
 		headers: Joi.object().default({}),
 	}).required(),
 	ipVersion: Joi.when(Joi.ref('target'), {
-		is: Joi.string().domain(),
-		then: Joi.valid(...allowedIpVersions).default(4),
+		is: Joi.string().ip({ version: [ 'ipv4' ], cidr: 'forbidden' }).required(),
+		then: Joi.valid(4).default(4),
 		otherwise: Joi.when(Joi.ref('target'), {
-			is: Joi.string().ip({ version: [ 'ipv6' ], cidr: 'forbidden' }),
+			is: Joi.string().ip({ version: [ 'ipv6' ], cidr: 'forbidden' }).required(),
 			then: Joi.valid(6).default(6),
-			otherwise: Joi.valid(4).default(4),
+			otherwise: Joi.valid(...allowedIpVersions).default(4),
 		}),
 	}),
 });
