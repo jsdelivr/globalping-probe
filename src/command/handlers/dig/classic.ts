@@ -3,7 +3,7 @@ import { InternalError } from '../../../lib/internal-error.js';
 import {
 	SECTION_REG_EXP,
 	NEW_LINE_REG_EXP,
-	IPV4_REG_EXP,
+	IP_REG_EXP,
 	SharedDigParser,
 	type DnsSection,
 	type DnsParseLoopResponse,
@@ -39,7 +39,7 @@ export const ClassicDigParser = {
 		let output = rawOutput;
 
 		if (lines.length <= 2) {
-			const ipMatchList = rawOutput.match(IPV4_REG_EXP) ?? [];
+			const ipMatchList = rawOutput.match(IP_REG_EXP) ?? [];
 
 			for (const ip of ipMatchList) {
 				if (isIpPrivate(ip)) {

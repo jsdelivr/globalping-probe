@@ -1,0 +1,23 @@
+{
+	"testId": "test",
+	"measurementId": "measurement",
+	"result": {
+		"status": "finished",
+		"statusCodeName": "NOERROR",
+		"statusCode": 0,
+		"rawOutput": "; <<>> DiG 9.16.1-Ubuntu <<>> gitlab.test.com -t AAAA -p 53 -4 +timeout=3 +tries=2 +nocookie\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 21105\n;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags:; udp: 65494\n;; QUESTION SECTION:\n;gitlab.test.com.\t\tIN\tAAAA\n\n;; ANSWER SECTION:\ngitlab.test.com.\t0\tIN\tAAAA\tfd00::3\n\n;; Query time: 0 msec\n;; SERVER: x.x.x.x#53(x.x.x.x)\n;; WHEN: Thu May 12 08:15:15 BST 2022\n;; MSG SIZE  rcvd: 64\n",
+		"answers": [
+			{
+				"name": "gitlab.test.com.",
+				"type": "AAAA",
+				"ttl": 0,
+				"class": "IN",
+				"value": "fd00::3"
+			}
+		],
+		"timings": {
+			"total": 0
+		},
+		"resolver": "private"
+	}
+}
