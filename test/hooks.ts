@@ -1,4 +1,5 @@
 import * as chai from 'chai';
+import nock from 'nock';
 
 import chaiSnapshot from './plugins/snapshot/index.js';
 
@@ -18,6 +19,9 @@ export const mochaHooks = {
 				}, { threshold: 100 });
 			}).catch(console.error);
 		}
+
+		nock.disableNetConnect();
+		nock.enableNetConnect('127.0.0.1');
 	},
 	afterAll () {
 		if (Number(process.env['PRUNE_OLD_SNAPSHOTS'])) {

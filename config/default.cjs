@@ -1,6 +1,7 @@
 module.exports = {
 	api: {
 		host: 'wss://api.globalping.io',
+		httpHost: 'https://api.globalping.io/v1',
 	},
 	update: {
 		releaseUrl: 'https://data.jsdelivr.com/v1/packages/gh/jsdelivr/globalping-probe/resolved',
