@@ -40,6 +40,14 @@ describe('apiConnectAltIpsHandler', async () => {
 			],
 			ens5: [
 				{
+					address: '1.0.1.0',
+					netmask: '255.255.240.0',
+					family: 'IPv4',
+					mac: '0a:ab:82:5a:50:d1',
+					internal: false,
+					cidr: '172.31.43.80/20',
+				},
+				{
 					address: '172.31.43.80',
 					netmask: '255.255.240.0',
 					family: 'IPv4',
@@ -102,7 +110,7 @@ describe('apiConnectAltIpsHandler', async () => {
 		});
 
 		expect(reqs.length).to.equal(2);
-		expect(reqs[0].options.localAddress).to.equal('172.31.43.80');
+		expect(reqs[0].options.localAddress).to.equal('1.0.1.0');
 		expect(reqs[1].options.localAddress).to.equal('2a05:d016:174:7b28:f47b:e6:3307:fab6');
 		expect(nockRequest.isDone()).to.equal(true);
 	});
