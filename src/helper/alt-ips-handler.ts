@@ -2,6 +2,7 @@ import os from 'node:os';
 import config from 'config';
 import _ from 'lodash';
 import { scopedLogger } from '../lib/logger.js';
+import { isIpPrivate } from '../lib/private-ip.js';
 import got, { RequestError } from 'got';
 
 const logger = scopedLogger('api:connect:alt-ips-handler');
@@ -14,8 +15,7 @@ export const apiConnectAltIpsHandler = async ({ token, socketId, ip }: { token: 
 		.flatten()
 		.uniqBy('address')
 		.filter(address => !address.internal)
-		.filter(address => !address.address.startsWith('fe80:')) // filter out link-local addresses
-		.filter(address => !address.address.startsWith('169.254.')) // filter out link-local addresses
+		.filter(address => !isIpPrivate(address.address))
 		.value();
 
 	const results = await Promise.allSettled(addresses.map(({ address, family }) => sendToken(address, family === 'IPv6' ? 6 : 4, token, socketId)));
@@ -25,9 +25,9 @@ export const apiConnectAltIpsHandler = async ({ token, socketId, ip }: { token: 
 			allIps.push(result.value);
 		} else {
 			if (!(result.reason instanceof RequestError)) {
-				logger.error(result.reason);
+				logger.warn(result.reason);
 			} else if (result.reason.response?.statusCode !== 400) {
-				logger.error(result.reason.message);
+				logger.warn(`${result.reason.message} (via ${result.reason.options.localAddress}).`);
 			}
 		}
 	});
@@ -54,6 +54,9 @@ const sendToken = async (ip: string, dnsLookupIpVersion: 4 | 6, token: string, s
 			limit: 1,
 			methods: [ 'POST' ],
 			statusCodes: [ 504 ],
+		},
+		timeout: {
+			request: 10000,
 		},
 		responseType: 'json',
 	});
