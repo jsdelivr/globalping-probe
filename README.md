@@ -7,6 +7,7 @@ The [Globalping platform](https://github.com/jsdelivr/globalping) relies on a gl
 Globalping thrives on the contribution of its community – with your support, we can continuously enhance the platform and provide improved, reliable measurement results to all users free of charge.
 We'd be happy to welcome you to our community by hosting a probe!
 
+
 ### Set up a virtual probe
 To join the Globalping probe network, all you need to do is run our Docker container, which works on both x86 and ARM architectures. 
 
@@ -26,6 +27,15 @@ Run the container with the following command:
 ```
 sudo podman run --cap-add=NET_RAW -d --network host --restart=always --name globalping-probe globalping/globalping-probe
 ```
+
+## Adopt your probes
+Every new probe that comes online is a great help to our platform and the community and we want to encourage everyone to start new probes on every available hardware!
+
+If you're also an active user of Globalping that needs higher than free limits we recommend you register in the [Globalping Dashboard](https://dash.globalping.io/) and adopt your probes.
+
+Every adopted probe will generate additional daily credits that you can use to run even more tests.
+
+Learn more about [Globalping credits](https://globalping.io/credits)
 
 ## Where to run
 You can run the virtual probe on anything that can run a Docker container, supporting x86 and ARM architectures. This includes any Linux server hosted with a cloud provider, your home server, or even a Raspberry Pi lying around at your office. 
