@@ -7,7 +7,6 @@ The [Globalping platform](https://github.com/jsdelivr/globalping) relies on a gl
 Globalping thrives on the contribution of its community – with your support, we can continuously enhance the platform and provide improved, reliable measurement results to all users free of charge.
 We'd be happy to welcome you to our community by hosting a probe!
 
-
 ### Set up a virtual probe
 To join the Globalping probe network, all you need to do is run our Docker container, which works on both x86 and ARM architectures. 
 
