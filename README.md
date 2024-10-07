@@ -29,9 +29,9 @@ sudo podman run --cap-add=NET_RAW -d --network host --restart=always --name glob
 ```
 
 ## Adopt your probes
-Every new probe that comes online is a great help to our platform and the community and we want to encourage everyone to start new probes on every available hardware!
+Every new probe that comes online is a great help to our platform and the community, and we want to encourage everyone to start new probes on every available hardware!
 
-If you're also an active user of Globalping that needs higher than free limits we recommend you register in the [Globalping Dashboard](https://dash.globalping.io/) and adopt your probes.
+If you're also an active user of Globalping who needs higher than free limits, we recommend you register on the [Globalping Dashboard](https://dash.globalping.io/) and adopt your probes.
 
 Every adopted probe will generate additional daily credits that you can use to run even more tests.
 
