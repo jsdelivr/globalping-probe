@@ -5,6 +5,8 @@ import * as td from 'testdouble';
 import * as sinon from 'sinon';
 import * as constants from '../../../src/constants.js';
 
+class MockHTTPError extends Error {}
+class MockRequestError extends Error {}
 class MockTimeoutError extends Error {}
 
 describe('updater module', () => {
@@ -12,7 +14,11 @@ describe('updater module', () => {
 	const gotStub = sinon.stub();
 
 	before(async () => {
-		await td.replaceEsm('got', { TimeoutError: MockTimeoutError }, gotStub);
+		await td.replaceEsm('got', {
+			HTTPError: MockHTTPError,
+			RequestError: MockRequestError,
+			TimeoutError: MockTimeoutError,
+		}, gotStub);
 	});
 
 	beforeEach(() => {
