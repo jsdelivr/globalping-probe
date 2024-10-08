@@ -1,7 +1,7 @@
 import config from 'config';
 import process from 'node:process';
 import _ from 'lodash';
-import got, { TimeoutError } from 'got';
+import got, { HTTPError, RequestError, TimeoutError } from 'got';
 import { VERSION } from '../constants.js';
 import { scopedLogger } from './logger.js';
 
@@ -30,7 +30,15 @@ const checkForUpdates = () => {
 		process.kill(process.pid, 'SIGTERM');
 	}).catch((error: unknown) => {
 		if (error instanceof TimeoutError) {
-			logger.warn('The server timed out, while checking for a new version.');
+			logger.warn('The request timed out while checking for a new probe version.');
+			logger.warn(error);
+			return;
+		} else if (error instanceof HTTPError) {
+			logger.warn('The request failed with an HTTP error while checking for a new probe version.');
+			logger.warn(error);
+			return;
+		} else if (error instanceof RequestError) {
+			logger.warn('The request failed while checking for a new probe version.');
 			logger.warn(error);
 			return;
 		}
