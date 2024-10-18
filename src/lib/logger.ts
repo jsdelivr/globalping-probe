@@ -21,7 +21,7 @@ const objectFormatter = (object: Record<string, any>) => {
 const logger = winston.createLogger({
 	level: process.env['LOG_LEVEL'] ?? 'debug',
 	format: winston.format.combine(
-		winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+		winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss Z' }),
 		winston.format.prettyPrint(),
 		winston.format.printf((info: winston.Logform.TransformableInfo) => {
 			const { timestamp, level, scope, message, stack, ...otherFields } = info;
