@@ -51,6 +51,7 @@ await loadAllDeps();
 
 const logger = scopedLogger('general');
 const handlersMap = new Map<string, CommandInterface<unknown>>();
+const probeUuid = randomUUID();
 
 handlersMap.set('ping', process.env['FAKE_COMMANDS'] ? new FakePingCommand() : new PingCommand(pingCmd));
 handlersMap.set('mtr', process.env['FAKE_COMMANDS'] ? new FakeMtrCommand() : new MtrCommand(mtrCmd));
@@ -62,7 +63,7 @@ if (process.env['GP_HOST_FIRMWARE']) {
 	logger.info(`Hardware probe running firmware version ${process.env['GP_HOST_FIRMWARE'].substring(1)}.`);
 }
 
-logger.info(`Starting probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode.`);
+logger.info(`Starting probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode with UUID ${probeUuid}.`);
 
 function connect () {
 	const worker = {
@@ -87,7 +88,7 @@ function connect () {
 			totalMemory: os.totalmem(),
 			totalDiskSize: getTotalDiskSize(),
 			availableDiskSpace: getAvailableDiskSpace(),
-			uuid: randomUUID(),
+			uuid: probeUuid,
 			isHardware: process.env['GP_HOST_HW'],
 			hardwareDevice: process.env['GP_HOST_DEVICE'],
 			hardwareDeviceFirmware: process.env['GP_HOST_FIRMWARE'],
