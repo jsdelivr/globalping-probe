@@ -22,9 +22,10 @@ RUN apt-get update -y && apt-get install --no-install-recommends -y expect ca-ce
     && apt-get clean && apt-get autoremove -y \
     && rm -rf /var/lib/apt /var/lib/dpkg /var/lib/cache /var/lib/log \
     && rm -rf /var/cache/apt /var/cache/debconf /var/cache/fontconfig /var/cache/ldconfig \
-    && rm -rf /opt /root/.npm /usr/share/man /usr/lib/arm-linux-gnueabihf/perl-base /usr/include /usr/local/include /usr/local/lib/node_modules/npm/docs \
-    && rm -rf /tmp/v8-compile-cache-0 /sbin/debugfs /sbin/e2fsck /sbin/ldconfig /usr/bin/perl* \
-    && cd /app && npm install --omit=dev --omit=optional
+    && rm -rf /opt /usr/share/man /usr/lib/arm-linux-gnueabihf/perl-base /usr/include /usr/local/include /usr/local/lib/node_modules/npm/docs \
+    && rm -rf /sbin/debugfs /sbin/e2fsck /sbin/ldconfig /usr/bin/perl* \
+    && cd /app && npm install --omit=dev --omit=optional \
+    && rm -rf /root/.npm /tmp/v8-compile-cache-0
 
 COPY --from=builder /app/dist /app/dist
 COPY --from=builder /app/config /app/config
