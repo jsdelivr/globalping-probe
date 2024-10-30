@@ -35,9 +35,9 @@ export const apiConnectAltIpsHandler = async ({ token, socketId, ip }: { token: 
 	const uniqIps = _(allIps).uniq().value();
 
 	if (uniqIps.length === 1) {
-		logger.info(`IP address of the probe: ${uniqIps[0]}`);
+		logger.info(`IP address of the probe: ${uniqIps[0]}.`);
 	} else {
-		logger.info(`IP addresses of the probe: ${uniqIps.join(', ')}`);
+		logger.info(`IP addresses of the probe: ${uniqIps.join(', ')}.`);
 	}
 };
 
