@@ -2,7 +2,6 @@ import os from 'node:os';
 import config from 'config';
 import _ from 'lodash';
 import { scopedLogger } from '../lib/logger.js';
-import { isIpPrivate } from '../lib/private-ip.js';
 import got, { RequestError } from 'got';
 
 const logger = scopedLogger('api:connect:alt-ips-handler');
@@ -15,7 +14,8 @@ export const apiConnectAltIpsHandler = async ({ token, socketId, ip }: { token: 
 		.flatten()
 		.uniqBy('address')
 		.filter(address => !address.internal)
-		.filter(address => !isIpPrivate(address.address))
+		.filter(address => !address.address.startsWith('fe80:')) // filter out link-local addresses
+		.filter(address => !address.address.startsWith('169.254.')) // filter out link-local addresses
 		.value();
 
 	const results = await Promise.allSettled(addresses.map(({ address, family }) => sendToken(address, family === 'IPv6' ? 6 : 4, token, socketId)));

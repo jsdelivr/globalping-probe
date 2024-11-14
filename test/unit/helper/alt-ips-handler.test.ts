@@ -109,9 +109,10 @@ describe('apiConnectAltIpsHandler', async () => {
 			ip: '3.3.3.3',
 		});
 
-		expect(reqs.length).to.equal(2);
+		expect(reqs.length).to.equal(3);
 		expect(reqs[0].options.localAddress).to.equal('1.0.1.0');
-		expect(reqs[1].options.localAddress).to.equal('2a05:d016:174:7b28:f47b:e6:3307:fab6');
+		expect(reqs[1].options.localAddress).to.equal('172.31.43.80');
+		expect(reqs[2].options.localAddress).to.equal('2a05:d016:174:7b28:f47b:e6:3307:fab6');
 		expect(nockRequest.isDone()).to.equal(true);
 	});
 });
