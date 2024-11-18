@@ -2,6 +2,7 @@ import os from 'node:os';
 import path from 'node:path';
 import * as fs from 'node:fs';
 import { execSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 import { getAvailableDiskSpace, looksLikeV1HardwareDevice } from './lib/util.js';
@@ -10,6 +11,7 @@ const WANTED_VERSION = 'v20.13.0';
 const MIN_NODE_UPDATE_MEMORY = 250 * 1e6;
 const MIN_NODE_UPDATE_DISK_SPACE_MB = 1000;
 const dirname = path.dirname(fileURLToPath(import.meta.url));
+const UUID_FILE = `/.globalping-probe-uuid`;
 
 function updateEntrypoint () {
 	const currentEntrypointPath = path.join(dirname, '../../entrypoint.sh');
@@ -31,7 +33,7 @@ function updateEntrypoint () {
 	// By replacing the file with just one command here, we cause the execution
 	// to stop (the new file is shorter than the current offset), and we copy
 	// the update after the restart (and then restart again for the same reason).
-	console.log('Entrypoint change detected. Updating and restarting.');
+	console.log(`[${new Date().toISOString()}] Entrypoint change detected. Updating and restarting.`);
 	fs.writeFileSync(currentEntrypointPath, `cp ${newEntrypointPath} ${currentEntrypointPath} && exit\n`);
 	process.exit(0);
 }
@@ -48,7 +50,7 @@ function updateNode () {
 		const IS_HW_PROBE = process.env['GP_HOST_HW'] || looksLikeV1HardwareDevice();
 
 		if (IS_HW_PROBE) {
-			console.log(`Hardware probe detected. Not updating.`);
+			console.log(`[${new Date().toISOString()}] Hardware probe detected. Not updating.`);
 			logUpdateFirmwareMessage();
 			return;
 		}
@@ -57,7 +59,7 @@ function updateNode () {
 		const PROBE_DISK_SPACE_MB = getAvailableDiskSpace();
 
 		if (PROBE_MEMORY < MIN_NODE_UPDATE_MEMORY || PROBE_DISK_SPACE_MB < MIN_NODE_UPDATE_DISK_SPACE_MB) {
-			console.log(`Total system memory (${PROBE_MEMORY}) or disk space (${PROBE_DISK_SPACE_MB}MB} below the required threshold. Not updating.`);
+			console.log(`[${new Date().toISOString()}] Total system memory (${PROBE_MEMORY}) or disk space (${PROBE_DISK_SPACE_MB}MB} below the required threshold. Not updating.`);
 			logUpdateContainerMessage();
 			return;
 		}
@@ -82,16 +84,43 @@ function updateNode () {
 		try {
 			execSync(`\\. $NVM_DIR/nvm.sh && nvm uninstall ${process.version} && nvm cache clear`, { env: { NVM_DIR }, stdio: 'inherit' });
 		} catch (e) {
-			console.error(`Failed to uninstall ${process.version}:`);
+			console.error(`[${new Date().toISOString()}] Failed to uninstall ${process.version}:`);
 			console.error(e);
 		}
 
 		console.log(`[${new Date().toISOString()}] Restarting`);
 		process.exit(0);
 	} catch (e) {
-		console.error(`Failed to update node.js:`);
+		console.error(`[${new Date().toISOString()}] Failed to update node.js:`);
 		console.error(e);
 	}
+}
+
+function setPersistentUUID () {
+	// UUID already set; allows persistence on read-only systems with firmware support.
+	if (process.env['GP_PROBE_UUID']) {
+		return;
+	}
+
+	let probeUuid;
+
+	try {
+		probeUuid = fs.readFileSync(UUID_FILE, 'utf8').trim();
+	} catch (e) {
+		console.warn(`[${new Date().toISOString()}] Failed to read the persistent UUID. Generating a new one:`);
+		console.warn(e);
+
+		probeUuid = randomUUID();
+
+		try {
+			fs.writeFileSync(UUID_FILE, probeUuid, 'utf8');
+		} catch (e) {
+			console.error(`[${new Date().toISOString()}] Failed to write the new UUID:`);
+			console.error(e);
+		}
+	}
+
+	process.env['GP_PROBE_UUID'] = probeUuid;
 }
 
 function logUpdateFirmwareMessage () {
@@ -123,4 +152,6 @@ Please either:
 
 updateEntrypoint();
 updateNode();
+
+setPersistentUUID();
 import('./probe.js');
