@@ -1,5 +1,5 @@
 import type { TLSSocket } from 'node:tls';
-import type { Socket as NetSocket } from 'node:net';
+import { isIPv6, type Socket as NetSocket } from 'node:net';
 import http from 'node:http';
 import https from 'node:https';
 import http2 from 'http2-wrapper';
@@ -140,7 +140,7 @@ export const urlBuilder = (options: HttpOptions): string => {
 	const port = options.port ? options.port : (options.protocol === 'HTTP' ? 80 : 443);
 	const path = `/${options.request.path}`.replace(/^\/\//, '/');
 	const query = options.request.query.length > 0 ? `?${options.request.query}`.replace(/^\?\?/, '?') : '';
-	const url = `${protocolPrefix}://${options.target}:${port}${path}${query}`;
+	const url = `${protocolPrefix}://${isIPv6(options.target) ? `[${options.target}]` : options.target}:${port}${path}${query}`;
 
 	return url;
 };
