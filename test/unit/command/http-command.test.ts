@@ -132,6 +132,65 @@ describe('http command', () => {
 			});
 		});
 
+		describe('target', () => {
+			it('should enclose an IPv6 addresses in brackets', () => {
+				const options = {
+					type: 'http' as const,
+					target: '2606:4700:4700::1111',
+					protocol: 'HTTP',
+					request: {
+						method: 'GET',
+						path: '/',
+						query: '',
+					},
+					inProgressUpdates: false,
+					ipVersion: 6,
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('http://[2606:4700:4700::1111]:80/');
+			});
+
+			it('should not enclose an IPv4 addresses in brackets', () => {
+				const options = {
+					type: 'http' as const,
+					target: '1.1.1.1',
+					protocol: 'HTTP',
+					request: {
+						method: 'GET',
+						path: '/',
+						query: '',
+					},
+					inProgressUpdates: false,
+					ipVersion: 6,
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('http://1.1.1.1:80/');
+			});
+
+			it('should enclose a domain in brackets', () => {
+				const options = {
+					type: 'http' as const,
+					target: 'jsdelivr.com',
+					protocol: 'HTTP',
+					request: {
+						method: 'GET',
+						path: '/',
+						query: '',
+					},
+					inProgressUpdates: false,
+					ipVersion: 6,
+				};
+
+				const url = urlBuilder(options);
+
+				expect(url).to.equal('http://jsdelivr.com:80/');
+			});
+		});
+
 		describe('port', () => {
 			it('should set custom port', () => {
 				const options = {
