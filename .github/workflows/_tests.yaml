@@ -72,9 +72,16 @@ jobs:
       - uses: ubicloud/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - name: install and build
+      - name: Enable IPv6 for Docker containers
         run: |
-          npm ci && npm run build
-      - name: e2e tests
+          sudo cat /etc/docker/daemon.json | jq '. + { "ipv6": true, "fixed-cidr-v6": "2001:db8:1::/64", "experimental": true, "ip6tables": true }' > daemon.json
+          sudo mv daemon.json /etc/docker/
+          sudo systemctl restart docker
+          docker restart $(docker ps -aq)
+      - name: Build
+        run: |
+          npm ci
+          npm run build
+      - name: Test E2E
         run: |
           npm run test:e2e
