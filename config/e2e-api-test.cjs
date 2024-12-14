@@ -21,4 +21,11 @@ module.exports = {
 	systemApi: {
 		key: 'system',
 	},
+	measurement: {
+		rateLimit: {
+			post: {
+				anonymousLimit: 100000,
+			},
+		},
+	},
 };
