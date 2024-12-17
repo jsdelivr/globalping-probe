@@ -450,6 +450,115 @@ describe('http command', () => {
 			]);
 		});
 
+		it('should respond with 200 on OPTIONS request and response with body', async () => {
+			nock('http://google.com').options('/').reply(200, function () {
+				const request = this.req as typeof this.req & {response: Response & {socket: { getPeerCertificate }}};
+				request.response.httpVersion = '1.1';
+				request.response.socket.getPeerCertificate = false;
+				return 'response body';
+			});
+
+			const options = {
+				type: 'http' as const,
+				target: 'google.com',
+				inProgressUpdates: false,
+				protocol: 'HTTP',
+				request: {
+					method: 'OPTIONS',
+					path: '/',
+					query: '',
+				},
+				ipVersion: 4,
+			};
+
+			const http = new HttpCommand(httpCmd);
+			await http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			expect(mockedSocket.emit.callCount).to.equal(1);
+
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([
+				'probe:measurement:result',
+				{
+					testId: 'test',
+					measurementId: 'measurement',
+					result: {
+						status: 'finished',
+						resolvedAddress: '127.0.0.1',
+						headers: {},
+						rawHeaders: null,
+						rawBody: 'response body',
+						rawOutput: 'HTTP/1.1 200\n\n\nresponse body',
+						truncated: false,
+						statusCode: 200,
+						statusCodeName: 'OK',
+						timings: {
+							total: 0,
+							download: 0,
+							firstByte: 0,
+							dns: 0,
+							tls: null,
+							tcp: 0,
+						},
+						tls: null,
+					},
+				},
+			]);
+		});
+
+		it('should respond with 200 on OPTIONS request and response without body', async () => {
+			nock('http://google.com').options('/').reply(200, function () {
+				const request = this.req as typeof this.req & {response: Response & {socket: { getPeerCertificate }}};
+				request.response.httpVersion = '1.1';
+				request.response.socket.getPeerCertificate = false;
+			});
+
+			const options = {
+				type: 'http' as const,
+				target: 'google.com',
+				inProgressUpdates: false,
+				protocol: 'HTTP',
+				request: {
+					method: 'OPTIONS',
+					path: '/',
+					query: '',
+				},
+				ipVersion: 4,
+			};
+
+			const http = new HttpCommand(httpCmd);
+			await http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			expect(mockedSocket.emit.callCount).to.equal(1);
+
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([
+				'probe:measurement:result',
+				{
+					testId: 'test',
+					measurementId: 'measurement',
+					result: {
+						status: 'finished',
+						resolvedAddress: '127.0.0.1',
+						headers: {},
+						rawHeaders: null,
+						rawBody: null,
+						rawOutput: 'HTTP/1.1 200\n',
+						truncated: false,
+						statusCode: 200,
+						statusCodeName: 'OK',
+						timings: {
+							total: 0,
+							download: 0,
+							firstByte: 0,
+							dns: 0,
+							tls: null,
+							tcp: 0,
+						},
+						tls: null,
+					},
+				},
+			]);
+		});
+
 		it('should respond with 400 with progress messages', async () => {
 			nock('http://google.com').get('/400').times(3).reply(400, function () {
 				const request = this.req as typeof this.req & {response: Response & {socket: { getPeerCertificate }}};
