@@ -216,7 +216,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				rawOutput = result.error;
 			} else if (result.error) {
 				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.rawHeaders}\n\n${result.error}`;
-			} else if (cmdOptions.request.method === 'HEAD') {
+			} else if (cmdOptions.request.method === 'HEAD' || !result.rawBody) {
 				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.rawHeaders}`;
 			} else {
 				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.rawHeaders}\n\n${result.rawBody}`;
