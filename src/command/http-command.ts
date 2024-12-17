@@ -107,7 +107,7 @@ const getInitialResult = () => ({
 });
 
 const allowedHttpProtocols = [ 'HTTP', 'HTTPS', 'HTTP2' ];
-const allowedHttpMethods = [ 'GET', 'HEAD' ];
+const allowedHttpMethods = [ 'GET', 'HEAD', 'OPTIONS' ];
 const allowedIpVersions = [ 4, 6 ];
 
 export const httpOptionsSchema = Joi.object<HttpOptions>({
@@ -145,7 +145,7 @@ export const urlBuilder = (options: HttpOptions): string => {
 	return url;
 };
 
-export const httpCmd =	(options: HttpOptions, resolverFn?: ResolverType): Request => {
+export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Request => {
 	const url = urlBuilder(options);
 	const dnsResolver = callbackify(dnsLookup(options.resolver, resolverFn), true);
 
@@ -166,6 +166,7 @@ export const httpCmd =	(options: HttpOptions, resolverFn?: ResolverType): Reques
 			'User-Agent': 'globalping probe (https://github.com/jsdelivr/globalping)',
 			'host': options.request.host ?? options.target,
 		},
+		...(options.request.method === 'OPTIONS' && { body: '' }), // https://github.com/sindresorhus/got/issues/2394
 		setHost: false,
 		throwHttpErrors: false,
 		context: {
