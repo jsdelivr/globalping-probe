@@ -76,11 +76,6 @@ The amount of measurement tests your probe can process scales with the available
 
 However, if you still want to control resource usage, add the docker parameter `--cpuset-cpus="0-2"` to your `docker run` command and set the number of CPUs within the quotes.
 
-## Running multiple probes 
-We'd love to work with you if you can host probes in multiple regions, especially in places we have not yet covered. We're happy to list anyone who can **host at least six probes** as donors on GitHub and our website.
-
-To get started or if you have any questions, contact us at dak@prospectone.io
-
 ## Hardware Probes
 <img src="https://user-images.githubusercontent.com/1834071/183153051-5c741c3c-5e8c-4372-ba12-82a602cb7cb6.png" alt="globalping probe" height="200px" align="right"/>
 
