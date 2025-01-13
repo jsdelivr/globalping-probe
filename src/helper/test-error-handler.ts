@@ -7,6 +7,7 @@ export const handleTestError = (error: unknown, socket: Socket, measurementId: s
 	logger.error('Failed to run the measurement.', error);
 
 	const rawOutput = error instanceof Error ? error.toString() : String(error);
+
 	socket.emit('probe:measurement:result', {
 		testId,
 		measurementId,
