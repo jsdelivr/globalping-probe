@@ -11,6 +11,7 @@ import type { CommandInterface, MeasurementRequest } from './types.js';
 import { loadAll as loadAllDeps } from './lib/dependencies.js';
 import { scopedLogger } from './lib/logger.js';
 import { initErrorHandler } from './helper/api-error-handler.js';
+import { handleTestError } from './helper/test-error-handler.js';
 import { apiConnectLocationHandler } from './helper/api-connect-handler.js';
 import { apiConnectAltIpsHandler } from './helper/alt-ips-handler.js';
 import { adoptionStatusHandler } from './helper/adoption-status-handler.js';
@@ -138,10 +139,9 @@ function connect () {
 
 				try {
 					await handler.run(socket, measurementId, testId, measurement);
-					worker.jobs.delete(measurementId);
 				} catch (error: unknown) {
-					// Todo: maybe we should notify api as well
-					logger.error('Failed to run the measurement.', error);
+					handleTestError(error, socket, measurementId, testId);
+				} finally {
 					worker.jobs.delete(measurementId);
 				}
 			});

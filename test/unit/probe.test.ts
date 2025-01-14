@@ -169,6 +169,29 @@ describe('index module', () => {
 		expect(runStub.firstCall.args[3]).to.deep.equal({ type: 'ping' });
 	});
 
+	it('should return error message in case of error', async () => {
+		await import('../../src/probe.js');
+		mockSocket.emit('connect');
+		mockSocket.emit('api:connect:location', fakeLocation);
+		await sandbox.clock.nextAsync();
+		runStub.rejects(new Error('Some error message'));
+
+		mockSocket.emit('probe:measurement:request', { measurementId: 'measurementid', testId: 'testid', measurement: { type: 'ping' } });
+		const emitSpy = sinon.spy(mockSocket, 'emit');
+		await sandbox.clock.nextAsync();
+
+		expect(emitSpy.callCount).to.equal(1);
+
+		expect(emitSpy.getCall(0).args).to.deep.equal([
+			'probe:measurement:result',
+			{
+				testId: 'testid',
+				measurementId: 'measurementid',
+				result: { status: 'failed', rawOutput: 'Error: Some error message' },
+			},
+		]);
+	});
+
 	it('should reconnect on "disconnect" event from API', async () => {
 		await import('../../src/probe.js');
 
