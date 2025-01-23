@@ -3,7 +3,7 @@
 update-ca-certificates
 
 function run_probe() {
-	node /app/dist/index.js
+	node --dns-result-order=ipv4first /app/dist/index.js
 	return
 }
 
