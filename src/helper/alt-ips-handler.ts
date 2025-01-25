@@ -4,10 +4,12 @@ import _ from 'lodash';
 import { scopedLogger } from '../lib/logger.js';
 import got, { RequestError } from 'got';
 
-const logger = scopedLogger('api:connect:alt-ips-handler');
+const mainLogger = scopedLogger('general');
+const altIpsLogger = scopedLogger('api:connect:alt-ips-handler');
 
 export const apiConnectAltIpsHandler = async ({ token, socketId, ip }: { token: string, socketId: string, ip: string }): Promise<void> => {
-	const allIps = [ ip ];
+	const acceptedIps = [ ip ];
+	const rejectedIps: string[] = [];
 	const addresses = _(os.networkInterfaces())
 		.values()
 		.filter((int): int is os.NetworkInterfaceInfo[] => !!int)
@@ -20,24 +22,33 @@ export const apiConnectAltIpsHandler = async ({ token, socketId, ip }: { token: 
 
 	const results = await Promise.allSettled(addresses.map(({ address, family }) => sendToken(address, family === 'IPv6' ? 6 : 4, token, socketId)));
 
-	results.forEach((result) => {
+	results.forEach((result, index) => {
 		if (result.status === 'fulfilled') {
-			allIps.push(result.value);
+			acceptedIps.push(result.value);
 		} else {
 			if (!(result.reason instanceof RequestError)) {
-				logger.warn(result.reason);
+				altIpsLogger.warn(result.reason);
 			} else if (result.reason.response?.statusCode !== 400) {
-				logger.warn(`${result.reason.message} (via ${result.reason.options.localAddress}).`);
+				altIpsLogger.warn(`${result.reason.message} (via ${result.reason.options.localAddress}).`);
+			} else {
+				rejectedIps.push(addresses[index]!.address);
 			}
 		}
 	});
 
-	const uniqIps = _(allIps).uniq().value();
+	const uniqAcceptedIps = _(acceptedIps).uniq().value();
+	const uniqRejectedIps = _(rejectedIps).uniq().value();
 
-	if (uniqIps.length === 1) {
-		logger.info(`IP address of the probe: ${uniqIps[0]}.`);
+	if (uniqRejectedIps.length === 1) {
+		altIpsLogger.info(`IP address rejected by the API: ${uniqRejectedIps.join(', ')}.`);
+	} else if (uniqRejectedIps.length > 1) {
+		altIpsLogger.info(`IP addresses rejected by the API: ${uniqRejectedIps.join(', ')}.`);
+	}
+
+	if (uniqAcceptedIps.length === 1) {
+		mainLogger.info(`IP address of the probe: ${uniqAcceptedIps[0]}.`);
 	} else {
-		logger.info(`IP addresses of the probe: ${uniqIps.join(', ')}.`);
+		mainLogger.info(`IP addresses of the probe: ${uniqAcceptedIps.join(', ')}.`);
 	}
 };
 
