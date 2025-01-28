@@ -1,6 +1,7 @@
 import config from 'config';
 import os from 'node:os';
 import net from 'node:net';
+import dns from 'node:dns';
 import { randomUUID } from 'node:crypto';
 import process from 'node:process';
 import throng from 'throng';
@@ -27,6 +28,8 @@ import { initStatusManager } from './lib/status-manager.js';
 import { logAdoptionCode } from './lib/log-adoption-code.js';
 import { getAvailableDiskSpace, getTotalDiskSize, looksLikeV1HardwareDevice } from './lib/util.js';
 import { VERSION } from './constants.js';
+
+dns.setDefaultResultOrder('ipv4first');
 
 // The default value (250 ms) is too low for clients that are far from our servers
 // See https://github.com/nodejs/node/issues/52216 for more details
