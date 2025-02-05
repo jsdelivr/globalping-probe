@@ -411,7 +411,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				issuer: { ...cert.issuer },
 				subject: {
 					...cert.subject,
-					alt: cert.subjectaltname,
+					alt: cert.subjectaltname || null,
 				},
 				keyType: cert.asn1Curve || cert.nistCurve ? 'EC' : cert.modulus || cert.exponent ? 'RSA' : null,
 				keyBits: cert.bits || null,
