@@ -13,7 +13,7 @@ export type CpuUsageResponse = {
 	}>;
 };
 
-export const getCurrentCpu = (): CpuUsageInternal => {
+const getCurrentCpu = (): CpuUsageInternal => {
 	const cpus = os.cpus();
 
 	const load = cpus.map((cpu) => {

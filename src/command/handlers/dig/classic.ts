@@ -81,12 +81,12 @@ export const ClassicDigParser = {
 		};
 	},
 
-	toJsonOutput (result: DnsParseResponse): DnsParseResponseJson {
+	toJsonOutput (result: Partial<DnsParseResponse>): DnsParseResponseJson {
 		return {
-			status: result.status,
+			status: result.status!,
+			rawOutput: result.rawOutput!,
 			statusCodeName: result.statusCodeName ?? null,
 			statusCode: result.statusCode ?? null,
-			rawOutput: result.rawOutput,
 			answers: result.answers ?? [],
 			timings: {
 				...(result.timings ?? { total: 0 }),

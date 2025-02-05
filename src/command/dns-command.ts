@@ -186,7 +186,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			};
 		}
 
-		buffer.pushResult(this.toJsonOutput(result as DnsParseResponseClassic | DnsParseResponseTrace, cmdOptions.trace));
+		buffer.pushResult(this.toJsonOutput(result, cmdOptions.trace));
 	}
 
 	private validatePartialResult (rawOutput: string, cmd: ExecaChildProcess, options: DnsOptions): boolean {
@@ -204,18 +204,12 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		return true;
 	}
 
-	private toJsonOutput (
-		result: DnsParseResponseClassic | DnsParseResponseTrace,
-		trace: boolean,
-	): DnsParseResponseJson {
+	private toJsonOutput (result: Partial<DnsParseResponseClassic | DnsParseResponseTrace>, trace: boolean): DnsParseResponseJson {
 		if (trace) {
-			return TraceDigParser.toJsonOutput({
-				...result,
-				hops: (result.hops || []) as DnsParseResponseTrace['hops'],
-			} as DnsParseResponseTrace);
+			return TraceDigParser.toJsonOutput(result as Partial<DnsParseResponseTrace>);
 		}
 
-		return ClassicDigParser.toJsonOutput(result as DnsParseResponseClassic);
+		return ClassicDigParser.toJsonOutput(result as Partial<DnsParseResponseClassic>);
 	}
 
 	private hasResultPrivateIp (result: DnsParseResponseClassic | DnsParseResponseTrace, target: string): boolean {

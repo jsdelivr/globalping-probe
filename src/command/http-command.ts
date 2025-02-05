@@ -80,14 +80,7 @@ export type OutputJson = {
 	truncated: boolean;
 	statusCode: number | null;
 	statusCodeName: string | null;
-	timings: {
-		total: number | null,
-		download: number | null,
-		firstByte: number | null,
-		dns: number | null,
-		tls: number | null,
-		tcp: number | null,
-	};
+	timings: Record<string, number | null>;
 	tls: Cert | null;
 	rawOutput: string | null;
 };
