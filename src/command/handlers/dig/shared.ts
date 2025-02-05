@@ -3,10 +3,10 @@ import ipRegex from 'ip-regex';
 export type DnsValueType = string;
 
 export type DnsSection = Record<string, unknown> | {
-	name: string;
-	type: string;
+	name: string | null;
+	type: string | null;
 	ttl: number;
-	class: string;
+	class: string| null;
 	value: DnsValueType;
 };
 
@@ -35,10 +35,10 @@ export const IP_REG_EXP = ipRegex();
 export const SharedDigParser = {
 	parseSection (values: string[]): DnsSection {
 		return {
-			name: values[0],
-			type: values[3],
+			name: values[0] ?? null,
+			type: values[3] ?? null,
 			ttl: Number(values[1] ?? ''),
-			class: values[2],
+			class: values[2] ?? null,
 			value: SharedDigParser.parseValue(values),
 		};
 	},

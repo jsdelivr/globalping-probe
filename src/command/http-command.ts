@@ -80,7 +80,14 @@ export type OutputJson = {
 	truncated: boolean;
 	statusCode: number | null;
 	statusCodeName: string | null;
-	timings: Record<string, number | null>;
+	timings: {
+		total: number | null,
+		download: number | null,
+		firstByte: number | null,
+		dns: number | null,
+		tls: number | null,
+		tcp: number | null,
+	};
 	tls: Cert | null;
 	rawOutput: string | null;
 };
@@ -411,7 +418,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				issuer: { ...cert.issuer },
 				subject: {
 					...cert.subject,
-					alt: cert.subjectaltname,
+					alt: cert.subjectaltname || null,
 				},
 				keyType: cert.asn1Curve || cert.nistCurve ? 'EC' : cert.modulus || cert.exponent ? 'RSA' : null,
 				keyBits: cert.bits || null,

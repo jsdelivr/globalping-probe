@@ -23,7 +23,7 @@ export type DnsParseResponse = DnsParseLoopResponseClassic & {
 
 export type DnsParseResponseJson = DnsParseLoopResponseJson & {
 	status: 'finished' | 'failed';
-	statusCodeName: string;
+	statusCodeName: string | null;
 	statusCode: number | null; // eslint-disable-line @typescript-eslint/ban-types
 	rawOutput: string;
 };
