@@ -1,6 +1,7 @@
 import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { Socket } from 'socket.io-client';
+import { type ExecaError } from 'execa';
 import { getCmdMock, getCmdMockResult, getExecaMock } from '../../utils.js';
 import {
 	TracerouteCommand,
@@ -357,6 +358,44 @@ describe('trace command', () => {
 
 				expect(mockSocket.emit.calledOnce).to.be.true;
 				expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+			});
+
+			it('should fail in case of execa timeout', async () => {
+				const options = {
+					type: 'traceroute' as TraceOptions['type'],
+					target: 'google.com',
+					port: 53,
+					protocol: 'UDP',
+					inProgressUpdates: true,
+					ipVersion: 4,
+				};
+				const mockCmd = getExecaMock();
+				const ping = new TracerouteCommand((): any => mockCmd);
+				const runPromise = ping.run(mockSocket as any, 'measurement', 'test', options);
+
+				const timeoutError = new Error('Timeout') as ExecaError;
+				timeoutError.stderr = '';
+				timeoutError.timedOut = true;
+				timeoutError.stdout = 'traceroute to hello.com (216.239.38.21), 20 hops max, 60 byte packets';
+				mockCmd.reject(timeoutError);
+
+				await runPromise;
+
+				expect(mockSocket.emit.callCount).to.equal(1);
+
+				expect(mockSocket.emit.lastCall.args).to.deep.equal([
+					'probe:measurement:result',
+					{
+						testId: 'test',
+						measurementId: 'measurement',
+						result: {
+							status: 'failed',
+							rawOutput: 'traceroute to hello.com (216.239.38.21), 20 hops max, 60 byte packets\n'
+								+ '\n'
+								+ 'Measurement command timed out.',
+						},
+					},
+				]);
 			});
 		});
 	});

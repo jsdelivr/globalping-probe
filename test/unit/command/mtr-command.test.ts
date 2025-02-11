@@ -1,6 +1,7 @@
 import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { Socket } from 'socket.io-client';
+import { type ExecaError } from 'execa';
 import { getCmdMock, getCmdMockResult, getExecaMock } from '../../utils.js';
 import {
 	MtrCommand,
@@ -397,6 +398,61 @@ describe('mtr command executor', () => {
 			expect(mockedSocket.emit.calledOnce).to.be.true;
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
+		});
+
+		it('should fail in case of execa timeout', async () => {
+			const options = {
+				type: 'mtr' as const,
+				target: 'jsdelivr.net',
+				inProgressUpdates: false,
+				ipVersion: 4,
+			};
+			const mockCmd = getExecaMock();
+			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(false));
+			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+
+			const timeoutError = new Error('Timeout') as ExecaError;
+			timeoutError.stderr = '';
+			timeoutError.timedOut = true;
+
+			timeoutError.stdout = 'x 0 33000\n'
+				+ 'h 0 192.168.0.1\n'
+				+ 'd 0 192.168.0.1\n'
+				+ 'p 0 0 33000\n'
+				+ 'x 1 33001\n'
+				+ 'x 2 33002\n'
+				+ 'h 2 62.252.67.181\n'
+				+ 'd 2 62.252.67.181';
+
+			mockCmd.reject(timeoutError);
+
+			await runPromise;
+
+			expect(mockedSocket.emit.callCount).to.equal(1);
+
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([
+				'probe:measurement:result',
+				{
+					testId: 'test',
+					measurementId: 'measurement',
+					result: {
+						status: 'failed',
+						rawOutput: 'x 0 33000\n'
+							+ 'h 0 192.168.0.1\n'
+							+ 'd 0 192.168.0.1\n'
+							+ 'p 0 0 33000\n'
+							+ 'x 1 33001\n'
+							+ 'x 2 33002\n'
+							+ 'h 2 62.252.67.181\n'
+							+ 'd 2 62.252.67.181\n'
+							+ '\n'
+							+ 'Measurement command timed out.',
+						resolvedAddress: null,
+						resolvedHostname: null,
+						hops: [],
+					},
+				},
+			]);
 		});
 	});
 });

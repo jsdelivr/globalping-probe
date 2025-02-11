@@ -169,13 +169,13 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			resolvedHostname: input.resolvedHostname ? input.resolvedHostname : null,
 			timings: input.timings ?? [],
 			stats: {
-				min: input.stats?.min ?? null,
-				max: input.stats?.max ?? null,
-				avg: input.stats?.avg ?? null,
-				total: input.stats?.total ?? null,
-				loss: input.stats?.loss ?? null,
-				rcv: input.stats?.rcv ?? null,
-				drop: input.stats?.drop ?? null,
+				min: (input.stats?.min || input.stats?.min === 0) ? input.stats?.min : null,
+				max: (input.stats?.max || input.stats?.max === 0) ? input.stats?.max : null,
+				avg: (input.stats?.avg || input.stats?.avg === 0) ? input.stats?.avg : null,
+				total: (input.stats?.total || input.stats?.total === 0) ? input.stats?.total : null,
+				loss: (input.stats?.loss || input.stats?.loss === 0) ? input.stats?.loss : null,
+				rcv: (input.stats?.rcv || input.stats?.rcv === 0) ? input.stats?.rcv : null,
+				drop: (input.stats?.drop || input.stats?.drop === 0) ? input.stats?.drop : null,
 			},
 		};
 	}

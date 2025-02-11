@@ -1,6 +1,7 @@
 import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { Socket } from 'socket.io-client';
+import { type ExecaError } from 'execa';
 import { CommandTester, getCmdMock, getCmdMockResult, getExecaMock, makeSnapshotTests, setupSnapshots, wrapIt } from '../../utils.js';
 import {
 	DnsCommand,
@@ -1061,6 +1062,51 @@ describe('dns command', () => {
 			}]);
 
 			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+		});
+
+		it('should fail in case of execa timeout', async () => {
+			const options = {
+				type: 'dns' as const,
+				target: 'google.com',
+				trace: false,
+				query: {
+					type: 'TXT',
+				},
+				protocol: 'UDP',
+				port: 53,
+				inProgressUpdates: false,
+				ipVersion: 4,
+			};
+			const mockCmd = getExecaMock();
+			const dns = new DnsCommand((): any => mockCmd);
+			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+
+			const timeoutError = new Error('Timeout') as ExecaError;
+			timeoutError.stderr = '';
+			timeoutError.timedOut = true;
+			timeoutError.stdout = '';
+			mockCmd.reject(timeoutError);
+
+			await runPromise;
+
+			expect(mockSocket.emit.callCount).to.equal(1);
+
+			expect(mockSocket.emit.firstCall.args).to.deep.equal([
+				'probe:measurement:result',
+				{
+					testId: 'test',
+					measurementId: 'measurement',
+					result: {
+						status: 'failed',
+						rawOutput: '\n\nMeasurement command timed out.',
+						statusCodeName: null,
+						statusCode: null,
+						answers: [],
+						timings: { total: 0 },
+						resolver: null,
+					},
+				},
+			]);
 		});
 	});
 
