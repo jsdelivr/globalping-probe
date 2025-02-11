@@ -124,14 +124,19 @@ export class PingCommand implements CommandInterface<PingOptions> {
 				isResultPrivate = true;
 			}
 		} catch (error: unknown) {
+			result = { status: 'failed', rawOutput: 'Test failed. Please try again.' };
+
 			if (isExecaError(error)) {
 				result = parse(error.stdout.toString());
-				result.status = 'failed';
-				error.timedOut && (result.rawOutput += '\n\nMeasurement command timed out.');
+
+				if (error.timedOut) {
+					result.status = 'failed';
+					result.rawOutput += '\n\nMeasurement command timed out.';
+				}
+
 				!result.rawOutput && (result.rawOutput = 'Test failed. Please try again.');
 			} else {
 				logger.error(error);
-				result = { status: 'failed', rawOutput: 'Test failed. Please try again.' };
 			}
 		}
 

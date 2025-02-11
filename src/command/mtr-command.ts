@@ -141,7 +141,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 				}
 
 				if (error instanceof Error && error.message === 'private destination') {
-					result.rawOutput = 'Private IP ranges are not allowed';
+					result.rawOutput = 'Private IP ranges are not allowed.';
 				} else {
 					logger.error(error);
 				}
