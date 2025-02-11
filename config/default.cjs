@@ -20,6 +20,7 @@ module.exports = {
 		maxUptime: 604800,
 	},
 	commands: {
+		timeout: 25,
 		mtr: {
 			interval: 0.5,
 		},

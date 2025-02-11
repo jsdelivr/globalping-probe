@@ -77,7 +77,7 @@ export const argBuilder = (options: MtrOptions): string[] => {
 
 export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', [ 'mtr', ...args ]);
+	return execa('unbuffer', [ 'mtr', ...args ], { timeout: config.get<number>('commands.timeout') * 1000 });
 };
 
 export class MtrCommand implements CommandInterface<MtrOptions> {
@@ -128,10 +128,10 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			result = await this.parseResult(result.data, true);
 		} catch (error: unknown) {
 			result.status = 'failed';
-			result.rawOutput = 'Test failed. Please try again.';
 
-			if (isExecaError(error) && error.stdout.toString().length > 0) {
+			if (isExecaError(error)) {
 				result.rawOutput = error.stdout.toString();
+				error.timedOut && (result.rawOutput += '\n\nMeasurement command timed out.');
 			} else {
 				cmd.kill('SIGKILL');
 
@@ -146,6 +146,8 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 					logger.error(error);
 				}
 			}
+
+			!result.rawOutput && (result.rawOutput = 'Test failed. Please try again.');
 		}
 
 		buffer.pushResult(this.toJsonOutput(result));

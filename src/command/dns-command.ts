@@ -1,3 +1,4 @@
+import config from 'config';
 import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
@@ -95,7 +96,7 @@ export const argBuilder = (options: DnsOptions): string[] => {
 
 export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', [ 'dig', ...args ]);
+	return execa('unbuffer', [ 'dig', ...args ], { timeout: config.get<number>('commands.timeout') * 1000 });
 };
 
 export class DnsCommand implements CommandInterface<DnsOptions> {
@@ -166,6 +167,8 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 
 			if (error instanceof InternalError && error.expose) {
 				output = error.message;
+			} else if (isExecaError(error) && error.timedOut) {
+				output = this.rewrite(error.stdout.toString(), cmdOptions.trace) + '\n\nMeasurement command timed out.';
 			} else if (isExecaError(error) && error.stdout.toString().length > 0) {
 				output = this.rewrite(error.stdout.toString(), cmdOptions.trace);
 			} else {
@@ -181,7 +184,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		if (isResultPrivate) {
 			result = {
 				status: 'failed',
-				rawOutput: 'Private IP ranges are not allowed',
+				rawOutput: 'Private IP ranges are not allowed.',
 				...(!cmdOptions.trace ? { resolver: (result as DnsParseResponseClassic).resolver } : {}),
 			};
 		}

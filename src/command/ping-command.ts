@@ -1,3 +1,4 @@
+import config from 'config';
 import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
@@ -74,7 +75,7 @@ export const argBuilder = (options: PingOptions): string[] => {
 
 export const pingCmd = (options: PingOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', [ 'ping', ...args ]);
+	return execa('unbuffer', [ 'ping', ...args ], { timeout: config.get<number>('commands.timeout') * 1000 });
 };
 
 export class PingCommand implements CommandInterface<PingOptions> {
@@ -123,8 +124,11 @@ export class PingCommand implements CommandInterface<PingOptions> {
 				isResultPrivate = true;
 			}
 		} catch (error: unknown) {
-			if (isExecaError(error) && error.stdout.toString().length > 0) {
+			if (isExecaError(error)) {
 				result = parse(error.stdout.toString());
+				result.status = 'failed';
+				error.timedOut && (result.rawOutput += '\n\nMeasurement command timed out.');
+				!result.rawOutput && (result.rawOutput = 'Test failed. Please try again.');
 			} else {
 				logger.error(error);
 				result = { status: 'failed', rawOutput: 'Test failed. Please try again.' };
@@ -134,7 +138,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		if (isResultPrivate) {
 			result = {
 				status: 'failed',
-				rawOutput: 'Private IP ranges are not allowed',
+				rawOutput: 'Private IP ranges are not allowed.',
 			};
 		}
 
