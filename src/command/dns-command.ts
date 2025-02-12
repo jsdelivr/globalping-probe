@@ -218,10 +218,10 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		if (isTrace(result)) {
 			privateResults = result.hops
 				.flatMap((result: DnsParseLoopResponse) => result.answers)
-				.filter((answer: unknown) => isDnsSection(answer) ? isIpPrivate(answer.value as string) : false);
+				.filter((answer: unknown) => isDnsSection(answer) ? isIpPrivate(answer.value) : false);
 		} else {
 			privateResults = result.answers
-				.filter((answer: unknown) => isDnsSection(answer) ? isIpPrivate(answer.value as string) : false);
+				.filter((answer: unknown) => isDnsSection(answer) ? isIpPrivate(answer.value) : false);
 		}
 
 		if (privateResults.length > 0 && !(tldts.parse(target).isIcann)) {
