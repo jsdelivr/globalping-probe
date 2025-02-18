@@ -149,7 +149,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 
 			if (isExecaError(error)) {
 				output = error.stdout.toString();
-				error.timedOut && (output += '\n\nMeasurement command timed out.');
+				error.timedOut && (output += '\n\nThe measurement command timed out.');
 			} else {
 				logger.error(error);
 			}
