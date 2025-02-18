@@ -451,7 +451,7 @@ describe('ping command executor', () => {
 							+ '64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=1 ttl=37 time=7.99 ms\n'
 							+ '64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=2 ttl=37 time=8.12 ms\n'
 							+ '\n'
-							+ 'Measurement command timed out.',
+							+ 'The measurement command timed out.',
 						resolvedAddress: '172.217.20.206',
 						resolvedHostname: 'lhr25s33-in-f14.1e100.net',
 						timings: [{ ttl: 37, rtt: 7.99 }, { ttl: 37, rtt: 8.12 }],

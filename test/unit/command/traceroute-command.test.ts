@@ -392,7 +392,7 @@ describe('trace command', () => {
 							status: 'failed',
 							rawOutput: 'traceroute to hello.com (216.239.38.21), 20 hops max, 60 byte packets\n'
 								+ '\n'
-								+ 'Measurement command timed out.',
+								+ 'The measurement command timed out.',
 						},
 					},
 				]);

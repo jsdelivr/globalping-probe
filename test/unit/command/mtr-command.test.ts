@@ -446,7 +446,7 @@ describe('mtr command executor', () => {
 							+ 'h 2 62.252.67.181\n'
 							+ 'd 2 62.252.67.181\n'
 							+ '\n'
-							+ 'Measurement command timed out.',
+							+ 'The measurement command timed out.',
 						resolvedAddress: null,
 						resolvedHostname: null,
 						hops: [],
