@@ -350,7 +350,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			rawOutput: input.rawOutput,
 			truncated: input.truncated,
 			statusCode: input.statusCode || null,
-			statusCodeName: input.statusCodeName || null,
+			statusCodeName: input.statusCodeName ?? null,
 			timings: {
 				total: null,
 				download: null,
