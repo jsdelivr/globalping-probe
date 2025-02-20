@@ -391,13 +391,12 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 	private parseResponse (resp: Response, tlsDetails: TlsDetails | undefined) {
 		const result = getInitialResult();
 
-		// Headers
 		result.rawHeaders = _.chunk(resp.rawHeaders, 2)
-			.map((g: string[]) => `${String(g[0])}: ${String(g[1])}`)
-			.filter((r: string) => !r.startsWith(':status:'))
+			.map(([ key, value ]) => `${String(key)}: ${String(value)}`)
+			.filter((rawHeader: string) => !rawHeader.startsWith(':'))
 			.join('\n');
 
-		result.headers = resp.headers as Record<string, string>;
+		result.headers = Object.fromEntries(Object.entries(resp.headers).filter(([ key ]) => !key.startsWith(':')));
 
 		result.statusCode = resp.statusCode;
 		result.statusCodeName = resp.statusMessage ?? '';

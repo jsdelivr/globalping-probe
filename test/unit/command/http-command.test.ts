@@ -1,5 +1,5 @@
 import { PassThrough } from 'node:stream';
-import nock from 'nock';
+import nock, { ReplyHeaders } from 'nock';
 import { type Request, type PlainResponse, HTTPError, CacheError, RequestError, Response } from 'got';
 import * as sinon from 'sinon';
 import { expect } from 'chai';
@@ -401,117 +401,7 @@ describe('http command', () => {
 			}]);
 		});
 
-		it('should respond with 200', async () => {
-			nock('http://google.com').get('/200?abc=def').reply(200, function () {
-				const request = this.req as typeof this.req & {response: Response & {socket: { getPeerCertificate }}};
-				request.response.httpVersion = '1.1';
-				request.response.socket.getPeerCertificate = false;
-				return '200 Ok';
-			}, { test: 'abc' });
-
-			const options = {
-				type: 'http' as const,
-				target: 'google.com',
-				inProgressUpdates: false,
-				protocol: 'HTTP',
-				request: {
-					method: 'GET',
-					path: '/200',
-					query: 'abc=def',
-				},
-				ipVersion: 4,
-			};
-
-			const http = new HttpCommand(httpCmd);
-			await http.run(mockedSocket as any, 'measurement', 'test', options);
-
-			expect(mockedSocket.emit.callCount).to.equal(1);
-
-			expect(mockedSocket.emit.firstCall.args).to.deep.equal([
-				'probe:measurement:result',
-				{
-					testId: 'test',
-					measurementId: 'measurement',
-					result: {
-						status: 'finished',
-						resolvedAddress: '127.0.0.1',
-						headers: { test: 'abc' },
-						rawHeaders: 'test: abc',
-						rawBody: '200 Ok',
-						rawOutput: 'HTTP/1.1 200\ntest: abc\n\n200 Ok',
-						truncated: false,
-						statusCode: 200,
-						statusCodeName: 'OK',
-						timings: {
-							total: 0,
-							download: 0,
-							firstByte: 0,
-							dns: 0,
-							tls: null,
-							tcp: 0,
-						},
-						tls: null,
-					},
-				},
-			]);
-		});
-
-		it('should respond with 200 on OPTIONS request and response with body', async () => {
-			nock('http://google.com').options('/').reply(200, function () {
-				const request = this.req as typeof this.req & {response: Response & {socket: { getPeerCertificate }}};
-				request.response.httpVersion = '1.1';
-				request.response.socket.getPeerCertificate = false;
-				return 'response body';
-			});
-
-			const options = {
-				type: 'http' as const,
-				target: 'google.com',
-				inProgressUpdates: false,
-				protocol: 'HTTP',
-				request: {
-					method: 'OPTIONS',
-					path: '/',
-					query: '',
-				},
-				ipVersion: 4,
-			};
-
-			const http = new HttpCommand(httpCmd);
-			await http.run(mockedSocket as any, 'measurement', 'test', options);
-
-			expect(mockedSocket.emit.callCount).to.equal(1);
-
-			expect(mockedSocket.emit.firstCall.args).to.deep.equal([
-				'probe:measurement:result',
-				{
-					testId: 'test',
-					measurementId: 'measurement',
-					result: {
-						status: 'finished',
-						resolvedAddress: '127.0.0.1',
-						headers: {},
-						rawHeaders: null,
-						rawBody: 'response body',
-						rawOutput: 'HTTP/1.1 200\n\n\nresponse body',
-						truncated: false,
-						statusCode: 200,
-						statusCodeName: 'OK',
-						timings: {
-							total: 0,
-							download: 0,
-							firstByte: 0,
-							dns: 0,
-							tls: null,
-							tcp: 0,
-						},
-						tls: null,
-					},
-				},
-			]);
-		});
-
-		it('should respond with 200 on OPTIONS request and response without body', async () => {
+		it('should respond with 200 on OPTIONS request', async () => {
 			nock('http://google.com').options('/').reply(200, function () {
 				const request = this.req as typeof this.req & {response: Response & {socket: { getPeerCertificate }}};
 				request.response.httpVersion = '1.1';
@@ -565,7 +455,57 @@ describe('http command', () => {
 			]);
 		});
 
-		it('should respond with 400 with progress messages', async () => {
+		it('should remove pseudo-headers', async () => {
+			nock('http://google.com').get('/200?abc=def').reply(200, function () {
+				const request = this.req as typeof this.req & {response: Response & {socket: { getPeerCertificate }}};
+				request.response.httpVersion = '1.1';
+				request.response.socket.getPeerCertificate = false;
+				return '200 Ok';
+			}, { 'test': 'abc', ':status': 200, ':path': '/index.html' } as unknown as ReplyHeaders);
+
+			const options = {
+				type: 'http' as const,
+				target: 'google.com',
+				inProgressUpdates: false,
+				protocol: 'HTTP',
+				request: {
+					method: 'GET',
+					path: '/200',
+					query: 'abc=def',
+				},
+				ipVersion: 4,
+			};
+
+			const http = new HttpCommand(httpCmd);
+			await http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			expect(mockedSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', {
+				testId: 'test',
+				measurementId: 'measurement',
+				result: {
+					status: 'finished',
+					resolvedAddress: '127.0.0.1',
+					headers: { test: 'abc' },
+					rawHeaders: 'test: abc',
+					rawBody: '200 Ok',
+					rawOutput: 'HTTP/1.1 200\ntest: abc\n\n200 Ok',
+					truncated: false,
+					statusCode: 200,
+					statusCodeName: 'OK',
+					timings: {
+						total: 0,
+						download: 0,
+						firstByte: 0,
+						dns: 0,
+						tls: null,
+						tcp: 0,
+					},
+					tls: null,
+				},
+			}]);
+		});
+
+		it('should respond with 400', async () => {
 			nock('http://google.com').get('/400').times(3).reply(400, function () {
 				const request = this.req as typeof this.req & {response: Response & {socket: { getPeerCertificate }}};
 				request.response.httpVersion = '1.1';
@@ -602,52 +542,6 @@ describe('http command', () => {
 			}]);
 
 			expect(mockedSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', {
-				testId: 'test',
-				measurementId: 'measurement',
-				result: {
-					status: 'finished',
-					resolvedAddress: '127.0.0.1',
-					headers: { test: 'abc' },
-					rawHeaders: 'test: abc',
-					rawBody: '400 Bad Request',
-					rawOutput: 'HTTP/1.1 400\ntest: abc\n\n400 Bad Request',
-					truncated: false,
-					statusCode: 400,
-					statusCodeName: 'Bad Request',
-					timings: {
-						total: 0,
-						download: 0,
-						firstByte: 0,
-						dns: 0,
-						tls: null,
-						tcp: 0,
-					},
-					tls: null,
-				},
-			}]);
-		});
-
-		it('should respond with 400', async () => {
-			nock('http://google.com').get('/400').times(3).reply(400, '400 Bad Request', { test: 'abc' });
-			const options = {
-				type: 'http' as const,
-				target: 'google.com',
-				inProgressUpdates: false,
-				protocol: 'HTTP',
-				request: {
-					method: 'GET',
-					path: '/400',
-					query: '',
-				},
-				ipVersion: 4,
-			};
-
-			const http = new HttpCommand(httpCmd);
-			await http.run(mockedSocket as any, 'measurement', 'test', options);
-
-			expect(mockedSocket.emit.callCount).to.equal(1);
-
-			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', {
 				testId: 'test',
 				measurementId: 'measurement',
 				result: {
@@ -1636,93 +1530,6 @@ describe('http command', () => {
 		});
 
 		it('should send only first 10 KB of data if response body is too big', async () => {
-			const options = {
-				type: 'http' as const,
-				target: 'cdn.jsdelivr.net',
-				inProgressUpdates: false,
-				protocol: 'HTTP',
-				request: {
-					method: 'GET',
-					path: '/npm/jquery',
-					query: '',
-				},
-				ipVersion: 4,
-			};
-
-			const response: StreamResponse = {
-				socket: {},
-				statusCode: 200,
-				statusMessage: 'OK',
-				httpVersion: '1.1',
-				timings: {
-					start: 1689320000000,
-					response: 1689320000050,
-					end: undefined,
-					phases: {
-						tls: 2,
-						tcp: 2,
-						dns: 5,
-						download: undefined,
-						total: undefined,
-						firstByte: 1,
-					},
-				},
-				headers: { test: 'abc' },
-				rawHeaders: [ 'test', 'abc' ],
-			};
-
-			const httpResponse = getCmdMock('http-big-response-size');
-			const data = httpResponse.split('\n');
-
-			const stream = new Stream(response, '1.1.1.1');
-			const mockHttpCmd = (): Request => stream as never;
-
-			const http = new HttpCommand(mockHttpCmd);
-			const cmd = http.run(mockedSocket as any, 'measurement', 'test', options);
-
-			stream.emit('response', response);
-
-			for (const chunk of data) {
-				stream.emit('data', Buffer.from(chunk));
-			}
-
-			await cmd;
-
-			expect(mockedSocket.emit.callCount).to.equal(1);
-
-			expect((mockedSocket.emit.lastCall.args[0] as any)).to.equal('probe:measurement:result');
-			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawBody.length).to.equal(10000);
-			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput.substring(0, 24)).to.equal('HTTP/1.1 200\ntest: abc\n\n');
-			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput.length).to.equal(10024);
-
-			delete (mockedSocket.emit.lastCall.args[1] as any).result.rawBody;
-			delete (mockedSocket.emit.lastCall.args[1] as any).result.rawOutput;
-
-			expect((mockedSocket.emit.lastCall.args[1] as any)).to.deep.equal({
-				testId: 'test',
-				measurementId: 'measurement',
-				result: {
-					status: 'finished',
-					resolvedAddress: '1.1.1.1',
-					headers: { test: 'abc' },
-					rawHeaders: 'test: abc',
-					truncated: true,
-					statusCode: 200,
-					statusCodeName: 'OK',
-					timings: {
-						total: 150,
-						download: 100,
-						firstByte: 1,
-						dns: 5,
-						tls: 2,
-						tcp: 2,
-					},
-					tls: null,
-				},
-			});
-		});
-
-		it('should send only first 10 KB of data if response body is too big while `inProgressUpdates: true`', async () => {
 			const options = {
 				type: 'http' as const,
 				target: 'cdn.jsdelivr.net',
