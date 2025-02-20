@@ -210,7 +210,7 @@ export const MtrParser = {
 
 		hops = MtrParser.fulfillMissingHostnames(addressToHostname, hops);
 
-		return isFinalResult ? MtrParser.hopFinalParse(hops) : hops;
+		return MtrParser.hopFinalParse(hops);
 	},
 
 	removeDuplicates (hops: HopType[]): HopType[] {
