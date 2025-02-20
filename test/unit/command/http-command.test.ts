@@ -1019,6 +1019,7 @@ describe('http command', () => {
 				valid_from: (new Date(1_657_802_359_042)).toUTCString(),
 				valid_to: (new Date(1_657_802_359_042)).toUTCString(),
 				issuer: {
+					C: 'abc',
 					CN: 'abc ltd',
 				},
 				subject: {
@@ -1105,7 +1106,9 @@ describe('http command', () => {
 						createdAt: (new Date(cert.valid_from)).toISOString(),
 						expiresAt: (new Date(cert.valid_from)).toISOString(),
 						issuer: {
-							...cert.issuer,
+							C: 'abc',
+							CN: 'abc ltd',
+							O: null,
 						},
 						keyType: 'EC',
 						keyBits: 256,
@@ -1246,7 +1249,7 @@ describe('http command', () => {
 						serialNumber: '75:92:80:FC:28:32:B4:6F:4D:8D:25:6E:06:5E:A8:AD:B4:A0:87:D5',
 						fingerprint256: 'E1:17:45:D1:32:4A:4B:12:FB:A0:A9:F6:70:8C:69:A6:84:22:1D:48:2A:06:40:5E:D3:51:CD:90:EE:E8:68:39',
 						subject: {
-							...cert.subject,
+							CN: 'twitter.com',
 							alt: cert.subjectaltname,
 						},
 					},

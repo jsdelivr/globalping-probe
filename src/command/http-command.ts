@@ -1,4 +1,4 @@
-import type { TLSSocket } from 'node:tls';
+import type { Certificate, TLSSocket } from 'node:tls';
 import { isIPv6, type Socket as NetSocket } from 'node:net';
 import http from 'node:http';
 import https from 'node:https';
@@ -33,14 +33,8 @@ export type HttpOptions = {
 type Cert = {
 	valid_to: string;
 	valid_from: string;
-	issuer: {
-		C: string;
-		O: string;
-		CN: string;
-	};
-	subject: {
-		CN: string;
-	};
+	issuer: Certificate;
+	subject: Certificate;
 	subjectaltname?: string;
 	pubkey?: Buffer;
 	fingerprint: string;
@@ -419,9 +413,13 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 					createdAt: (new Date(tlsDetails.valid_from)).toISOString(),
 					expiresAt: (new Date(tlsDetails.valid_to)).toISOString(),
 				} : {}),
-				issuer: { ...tlsDetails.issuer },
+				issuer: {
+					C: tlsDetails.issuer.C || null,
+					O: tlsDetails.issuer.O || null,
+					CN: tlsDetails.issuer.CN || null,
+				},
 				subject: {
-					...tlsDetails.subject,
+					CN: tlsDetails.subject.CN || null,
 					alt: tlsDetails.subjectaltname || null,
 				},
 				keyType: tlsDetails.asn1Curve || tlsDetails.nistCurve ? 'EC' : tlsDetails.modulus || tlsDetails.exponent ? 'RSA' : null,
