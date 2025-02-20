@@ -1,7 +1,7 @@
 import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { Socket } from 'socket.io-client';
-import { execaSync } from 'execa';
+import { type ExecaError, execaSync } from 'execa';
 import { getCmdMock, getCmdMockResult, getExecaMock } from '../../utils.js';
 import {
 	PingCommand,
@@ -415,6 +415,58 @@ describe('ping command executor', () => {
 					stats: { min: null, max: null, avg: null, total: null, loss: null, rcv: null, drop: null },
 				},
 			}]);
+		});
+
+		it('should fail in case of execa timeout', async () => {
+			const mockedCmd = getExecaMock();
+			const ping = new PingCommand((): any => mockedCmd);
+			const options = {
+				type: 'ping' as PingOptions['type'],
+				target: 'google.com',
+				packets: 3,
+				inProgressUpdates: true,
+				ipVersion: 4,
+			};
+
+			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+			const timeoutError = new Error('Timeout') as ExecaError;
+			timeoutError.stderr = '';
+			timeoutError.timedOut = true;
+
+			timeoutError.stdout = 'PING google.com (172.217.20.206) 56(84) bytes of data.\n'
+				+ '64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=1 ttl=37 time=7.99 ms\n'
+				+ '64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=2 ttl=37 time=8.12 ms';
+
+			mockedCmd.reject(timeoutError);
+			await runPromise;
+
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([
+				'probe:measurement:result',
+				{
+					testId: 'test',
+					measurementId: 'measurement',
+					result: {
+						status: 'failed',
+						rawOutput: 'PING google.com (172.217.20.206) 56(84) bytes of data.\n'
+							+ '64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=1 ttl=37 time=7.99 ms\n'
+							+ '64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=2 ttl=37 time=8.12 ms\n'
+							+ '\n'
+							+ 'The measurement command timed out.',
+						resolvedAddress: '172.217.20.206',
+						resolvedHostname: 'lhr25s33-in-f14.1e100.net',
+						timings: [{ ttl: 37, rtt: 7.99 }, { ttl: 37, rtt: 8.12 }],
+						stats: {
+							min: null,
+							max: null,
+							avg: null,
+							total: -1,
+							loss: -1,
+							rcv: -1,
+							drop: 0,
+						},
+					},
+				},
+			]);
 		});
 	});
 });

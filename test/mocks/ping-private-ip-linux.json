@@ -15,6 +15,6 @@
 			"drop": null
 		},
 		"timings": [],
-		"rawOutput": "Private IP ranges are not allowed"
+		"rawOutput": "Private IP ranges are not allowed."
 	}
 }

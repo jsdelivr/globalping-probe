@@ -1,3 +1,4 @@
+import config from 'config';
 import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
@@ -74,7 +75,7 @@ export const argBuilder = (options: PingOptions): string[] => {
 
 export const pingCmd = (options: PingOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', [ 'ping', ...args ]);
+	return execa('unbuffer', [ 'ping', ...args ], { timeout: config.get<number>('commands.timeout') * 1000 });
 };
 
 export class PingCommand implements CommandInterface<PingOptions> {
@@ -123,18 +124,26 @@ export class PingCommand implements CommandInterface<PingOptions> {
 				isResultPrivate = true;
 			}
 		} catch (error: unknown) {
-			if (isExecaError(error) && error.stdout.toString().length > 0) {
+			result = { status: 'failed', rawOutput: 'Test failed. Please try again.' };
+
+			if (isExecaError(error)) {
 				result = parse(error.stdout.toString());
+
+				if (error.timedOut) {
+					result.status = 'failed';
+					result.rawOutput += '\n\nThe measurement command timed out.';
+				}
+
+				!result.rawOutput && (result.rawOutput = 'Test failed. Please try again.');
 			} else {
 				logger.error(error);
-				result = { status: 'failed', rawOutput: 'Test failed. Please try again.' };
 			}
 		}
 
 		if (isResultPrivate) {
 			result = {
 				status: 'failed',
-				rawOutput: 'Private IP ranges are not allowed',
+				rawOutput: 'Private IP ranges are not allowed.',
 			};
 		}
 
@@ -160,13 +169,13 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			resolvedHostname: input.resolvedHostname ? input.resolvedHostname : null,
 			timings: input.timings ?? [],
 			stats: {
-				min: input.stats?.min ?? null,
-				max: input.stats?.max ?? null,
-				avg: input.stats?.avg ?? null,
-				total: input.stats?.total ?? null,
-				loss: input.stats?.loss ?? null,
-				rcv: input.stats?.rcv ?? null,
-				drop: input.stats?.drop ?? null,
+				min: (input.stats?.min || input.stats?.min === 0) ? input.stats?.min : null,
+				max: (input.stats?.max || input.stats?.max === 0) ? input.stats?.max : null,
+				avg: (input.stats?.avg || input.stats?.avg === 0) ? input.stats?.avg : null,
+				total: (input.stats?.total || input.stats?.total === 0) ? input.stats?.total : null,
+				loss: (input.stats?.loss || input.stats?.loss === 0) ? input.stats?.loss : null,
+				rcv: (input.stats?.rcv || input.stats?.rcv === 0) ? input.stats?.rcv : null,
+				drop: (input.stats?.drop || input.stats?.drop === 0) ? input.stats?.drop : null,
 			},
 		};
 	}

@@ -5,7 +5,7 @@
 		"status": "failed",
 		"statusCodeName": null,
 		"statusCode": null,
-		"rawOutput": "Private IP ranges are not allowed",
+		"rawOutput": "Private IP ranges are not allowed.",
 		"answers": [],
 		"timings": {
 			"total": 0

@@ -6,6 +6,6 @@
 		"resolvedAddress": null,
 		"resolvedHostname": null,
 		"hops": [],
-		"rawOutput": "Private IP ranges are not allowed"
+		"rawOutput": "Private IP ranges are not allowed."
 	}
 }
