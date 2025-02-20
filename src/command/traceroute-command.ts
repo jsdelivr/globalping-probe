@@ -1,3 +1,4 @@
+import config from 'config';
 import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
@@ -95,7 +96,7 @@ export const argBuilder = (options: TraceOptions): string[] => {
 
 export const traceCmd = (options: TraceOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', [ 'traceroute', ...args ]);
+	return execa('unbuffer', [ 'traceroute', ...args ], { timeout: config.get<number>('commands.timeout') * 1000 });
 };
 
 export class TracerouteCommand implements CommandInterface<TraceOptions> {
@@ -144,24 +145,25 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 				isResultPrivate = true;
 			}
 		} catch (error: unknown) {
-			let output = 'Test failed. Please try again.';
+			let output = '';
 
-			if (isExecaError(error) && error.stdout.toString().length > 0) {
+			if (isExecaError(error)) {
 				output = error.stdout.toString();
+				error.timedOut && (output += '\n\nThe measurement command timed out.');
 			} else {
 				logger.error(error);
 			}
 
 			result = {
 				status: 'failed',
-				rawOutput: output,
+				rawOutput: output || 'Test failed. Please try again.',
 			};
 		}
 
 		if (isResultPrivate) {
 			result = {
 				status: 'failed',
-				rawOutput: 'Private IP ranges are not allowed',
+				rawOutput: 'Private IP ranges are not allowed.',
 			};
 		}
 

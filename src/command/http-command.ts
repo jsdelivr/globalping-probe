@@ -158,7 +158,6 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 		http2: options.protocol === 'HTTP2',
 		timeout: {
 			request: 10_000,
-			response: 10_000,
 		},
 		https: { rejectUnauthorized: false },
 		headers: {

@@ -25,7 +25,7 @@ export type PingParseOutput = {
 export default function parse (rawOutput: string): PingParseOutput {
 	const lines = rawOutput.split('\n');
 
-	if (lines.length === 0) {
+	if (rawOutput.length === 0 || lines.length === 0) {
 		return { status: 'failed', rawOutput };
 	}
 
