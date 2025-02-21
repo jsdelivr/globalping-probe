@@ -166,8 +166,8 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			rawOutput,
 			hops: nHops,
 			data,
-			resolvedAddress: String(lastHop?.resolvedAddress),
-			resolvedHostname: String(lastHop?.resolvedHostname),
+			resolvedAddress: lastHop?.resolvedAddress ?? null,
+			resolvedHostname: lastHop?.resolvedHostname ?? null,
 		};
 	}
 
@@ -222,8 +222,8 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		return {
 			status: input.status,
 			rawOutput: input.rawOutput,
-			resolvedAddress: input.resolvedAddress ? input.resolvedAddress : null,
-			resolvedHostname: input.resolvedHostname ? input.resolvedHostname : null,
+			resolvedAddress: input.resolvedAddress ? String(input.resolvedAddress) : null,
+			resolvedHostname: input.resolvedHostname ? String(input.resolvedHostname) : null,
 			hops: input.hops ? input.hops.map(h => ({
 				...h,
 				resolvedAddress: h.resolvedAddress ? h.resolvedAddress : null,
