@@ -107,8 +107,12 @@ function setPersistentUUID () {
 	try {
 		probeUuid = fs.readFileSync(UUID_FILE, 'utf8').trim();
 	} catch (e) {
-		console.warn(`[${new Date().toISOString()}] Failed to read the persistent UUID. Generating a new one:`);
-		console.warn(e);
+		if (!fs.existsSync(UUID_FILE)) {
+			console.log(`[${new Date().toISOString()}] No persistent UUID file. Generating a new one.`);
+		} else {
+			console.warn(`[${new Date().toISOString()}] Failed to read the persistent UUID. Generating a new one:`);
+			console.warn(e);
+		}
 
 		probeUuid = randomUUID();
 
