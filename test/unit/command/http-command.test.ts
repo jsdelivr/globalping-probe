@@ -26,6 +26,11 @@ type StreamCert = {
 	subjectaltname: string; // 'DNS:*.google.com, DNS:google.com'
 };
 
+type StreamCipher = {
+	name: string;
+	version: string;
+};
+
 type StreamResponse = {
 	timings: Timings;
 	statusCode?: number;
@@ -36,6 +41,7 @@ type StreamResponse = {
 		authorizationError?: string;
 		cert?: StreamCert;
 		getPeerCertificate?: () => StreamCert;
+		getCipher?: () => StreamCipher;
 	};
 	headers?: object;
 	rawHeaders?: string[];
@@ -1133,10 +1139,16 @@ describe('http command', () => {
 				nistCurve: 'P-256',
 			};
 
+			const cipher = {
+				name: 'ECDHE-RSA-AES128-GCM-SHA256',
+				version: 'TLSv1.3',
+			};
+
 			const response: StreamResponse = {
 				socket: {
 					authorized: true,
 					getPeerCertificate: () => cert,
+					getCipher: () => cipher,
 				},
 				statusCode: 200,
 				statusMessage: 'OK',
@@ -1194,6 +1206,8 @@ describe('http command', () => {
 					},
 					tls: {
 						authorized: true,
+						protocol: 'TLSv1.3',
+						cipherName: 'ECDHE-RSA-AES128-GCM-SHA256',
 						createdAt: (new Date(cert.valid_from)).toISOString(),
 						expiresAt: (new Date(cert.valid_from)).toISOString(),
 						issuer: {
@@ -1258,10 +1272,16 @@ describe('http command', () => {
 				modulus: 'D1B150D123CC786FC780E786BC66ED3D037F6F299598C69BF3BD5955C7BCA0AA9B010CE23193A474115C5A4CC4FDB339660EC73EE0E7B00168B731FF72CACD5822DF1528A0599A64EFE8A54DF07E2702024EBAA859E09F96479FBF70D9FFF1AEBBC064DC0E6D9FA8E072BFDBE84E749FB5D48CE4B62DEB17FB8CF4BFE9448C64E50D7F59AE1CEED6A17AD2143ABEBE69BE8D59B701402C03FDD4080B31B0BA03552053A6314FD863F368CC6612189171F09DBE90E12AEC8961FE3AFD46073E0634896BFD498B332744B6C9165040E78584C5F87A7C767577E8ED21B8231C61842BFDE2090A1931EA4E64D20D65D3E79937871BC2BF041F3D40244CD2621C041F',
 			};
 
+			const cipher = {
+				name: 'ECDHE-RSA-AES128-GCM-SHA256',
+				version: 'TLSv1.3',
+			};
+
 			const response: StreamResponse = {
 				socket: {
 					authorized: true,
 					getPeerCertificate: () => cert,
+					getCipher: () => cipher,
 				},
 				statusCode: 200,
 				statusMessage: 'OK',
@@ -1319,6 +1339,8 @@ describe('http command', () => {
 					},
 					tls: {
 						authorized: true,
+						protocol: 'TLSv1.3',
+						cipherName: 'ECDHE-RSA-AES128-GCM-SHA256',
 						createdAt: '2023-10-31T00:00:00.000Z',
 						expiresAt: '2024-10-29T23:59:59.000Z',
 						issuer: {
