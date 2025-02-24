@@ -405,14 +405,12 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 		if (tlsDetails) {
 			result.tls = {
+				authorized: tlsDetails.authorized,
 				protocol: tlsDetails.protocol,
 				cipherName: tlsDetails.cipherName,
-				authorized: tlsDetails.authorized,
 				...(tlsDetails.authorizationError ? { error: tlsDetails.authorizationError } : {}),
-				...(tlsDetails.valid_from && tlsDetails.valid_to ? {
-					createdAt: (new Date(tlsDetails.valid_from)).toISOString(),
-					expiresAt: (new Date(tlsDetails.valid_to)).toISOString(),
-				} : {}),
+				createdAt: tlsDetails.valid_from ? (new Date(tlsDetails.valid_from)).toISOString() : null,
+				expiresAt: tlsDetails.valid_from ? (new Date(tlsDetails.valid_to)).toISOString() : null,
 				issuer: {
 					C: tlsDetails.issuer.C || null,
 					O: tlsDetails.issuer.O || null,
