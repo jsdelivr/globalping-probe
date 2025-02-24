@@ -31,8 +31,6 @@ export type HttpOptions = {
 };
 
 type Cert = {
-	authorized: boolean;
-	authorizationError?: Error;
 	valid_to: string;
 	valid_from: string;
 	issuer: {
@@ -56,6 +54,13 @@ type Cert = {
 	bits?: number;
 };
 
+type TlsDetails = Cert & {
+	protocol: string;
+	authorized: boolean;
+	authorizationError?: Error;
+	cipherName: string;
+};
+
 type Output = {
 	status: 'finished' | 'failed';
 	resolvedAddress: string;
@@ -66,7 +71,7 @@ type Output = {
 	statusCode: number;
 	statusCodeName: string;
 	timings: Record<string, number>;
-	tls: Cert | Record<string, unknown>;
+	tls: TlsDetails | Record<string, unknown>;
 	rawOutput: string;
 };
 
@@ -81,7 +86,7 @@ export type OutputJson = {
 	statusCode: number | null;
 	statusCodeName: string | null;
 	timings: Record<string, number | null>;
-	tls: Cert | null;
+	tls: TlsDetails | null;
 	rawOutput: string | null;
 };
 /* eslint-enable @typescript-eslint/ban-types */
@@ -199,7 +204,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		const stream = this.cmd(cmdOptions);
 
 		let result = getInitialResult();
-		let cert: Cert | undefined;
+		let tlsDetails: TlsDetails | undefined;
 
 		const respond = (resolveStream: () => void) => {
 			result.resolvedAddress = stream.ip ?? '';
@@ -238,17 +243,23 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			resolveStream();
 		};
 
-		const captureCert = (socket: TLSSocket): Cert | undefined => ({
-			...socket.getPeerCertificate(),
-			authorized: socket.authorized,
-			authorizationError: socket.authorizationError,
-		});
+		const captureTlsDetails = (socket: TLSSocket): TlsDetails | undefined => {
+			const cipher = socket.getCipher();
+
+			return {
+				...socket.getPeerCertificate(),
+				protocol: cipher.version,
+				cipherName: cipher.name,
+				authorized: socket.authorized,
+				authorizationError: socket.authorizationError,
+			};
+		};
 
 		// HTTPS cert is not guaranteed to be available after this point
 		const onSocket = (socket: NetSocket | TLSSocket) => {
 			if (isTlsSocket(socket)) {
 				socket.on('secureConnect', () => {
-					cert = captureCert(socket);
+					tlsDetails = captureTlsDetails(socket);
 				});
 			}
 		};
@@ -287,13 +298,13 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 		const onResponse = (resp: Response) => {
 			// HTTP2 cert only available in the final response
-			if (!cert && isTlsSocket(resp.socket)) {
-				cert = captureCert(resp.socket);
+			if (!tlsDetails && isTlsSocket(resp.socket)) {
+				tlsDetails = captureTlsDetails(resp.socket);
 			}
 
 			result = {
 				...result,
-				...this.parseResponse(resp, cert),
+				...this.parseResponse(resp, tlsDetails),
 			};
 		};
 
@@ -349,7 +360,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				tcp: null,
 				...input.timings,
 			},
-			tls: Object.keys(input.tls).length > 0 ? input.tls as Cert : null,
+			tls: Object.keys(input.tls).length > 0 ? input.tls as TlsDetails : null,
 		};
 	}
 
@@ -377,7 +388,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		return { total, download };
 	}
 
-	private parseResponse (resp: Response, cert: Cert | undefined) {
+	private parseResponse (resp: Response, tlsDetails: TlsDetails | undefined) {
 		const result = getInitialResult();
 
 		// Headers
@@ -399,24 +410,26 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			tcp: resp.timings.phases.tcp ?? null,
 		};
 
-		if (cert) {
+		if (tlsDetails) {
 			result.tls = {
-				authorized: cert.authorized,
-				...(cert.authorizationError ? { error: cert.authorizationError } : {}),
-				...(cert.valid_from && cert.valid_to ? {
-					createdAt: (new Date(cert.valid_from)).toISOString(),
-					expiresAt: (new Date(cert.valid_to)).toISOString(),
+				protocol: tlsDetails.protocol,
+				cipherName: tlsDetails.cipherName,
+				authorized: tlsDetails.authorized,
+				...(tlsDetails.authorizationError ? { error: tlsDetails.authorizationError } : {}),
+				...(tlsDetails.valid_from && tlsDetails.valid_to ? {
+					createdAt: (new Date(tlsDetails.valid_from)).toISOString(),
+					expiresAt: (new Date(tlsDetails.valid_to)).toISOString(),
 				} : {}),
-				issuer: { ...cert.issuer },
+				issuer: { ...tlsDetails.issuer },
 				subject: {
-					...cert.subject,
-					alt: cert.subjectaltname || null,
+					...tlsDetails.subject,
+					alt: tlsDetails.subjectaltname || null,
 				},
-				keyType: cert.asn1Curve || cert.nistCurve ? 'EC' : cert.modulus || cert.exponent ? 'RSA' : null,
-				keyBits: cert.bits || null,
-				serialNumber: cert.serialNumber.match(/.{2}/g)!.join(':'),
-				fingerprint256: cert.fingerprint256,
-				publicKey: cert.pubkey ? cert.pubkey.toString('hex').toUpperCase().match(/.{2}/g)!.join(':') : null,
+				keyType: tlsDetails.asn1Curve || tlsDetails.nistCurve ? 'EC' : tlsDetails.modulus || tlsDetails.exponent ? 'RSA' : null,
+				keyBits: tlsDetails.bits || null,
+				serialNumber: tlsDetails.serialNumber.match(/.{2}/g)!.join(':'),
+				fingerprint256: tlsDetails.fingerprint256,
+				publicKey: tlsDetails.pubkey ? tlsDetails.pubkey.toString('hex').toUpperCase().match(/.{2}/g)!.join(':') : null,
 			};
 		}
 
