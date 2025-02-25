@@ -49,7 +49,7 @@ type Cert = {
 };
 
 type TlsDetails = Cert & {
-	protocol: string;
+	protocol: string | null;
 	authorized: boolean;
 	authorizationError?: Error;
 	cipherName: string;
@@ -238,12 +238,10 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		};
 
 		const captureTlsDetails = (socket: TLSSocket): TlsDetails | undefined => {
-			const cipher = socket.getCipher();
-
 			return {
 				...socket.getPeerCertificate(),
-				protocol: cipher.version,
-				cipherName: cipher.name,
+				protocol: socket.getProtocol(),
+				cipherName: socket.getCipher().name,
 				authorized: socket.authorized,
 				authorizationError: socket.authorizationError,
 			};

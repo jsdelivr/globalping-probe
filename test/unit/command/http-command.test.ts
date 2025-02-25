@@ -28,7 +28,6 @@ type StreamCert = {
 
 type StreamCipher = {
 	name: string;
-	version: string;
 };
 
 type StreamResponse = {
@@ -42,6 +41,7 @@ type StreamResponse = {
 		cert?: StreamCert;
 		getPeerCertificate?: () => StreamCert;
 		getCipher?: () => StreamCipher;
+		getProtocol?: () => string;
 	};
 	headers?: object;
 	rawHeaders?: string[];
@@ -1036,7 +1036,6 @@ describe('http command', () => {
 
 			const cipher = {
 				name: 'ECDHE-RSA-AES128-GCM-SHA256',
-				version: 'TLSv1.3',
 			};
 
 			const response: StreamResponse = {
@@ -1044,6 +1043,7 @@ describe('http command', () => {
 					authorized: true,
 					getPeerCertificate: () => cert,
 					getCipher: () => cipher,
+					getProtocol: () => 'TLSv1.3',
 				},
 				statusCode: 200,
 				statusMessage: 'OK',
@@ -1171,7 +1171,6 @@ describe('http command', () => {
 
 			const cipher = {
 				name: 'ECDHE-RSA-AES128-GCM-SHA256',
-				version: 'TLSv1.3',
 			};
 
 			const response: StreamResponse = {
@@ -1179,6 +1178,7 @@ describe('http command', () => {
 					authorized: true,
 					getPeerCertificate: () => cert,
 					getCipher: () => cipher,
+					getProtocol: () => 'TLSv1.3',
 				},
 				statusCode: 200,
 				statusMessage: 'OK',
