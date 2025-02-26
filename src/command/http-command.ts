@@ -415,8 +415,8 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 					...(tlsDetails.issuer.CN ? { CN: tlsDetails.issuer.CN } : {}),
 				},
 				subject: {
-					CN: tlsDetails.subject.CN || null,
-					alt: tlsDetails.subjectaltname || null,
+					...(tlsDetails.subject.CN ? { CN: tlsDetails.subject.CN } : {}),
+					...(tlsDetails.subjectaltname ? { alt: tlsDetails.subjectaltname } : {}),
 				},
 				keyType: tlsDetails.asn1Curve || tlsDetails.nistCurve ? 'EC' : tlsDetails.modulus || tlsDetails.exponent ? 'RSA' : null,
 				keyBits: tlsDetails.bits || null,
