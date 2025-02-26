@@ -1,4 +1,4 @@
-import type { TLSSocket } from 'node:tls';
+import type { Certificate, TLSSocket } from 'node:tls';
 import { isIPv6, type Socket as NetSocket } from 'node:net';
 import http from 'node:http';
 import https from 'node:https';
@@ -33,14 +33,8 @@ export type HttpOptions = {
 type Cert = {
 	valid_to: string;
 	valid_from: string;
-	issuer: {
-		C: string;
-		O: string;
-		CN: string;
-	};
-	subject: {
-		CN: string;
-	};
+	issuer: Certificate;
+	subject: Certificate;
 	subjectaltname?: string;
 	pubkey?: Buffer;
 	fingerprint: string;
@@ -55,7 +49,7 @@ type Cert = {
 };
 
 type TlsDetails = Cert & {
-	protocol: string;
+	protocol: string | null;
 	authorized: boolean;
 	authorizationError?: Error;
 	cipherName: string;
@@ -244,12 +238,10 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		};
 
 		const captureTlsDetails = (socket: TLSSocket): TlsDetails | undefined => {
-			const cipher = socket.getCipher();
-
 			return {
 				...socket.getPeerCertificate(),
-				protocol: cipher.version,
-				cipherName: cipher.name,
+				protocol: socket.getProtocol(),
+				cipherName: socket.getCipher().name,
 				authorized: socket.authorized,
 				authorizationError: socket.authorizationError,
 			};
@@ -350,7 +342,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			rawOutput: input.rawOutput,
 			truncated: input.truncated,
 			statusCode: input.statusCode || null,
-			statusCodeName: input.statusCodeName || null,
+			statusCodeName: input.statusCodeName ?? null,
 			timings: {
 				total: null,
 				download: null,
@@ -391,13 +383,12 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 	private parseResponse (resp: Response, tlsDetails: TlsDetails | undefined) {
 		const result = getInitialResult();
 
-		// Headers
 		result.rawHeaders = _.chunk(resp.rawHeaders, 2)
-			.map((g: string[]) => `${String(g[0])}: ${String(g[1])}`)
-			.filter((r: string) => !r.startsWith(':status:'))
+			.map(([ key, value ]) => `${String(key)}: ${String(value)}`)
+			.filter((rawHeader: string) => !rawHeader.startsWith(':'))
 			.join('\n');
 
-		result.headers = resp.headers as Record<string, string>;
+		result.headers = Object.fromEntries(Object.entries(resp.headers).filter(([ key ]) => !key.startsWith(':')));
 
 		result.statusCode = resp.statusCode;
 		result.statusCodeName = resp.statusMessage ?? '';
@@ -412,18 +403,20 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 		if (tlsDetails) {
 			result.tls = {
+				authorized: tlsDetails.authorized,
 				protocol: tlsDetails.protocol,
 				cipherName: tlsDetails.cipherName,
-				authorized: tlsDetails.authorized,
 				...(tlsDetails.authorizationError ? { error: tlsDetails.authorizationError } : {}),
-				...(tlsDetails.valid_from && tlsDetails.valid_to ? {
-					createdAt: (new Date(tlsDetails.valid_from)).toISOString(),
-					expiresAt: (new Date(tlsDetails.valid_to)).toISOString(),
-				} : {}),
-				issuer: { ...tlsDetails.issuer },
+				createdAt: tlsDetails.valid_from ? (new Date(tlsDetails.valid_from)).toISOString() : null,
+				expiresAt: tlsDetails.valid_from ? (new Date(tlsDetails.valid_to)).toISOString() : null,
+				issuer: {
+					...(tlsDetails.issuer.C ? { C: tlsDetails.issuer.C } : {}),
+					...(tlsDetails.issuer.O ? { O: tlsDetails.issuer.O } : {}),
+					...(tlsDetails.issuer.CN ? { CN: tlsDetails.issuer.CN } : {}),
+				},
 				subject: {
-					...tlsDetails.subject,
-					alt: tlsDetails.subjectaltname || null,
+					...(tlsDetails.subject.CN ? { CN: tlsDetails.subject.CN } : {}),
+					...(tlsDetails.subjectaltname ? { alt: tlsDetails.subjectaltname } : {}),
 				},
 				keyType: tlsDetails.asn1Curve || tlsDetails.nistCurve ? 'EC' : tlsDetails.modulus || tlsDetails.exponent ? 'RSA' : null,
 				keyBits: tlsDetails.bits || null,

@@ -32,8 +32,8 @@ export type ProgressType = {
 
 export type ResultType = {
 	status: 'finished' | 'failed';
-	resolvedAddress?: string;
-	resolvedHostname?: string;
+	resolvedAddress?: string | null;
+	resolvedHostname?: string | null;
 	hops: HopType[];
 	data: string[];
 	rawOutput: string;
