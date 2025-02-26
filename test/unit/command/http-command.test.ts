@@ -1108,7 +1108,6 @@ describe('http command', () => {
 						issuer: {
 							C: 'abc',
 							CN: 'abc ltd',
-							O: null,
 						},
 						keyType: 'EC',
 						keyBits: 256,

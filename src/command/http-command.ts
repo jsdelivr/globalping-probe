@@ -410,9 +410,9 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				createdAt: tlsDetails.valid_from ? (new Date(tlsDetails.valid_from)).toISOString() : null,
 				expiresAt: tlsDetails.valid_from ? (new Date(tlsDetails.valid_to)).toISOString() : null,
 				issuer: {
-					C: tlsDetails.issuer.C || null,
-					O: tlsDetails.issuer.O || null,
-					CN: tlsDetails.issuer.CN || null,
+					...(tlsDetails.issuer.C ? { C: tlsDetails.issuer.C } : {}),
+					...(tlsDetails.issuer.O ? { O: tlsDetails.issuer.O } : {}),
+					...(tlsDetails.issuer.CN ? { CN: tlsDetails.issuer.CN } : {}),
 				},
 				subject: {
 					CN: tlsDetails.subject.CN || null,
