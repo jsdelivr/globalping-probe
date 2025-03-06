@@ -16,6 +16,7 @@ import { handleTestError } from './helper/test-error-handler.js';
 import { apiConnectLocationHandler } from './helper/api-connect-handler.js';
 import { apiConnectAltIpsHandler } from './helper/alt-ips-handler.js';
 import { adoptionStatusHandler } from './helper/adoption-status-handler.js';
+import { adoptionTokenHandler } from './helper/adoption-token-handler.js';
 import { dnsCmd, DnsCommand } from './command/dns-command.js';
 import { pingCmd, PingCommand } from './command/ping-command.js';
 import { traceCmd, TracerouteCommand } from './command/traceroute-command.js';
@@ -112,6 +113,7 @@ function connect (workerId?: number) {
 		})
 		.on('connect', () => {
 			statusManager.sendStatus();
+			adoptionTokenHandler(socket);
 			logger.debug('Connection to API established.');
 		})
 		.on('disconnect', errorHandler.handleDisconnect)
