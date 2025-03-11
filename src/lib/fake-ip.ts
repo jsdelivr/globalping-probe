@@ -1,14 +1,7 @@
-export const getFakeIp = () => {
-	const octet1String = process.env['FAKE_IP_FIRST_OCTET'];
+export const getFakeIp = (workerId: number = 0) => {
+	const first3Octets = process.env['FAKE_IP_FIRST_3_OCTETS']!;
 
-	if (!octet1String) {
-		throw new Error('FAKE_IP_FIRST_OCTET is not specified');
-	}
+	const octet4 = workerId % 256;
 
-	const octet1 = parseInt(octet1String, 10);
-	const octet2 = Math.floor(process.pid / 65536) % 256; // Divide by 2^16
-	const octet3 = Math.floor(process.pid / 256) % 256; // Divide by 2^8
-	const octet4 = process.pid % 256;
-
-	return `${octet1}.${octet2}.${octet3}.${octet4}`;
+	return `${first3Octets}.${octet4}`;
 };

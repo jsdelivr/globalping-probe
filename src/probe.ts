@@ -70,7 +70,7 @@ if (process.env['GP_HOST_FIRMWARE']) {
 
 logger.info(`Starting probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode with UUID ${probeUuid.substring(0, 8)}.`);
 
-function connect () {
+function connect (workerId?: number) {
 	const worker = {
 		jobs: new Map<string, number>(),
 		jobsInterval: setInterval(() => {
@@ -97,7 +97,7 @@ function connect () {
 			isHardware: process.env['GP_HOST_HW'],
 			hardwareDevice: process.env['GP_HOST_DEVICE'],
 			hardwareDeviceFirmware: process.env['GP_HOST_FIRMWARE'],
-			...(process.env['FAKE_IP_FIRST_OCTET'] && { fakeIp: getFakeIp() }),
+			...(process.env['FAKE_IP_FIRST_3_OCTETS'] && { fakeIp: getFakeIp(workerId) }),
 		},
 	});
 
@@ -180,7 +180,7 @@ function connect () {
 
 if (process.env['NODE_ENV'] === 'development') {
 	// Run multiple clients in dev mode for easier debugging
-	throng({ worker: connect, count: Number(process.env['PROBES_COUNT']) || physicalCpuCount })
+	throng({ worker: workerId => connect(workerId), count: Number(process.env['PROBES_COUNT']) || physicalCpuCount })
 		.catch((error) => {
 			logger.error(error);
 		});
