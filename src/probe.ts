@@ -16,7 +16,6 @@ import { handleTestError } from './helper/test-error-handler.js';
 import { apiConnectLocationHandler } from './helper/api-connect-handler.js';
 import { apiConnectAltIpsHandler } from './helper/alt-ips-handler.js';
 import { adoptionStatusHandler } from './helper/adoption-status-handler.js';
-import { adoptionTokenHandler } from './helper/adoption-token-handler.js';
 import { dnsCmd, DnsCommand } from './command/dns-command.js';
 import { pingCmd, PingCommand } from './command/ping-command.js';
 import { traceCmd, TracerouteCommand } from './command/traceroute-command.js';
@@ -98,6 +97,7 @@ function connect (workerId?: number) {
 			isHardware: process.env['GP_HOST_HW'],
 			hardwareDevice: process.env['GP_HOST_DEVICE'],
 			hardwareDeviceFirmware: process.env['GP_HOST_FIRMWARE'],
+			adoptionToken: process.env['GP_ADOPTION_TOKEN'],
 			...(process.env['FAKE_IP_FIRST_3_OCTETS'] && { fakeIp: getFakeIp(workerId) }),
 		},
 	});
@@ -113,7 +113,6 @@ function connect (workerId?: number) {
 		})
 		.on('connect', () => {
 			statusManager.sendStatus();
-			adoptionTokenHandler(socket);
 			logger.debug('Connection to API established.');
 		})
 		.on('disconnect', errorHandler.handleDisconnect)
