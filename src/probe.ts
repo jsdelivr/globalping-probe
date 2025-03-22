@@ -97,6 +97,7 @@ function connect (workerId?: number) {
 			isHardware: process.env['GP_HOST_HW'],
 			hardwareDevice: process.env['GP_HOST_DEVICE'],
 			hardwareDeviceFirmware: process.env['GP_HOST_FIRMWARE'],
+			adoptionToken: process.env['GP_ADOPTION_TOKEN'],
 			...(process.env['FAKE_IP_FIRST_3_OCTETS'] && { fakeIp: getFakeIp(workerId) }),
 		},
 	});
