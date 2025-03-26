@@ -48,9 +48,8 @@ export const getCpuUsage = async (): Promise<CpuUsageResponse> => {
 				const idleDiff = endLoad.idle - startLoad.idle || 0;
 				const totalDiff = (endLoad.usage + endLoad.idle) - (startLoad.usage + startLoad.idle);
 
-				result.load[i] = {
-					usage: (10_000 - Math.round(10_000 * idleDiff / totalDiff)) / 100,
-				};
+				const usage = totalDiff === 0 ? 0 : (10_000 - Math.round(10_000 * idleDiff / totalDiff)) / 100;
+				result.load[i] = { usage };
 			}
 
 			resolve();
