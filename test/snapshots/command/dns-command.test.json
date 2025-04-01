@@ -164,6 +164,50 @@
 			}
 		}
 	],
+	"should work with {target: '_dns.resolver.arpa', query: {type: 'SVCB'}, resolver: '8.8.8.8'}: payload": {
+		"command": "unbuffer dig -t SVCB _dns.resolver.arpa @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
+		"escapedCommand": "unbuffer dig -t SVCB _dns.resolver.arpa \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
+		"exitCode": 0,
+		"stdout": "\n; <<>> DiG 9.20.7 <<>> -t SVCB _dns.resolver.arpa @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 18060\n;; flags: qr aa rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 4\n\n;; QUESTION SECTION:\n;_dns.resolver.arpa.\t\tIN\tSVCB\n\n;; ANSWER SECTION:\n_dns.resolver.arpa.\t86400\tIN\tSVCB\t1 dns.google. alpn=\"dot\"\n_dns.resolver.arpa.\t86400\tIN\tSVCB\t2 dns.google. alpn=\"h2,h3\" key7=\"/dns-query{?dns}\"\n\n;; ADDITIONAL SECTION:\ndns.google.\t\t86400\tIN\tA\t8.8.8.8\ndns.google.\t\t86400\tIN\tA\t8.8.4.4\ndns.google.\t\t86400\tIN\tAAAA\t2001:4860:4860::8888\ndns.google.\t\t86400\tIN\tAAAA\t2001:4860:4860::8844\n\n;; Query time: 39 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8) (UDP)\n;; WHEN: Tue Apr 01 12:19:26 CEST 2025\n;; MSG SIZE  rcvd: 224\n",
+		"stderr": "",
+		"failed": false,
+		"timedOut": false,
+		"isCanceled": false,
+		"killed": false
+	},
+	"should work with {target: '_dns.resolver.arpa', query: {type: 'SVCB'}, resolver: '8.8.8.8'}: result": [
+		"probe:measurement:result",
+		{
+			"testId": "",
+			"measurementId": "",
+			"result": {
+				"status": "finished",
+				"rawOutput": "\n; <<>> DiG 9.20.7 <<>> -t SVCB _dns.resolver.arpa @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 18060\n;; flags: qr aa rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 4\n\n;; QUESTION SECTION:\n;_dns.resolver.arpa.\t\tIN\tSVCB\n\n;; ANSWER SECTION:\n_dns.resolver.arpa.\t86400\tIN\tSVCB\t1 dns.google. alpn=\"dot\"\n_dns.resolver.arpa.\t86400\tIN\tSVCB\t2 dns.google. alpn=\"h2,h3\" key7=\"/dns-query{?dns}\"\n\n;; ADDITIONAL SECTION:\ndns.google.\t\t86400\tIN\tA\t8.8.8.8\ndns.google.\t\t86400\tIN\tA\t8.8.4.4\ndns.google.\t\t86400\tIN\tAAAA\t2001:4860:4860::8888\ndns.google.\t\t86400\tIN\tAAAA\t2001:4860:4860::8844\n\n;; Query time: 39 msec\n;; SERVER: 8.8.8.8#53(8.8.8.8) (UDP)\n;; WHEN: Tue Apr 01 12:19:26 CEST 2025\n;; MSG SIZE  rcvd: 224\n",
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
+				"answers": [
+					{
+						"name": "_dns.resolver.arpa.",
+						"type": "SVCB",
+						"ttl": 86400,
+						"class": "IN",
+						"value": "1 dns.google. alpn=\"dot\""
+					},
+					{
+						"name": "_dns.resolver.arpa.",
+						"type": "SVCB",
+						"ttl": 86400,
+						"class": "IN",
+						"value": "2 dns.google. alpn=\"h2,h3\" key7=\"/dns-query{?dns}\""
+					}
+				],
+				"timings": {
+					"total": 39
+				},
+				"resolver": "UDP"
+			}
+		}
+	],
 	"should work with {target: 'cdn.jsdelivr.net', query: {type: 'CNAME'}, resolver: '8.8.8.8'}: payload": {
 		"command": "unbuffer dig -t CNAME cdn.jsdelivr.net @8.8.8.8 -p 53 -4 +timeout=3 +tries=2 +nocookie +nosplit +nsid",
 		"escapedCommand": "unbuffer dig -t CNAME cdn.jsdelivr.net \"@8.8.8.8\" -p 53 -4 \"+timeout=3\" \"+tries=2\" \"+nocookie\" \"+nosplit\" \"+nsid\"",
