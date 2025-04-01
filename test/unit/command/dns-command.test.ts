@@ -1184,5 +1184,11 @@ describe('dns command', () => {
 			query: [{ type: 'ANY' }],
 			resolver: '8.8.8.8',
 		});
+
+		makeSnapshotTests(tester, {
+			target: '_dns.resolver.arpa',
+			query: [{ type: 'SVCB' }],
+			resolver: '8.8.8.8',
+		});
 	});
 });
