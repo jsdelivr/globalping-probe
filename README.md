@@ -27,6 +27,14 @@ Run the container with the following command:
 sudo podman run --cap-add=NET_RAW -d --network host --restart=always --name globalping-probe globalping/globalping-probe
 ```
 
+### Alternative registry
+In case the main Docker Hub registry is inaccessible to your server for any reason, you can use our official GitHub Packages mirror.
+
+```
+docker run -d --log-driver local --network host --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
+```
+Note that ghcr.io does not support IPv6 at the moment.
+
 ## Adopt your probes
 Every new probe that comes online is a great help to our platform and the community, and we want to encourage everyone to start new probes on every available hardware!
 
@@ -35,6 +43,13 @@ If you're also an active user of Globalping who needs higher than free limits, w
 Every adopted probe will generate additional daily credits that you can use to run even more tests.
 
 Learn more about [Globalping credits](https://globalping.io/credits)
+
+### Automated adoption
+
+You can also make the adoption process fully automated by setting an environment variable
+`GP_ADOPTION_TOKEN` to your unique adoption token. Simply check the [Dashboard](https://dash.globalping.io/probes?view=start-a-probe) for a personalized command that includes the token.
+
+Note that anyone who knows your adoption token will be able to register new probes under your account.
 
 ## Where to run
 You can run the virtual probe on anything that can run a Docker container, supporting x86 and ARM architectures. This includes any Linux server hosted with a cloud provider, your home server, or even a Raspberry Pi lying around at your office. 
