@@ -28,7 +28,7 @@ sudo podman run --cap-add=NET_RAW -d --network host --restart=always --name glob
 ```
 
 ### Alternative registry
-In case the main Docker Hub registry is inaccesible to your server for any reason, you can use our official GitHub Packages mirror.
+In case the main Docker Hub registry is inaccessible to your server for any reason, you can use our official GitHub Packages mirror.
 
 ```
 docker run -d --log-driver local --network host --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
