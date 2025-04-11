@@ -53,6 +53,8 @@ For example (replace with your own unique token)
 
 ```
 docker run -d -e GP_ADOPTION_TOKEN=REPLACE_WITH_YOUR_PRIVATE_TOKEN --log-driver local --network host --restart=always --name globalping-probe globalping/globalping-probe
+```
+
 Note that anyone who knows your adoption token will be able to register new probes under your account.
 
 ## Where to run
