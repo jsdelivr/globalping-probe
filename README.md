@@ -46,14 +46,8 @@ Learn more about [Globalping credits](https://globalping.io/credits)
 
 ### Automated adoption
 
-For full automation you can auto-adopt all probes under your account without any manual work.
-You simply need to find your adoption token in your [dashboard settings](https://dash.globalping.io/settings) or start a probe adoption process and the full command will be provided for you.
-
-For example (replace with your own unique token)
-
-```
-docker run -d -e GP_ADOPTION_TOKEN=REPLACE_WITH_YOUR_PRIVATE_TOKEN --log-driver local --network host --restart=always --name globalping-probe globalping/globalping-probe
-```
+You can also make the adoption process fully automated by setting an environment variable
+`GP_ADOPTION_TOKEN` to your unique adoption token. Simply check the [Dashboard](https://dash.globalping.io/probes?view=start-a-probe) for a personalized command that includes the token.
 
 Note that anyone who knows your adoption token will be able to register new probes under your account.
 
