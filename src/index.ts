@@ -158,4 +158,4 @@ updateEntrypoint();
 updateNode();
 
 setPersistentUUID();
-import('./probe.js');
+void import('./probe.js');
