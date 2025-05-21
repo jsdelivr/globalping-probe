@@ -1,4 +1,3 @@
-/* eslint-disable quote-props */
 import config from 'config';
 import process from 'node:process';
 import { expect } from 'chai';

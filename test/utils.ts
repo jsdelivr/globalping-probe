@@ -51,18 +51,14 @@ export const getExecaMock = () => {
 		res = resolve;
 		rej = reject;
 	}) as ExecaMock & ExecaChildProcess;
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
+
 	execaMock.resolve = res;
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
+
 	execaMock.reject = rej;
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
+
 	execaMock.kill = sinon.stub();
 
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
+	// @ts-expect-error TS error expected.
 	execaMock.stdout = new EventEmitter();
 	return execaMock;
 };

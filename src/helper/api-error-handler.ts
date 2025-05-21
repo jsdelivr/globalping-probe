@@ -17,8 +17,8 @@ class ErrorHandler {
 	constructor (private readonly socket: Socket) {}
 
 	connectError = (error: Error & {
-		description?: {message: string}
-		data?: {ipAddress?: string}
+		description?: { message: string };
+		data?: { ipAddress?: string };
 	}) => {
 		const message = error?.description?.message ?? error.toString();
 		logger.error(`Connection to API failed: ${message}`);

@@ -14,17 +14,15 @@ export type DnsParseLoopResponse = {
 	[key: string]: unknown;
 	header?: string[];
 	answers: DnsSection[];
-	timings: {total: number};
+	timings: { total: number };
 	resolver: string;
 };
 
-/* eslint-disable @typescript-eslint/ban-types */
 export type DnsParseLoopResponseJson = {
 	answers: DnsSection[];
-	timings: {total: number | null};
+	timings: { total: number | null };
 	resolver: string | null;
 };
-/* eslint-enable @typescript-eslint/ban-types */
 
 export const isDnsSection = (output: unknown): output is DnsSection => typeof (output as DnsSection) !== 'undefined';
 

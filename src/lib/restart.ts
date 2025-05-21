@@ -4,7 +4,7 @@ import _ from 'lodash';
 import { scopedLogger } from './logger.js';
 
 const logger = scopedLogger('health-restart');
-const uptimeConfig = config.get<{interval: number; maxDeviation: number; maxUptime: number}>('uptime');
+const uptimeConfig = config.get<{ interval: number; maxDeviation: number; maxUptime: number }>('uptime');
 const uptimeInterval = uptimeConfig.interval + _.random(0, uptimeConfig.maxDeviation);
 
 const checkUptime = () => {

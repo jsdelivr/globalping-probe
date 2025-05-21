@@ -8,8 +8,8 @@ import type { PingParseOutputJson } from '../command/ping-command.js';
 import { PROGRESS_INTERVAL_TIME } from '../constants.js';
 
 type DefaultProgress = {
-	rawOutput: string
-}
+	rawOutput: string;
+};
 
 type HttpProgress = DefaultProgress & {
 	rawHeaders?: string;

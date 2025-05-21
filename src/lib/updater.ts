@@ -10,7 +10,7 @@ type ReleaseInfo = {
 };
 
 const logger = scopedLogger('self-update');
-const updateConfig = config.get<{releaseUrl: string; interval: number; maxDeviation: number}>('update');
+const updateConfig = config.get<{ releaseUrl: string; interval: number; maxDeviation: number }>('update');
 const updateInterval = updateConfig.interval + _.random(0, updateConfig.maxDeviation);
 let lastSuccessfulCheck = Date.now();
 

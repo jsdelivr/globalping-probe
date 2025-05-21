@@ -52,7 +52,7 @@ class Stream extends PassThrough {
 	timings: Timings | undefined;
 	stream: PassThrough;
 	ip: string;
-	options: {context: {downloadLimit?: number}};
+	options: { context: { downloadLimit?: number } };
 
 	constructor (
 		response: StreamResponse,
@@ -341,7 +341,7 @@ describe('http command', () => {
 	describe('with real httpCmd', () => {
 		it('should respond with 200', async () => {
 			nock('http://google.com').get('/200?abc=def').reply(200, function () {
-				const request = this.req as typeof this.req & {response: Response & {socket: { getPeerCertificate }}};
+				const request = this.req as typeof this.req & { response: Response & { socket: { getPeerCertificate } } };
 				request.response.httpVersion = '1.1';
 				request.response.socket.getPeerCertificate = false;
 				return '200 Ok';
@@ -403,7 +403,7 @@ describe('http command', () => {
 
 		it('should respond with 200 on OPTIONS request', async () => {
 			nock('http://google.com').options('/').reply(200, function () {
-				const request = this.req as typeof this.req & {response: Response & {socket: { getPeerCertificate }}};
+				const request = this.req as typeof this.req & { response: Response & { socket: { getPeerCertificate } } };
 				request.response.httpVersion = '1.1';
 				request.response.socket.getPeerCertificate = false;
 			});
@@ -457,7 +457,7 @@ describe('http command', () => {
 
 		it('should remove pseudo-headers', async () => {
 			nock('http://google.com').get('/200?abc=def').reply(200, function () {
-				const request = this.req as typeof this.req & {response: Response & {socket: { getPeerCertificate }}};
+				const request = this.req as typeof this.req & { response: Response & { socket: { getPeerCertificate } } };
 				request.response.httpVersion = '1.1';
 				request.response.socket.getPeerCertificate = false;
 				return '200 Ok';
@@ -507,7 +507,7 @@ describe('http command', () => {
 
 		it('should respond with 400', async () => {
 			nock('http://google.com').get('/400').times(3).reply(400, function () {
-				const request = this.req as typeof this.req & {response: Response & {socket: { getPeerCertificate }}};
+				const request = this.req as typeof this.req & { response: Response & { socket: { getPeerCertificate } } };
 				request.response.httpVersion = '1.1';
 				request.response.socket.getPeerCertificate = false;
 				return '400 Bad Request';
@@ -569,7 +569,7 @@ describe('http command', () => {
 
 		it('should respond with 400 (missing path slash)', async () => {
 			nock('http://google.com').get('/400').times(3).reply(400, function () {
-				const request = this.req as typeof this.req & {response: Response & {socket: { getPeerCertificate }}};
+				const request = this.req as typeof this.req & { response: Response & { socket: { getPeerCertificate } } };
 				request.response.httpVersion = '1.1';
 				request.response.socket.getPeerCertificate = false;
 				return '400 Bad Request';

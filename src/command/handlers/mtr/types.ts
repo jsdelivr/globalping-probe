@@ -39,7 +39,6 @@ export type ResultType = {
 	rawOutput: string;
 };
 
-/* eslint-disable @typescript-eslint/ban-types */
 export type ResultTypeJson = {
 	status: 'finished' | 'failed';
 	resolvedAddress: string | null;
@@ -53,4 +52,3 @@ export type ResultTypeJson = {
 	}>;
 	rawOutput: string;
 };
-/* eslint-enable @typescript-eslint/ban-types */
