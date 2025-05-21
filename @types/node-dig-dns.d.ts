@@ -13,7 +13,7 @@ declare module 'node-dig-dns' {
 		server: string;
 	};
 
-	export function dig(args: string[]): Promise<DnsQueryResult>;
+	export function dig (args: string[]): Promise<DnsQueryResult>;
 
 	export default dig;
 }

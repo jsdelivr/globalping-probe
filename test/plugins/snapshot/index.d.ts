@@ -7,8 +7,8 @@ declare global {
 }
 
 interface SnapshotOptions {
-	snapshotResponses?: boolean,
-	updateExistingSnapshots?: boolean
+	snapshotResponses?: boolean;
+	updateExistingSnapshots?: boolean;
 }
 
 declare function chaiSnapshot (options: SnapshotOptions): chaiSnapshotPlugin;

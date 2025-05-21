@@ -24,7 +24,7 @@ export type TraceOptions = {
 type ParsedLine = {
 	resolvedAddress?: string;
 	resolvedHostname?: string;
-	timings: Array<{rtt: number}>;
+	timings: Array<{ rtt: number }>;
 };
 
 type ParsedOutput = {
@@ -34,7 +34,6 @@ type ParsedOutput = {
 	hops?: ParsedLine[];
 };
 
-/* eslint-disable @typescript-eslint/ban-types */
 type ParsedOutputJson = {
 	rawOutput: string;
 	status: 'finished' | 'failed';
@@ -43,10 +42,9 @@ type ParsedOutputJson = {
 	hops: Array<{
 		resolvedAddress: string | null;
 		resolvedHostname: string | null;
-		timings: Array<{rtt: number}>;
+		timings: Array<{ rtt: number }>;
 	}>;
 };
-/* eslint-enable @typescript-eslint/ban-types */
 
 const logger = scopedLogger('traceroute-command');
 

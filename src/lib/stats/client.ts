@@ -9,7 +9,7 @@ type Worker = {
 	jobs: Map<string, number>;
 };
 
-const statsConfig = config.get<{interval: number}>('stats');
+const statsConfig = config.get<{ interval: number }>('stats');
 
 const report = async (socket: Socket, jobCount: number) => {
 	const cpuUsage = await getCpuUsage();

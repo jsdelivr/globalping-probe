@@ -36,7 +36,6 @@ const pingOptionsSchema = Joi.object<PingOptions>({
 	}),
 });
 
-/* eslint-disable @typescript-eslint/ban-types */
 export type PingParseOutputJson = {
 	status: 'finished' | 'failed';
 	rawOutput: string;
@@ -56,7 +55,6 @@ export type PingParseOutputJson = {
 		drop: number | null;
 	};
 };
-/* eslint-enable @typescript-eslint/ban-types */
 
 const logger = scopedLogger('ping-command');
 

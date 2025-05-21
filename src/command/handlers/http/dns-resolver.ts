@@ -6,7 +6,7 @@ export type Options = {
 	family: IpFamily;
 };
 export type ErrnoException = NodeJS.ErrnoException;
-export type ResolverOptionsType = {ttl: boolean};
+export type ResolverOptionsType = { ttl: boolean };
 export type ResolverType = (hostname: string, options: ResolverOptionsType) => Promise<string[]>;
 
 const isRecordWithTtl = (record: unknown): record is RecordWithTtl => Boolean((record as RecordWithTtl).ttl);
