@@ -5,9 +5,9 @@
 		"lib": [
 			"ES2021"
 		],
-		"module": "ES2022",
+		"module": "NodeNext",
 		"target": "ES2021",
-		"moduleResolution": "node",
+		"moduleResolution": "NodeNext",
 		"sourceMap": true,
 		"paths": {
 			"node-dig-dns": [

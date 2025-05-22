@@ -22,4 +22,4 @@ export interface chaiSnapshotPlugin {
 	store (): void;
 }
 
-export = chaiSnapshot;
+export default chaiSnapshot;

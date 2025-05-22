@@ -1,8 +1,6 @@
 {
 	"extends": "../tsconfig.json",
 	"compilerOptions": {
-		"moduleResolution": "node",
-		"sourceMap": true,
 		"exactOptionalPropertyTypes": false,
 		"noImplicitReturns": false,
 		"strict": false
