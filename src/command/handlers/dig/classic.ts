@@ -13,7 +13,7 @@ import { statusNameToStatusCodeMap } from './dig-status-code-map.js';
 
 type DnsParseLoopResponseClassic = DnsParseLoopResponse & {
 	statusCodeName: string;
-	statusCode: number | null; // eslint-disable-line @typescript-eslint/ban-types
+	statusCode: number | null;
 };
 
 export type DnsParseResponse = DnsParseLoopResponseClassic & {
@@ -24,7 +24,7 @@ export type DnsParseResponse = DnsParseLoopResponseClassic & {
 export type DnsParseResponseJson = DnsParseLoopResponseJson & {
 	status: 'finished' | 'failed';
 	statusCodeName: string | null;
-	statusCode: number | null; // eslint-disable-line @typescript-eslint/ban-types
+	statusCode: number | null;
 	rawOutput: string;
 };
 

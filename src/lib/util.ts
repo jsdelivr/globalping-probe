@@ -11,7 +11,7 @@ export const callbackify = (
 	const cb = args[args.length - 1] as (
 		error: Error | undefined,
 		result?: unknown,
-		family?: number | undefined
+		family?: number
 	) => void;
 	const pArgs = args.slice(0, -1) as never[];
 

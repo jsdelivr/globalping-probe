@@ -69,7 +69,6 @@ type Output = {
 	rawOutput: string;
 };
 
-/* eslint-disable @typescript-eslint/ban-types */
 export type OutputJson = {
 	status: 'finished' | 'failed';
 	resolvedAddress: string | null;
@@ -83,7 +82,6 @@ export type OutputJson = {
 	tls: TlsDetails | null;
 	rawOutput: string | null;
 };
-/* eslint-enable @typescript-eslint/ban-types */
 
 export type Timings = {
 	[k: string]: number | Record<string, unknown> | undefined;
@@ -181,7 +179,7 @@ export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Reques
 	return got.stream(url, options_);
 };
 
-const isTlsSocket = (socket: unknown): socket is TLSSocket => Boolean((socket as {getPeerCertificate?: unknown}).getPeerCertificate);
+const isTlsSocket = (socket: unknown): socket is TLSSocket => Boolean((socket as { getPeerCertificate?: unknown }).getPeerCertificate);
 
 export class HttpCommand implements CommandInterface<HttpOptions> {
 	constructor (private readonly cmd: typeof httpCmd) {}

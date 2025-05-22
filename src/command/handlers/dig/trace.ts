@@ -50,7 +50,7 @@ export const TraceDigParser = {
 	parseLoop (lines: string[]): DnsParseLoopResponse[] {
 		const groups: Array<{
 			answers: DnsSection[];
-			timings: {total: number};
+			timings: { total: number };
 			resolver: string;
 		}> = [];
 

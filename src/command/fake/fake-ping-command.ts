@@ -7,8 +7,7 @@ export class FakePingCommand implements CommandInterface<object> {
 			socket.emit('probe:measurement:progress', {
 				testId,
 				measurementId,
-				result: {
-					rawOutput: 'This is a ping response for testing purposes\nPING google.com (142.250.75.14): 56 data bytes\n' },
+				result: { rawOutput: 'This is a ping response for testing purposes\nPING google.com (142.250.75.14): 56 data bytes\n' },
 			});
 		}, 1000);
 

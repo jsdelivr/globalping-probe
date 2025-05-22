@@ -7,7 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ 16.x, 18.x, 20.x ]
+        node-version: [ 18.x, 20.x ]
+      fail-fast: false
 
     env:
       NODE_ENV: test
@@ -24,7 +25,7 @@ jobs:
           npm ci && npm run build
       - name: lint and test
         run: |
-          npm run lint
+          [[ $(node -v | cut -d. -f1 | tr -d 'v') -ge 20 ]] && npm run lint
           npm run coverage
       - name: test dist
         run: |

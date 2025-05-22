@@ -7,7 +7,7 @@ import got, { RequestError } from 'got';
 const mainLogger = scopedLogger('general');
 const altIpsLogger = scopedLogger('api:connect:alt-ips-handler');
 
-export const apiConnectAltIpsHandler = async ({ token, socketId, ip }: { token: string, socketId: string, ip: string }): Promise<void> => {
+export const apiConnectAltIpsHandler = async ({ token, socketId, ip }: { token: string; socketId: string; ip: string }): Promise<void> => {
 	const acceptedIps = [ ip ];
 	const rejectedIps: string[] = [];
 	const addresses = _(os.networkInterfaces())

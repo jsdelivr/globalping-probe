@@ -58,12 +58,12 @@ export class StatusManager {
 		this.sendStatus();
 	}
 
-	public updateIsIPv4Supported (isIPv4Supported : boolean) {
+	public updateIsIPv4Supported (isIPv4Supported: boolean) {
 		this.isIPv4Supported = isIPv4Supported;
 		this.sendIsIPv4Supported();
 	}
 
-	public updateIsIPv6Supported (isIPv6Supported : boolean) {
+	public updateIsIPv6Supported (isIPv6Supported: boolean) {
 		this.isIPv6Supported = isIPv6Supported;
 		this.sendIsIPv6Supported();
 	}
@@ -107,9 +107,9 @@ export class StatusManager {
 		const targets = [ 'ns1.registry.in', 'k.root-servers.net', 'ns1.dns.nl' ];
 		const results = await Promise.allSettled(targets.map(target => this.pingCmd({ type: 'ping', ipVersion, target, packets, inProgressUpdates: false })));
 
-		const rejectedResults: Array<{ target: string, reason: ExecaError }> = [];
-		const successfulResults: Array<{ target: string, result: PingParseOutput }> = [];
-		const unSuccessfulResults: Array<{ target: string, result: PingParseOutput }> = [];
+		const rejectedResults: Array<{ target: string; reason: ExecaError }> = [];
+		const successfulResults: Array<{ target: string; result: PingParseOutput }> = [];
+		const unSuccessfulResults: Array<{ target: string; result: PingParseOutput }> = [];
 
 		for (const [ index, result ] of results.entries()) {
 			if (result.status === 'rejected' && (!isExecaError(result.reason) || !result.reason?.stdout?.toString()?.length)) {

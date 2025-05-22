@@ -4,7 +4,7 @@ export type CpuUsageInternal = {
 	load: Array<{
 		usage: number;
 		idle: number;
-	}>
+	}>;
 };
 
 export type CpuUsageResponse = {
