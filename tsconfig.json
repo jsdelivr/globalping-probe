@@ -3,10 +3,10 @@
 	"compilerOptions": {
 		"outDir": "./dist",
 		"lib": [
-			"ES2021"
+			"ES2022"
 		],
 		"module": "NodeNext",
-		"target": "ES2021",
+		"target": "ES2022",
 		"moduleResolution": "NodeNext",
 		"sourceMap": true,
 		"paths": {
