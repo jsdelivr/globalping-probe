@@ -1,10 +1,11 @@
-
+import config from 'config';
 import type { Socket } from 'socket.io-client';
 import type { ProgressType as MtrProgressType, ResultTypeJson as MtrResultTypeJson } from '../command/handlers/mtr/types.js';
-import { PROGRESS_INTERVAL_TIME } from '../constants.js';
 
 type ProgressType = MtrProgressType;
 type ResultTypeJson = MtrResultTypeJson;
+
+const progressIntervalTime = config.get<number>('commands.progressInterval');
 
 export class ProgressBufferOverwrite {
 	private buffer?: ProgressType;
@@ -26,7 +27,7 @@ export class ProgressBufferOverwrite {
 		} else if (!this.timer) {
 			this.timer = setTimeout(() => {
 				this.sendProgress();
-			}, PROGRESS_INTERVAL_TIME);
+			}, progressIntervalTime);
 		}
 	}
 

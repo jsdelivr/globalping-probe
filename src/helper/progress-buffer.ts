@@ -1,11 +1,10 @@
-
-import type { Socket } from 'socket.io-client';
 import _ from 'lodash';
+import config from 'config';
+import type { Socket } from 'socket.io-client';
 import type { DnsParseResponseJson as DnsParseResponseClassicJson } from '../command/handlers/dig/classic.js';
 import type { DnsParseResponseJson as DnsParseResponseTraceJson } from '../command/handlers/dig/trace.js';
 import type { OutputJson as HttpOutputJson } from '../command/http-command.js';
 import type { PingParseOutputJson } from '../command/ping-command.js';
-import { PROGRESS_INTERVAL_TIME } from '../constants.js';
 
 type DefaultProgress = {
 	rawOutput: string;
@@ -19,6 +18,8 @@ type HttpProgress = DefaultProgress & {
 type ProgressType = DefaultProgress | HttpProgress;
 
 type ResultTypeJson = DnsParseResponseClassicJson | DnsParseResponseTraceJson | PingParseOutputJson | HttpOutputJson | Record<string, unknown>;
+
+const progressIntervalTime = config.get<number>('commands.progressInterval');
 
 export class ProgressBuffer {
 	private buffer: Record<string, string> = {};
@@ -46,7 +47,7 @@ export class ProgressBuffer {
 		} else if (!this.timer) {
 			this.timer = setTimeout(() => {
 				this.sendProgress();
-			}, PROGRESS_INTERVAL_TIME);
+			}, progressIntervalTime);
 		}
 	}
 
