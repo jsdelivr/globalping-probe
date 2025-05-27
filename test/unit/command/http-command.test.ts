@@ -68,16 +68,21 @@ class Stream extends PassThrough {
 }
 
 describe('http command', () => {
-	const sandbox = sinon.createSandbox({
-		useFakeTimers: { now: 1689320000150, toFake: [ 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date', 'hrtime', 'performance' ] },
-	});
-	const mockedSocket = sandbox.createStubInstance(Socket);
+	let sandbox: sinon.SinonSandbox;
+	let mockedSocket: sinon.SinonStubbedInstance<Socket>;
 
 	beforeEach(() => {
-		sandbox.reset();
+		sandbox = sinon.createSandbox({
+			useFakeTimers: {
+				now: 1689320000150,
+				toFake: [ 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date' ],
+			},
+		});
+
+		mockedSocket = sandbox.createStubInstance(Socket) as sinon.SinonStubbedInstance<Socket>;
 	});
 
-	after(() => {
+	afterEach(() => {
 		sandbox.restore();
 	});
 
