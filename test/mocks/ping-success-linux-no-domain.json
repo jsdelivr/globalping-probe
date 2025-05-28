@@ -28,6 +28,6 @@
 				"rtt": 41.7
 			}
 		],
-		"rawOutput": "PING 1.1.1.1 (1.1.1.1) 56(84) bytes of data.\n64 bytes from 1.1.1.1: icmp_seq=1 ttl=58 time=41.7 ms\n64 bytes from 1.1.1.1: icmp_seq=2 ttl=58 time=41.7 ms\n64 bytes from 1.1.1.1: icmp_seq=3 ttl=58 time=41.7 ms\n\n--- 1.1.1.1 ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 1003ms\nrtt min/avg/max/mdev = 41.666/41.689/41.706/0.017 ms\n"
+		"rawOutput": "PING 1.1.1.1 (1.1.1.1) 56(84) bytes of data.\n64 bytes from 1.1.1.1: icmp_seq=1 ttl=58 time=41.7 ms\n64 bytes from 1.1.1.1: icmp_seq=2 ttl=58 time=41.7 ms\n64 bytes from 1.1.1.1: icmp_seq=3 ttl=58 time=41.7 ms\n\n--- 1.1.1.1 ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 1003ms\nrtt min/avg/max/mdev = 41.666/41.689/41.706/0.017 ms"
 	}
 }
