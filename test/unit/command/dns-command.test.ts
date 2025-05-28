@@ -257,7 +257,6 @@ describe('dns command', () => {
 			};
 
 			const rawOutput = getCmdMock(testCase);
-			const outputProgress = chunkOutput(rawOutput).lines;
 			const expectedResult = getCmdMockResult(testCase);
 
 			const mockCmd = getExecaMock();
@@ -265,9 +264,8 @@ describe('dns command', () => {
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
 
-			for (const progressOutput of outputProgress) {
-				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
+			const { emitChunks } = chunkOutput(rawOutput);
+			await emitChunks(mockCmd.stdout);
 
 			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
@@ -327,7 +325,6 @@ describe('dns command', () => {
 			};
 
 			const rawOutput = getCmdMock(testCase);
-			const outputProgress = chunkOutput(rawOutput).lines;
 			const expectedResult = getCmdMockResult(testCase);
 
 			const mockCmd = getExecaMock();
@@ -335,9 +332,8 @@ describe('dns command', () => {
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
 
-			for (const progressOutput of outputProgress) {
-				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
+			const { emitChunks } = chunkOutput(rawOutput);
+			await emitChunks(mockCmd.stdout);
 
 			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
@@ -366,7 +362,6 @@ describe('dns command', () => {
 			};
 
 			const rawOutput = getCmdMock(testCase);
-			const outputProgress = chunkOutput(rawOutput).lines;
 			const expectedResult = getCmdMockResult(testCase);
 
 			const mockCmd = getExecaMock();
@@ -374,9 +369,8 @@ describe('dns command', () => {
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
 
-			for (const progressOutput of outputProgress) {
-				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
+			const { emitChunks } = chunkOutput(rawOutput);
+			await emitChunks(mockCmd.stdout);
 
 			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
@@ -405,7 +399,6 @@ describe('dns command', () => {
 			};
 
 			const rawOutput = getCmdMock(testCase);
-			const outputProgress = chunkOutput(rawOutput).lines;
 			const expectedResult = getCmdMockResult(testCase);
 
 			const mockCmd = getExecaMock();
@@ -413,9 +406,8 @@ describe('dns command', () => {
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
 
-			for (const progressOutput of outputProgress) {
-				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
+			const { emitChunks } = chunkOutput(rawOutput);
+			await emitChunks(mockCmd.stdout);
 
 			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
@@ -478,7 +470,6 @@ describe('dns command', () => {
 			};
 
 			const rawOutput = getCmdMock(testCase);
-			const outputProgress = chunkOutput(rawOutput).lines;
 			const expectedResult = getCmdMockResult(testCase);
 
 			const mockCmd = getExecaMock();
@@ -486,9 +477,8 @@ describe('dns command', () => {
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
 
-			for (const progressOutput of outputProgress) {
-				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
+			const { emitChunks } = chunkOutput(rawOutput);
+			await emitChunks(mockCmd.stdout);
 
 			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
@@ -548,7 +538,6 @@ describe('dns command', () => {
 			};
 
 			const rawOutput = getCmdMock(testCase);
-			const outputProgress = chunkOutput(rawOutput).lines;
 			const expectedResult = getCmdMockResult(testCase);
 
 			const mockCmd = getExecaMock();
@@ -556,9 +545,8 @@ describe('dns command', () => {
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
 
-			for (const progressOutput of outputProgress) {
-				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
+			const { emitChunks } = chunkOutput(rawOutput);
+			await emitChunks(mockCmd.stdout);
 
 			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
@@ -653,7 +641,6 @@ describe('dns command', () => {
 			};
 
 			const rawOutput = getCmdMock(testCase);
-			const outputProgress = chunkOutput(rawOutput).lines;
 			const expectedResult = getCmdMockResult(testCase);
 
 			const mockCmd = getExecaMock();
@@ -661,9 +648,8 @@ describe('dns command', () => {
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
 
-			for (const progressOutput of outputProgress) {
-				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
+			const { emitChunks } = chunkOutput(rawOutput);
+			await emitChunks(mockCmd.stdout);
 
 			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
@@ -688,7 +674,6 @@ describe('dns command', () => {
 			};
 
 			const rawOutput = getCmdMock(testCase);
-			const outputProgress = chunkOutput(rawOutput).lines;
 			const expectedResult = getCmdMockResult(testCase);
 
 			const mockCmd = getExecaMock();
@@ -696,9 +681,8 @@ describe('dns command', () => {
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
 
-			for (const progressOutput of outputProgress) {
-				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
+			const { emitChunks } = chunkOutput(rawOutput);
+			await emitChunks(mockCmd.stdout);
 
 			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
@@ -867,7 +851,6 @@ describe('dns command', () => {
 			};
 
 			const rawOutput = getCmdMock(testCase);
-			const outputProgress = chunkOutput(rawOutput).lines;
 			const expectedResult = getCmdMockResult(testCase);
 
 			const mockCmd = getExecaMock();
@@ -875,9 +858,8 @@ describe('dns command', () => {
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
 
-			for (const progressOutput of outputProgress) {
-				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
+			const { emitChunks } = chunkOutput(rawOutput);
+			await emitChunks(mockCmd.stdout);
 
 			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
@@ -937,7 +919,6 @@ describe('dns command', () => {
 			};
 
 			const rawOutput = getCmdMock(testCase);
-			const outputProgress = chunkOutput(rawOutput).lines;
 			const expectedResult = getCmdMockResult(testCase);
 
 			const mockCmd = getExecaMock();
@@ -945,9 +926,8 @@ describe('dns command', () => {
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
 
-			for (const progressOutput of outputProgress) {
-				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
+			const { emitChunks } = chunkOutput(rawOutput);
+			await emitChunks(mockCmd.stdout);
 
 			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;

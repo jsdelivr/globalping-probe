@@ -238,7 +238,6 @@ describe('ping command executor', () => {
 		it('should run and fail private ip command on the progress step', async () => {
 			const command = 'ping-private-ip-linux';
 			const rawOutput = getCmdMock(command);
-			const outputProgress = chunkOutput(rawOutput).lines;
 			const expectedResult = getCmdMockResult(command);
 			const options = {
 				type: 'ping' as PingOptions['type'],
@@ -254,9 +253,8 @@ describe('ping command executor', () => {
 
 			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
 
-			for (const progressOutput of outputProgress) {
-				mockedCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
+			const { emitChunks } = chunkOutput(rawOutput);
+			await emitChunks(mockedCmd.stdout);
 
 			mockedCmd.reject(new Error('KILL'));
 
@@ -295,7 +293,6 @@ describe('ping command executor', () => {
 		it('should run and fail private ip command on the result step if progress updates are disabled', async () => {
 			const command = 'ping-private-ip-linux';
 			const rawOutput = getCmdMock(command);
-			const outputProgress = chunkOutput(rawOutput).lines;
 			const expectedResult = getCmdMockResult(command);
 			const options = {
 				type: 'ping' as PingOptions['type'],
@@ -311,9 +308,8 @@ describe('ping command executor', () => {
 
 			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
 
-			for (const progressOutput of outputProgress) {
-				mockedCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
+			const { emitChunks } = chunkOutput(rawOutput);
+			await emitChunks(mockedCmd.stdout);
 
 			mockedCmd.resolve({ stdout: rawOutput });
 			await runPromise;
