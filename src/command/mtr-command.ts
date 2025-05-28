@@ -5,6 +5,7 @@ import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface } from '../types.js';
+import { byLine } from '../lib/by-line.js';
 import { isIpPrivate } from '../lib/private-ip.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
@@ -95,32 +96,34 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		const cmd = this.cmd(cmdOptions);
 		let result: ResultType = getResultInitState();
 
-		// TODO: remove:
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		cmd.stdout?.on('data', async (data: Buffer) => {
-			if (data.toString().startsWith('mtr:')) {
-				cmd.stderr?.emit('error', data);
-				return;
-			}
-
-			for (const line of data.toString().split(NEW_LINE_REG_EXP)) {
-				if (!line) {
-					continue;
+		if (cmd.stdout) {
+			// TODO: remove:
+			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+			byLine(cmd.stdout, async (data) => {
+				if (data.startsWith('mtr:')) {
+					cmd.stderr?.emit('error', data);
+					return;
 				}
 
-				result.data.push(line);
-			}
+				for (const line of data.split(NEW_LINE_REG_EXP)) {
+					if (!line) {
+						continue;
+					}
 
-			const output = await this.parseResult(result.data, false);
-			result.hops = output.hops;
-			result.rawOutput = output.rawOutput;
+					result.data.push(line);
+				}
 
-			if (cmdOptions.inProgressUpdates) {
-				buffer.pushProgress({
-					rawOutput: result.rawOutput,
-				});
-			}
-		});
+				const output = await this.parseResult(result.data, false);
+				result.hops = output.hops;
+				result.rawOutput = output.rawOutput;
+
+				if (cmdOptions.inProgressUpdates) {
+					buffer.pushProgress({
+						rawOutput: result.rawOutput,
+					});
+				}
+			});
+		}
 
 		try {
 			await this.checkForPrivateDest(cmdOptions.target);
