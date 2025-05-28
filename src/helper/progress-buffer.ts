@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import config from 'config';
 import type { Socket } from 'socket.io-client';
+import type { ResultTypeJson as MtrResultTypeJson } from '../command/handlers/mtr/types.js';
 import type { DnsParseResponseJson as DnsParseResponseClassicJson } from '../command/handlers/dig/classic.js';
 import type { DnsParseResponseJson as DnsParseResponseTraceJson } from '../command/handlers/dig/trace.js';
 import type { OutputJson as HttpOutputJson } from '../command/http-command.js';
@@ -17,24 +18,26 @@ type HttpProgress = DefaultProgress & {
 
 type ProgressType = DefaultProgress | HttpProgress;
 
-type ResultTypeJson = DnsParseResponseClassicJson | DnsParseResponseTraceJson | PingParseOutputJson | HttpOutputJson | Record<string, unknown>;
+type ResultTypeJson = DnsParseResponseClassicJson | DnsParseResponseTraceJson | PingParseOutputJson | HttpOutputJson | MtrResultTypeJson | Record<string, unknown>;
 
 const progressIntervalTime = config.get<number>('commands.progressInterval');
 
 export class ProgressBuffer {
 	private buffer: Record<string, string> = {};
-	private timer?: NodeJS.Timeout;
+	private offset: Record<string, number> = {};
 	private isFirst = true;
+	private timer?: NodeJS.Timeout;
 
 	constructor (
 		private readonly socket: Socket,
 		private readonly testId: string,
 		private readonly measurementId: string,
+		private readonly mode: 'append' | 'diff' | 'overwrite',
 	) {}
 
 	pushProgress (progress: ProgressType) {
 		Object.entries(progress).forEach(([ field, value ]) => {
-			if (this.buffer[field] === undefined) {
+			if (this.buffer[field] === undefined || this.mode !== 'append') {
 				this.buffer[field] = value;
 			} else {
 				this.buffer[field] += value;
@@ -66,9 +69,18 @@ export class ProgressBuffer {
 			return;
 		}
 
+		if (this.mode === 'diff') {
+			Object.entries(this.buffer).forEach(([ field, value ]) => {
+				const newOffset = value.length;
+				this.buffer[field] = value.slice(this.offset[field] ?? 0);
+				this.offset[field] = newOffset;
+			});
+		}
+
 		this.socket.emit('probe:measurement:progress', {
 			testId: this.testId,
 			measurementId: this.measurementId,
+			overwrite: this.mode === 'overwrite',
 			result: this.buffer,
 		});
 

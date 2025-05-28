@@ -7,7 +7,7 @@ import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface } from '../types.js';
 import { isIpPrivate } from '../lib/private-ip.js';
 import { isExecaError } from '../helper/execa-error-check.js';
-import { ProgressBufferOverwrite } from '../helper/progress-buffer-overwrite.js';
+import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { scopedLogger } from '../lib/logger.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 
@@ -91,7 +91,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		}
 
 		const { value: cmdOptions } = validationResult;
-		const buffer = new ProgressBufferOverwrite(socket, testId, measurementId);
+		const buffer = new ProgressBuffer(socket, testId, measurementId, 'overwrite');
 		const cmd = this.cmd(cmdOptions);
 		let result: ResultType = getResultInitState();
 

@@ -16,8 +16,8 @@ describe('progress buffer', () => {
 		sandbox.restore();
 	});
 
-	it('should send first message immideately', () => {
-		const progressBuffer = new ProgressBuffer(mockedSocket, 'test-id', 'measurement-id');
+	it('should send first message immediately', () => {
+		const progressBuffer = new ProgressBuffer(mockedSocket, 'test-id', 'measurement-id', 'append');
 
 		progressBuffer.pushProgress({ rawOutput: 'a' });
 		progressBuffer.pushProgress({ rawOutput: 'b' });
@@ -32,11 +32,12 @@ describe('progress buffer', () => {
 				rawOutput: 'a',
 			},
 			testId: 'test-id',
+			overwrite: false,
 		});
 	});
 
-	it('should accumulate all messages after the first and send them as one message in fixed time intervals', () => {
-		const progressBuffer = new ProgressBuffer(mockedSocket, 'test-id', 'measurement-id');
+	it('should accumulate all messages after the first and send them as one message in fixed time intervals (append mode)', () => {
+		const progressBuffer = new ProgressBuffer(mockedSocket, 'test-id', 'measurement-id', 'append');
 
 		progressBuffer.pushProgress({ rawOutput: 'a' });
 		progressBuffer.pushProgress({ rawOutput: 'b' });
@@ -55,6 +56,7 @@ describe('progress buffer', () => {
 				rawOutput: 'bc',
 			},
 			testId: 'test-id',
+			overwrite: false,
 		});
 
 		expect(mockedSocket.emit.thirdCall.args[0]).to.equal('probe:measurement:progress');
@@ -65,11 +67,12 @@ describe('progress buffer', () => {
 				rawOutput: 'de',
 			},
 			testId: 'test-id',
+			overwrite: false,
 		});
 	});
 
 	it('should ignore pending messages and only send result if pushResult was called', () => {
-		const progressBuffer = new ProgressBuffer(mockedSocket, 'test-id', 'measurement-id');
+		const progressBuffer = new ProgressBuffer(mockedSocket, 'test-id', 'measurement-id', 'append');
 
 		progressBuffer.pushProgress({ rawOutput: 'a' });
 		progressBuffer.pushProgress({ rawOutput: 'b' });
@@ -86,6 +89,7 @@ describe('progress buffer', () => {
 				rawOutput: 'a',
 			},
 			testId: 'test-id',
+			overwrite: false,
 		});
 
 		expect(mockedSocket.emit.secondCall.args[0]).to.equal('probe:measurement:result');
@@ -99,8 +103,8 @@ describe('progress buffer', () => {
 		});
 	});
 
-	it('should accumulate and send any fields passed in the progress object', () => {
-		const progressBuffer = new ProgressBuffer(mockedSocket, 'test-id', 'measurement-id');
+	it('should accumulate and send any fields passed in the progress object (append mode)', () => {
+		const progressBuffer = new ProgressBuffer(mockedSocket, 'test-id', 'measurement-id', 'append');
 
 		progressBuffer.pushProgress({ rawHeaders: 'header', rawBody: 'a', rawOutput: 'a' });
 		progressBuffer.pushProgress({ rawBody: 'b', rawOutput: 'b' });
@@ -122,6 +126,7 @@ describe('progress buffer', () => {
 				rawOutput: 'a',
 			},
 			testId: 'test-id',
+			overwrite: false,
 		});
 
 		expect(mockedSocket.emit.secondCall.args[0]).to.equal('probe:measurement:progress');
@@ -133,6 +138,7 @@ describe('progress buffer', () => {
 				rawOutput: 'bc',
 			},
 			testId: 'test-id',
+			overwrite: false,
 		});
 
 		expect(mockedSocket.emit.thirdCall.args[0]).to.equal('probe:measurement:progress');
@@ -143,6 +149,77 @@ describe('progress buffer', () => {
 				rawBody: 'de',
 				rawOutput: 'de',
 			},
+			testId: 'test-id',
+			overwrite: false,
+		});
+	});
+
+	it('should overwrite all messages after the first and send the last one in fixed time intervals (overwrite mode)', () => {
+		const progressBuffer = new ProgressBuffer(mockedSocket, 'test-id', 'measurement-id', 'overwrite');
+
+		progressBuffer.pushProgress({ rawOutput: 'a' });
+		progressBuffer.pushProgress({ rawOutput: 'b' });
+		progressBuffer.pushProgress({ rawOutput: 'c' });
+		sandbox.clock.tick(700);
+		progressBuffer.pushProgress({ rawOutput: 'd' });
+		progressBuffer.pushProgress({ rawOutput: 'e' });
+		sandbox.clock.tick(700);
+
+		expect(mockedSocket.emit.callCount).to.equal(3);
+		expect(mockedSocket.emit.secondCall.args[0]).to.equal('probe:measurement:progress');
+
+		expect(mockedSocket.emit.secondCall.args[1]).to.deep.equal({
+			measurementId: 'measurement-id',
+			result: {
+				rawOutput: 'c',
+			},
+			overwrite: true,
+			testId: 'test-id',
+		});
+
+		expect(mockedSocket.emit.thirdCall.args[0]).to.equal('probe:measurement:progress');
+
+		expect(mockedSocket.emit.thirdCall.args[1]).to.deep.equal({
+			measurementId: 'measurement-id',
+			result: {
+				rawOutput: 'e',
+			},
+			overwrite: true,
+			testId: 'test-id',
+		});
+	});
+
+	it('should only send the diff of received messages in fixed time intervals (diff mode)', () => {
+		const progressBuffer = new ProgressBuffer(mockedSocket, 'test-id', 'measurement-id', 'diff');
+
+		progressBuffer.pushProgress({ rawOutput: 'a' });
+		progressBuffer.pushProgress({ rawOutput: 'ab' });
+		progressBuffer.pushProgress({ rawOutput: 'abc' });
+		sandbox.clock.tick(700);
+		progressBuffer.pushProgress({ rawOutput: 'abcd' });
+		progressBuffer.pushProgress({ rawOutput: 'ancde' });
+		sandbox.clock.tick(700);
+
+		expect(mockedSocket.emit.callCount).to.equal(3);
+		expect(mockedSocket.emit.secondCall.args[0]).to.equal('probe:measurement:progress');
+
+		expect(mockedSocket.emit.secondCall.args[1]).to.deep.equal({
+			measurementId: 'measurement-id',
+			result: {
+				rawOutput: 'bc',
+			},
+			overwrite: false,
+			testId: 'test-id',
+		});
+
+		expect(mockedSocket.emit.thirdCall.args[0]).to.equal('probe:measurement:progress');
+
+		expect(mockedSocket.emit.thirdCall.args[1]).to.deep.equal({
+			measurementId: 'measurement-id',
+			result: {
+				rawOutput: 'de',
+			},
+			overwrite: false,
 			testId: 'test-id',
 		});
 	});
