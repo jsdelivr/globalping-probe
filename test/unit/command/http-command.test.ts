@@ -374,6 +374,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
+				overwrite: false,
 				result: {
 					rawHeaders: 'test: abc',
 					rawBody: '200 Ok',
@@ -540,6 +541,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
+				overwrite: false,
 				result: {
 					rawHeaders: 'test: abc',
 					rawBody: '400 Bad Request',
@@ -602,6 +604,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
+				overwrite: false,
 				result: {
 					rawHeaders: 'test: abc',
 					rawBody: '400 Bad Request',
@@ -719,6 +722,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
+				overwrite: false,
 				result: {
 					rawHeaders: 'test: abc',
 					rawBody: 'abc',
@@ -1574,7 +1578,7 @@ describe('http command', () => {
 			};
 
 			const httpResponse = getCmdMock('http-big-response-size');
-			const data = httpResponse.split('\n');
+			const data = httpResponse.match(/(.*?\n|.*$)/g);
 
 			const stream = new Stream(response, '1.1.1.1');
 			const mockHttpCmd = (): Request => stream as never;
@@ -1603,6 +1607,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal({
 				testId: 'test',
 				measurementId: 'measurement',
+				overwrite: false,
 				result: { rawHeaders: 'test: abc' },
 			});
 
@@ -1696,6 +1701,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal({
 				testId: 'test',
 				measurementId: 'measurement',
+				overwrite: false,
 				result: { rawHeaders: 'test: abc' },
 			});
 

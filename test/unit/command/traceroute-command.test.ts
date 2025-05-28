@@ -2,7 +2,7 @@ import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { Socket } from 'socket.io-client';
 import { type ExecaError } from 'execa';
-import { getCmdMock, getCmdMockResult, getExecaMock } from '../../utils.js';
+import { chunkOutput, getCmdMock, getCmdMockResult, getExecaMock } from '../../utils.js';
 import {
 	TracerouteCommand,
 	argBuilder,
@@ -150,7 +150,6 @@ describe('trace command', () => {
 
 				const testCase = 'trace-success-linux';
 				const rawOutput = getCmdMock(testCase);
-				const outputProgress = rawOutput.split('\n');
 				const expectedResult = getCmdMockResult(testCase);
 
 				const mockCmd = getExecaMock();
@@ -158,22 +157,14 @@ describe('trace command', () => {
 				const ping = new TracerouteCommand((): any => mockCmd);
 				const runPromise = ping.run(mockSocket as any, 'measurement', 'test', options);
 
-				for (const progressOutput of outputProgress) {
-					mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-				}
+				const { emitChunks, verifyChunks } = chunkOutput(rawOutput);
+
+				await emitChunks(mockCmd.stdout);
 
 				mockCmd.resolve({ stdout: rawOutput });
 				await runPromise;
 
-				expect(mockSocket.emit.callCount).to.equal(2);
-
-				expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
-					testId: 'test',
-					measurementId: 'measurement',
-					result: {
-						rawOutput: outputProgress[0],
-					},
-				}]);
+				verifyChunks(mockSocket);
 
 				expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 			});
@@ -190,7 +181,6 @@ describe('trace command', () => {
 
 				const testCase = 'trace-success-linux';
 				const rawOutput = getCmdMock(testCase);
-				const outputProgress = rawOutput.split('\n');
 				const expectedResult = getCmdMockResult(testCase);
 
 				const mockCmd = getExecaMock();
@@ -198,9 +188,9 @@ describe('trace command', () => {
 				const ping = new TracerouteCommand((): any => mockCmd);
 				const runPromise = ping.run(mockSocket as any, 'measurement', 'test', options);
 
-				for (const progressOutput of outputProgress) {
-					mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-				}
+				const { emitChunks } = chunkOutput(rawOutput);
+
+				await emitChunks(mockCmd.stdout);
 
 				mockCmd.resolve({ stdout: rawOutput });
 				await runPromise;
@@ -221,7 +211,6 @@ describe('trace command', () => {
 
 				const testCase = 'ipv6-trace-success';
 				const rawOutput = getCmdMock(testCase);
-				const outputProgress = rawOutput.split('\n');
 				const expectedResult = getCmdMockResult(testCase);
 
 				const mockCmd = getExecaMock();
@@ -229,9 +218,9 @@ describe('trace command', () => {
 				const ping = new TracerouteCommand((): any => mockCmd);
 				const runPromise = ping.run(mockSocket as any, 'measurement', 'test', options);
 
-				for (const progressOutput of outputProgress) {
-					mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-				}
+				const { emitChunks } = chunkOutput(rawOutput);
+
+				await emitChunks(mockCmd.stdout);
 
 				mockCmd.resolve({ stdout: rawOutput });
 				await runPromise;
@@ -252,7 +241,6 @@ describe('trace command', () => {
 
 				const testCase = 'ipv6-trace-success-ip';
 				const rawOutput = getCmdMock(testCase);
-				const outputProgress = rawOutput.split('\n');
 				const expectedResult = getCmdMockResult(testCase);
 
 				const mockCmd = getExecaMock();
@@ -260,9 +248,9 @@ describe('trace command', () => {
 				const ping = new TracerouteCommand((): any => mockCmd);
 				const runPromise = ping.run(mockSocket as any, 'measurement', 'test', options);
 
-				for (const progressOutput of outputProgress) {
-					mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-				}
+				const { emitChunks } = chunkOutput(rawOutput);
+
+				await emitChunks(mockCmd.stdout);
 
 				mockCmd.resolve({ stdout: rawOutput });
 				await runPromise;
@@ -283,7 +271,7 @@ describe('trace command', () => {
 
 				const testCase = 'trace-private-ip-linux';
 				const rawOutput = getCmdMock(testCase);
-				const outputProgress = rawOutput.split('\n');
+				const outputProgress = chunkOutput(rawOutput).lines;
 				const expectedResult = getCmdMockResult(testCase);
 
 				const mockCmd = getExecaMock();
@@ -341,7 +329,7 @@ describe('trace command', () => {
 
 				const testCase = 'trace-private-ip-linux';
 				const rawOutput = getCmdMock(testCase);
-				const outputProgress = rawOutput.split('\n');
+				const outputProgress = chunkOutput(rawOutput).lines;
 				const expectedResult = getCmdMockResult(testCase);
 
 				const mockCmd = getExecaMock();

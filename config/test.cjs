@@ -1,5 +1,5 @@
 module.exports = {
 	commands: {
-		progressInterval: 50,
+		progressInterval: 20,
 	},
 };
