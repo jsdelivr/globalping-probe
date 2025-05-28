@@ -46,3 +46,4 @@ test.com.		3600	IN	NS	ns2.hosting.com.
 test.com.		3600	IN	NS	ns1.hosting.com.
 test.com.		3600	IN	NS	ns3.hosting.com.
 ;; Received 163 bytes from 216.74.36.1#53(ns3.hosting.com) in 156 ms
+

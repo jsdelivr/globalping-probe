@@ -24,3 +24,4 @@ google.com.		3600	IN	TXT	"globalsign-smime-dv=CDYX+XFHUw2wml6/Gb8+59BsH31KzUr6c1
 ;; SERVER: 192.168.0.49#53(192.168.0.49)
 ;; WHEN: Mon Apr 04 12:25:44 UTC 2022
 ;; MSG SIZE  rcvd: 614
+

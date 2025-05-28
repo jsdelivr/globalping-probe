@@ -24,6 +24,6 @@
 				"ttl": 37
 			}
 		],
-		"rawOutput": "PING google.com (172.217.20.206) 56(84) bytes of data.\nno answer yet for icmp_seq=1\n64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=1 ttl=37 time=507.99 ms\nno answer yet for icmp_seq=2\nno answer yet for icmp_seq=3\n64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=3 ttl=37 time=507.95 ms\n\n--- google.com ping statistics ---\n3 packets transmitted, 2 received, 33.33% packet loss, time 1404ms\nrtt min/avg/max/mdev = 507.950/507.970/507.990/0.073 ms\n"
+		"rawOutput": "PING google.com (172.217.20.206) 56(84) bytes of data.\nno answer yet for icmp_seq=1\n64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=1 ttl=37 time=507.99 ms\nno answer yet for icmp_seq=2\nno answer yet for icmp_seq=3\n64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=3 ttl=37 time=507.95 ms\n\n--- google.com ping statistics ---\n3 packets transmitted, 2 received, 33.33% packet loss, time 1404ms\nrtt min/avg/max/mdev = 507.950/507.970/507.990/0.073 ms"
 	}
 }

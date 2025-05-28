@@ -87,7 +87,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		}
 
 		const { value: cmdOptions } = validationResult;
-		const buffer = new ProgressBuffer(socket, testId, measurementId);
+		const buffer = new ProgressBuffer(socket, testId, measurementId, 'append');
 		let isResultPrivate = false;
 		let result: PingParseOutput;
 

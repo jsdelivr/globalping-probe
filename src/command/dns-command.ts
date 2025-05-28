@@ -5,6 +5,7 @@ import { execa, type ExecaChildProcess } from 'execa';
 import tldts from 'tldts';
 import type { CommandInterface } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
+import { byLine } from '../lib/by-line.js';
 import { isIpPrivate } from '../lib/private-ip.js';
 import { InternalError } from '../lib/internal-error.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
@@ -110,16 +111,16 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		}
 
 		const { value: cmdOptions } = validationResult;
-		const buffer = new ProgressBuffer(socket, testId, measurementId);
+		const buffer = new ProgressBuffer(socket, testId, measurementId, 'diff');
 		let isResultPrivate = false;
 		let result: Partial<DnsParseResponseClassic | DnsParseResponseTrace> = {};
 
 		const cmd = this.cmd(cmdOptions);
 
-		if (cmdOptions.inProgressUpdates) {
+		if (cmd.stdout && cmdOptions.inProgressUpdates) {
 			const pStdout: string[] = [];
-			cmd.stdout?.on('data', (data: Buffer) => {
-				pStdout.push(data.toString());
+			byLine(cmd.stdout, (data: string) => {
+				pStdout.push(data);
 
 				let output = '';
 

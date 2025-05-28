@@ -16,3 +16,4 @@ gitlab.test.com.	0	IN	AAAA	fd00::3
 ;; SERVER: fd00::2#53(fd00::2)
 ;; WHEN: Thu May 12 08:15:15 BST 2022
 ;; MSG SIZE  rcvd: 64
+

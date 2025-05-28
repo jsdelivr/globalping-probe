@@ -192,7 +192,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		}
 
 		const { value: cmdOptions } = validationResult;
-		const buffer = new ProgressBuffer(socket, testId, measurementId);
+		const buffer = new ProgressBuffer(socket, testId, measurementId, 'append');
 		const stream = this.cmd(cmdOptions);
 
 		let result = getInitialResult();

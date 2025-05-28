@@ -2,13 +2,14 @@ import * as sinon from 'sinon';
 import { Socket } from 'socket.io-client';
 import { expect } from 'chai';
 import { run } from '../../../../src/lib/stats/client.js';
+import { useSandboxWithFakeTimers } from '../../../utils.js';
 
 describe('stats client', () => {
 	let sandbox: sinon.SinonSandbox;
 	let mockSocket: sinon.SinonStubbedInstance<Socket>;
 
 	beforeEach(() => {
-		sandbox = sinon.createSandbox({ useFakeTimers: true });
+		sandbox = useSandboxWithFakeTimers();
 		mockSocket = sandbox.createStubInstance(Socket) as sinon.SinonStubbedInstance<Socket>;
 	});
 

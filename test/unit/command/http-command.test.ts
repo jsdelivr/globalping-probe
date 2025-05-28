@@ -10,7 +10,7 @@ import {
 	urlBuilder,
 	type Timings, HttpOptions,
 } from '../../../src/command/http-command.js';
-import { getCmdMock } from '../../utils.js';
+import { getCmdMock, useSandboxWithFakeTimers } from '../../utils.js';
 
 type StreamCert = {
 	valid_from: number | string;
@@ -68,16 +68,20 @@ class Stream extends PassThrough {
 }
 
 describe('http command', () => {
-	const sandbox = sinon.createSandbox({
-		useFakeTimers: { now: 1689320000150, toFake: [ 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date', 'hrtime', 'performance' ] },
-	});
-	const mockedSocket = sandbox.createStubInstance(Socket);
+	let sandbox: sinon.SinonSandbox;
+	let mockedSocket: sinon.SinonStubbedInstance<Socket>;
 
 	beforeEach(() => {
-		sandbox.reset();
+		sandbox = useSandboxWithFakeTimers({
+			useFakeTimers: {
+				now: 1689320000150,
+			},
+		});
+
+		mockedSocket = sandbox.createStubInstance(Socket) as sinon.SinonStubbedInstance<Socket>;
 	});
 
-	after(() => {
+	afterEach(() => {
 		sandbox.restore();
 	});
 
@@ -370,6 +374,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
+				overwrite: false,
 				result: {
 					rawHeaders: 'test: abc',
 					rawBody: '200 Ok',
@@ -536,6 +541,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
+				overwrite: false,
 				result: {
 					rawHeaders: 'test: abc',
 					rawBody: '400 Bad Request',
@@ -598,6 +604,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
+				overwrite: false,
 				result: {
 					rawHeaders: 'test: abc',
 					rawBody: '400 Bad Request',
@@ -715,6 +722,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
 				testId: 'test',
 				measurementId: 'measurement',
+				overwrite: false,
 				result: {
 					rawHeaders: 'test: abc',
 					rawBody: 'abc',
@@ -1570,7 +1578,7 @@ describe('http command', () => {
 			};
 
 			const httpResponse = getCmdMock('http-big-response-size');
-			const data = httpResponse.split('\n');
+			const data = httpResponse.match(/(.*?\n|.*$)/g);
 
 			const stream = new Stream(response, '1.1.1.1');
 			const mockHttpCmd = (): Request => stream as never;
@@ -1599,6 +1607,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal({
 				testId: 'test',
 				measurementId: 'measurement',
+				overwrite: false,
 				result: { rawHeaders: 'test: abc' },
 			});
 
@@ -1692,6 +1701,7 @@ describe('http command', () => {
 			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal({
 				testId: 'test',
 				measurementId: 'measurement',
+				overwrite: false,
 				result: { rawHeaders: 'test: abc' },
 			});
 

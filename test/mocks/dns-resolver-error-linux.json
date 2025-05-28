@@ -5,7 +5,7 @@
 		"status": "failed",
 		"statusCodeName": null,
 		"statusCode": null,
-		"rawOutput": "dig: couldn't get address for 'sdsa': not found\n",
+		"rawOutput": "dig: couldn't get address for 'sdsa': not found",
 		"answers": [],
 		"resolver": null,
 		"timings": {

@@ -2,7 +2,7 @@ import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { Socket } from 'socket.io-client';
 import { type ExecaError } from 'execa';
-import { getCmdMock, getCmdMockResult, getExecaMock } from '../../utils.js';
+import { chunkOutput, getCmdMock, getCmdMockResult, getExecaMock } from '../../utils.js';
 import {
 	MtrCommand,
 	argBuilder,
@@ -205,29 +205,40 @@ describe('mtr command executor', () => {
 
 			const expectedResult = getCmdMockResult(testCase);
 			const rawOutput = getCmdMock(testCase);
-			const rawOutputLines = rawOutput.split('\n');
 			const mockCmd = getExecaMock();
 
 			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(false));
 			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
 
-			for (const progressOutput of rawOutputLines) {
-				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
+			const { lines, emitChunks } = chunkOutput(rawOutput);
 
-			mockCmd.resolve(rawOutput);
+			await emitChunks(mockCmd.stdout);
+
+			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
-			expect(mockedSocket.emit.callCount).to.equal(2);
+			expect(mockedSocket.emit.callCount).to.equal(lines.length + 1);
 
-			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:progress', {
-				measurementId: 'measurement',
+			expect(mockedSocket.emit.args[0][1]).to.deep.include({
 				overwrite: true,
 				result: {
 					rawOutput: 'Host          Loss% Drop Rcv Avg  StDev  Javg \n',
 				},
-				testId: 'test',
-			}]);
+			});
+
+			expect(mockedSocket.emit.args[1][1]).to.deep.include({
+				overwrite: true,
+				result: {
+					rawOutput: 'Host                              Loss% Drop Rcv Avg  StDev  Javg \n1. AS??? _gateway (192.168.0.1)       0.0%    0   0 0.0    0.0   0.0\n',
+				},
+			});
+
+			expect(mockedSocket.emit.args[20][1]).to.deep.include({
+				overwrite: true,
+				result: {
+					rawOutput: 'Host                                                   Loss% Drop Rcv  Avg  StDev  Javg \n1. AS??? _gateway (192.168.0.1)                         0.0%    0   1  0.0    0.0   0.0\n2. AS??? (waiting for reply)                         \n3. AS123 62.252.67.181 (62.252.67.181)                  0.0%    0   1  9.8    0.6   1.2\n4. AS??? (waiting for reply)                         \n5. AS123 62.254.59.130 (62.254.59.130)                  0.0%    0   1 11.4    0.6   1.3\n6. AS123 142.250.160.116 (142.250.160.116)              0.0%    0   0 10.9    0.0  10.9\n7. AS123 216.239.41.193 (216.239.41.193)                0.0%    0   0 15.8    0.0  15.8\n8. AS123 142.251.54.27 (142.251.54.27)                  0.0%    0   0 15.7    0.0  15.7\n9. AS123 lhr25s31-in-f14.1e100.net (142.250.179.238)    0.0%    0   0 11.8    0.0  11.8\n',
+				},
+			});
 
 			expect(mockedSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
@@ -243,15 +254,13 @@ describe('mtr command executor', () => {
 
 			const expectedResult = getCmdMockResult(testCase);
 			const rawOutput = getCmdMock(testCase);
-			const rawOutputLines = rawOutput.split('\n');
 			const mockCmd = getExecaMock();
 
 			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(false));
 			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
 
-			for (const progressOutput of rawOutputLines) {
-				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
+			const { emitChunks } = chunkOutput(rawOutput);
+			await emitChunks(mockCmd.stdout);
 
 			mockCmd.resolve(rawOutput);
 			await runPromise;
@@ -271,15 +280,13 @@ describe('mtr command executor', () => {
 
 			const expectedResult = getCmdMockResult(testCase);
 			const rawOutput = getCmdMock(testCase);
-			const rawOutputLines = rawOutput.split('\n');
 			const mockCmd = getExecaMock();
 
 			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(false));
 			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
 
-			for (const progressOutput of rawOutputLines) {
-				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
+			const { emitChunks } = chunkOutput(rawOutput);
+			await emitChunks(mockCmd.stdout);
 
 			mockCmd.resolve(rawOutput);
 			await runPromise;
@@ -299,15 +306,13 @@ describe('mtr command executor', () => {
 
 			const expectedResult = getCmdMockResult(testCase);
 			const rawOutput = getCmdMock(testCase);
-			const rawOutputLines = rawOutput.split('\n');
 			const mockCmd = getExecaMock();
 
 			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(false));
 			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
 
-			for (const progressOutput of rawOutputLines) {
-				mockCmd.stdout.emit('data', Buffer.from(progressOutput, 'utf8'));
-			}
+			const { emitChunks } = chunkOutput(rawOutput);
+			await emitChunks(mockCmd.stdout);
 
 			mockCmd.resolve(rawOutput);
 			await runPromise;

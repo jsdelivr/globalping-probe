@@ -31,13 +31,7 @@ export const TraceDigParser = {
 		const lines = rawOutput.split(NEW_LINE_REG_EXP);
 
 		if (lines.length < 3) {
-			const message = lines[lines.length - 2];
-
-			if (!message || message.length < 2) {
-				return new Error(rawOutput);
-			}
-
-			return new Error(message);
+			return new Error(rawOutput);
 		}
 
 		return {
