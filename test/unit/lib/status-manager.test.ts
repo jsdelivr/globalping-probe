@@ -3,7 +3,7 @@ import * as sinon from 'sinon';
 import { expect } from 'chai';
 import * as td from 'testdouble';
 import type { ExecaChildProcess } from 'execa';
-import { getCmdMock } from '../../utils.js';
+import { getCmdMock, useSandboxWithFakeTimers } from '../../utils.js';
 import type { StatusManager } from '../../../src/lib/status-manager.js';
 import type { PingOptions } from '../../../src/command/ping-command.js';
 
@@ -24,7 +24,7 @@ describe('StatusManager', () => {
 	});
 
 	beforeEach(() => {
-		sandbox = sinon.createSandbox({ useFakeTimers: true });
+		sandbox = useSandboxWithFakeTimers();
 		socket = sandbox.createStubInstance(Socket) as sinon.SinonStubbedInstance<Socket>;
 		pingCmd.resolves({ stdout: pingSuccess });
 		hasRequired.resolves(true);

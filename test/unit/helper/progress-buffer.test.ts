@@ -2,13 +2,14 @@ import { Socket } from 'socket.io-client';
 import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { ProgressBuffer } from '../../../src/helper/progress-buffer.js';
+import { useSandboxWithFakeTimers } from '../../utils.js';
 
 describe('progress buffer', () => {
 	let sandbox: sinon.SinonSandbox;
 	let mockedSocket: sinon.SinonStubbedInstance<Socket>;
 
 	beforeEach(() => {
-		sandbox = sinon.createSandbox({ useFakeTimers: true });
+		sandbox = useSandboxWithFakeTimers();
 		mockedSocket = sandbox.createStubInstance(Socket) as sinon.SinonStubbedInstance<Socket>;
 	});
 

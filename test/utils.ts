@@ -6,12 +6,12 @@ import { fileURLToPath } from 'node:url';
 import * as util from 'node:util';
 import { expect } from 'chai';
 import _ from 'lodash';
+import { SinonSandboxConfig, SinonStubbedInstance } from 'sinon';
 import stringifyObject from 'stringify-object';
 import wrapItPlugin from './plugins/wrap-it/index.js';
 
 import type { ExecaChildProcess } from 'execa';
 import type { CommandInterface } from '../src/types.js';
-import type { SinonStubbedInstance } from 'sinon';
 import type { Socket } from 'socket.io-client';
 
 export const getCmdMock = (name: string): string => readFileSync(path.resolve(`./test/mocks/${name}.txt`)).toString();
@@ -138,4 +138,15 @@ export const setupSnapshots = (url: string) => {
 		path.relative(directory, path.dirname(file)).split(path.sep).slice(1).join(path.sep),
 		`${path.basename(file, path.extname(file))}.json`,
 	));
+};
+
+export const useSandboxWithFakeTimers = (config: Partial<SinonSandboxConfig> = {}) => {
+	return sinon.createSandbox({
+		...config,
+		useFakeTimers: {
+			..._.isObject(config.useFakeTimers) ? config.useFakeTimers : {},
+			// Avoid overriding hrtime, performance, and other advanced APIs as it causes problems with other modules.
+			toFake: [ 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date' ],
+		},
+	});
 };

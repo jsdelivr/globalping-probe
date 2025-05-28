@@ -10,7 +10,7 @@ import {
 	urlBuilder,
 	type Timings, HttpOptions,
 } from '../../../src/command/http-command.js';
-import { getCmdMock } from '../../utils.js';
+import { getCmdMock, useSandboxWithFakeTimers } from '../../utils.js';
 
 type StreamCert = {
 	valid_from: number | string;
@@ -72,10 +72,9 @@ describe('http command', () => {
 	let mockedSocket: sinon.SinonStubbedInstance<Socket>;
 
 	beforeEach(() => {
-		sandbox = sinon.createSandbox({
+		sandbox = useSandboxWithFakeTimers({
 			useFakeTimers: {
 				now: 1689320000150,
-				toFake: [ 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date' ],
 			},
 		});
 
