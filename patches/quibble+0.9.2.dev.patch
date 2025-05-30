@@ -1,0 +1,13 @@
+diff --git a/node_modules/quibble/lib/quibble.mjs b/node_modules/quibble/lib/quibble.mjs
+index 125db13..fa94b69 100644
+--- a/node_modules/quibble/lib/quibble.mjs
++++ b/node_modules/quibble/lib/quibble.mjs
+@@ -59,7 +59,7 @@ export async function resolve (specifier, context, nextResolve) {
+ 
+     const quibbledUrl = addQueryToUrl(url, '__quibble', stubModuleGeneration)
+ 
+-    if (url.startsWith('node:') && !getStubsInfo(quibbledUrl)) {
++    if ((url.startsWith('node:') || url.includes('node_modules')) && !getStubsInfo(quibbledUrl)) {
+       return { ...ctx, url } // It's allowed to change ctx for a builtin (but unlikely)
+     }
+ 

@@ -20,6 +20,7 @@
 		"joi": "^17.13.3",
 		"lodash": "^4.17.21",
 		"nvm": "github:nvm-sh/nvm",
+		"patch-package": "^8.0.0",
 		"physical-cpu-count": "^2.0.0",
 		"socket.io-client": "^4.8.1",
 		"throng": "^5.0.0",
@@ -61,6 +62,7 @@
 		"typescript": "^5.8.3"
 	},
 	"scripts": {
+		"postinstall": "patch-package",
 		"build": "tsc && npm run copy:sh",
 		"coverage": "npm run clean && c8 npm run test:mocha",
 		"clean": "rimraf coverage",
