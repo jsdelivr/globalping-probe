@@ -82,8 +82,8 @@
 		"test:mocha:dev:prune": "PRUNE_OLD_SNAPSHOTS=1 npm run test:mocha:dev",
 		"test:mocha:dev:update": "PRUNE_OLD_SNAPSHOTS=1 UPDATE_EXISTING_SNAPSHOTS=1 npm run test:mocha:dev",
 		"test:mocha:dev:updateNoPrune": "UPDATE_EXISTING_SNAPSHOTS=1 npm run test:mocha:dev",
-		"test:e2e": "CURRENT_BRANCH=$(git branch --show-current) && npm run test:e2e:cases && npm run test:e2e:docker && npm run test:e2e:run",
-		"test:e2e:cases": "git clone -b $CURRENT_BRANCH https://github.com/jsdelivr/globalping.git test/e2e/globalping || git clone https://github.com/jsdelivr/globalping.git test/e2e/globalping; cd test/e2e/globalping && git add . && git reset --hard && git pull --force && npm install; cd ../../../; for f in config/e2e-api-*; do cp \"$f\" \"test/e2e/globalping/config/${f#config/e2e-api-}\"; done;",
+		"test:e2e": "npm run test:e2e:clone && npm run test:e2e:docker && npm run test:e2e:run",
+		"test:e2e:clone": "./scripts/clone-gp-api.sh",
 		"test:e2e:docker": "docker build -t globalping-probe-e2e . && docker build --build-arg BUILDKIT_CONTEXT_KEEP_GIT_DIR=1 -t globalping-api-e2e test/e2e/globalping",
 		"test:e2e:run": "cd test/e2e/globalping; TS_NODE_TRANSPILE_ONLY=true NODE_ENV=test mocha --config ./.mocharc.e2e.cjs || E=$?; cd ../../../; exit $E;"
 	},
