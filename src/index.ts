@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 import { getAvailableDiskSpace, looksLikeV1HardwareDevice } from './lib/util.js';
 
-const WANTED_VERSION = 'v20.13.0';
+const WANTED_VERSION = 'v22.16.0';
 const MIN_NODE_UPDATE_MEMORY = 250 * 1e6;
 const MIN_NODE_UPDATE_DISK_SPACE_MB = 1000;
 const dirname = path.dirname(fileURLToPath(import.meta.url));
