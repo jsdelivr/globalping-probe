@@ -74,7 +74,7 @@ jobs:
           CURRENT_BRANCH: ${{ github.head_ref || github.ref_name }}
         run: |
           echo "Current branch: $CURRENT_BRANCH."
-          npm run test:e2e:cases
+          npm run test:e2e:clone
           cd test/e2e/globalping
           cp config/redis/.env.redis ./
           docker compose up -d
