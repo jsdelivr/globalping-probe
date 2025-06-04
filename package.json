@@ -20,6 +20,7 @@
 		"joi": "^17.13.3",
 		"lodash": "^4.17.21",
 		"nvm": "github:nvm-sh/nvm",
+		"patch-package": "^8.0.0",
 		"physical-cpu-count": "^2.0.0",
 		"socket.io-client": "^4.8.1",
 		"throng": "^5.0.0",
@@ -61,6 +62,7 @@
 		"typescript": "^5.8.3"
 	},
 	"scripts": {
+		"postinstall": "patch-package",
 		"build": "tsc && npm run copy:sh",
 		"coverage": "npm run clean && c8 npm run test:mocha",
 		"clean": "rimraf coverage",
@@ -80,8 +82,8 @@
 		"test:mocha:dev:prune": "PRUNE_OLD_SNAPSHOTS=1 npm run test:mocha:dev",
 		"test:mocha:dev:update": "PRUNE_OLD_SNAPSHOTS=1 UPDATE_EXISTING_SNAPSHOTS=1 npm run test:mocha:dev",
 		"test:mocha:dev:updateNoPrune": "UPDATE_EXISTING_SNAPSHOTS=1 npm run test:mocha:dev",
-		"test:e2e": "npm run test:e2e:cases && npm run test:e2e:docker && npm run test:e2e:run",
-		"test:e2e:cases": "git clone https://github.com/jsdelivr/globalping.git test/e2e/globalping; cd test/e2e/globalping && git add . && git reset --hard && git pull --force && npm install; cd ../../../; for f in config/e2e-api-*; do cp \"$f\" \"test/e2e/globalping/config/${f#config/e2e-api-}\"; done;",
+		"test:e2e": "npm run test:e2e:clone && npm run test:e2e:docker && npm run test:e2e:run",
+		"test:e2e:clone": "bash ./scripts/clone-gp-api.sh",
 		"test:e2e:docker": "docker build -t globalping-probe-e2e . && docker build --build-arg BUILDKIT_CONTEXT_KEEP_GIT_DIR=1 -t globalping-api-e2e test/e2e/globalping",
 		"test:e2e:run": "cd test/e2e/globalping; TS_NODE_TRANSPILE_ONLY=true NODE_ENV=test mocha --config ./.mocharc.e2e.cjs || E=$?; cd ../../../; exit $E;"
 	},
@@ -89,6 +91,6 @@
 		"*.{cjs,js,json,ts}": "eslint --cache --fix"
 	},
 	"engines": {
-		"node": "18 || 20"
+		"node": "18 || 20 || 22 || 24"
 	}
 }

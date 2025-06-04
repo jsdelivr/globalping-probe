@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [ 18.x, 20.x ]
+        node-version: [ 18.x, 20.x, 22.x ]
       fail-fast: false
 
     env:
@@ -70,8 +70,11 @@ jobs:
           sudo systemctl restart docker
           docker restart $(docker ps -aq)
       - name: Set up Redis
+        env:
+          CURRENT_BRANCH: ${{ github.head_ref || github.ref_name }}
         run: |
-          npm run test:e2e:cases
+          echo "Current branch: $CURRENT_BRANCH."
+          npm run test:e2e:clone
           cd test/e2e/globalping
           cp config/redis/.env.redis ./
           docker compose up -d
@@ -81,4 +84,5 @@ jobs:
           npm run build
       - name: Test E2E
         run: |
-          npm run test:e2e
+          npm run test:e2e:docker
+          npm run test:e2e:run
