@@ -4,6 +4,7 @@ import { expect } from 'chai';
 import * as td from 'testdouble';
 import * as sinon from 'sinon';
 import * as constants from '../../../src/constants.js';
+import { useSandboxWithFakeTimers } from '../../utils.js';
 
 class MockHTTPError extends Error {}
 class MockRequestError extends Error {}
@@ -22,7 +23,7 @@ describe('updater module', () => {
 	});
 
 	beforeEach(() => {
-		sandbox = sinon.createSandbox({ useFakeTimers: true });
+		sandbox = useSandboxWithFakeTimers();
 	});
 
 	afterEach(() => {

@@ -3,7 +3,7 @@ import process from 'node:process';
 import { expect } from 'chai';
 import * as td from 'testdouble';
 import * as sinon from 'sinon';
-import { getCmdMock, MockSocket } from '../utils.js';
+import { getCmdMock, MockSocket, useSandboxWithFakeTimers } from '../utils.js';
 import { StatusManager } from '../../src/lib/status-manager.js';
 
 const pingStdout = getCmdMock('ping-success-linux');
@@ -60,7 +60,7 @@ describe('index module', () => {
 	});
 
 	beforeEach(() => {
-		sandbox = sinon.createSandbox({ useFakeTimers: true });
+		sandbox = useSandboxWithFakeTimers();
 	});
 
 	afterEach(() => {

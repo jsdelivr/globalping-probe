@@ -21,6 +21,7 @@ module.exports = {
 	},
 	commands: {
 		timeout: 25,
+		progressInterval: 500,
 		mtr: {
 			interval: 0.5,
 		},

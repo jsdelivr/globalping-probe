@@ -65,13 +65,7 @@ export const ClassicDigParser = {
 		const lines = rawOutput.split(NEW_LINE_REG_EXP);
 
 		if (lines.length < 6) {
-			const message = lines[lines.length - 2];
-
-			if (!message || message.length < 2) {
-				throw new InternalError(rawOutput, true);
-			}
-
-			throw new InternalError(message, true);
+			throw new InternalError(rawOutput, true);
 		}
 
 		return {

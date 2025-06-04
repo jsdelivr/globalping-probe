@@ -108,7 +108,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		}
 
 		const { value: cmdOptions } = validationResult;
-		const buffer = new ProgressBuffer(socket, testId, measurementId);
+		const buffer = new ProgressBuffer(socket, testId, measurementId, 'append');
 		let isResultPrivate = false;
 		let result = {};
 

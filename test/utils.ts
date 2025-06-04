@@ -5,16 +5,19 @@ import * as sinon from 'sinon';
 import { fileURLToPath } from 'node:url';
 import * as util from 'node:util';
 import { expect } from 'chai';
+import config from 'config';
 import _ from 'lodash';
+import { SinonSandboxConfig, SinonStubbedInstance } from 'sinon';
 import stringifyObject from 'stringify-object';
 import wrapItPlugin from './plugins/wrap-it/index.js';
 
 import type { ExecaChildProcess } from 'execa';
 import type { CommandInterface } from '../src/types.js';
-import type { SinonStubbedInstance } from 'sinon';
 import type { Socket } from 'socket.io-client';
 
-export const getCmdMock = (name: string): string => readFileSync(path.resolve(`./test/mocks/${name}.txt`)).toString();
+const progressIntervalTime = config.get<number>('commands.progressInterval');
+
+export const getCmdMock = (name: string): string => readFileSync(path.resolve(`./test/mocks/${name}.txt`)).toString().replace(/\r?\n$/, '');
 export const getCmdMockResult = (name: string) => JSON.parse(readFileSync(path.resolve(`./test/mocks/${name}.json`)).toString()) as Record<string, unknown>;
 
 export class MockSocket extends EventEmitter {
@@ -138,4 +141,61 @@ export const setupSnapshots = (url: string) => {
 		path.relative(directory, path.dirname(file)).split(path.sep).slice(1).join(path.sep),
 		`${path.basename(file, path.extname(file))}.json`,
 	));
+};
+
+export const chunkOutput = (rawOutput: string) => {
+	const lineCount = rawOutput.match(/\n/g)?.length ?? 0;
+	const maxPerChunk = lineCount > 20 ? 5 : 2;
+	const lines = rawOutput.trimEnd().match(new RegExp(`^.*?\n|(?:.*?\n){1,${maxPerChunk}}|.+$`, 'g'));
+	const linesChunks = lines.map((chunk, index) => {
+		if (!index) {
+			return [ chunk ];
+		}
+
+		const half = Math.round(chunk.length / 2);
+
+		return [
+			chunk.slice(0, half),
+			chunk.slice(half),
+		];
+	});
+
+	return {
+		lines,
+		async emitChunks (stream: EventEmitter) {
+			for (const lineChunks of linesChunks) {
+				for (const chunk of lineChunks) {
+					stream.emit('data', Buffer.from(chunk, 'utf8'));
+				}
+
+				await new Promise(resolve => setTimeout(resolve, progressIntervalTime * 2));
+			}
+
+			stream.emit('end');
+			await new Promise(resolve => setTimeout(resolve, progressIntervalTime * 2));
+		},
+		verifyChunks (socket: SinonStubbedInstance<Socket<any, any>>, expectedChunks: string[] = lines) {
+			for (let i = 0; i < expectedChunks.length; i++) {
+				expect(socket.emit.args[i], `emit [${i}]`).to.deep.equal([ 'probe:measurement:progress', {
+					testId: 'test',
+					measurementId: 'measurement',
+					overwrite: false,
+					result: { rawOutput: expectedChunks[i] },
+				}]);
+			}
+
+			expect(socket.emit.callCount).to.equal(expectedChunks.length + 1);
+		},
+	};
+};
+
+export const useSandboxWithFakeTimers = (config: Partial<SinonSandboxConfig> = {}) => {
+	return sinon.createSandbox({
+		...config,
+		useFakeTimers: {
+			..._.isObject(config.useFakeTimers) ? config.useFakeTimers : {},
+			// Avoid overriding hrtime, performance, and other advanced APIs as it causes problems with other modules.
+			toFake: [ 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date' ],
+		},
+	});
 };
