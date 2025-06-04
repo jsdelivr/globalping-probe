@@ -144,7 +144,9 @@ export const setupSnapshots = (url: string) => {
 };
 
 export const chunkOutput = (rawOutput: string) => {
-	const lines = rawOutput.trimEnd().match(/^.*?\n|(?:.*?\n){1,2}|.+$/g);
+	const lineCount = rawOutput.match(/\n/g)?.length ?? 0;
+	const maxPerChunk = lineCount > 20 ? 5 : 2;
+	const lines = rawOutput.trimEnd().match(new RegExp(`^.*?\n|(?:.*?\n){1,${maxPerChunk}}|.+$`, 'g'));
 	const linesChunks = lines.map((chunk, index) => {
 		if (!index) {
 			return [ chunk ];

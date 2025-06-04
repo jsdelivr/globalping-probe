@@ -229,11 +229,11 @@ describe('mtr command executor', () => {
 			expect(mockedSocket.emit.args[1][1]).to.deep.include({
 				overwrite: true,
 				result: {
-					rawOutput: 'Host                              Loss% Drop Rcv Avg  StDev  Javg \n1. AS??? _gateway (192.168.0.1)       0.0%    0   0 0.0    0.0   0.0\n',
+					rawOutput: 'Host                              Loss% Drop Rcv Avg  StDev  Javg \n1. AS??? _gateway (192.168.0.1)       0.0%    0   0 0.0    0.0   0.0\n2. AS??? (waiting for reply)       \n',
 				},
 			});
 
-			expect(mockedSocket.emit.args[20][1]).to.deep.include({
+			expect(mockedSocket.emit.args[8][1]).to.deep.include({
 				overwrite: true,
 				result: {
 					rawOutput: 'Host                                                   Loss% Drop Rcv  Avg  StDev  Javg \n1. AS??? _gateway (192.168.0.1)                         0.0%    0   1  0.0    0.0   0.0\n2. AS??? (waiting for reply)                         \n3. AS123 62.252.67.181 (62.252.67.181)                  0.0%    0   1  9.8    0.6   1.2\n4. AS??? (waiting for reply)                         \n5. AS123 62.254.59.130 (62.254.59.130)                  0.0%    0   1 11.4    0.6   1.3\n6. AS123 142.250.160.116 (142.250.160.116)              0.0%    0   0 10.9    0.0  10.9\n7. AS123 216.239.41.193 (216.239.41.193)                0.0%    0   0 15.8    0.0  15.8\n8. AS123 142.251.54.27 (142.251.54.27)                  0.0%    0   0 15.7    0.0  15.7\n9. AS123 lhr25s31-in-f14.1e100.net (142.250.179.238)    0.0%    0   0 11.8    0.0  11.8\n',
