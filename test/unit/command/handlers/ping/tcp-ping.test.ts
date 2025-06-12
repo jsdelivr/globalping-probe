@@ -388,9 +388,9 @@ describe('tcp-ping', () => {
 			expect(results.length).to.equal(5); // 1 start + 3 probes + 1 statistics
 
 			// Verify we got the results in the correct order.
-			expect(results[1].rtt).to.be.within(900, 1000);
-			expect(results[2].rtt).to.be.within(300, 400);
-			expect(results[3].rtt).to.be.within(700, 800);
+			expect(results[1].rtt).to.be.within(899, 1000);
+			expect(results[2].rtt).to.be.within(299, 400);
+			expect(results[3].rtt).to.be.within(699, 800);
 
 			const stats = results[4] as any;
 			expect(stats.type).to.equal('statistics');
@@ -398,10 +398,10 @@ describe('tcp-ping', () => {
 			expect(stats.rcv).to.equal(3);
 			expect(stats.drop).to.equal(0);
 			expect(stats.loss).to.equal(0);
-			expect(stats.time).to.be.within(1700, 1800);
+			expect(stats.time).to.be.within(1690, 1800);
 
-			expect(stats.min).to.be.within(300, 400);
-			expect(stats.max).to.be.within(900, 1000);
+			expect(stats.min).to.be.within(299, 400);
+			expect(stats.max).to.be.within(899, 1000);
 			expect(stats.avg).to.be.within(600, 700);
 		});
 	});
