@@ -133,7 +133,10 @@ export async function tcpPing (
 		}
 
 		// The ping runs in a non-blocking way so that we can start a new one every `interval`.
-		const pingPromise = tcpPingSingle(target, address, port, ipVersion, timeout).then((result) => {
+		const pingPromise = tcpPingSingle(target, address, port, ipVersion, timeout).then(async (result) => {
+			// Ensure we preserve the correct order.
+			await Promise.all(pingPromises.slice(0, i));
+
 			if (result.type === 'probe' && result.success) {
 				successTimings.push(result);
 			}
