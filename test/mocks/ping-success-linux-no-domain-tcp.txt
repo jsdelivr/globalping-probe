@@ -1,0 +1,5 @@
+{"type":"start","address":"1.1.1.1","hostname":"1.1.1.1","port":53}
+{"type":"probe","address":"1.1.1.1","hostname":"1.1.1.1","port":53,"rtt":4.1689,"success":true}
+{"type":"probe","address":"1.1.1.1","hostname":"1.1.1.1","port":53,"rtt":3.9423,"success":true}
+{"type":"probe","address":"1.1.1.1","hostname":"1.1.1.1","port":53,"rtt":3.1071,"success":true}
+{"type":"statistics","address":"1.1.1.1","hostname":"1.1.1.1","min":3.107,"avg":3.739,"max":4.169,"time":3000,"loss":0,"total":3,"rcv":3,"drop":0,"mdev":0.457}

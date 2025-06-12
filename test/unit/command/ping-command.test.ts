@@ -2,7 +2,8 @@ import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { Socket } from 'socket.io-client';
 import { type ExecaError, execaSync } from 'execa';
-import { chunkOutput, getCmdMock, getCmdMockResult, getExecaMock } from '../../utils.js';
+import { chunkObjectStream, chunkOutput, getCmdMock, getCmdMockResult, getExecaMock } from '../../utils.js';
+import { toRawTcpOutput } from '../../../src/command/handlers/ping/tcp-ping.js';
 import {
 	PingCommand,
 	argBuilder,
@@ -122,6 +123,22 @@ describe('ping command executor', () => {
 		const sandbox = sinon.createSandbox();
 		const mockedSocket = sandbox.createStubInstance(Socket);
 
+		const fakeTcpHandler = (emit: (cb: (chunk: unknown) => void) => Promise<void>) => {
+			return async (_options: never, _resolverFn?: never, onProgress?: (result: any) => void) => {
+				const chunks = [];
+
+				await emit((chunk) => {
+					chunks.push(chunk);
+
+					if (onProgress) {
+						onProgress(chunk);
+					}
+				});
+
+				return chunks;
+			};
+		};
+
 		beforeEach(() => {
 			sandbox.reset();
 		});
@@ -186,6 +203,67 @@ describe('ping command executor', () => {
 				await emitChunks(mockedCmd.stdout);
 
 				mockedCmd.resolve({ stdout: rawOutput });
+				await runPromise;
+
+				expect(mockedSocket.emit.callCount).to.equal(1);
+				expect(mockedSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+			});
+		}
+
+		const tcpCommands = [ 'ping-success-linux-tcp', 'ping-success-linux-no-domain-tcp', 'ping-packet-loss-linux-tcp', 'ping-timeout-linux-tcp' ];
+
+		for (const command of tcpCommands) {
+			it(`should run and parse commands - ${command}`, async () => {
+				const rawOutput = getCmdMock(command);
+				const expectedResult = getCmdMockResult(command);
+				const options = {
+					type: 'ping' as PingOptions['type'],
+					target: 'google.com',
+					packets: 3,
+					protocol: 'TCP',
+					port: 80,
+					inProgressUpdates: true,
+					ipVersion: 4 as const,
+				};
+
+				const ping = new PingCommand();
+
+				const { lines, emitChunks, verifyChunks } = chunkObjectStream(rawOutput);
+				const runPromise = ping.runTcp(fakeTcpHandler(emitChunks), mockedSocket as any, 'measurement', 'test', options);
+
+				const transformedLines = lines.map((_line, index, lines) => {
+					return toRawTcpOutput(lines.slice(0, index + 1).map(l => JSON.parse(l)));
+				}).map((line, index, lines) => {
+					return line.slice(lines[index - 1]?.length ?? 0);
+				});
+
+				await runPromise;
+
+				verifyChunks(mockedSocket, transformedLines);
+
+				expect(mockedSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+			});
+		}
+
+		for (const command of tcpCommands) {
+			it(`should run and parse successful commands without progress updates - ${command}`, async () => {
+				const rawOutput = getCmdMock(command);
+				const expectedResult = getCmdMockResult(command);
+				const options = {
+					type: 'ping' as PingOptions['type'],
+					target: 'google.com',
+					packets: 3,
+					protocol: 'TCP',
+					port: 80,
+					inProgressUpdates: false,
+					ipVersion: 4 as const,
+				};
+
+				const ping = new PingCommand();
+
+				const { emitChunks } = chunkObjectStream(rawOutput);
+				const runPromise = ping.runTcp(fakeTcpHandler(emitChunks), mockedSocket as any, 'measurement', 'test', options);
+
 				await runPromise;
 
 				expect(mockedSocket.emit.callCount).to.equal(1);
@@ -287,6 +365,31 @@ describe('ping command executor', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
+		it('should run and fail private ip command on the progress step (TCP)', async () => {
+			const command = 'ping-private-ip-linux-tcp';
+			const rawOutput = getCmdMock(command);
+			const expectedResult = getCmdMockResult(command);
+			const options = {
+				type: 'ping' as PingOptions['type'],
+				target: 'google.com',
+				packets: 3,
+				protocol: 'TCP',
+				port: 80,
+				inProgressUpdates: true,
+				ipVersion: 4 as const,
+			};
+
+			const ping = new PingCommand();
+
+			const { emitChunks } = chunkObjectStream(rawOutput);
+			const runPromise = ping.runTcp(fakeTcpHandler(emitChunks), mockedSocket as any, 'measurement', 'test', options);
+
+			await runPromise;
+
+			expect((mockedSocket.emit.firstCall.args[1] as any).result.rawOutput).to.include('Private IP');
+			expect(mockedSocket.emit.secondCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+		});
+
 		it('should run and fail private ip command on the result step', async () => {
 			const command = 'ping-private-ip-linux';
 			const rawOutput = getCmdMock(command);
@@ -342,6 +445,31 @@ describe('ping command executor', () => {
 			await runPromise;
 
 			expect(mockedCmd.kill.called).to.be.false;
+			expect(mockedSocket.emit.calledOnce).to.be.true;
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+		});
+
+		it('should run and fail private ip command on the result step if progress updates are disabled (TCP)', async () => {
+			const command = 'ping-private-ip-linux-tcp';
+			const rawOutput = getCmdMock(command);
+			const expectedResult = getCmdMockResult(command);
+			const options = {
+				type: 'ping' as PingOptions['type'],
+				target: 'google.com',
+				packets: 3,
+				protocol: 'TCP',
+				port: 80,
+				inProgressUpdates: false,
+				ipVersion: 4 as const,
+			};
+
+			const ping = new PingCommand();
+
+			const { emitChunks } = chunkObjectStream(rawOutput);
+			const runPromise = ping.runTcp(fakeTcpHandler(emitChunks), mockedSocket as any, 'measurement', 'test', options);
+
+			await runPromise;
+
 			expect(mockedSocket.emit.calledOnce).to.be.true;
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});

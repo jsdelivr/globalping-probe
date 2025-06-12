@@ -1,0 +1,20 @@
+{
+	"testId": "test",
+	"measurementId": "measurement",
+	"result": {
+		"status": "finished",
+		"resolvedAddress": "142.251.36.78",
+		"resolvedHostname": "google.com",
+		"stats": {
+			"min": null,
+			"avg": null,
+			"max": null,
+			"total": 3,
+			"loss": 100,
+			"rcv": 0,
+			"drop": 3
+		},
+		"timings": [],
+		"rawOutput": "PING google.com (142.251.36.78) on port 53.\nNo reply from google.com (142.251.36.78) on port 53: tcp_conn=1\nNo reply from google.com (142.251.36.78) on port 53: tcp_conn=2\nNo reply from google.com (142.251.36.78) on port 53: tcp_conn=3\n\n--- google.com (142.251.36.78) ping statistics ---\n3 packets transmitted, 0 received, 100% packet loss, time 3003 ms"
+	}
+}

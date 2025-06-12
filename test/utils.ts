@@ -189,6 +189,34 @@ export const chunkOutput = (rawOutput: string) => {
 	};
 };
 
+export const chunkObjectStream = (rawOutput: string) => {
+	const lines: string[] = rawOutput.trimEnd().match(/.*?\n|.+$/g) || [];
+
+	return {
+		lines,
+		async emitChunks (callback: (chunk: any) => void) {
+			for (const line of lines) {
+				callback(JSON.parse(line));
+				await new Promise(resolve => setTimeout(resolve, progressIntervalTime * 2));
+			}
+
+			await new Promise(resolve => setTimeout(resolve, progressIntervalTime * 2));
+		},
+		verifyChunks (socket: SinonStubbedInstance<Socket<any, any>>, expectedChunks: string[] = lines) {
+			for (let i = 0; i < expectedChunks.length; i++) {
+				expect(socket.emit.args[i], `emit [${i}]`).to.deep.equal([ 'probe:measurement:progress', {
+					testId: 'test',
+					measurementId: 'measurement',
+					overwrite: false,
+					result: { rawOutput: expectedChunks[i] },
+				}]);
+			}
+
+			expect(socket.emit.callCount).to.equal(expectedChunks.length + 1);
+		},
+	};
+};
+
 export const useSandboxWithFakeTimers = (config: Partial<SinonSandboxConfig> = {}) => {
 	return sinon.createSandbox({
 		...config,
