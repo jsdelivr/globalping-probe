@@ -60,10 +60,10 @@ describe('StatusManager', () => {
 		pingCmd.rejects({ stdout: 'host not found' });
 		await statusManager.start();
 		expect(pingCmd.callCount).to.equal(6);
-		expect(pingCmd.args[0]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'ns1.registry.in', packets: 6, inProgressUpdates: false }]);
+		expect(pingCmd.args[0]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'a.gtld-servers.net', packets: 6, inProgressUpdates: false }]);
 		expect(pingCmd.args[1]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'k.root-servers.net', packets: 6, inProgressUpdates: false }]);
 		expect(pingCmd.args[2]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'ns1.dns.nl', packets: 6, inProgressUpdates: false }]);
-		expect(pingCmd.args[3]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'ns1.registry.in', packets: 6, inProgressUpdates: false }]);
+		expect(pingCmd.args[3]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'a.gtld-servers.net', packets: 6, inProgressUpdates: false }]);
 		expect(pingCmd.args[4]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'k.root-servers.net', packets: 6, inProgressUpdates: false }]);
 		expect(pingCmd.args[5]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'ns1.dns.nl', packets: 6, inProgressUpdates: false }]);
 		expect(statusManager.getStatus()).to.equal('ping-test-failed');
@@ -133,10 +133,10 @@ describe('StatusManager', () => {
 		const statusManager = initStatusManager(socket, pingCmd);
 		await statusManager.start();
 		expect(pingCmd.callCount).to.equal(6);
-		expect(pingCmd.args[0]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'ns1.registry.in', packets: 6, inProgressUpdates: false }]);
+		expect(pingCmd.args[0]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'a.gtld-servers.net', packets: 6, inProgressUpdates: false }]);
 		expect(pingCmd.args[1]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'k.root-servers.net', packets: 6, inProgressUpdates: false }]);
 		expect(pingCmd.args[2]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'ns1.dns.nl', packets: 6, inProgressUpdates: false }]);
-		expect(pingCmd.args[3]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'ns1.registry.in', packets: 6, inProgressUpdates: false }]);
+		expect(pingCmd.args[3]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'a.gtld-servers.net', packets: 6, inProgressUpdates: false }]);
 		expect(pingCmd.args[4]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'k.root-servers.net', packets: 6, inProgressUpdates: false }]);
 		expect(pingCmd.args[5]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'ns1.dns.nl', packets: 6, inProgressUpdates: false }]);
 		expect(statusManager.getStatus()).to.equal('ready');
