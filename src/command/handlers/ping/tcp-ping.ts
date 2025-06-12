@@ -125,23 +125,30 @@ export async function tcpPing (
 		onProgress(start);
 	}
 
+	const pingPromises: Promise<void>[] = [];
+
 	for (let i = 0; i < packets; i++) {
 		if (i > 0) {
 			await setTimeoutAsync(interval);
 		}
 
-		const result = await tcpPingSingle(target, address, port, ipVersion, timeout);
+		// The ping runs in a non-blocking way so that we can start a new one every `interval`.
+		const pingPromise = tcpPingSingle(target, address, port, ipVersion, timeout).then((result) => {
+			if (result.type === 'probe' && result.success) {
+				successTimings.push(result);
+			}
 
-		if (result.type === 'probe' && result.success) {
-			successTimings.push(result);
-		}
+			if (onProgress) {
+				onProgress(result);
+			}
 
-		if (onProgress) {
-			onProgress(result);
-		}
+			results.push(result);
+		});
 
-		results.push(result);
+		pingPromises.push(pingPromise);
 	}
+
+	await Promise.all(pingPromises);
 
 	const rtts = successTimings.map(t => t.rtt);
 	const min = rtts.length > 0 ? Math.min(...rtts) : undefined;

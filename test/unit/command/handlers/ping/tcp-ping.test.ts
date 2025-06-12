@@ -23,7 +23,7 @@ describe('tcp-ping', () => {
 	}
 
 	const performanceMock = {
-		now: () => 1000,
+		now: () => performance.now(),
 	};
 
 	before(async () => {
@@ -364,6 +364,40 @@ describe('tcp-ping', () => {
 					success: true,
 				});
 			}
+		});
+
+		it('should start new pings at regular intervals regardless of previous ping completion', async () => {
+			const resolvedIp = '93.184.216.34';
+
+			performanceNowStub.reset();
+			performanceNowStub.callThrough();
+
+			// The first ping takes 900 ms (longer than the interval)
+			// The second ping takes 300 ms (shorter than the interval)
+			// The third ping takes 700 ms
+			let pingCount = 0;
+			socketMock.on.withArgs('connect', sinon.match.func).callsFake((_event: string, callback: () => void) => {
+				pingCount++;
+				const delay = pingCount === 1 ? 900 : (pingCount === 2 ? 300 : 700);
+				setTimeout(() => callback(), delay);
+				return socketMock;
+			});
+
+			const results = await tcpPing(options, () => [ resolvedIp ]);
+
+			expect(results.length).to.equal(5); // 1 start + 3 probes + 1 statistics
+
+			const stats = results[4] as any;
+			expect(stats.type).to.equal('statistics');
+			expect(stats.total).to.equal(3);
+			expect(stats.rcv).to.equal(3);
+			expect(stats.drop).to.equal(0);
+			expect(stats.loss).to.equal(0);
+			expect(stats.time).to.be.within(1700, 1800);
+
+			expect(stats.min).to.be.within(300, 400);
+			expect(stats.max).to.be.within(900, 1000);
+			expect(stats.avg).to.be.within(600, 700);
 		});
 	});
 
