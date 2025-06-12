@@ -10,14 +10,16 @@ import {
 } from '../../../src/command/ping-command.js';
 
 describe('ping command executor', () => {
-	describe('argument builder', () => {
+	describe('argument builder (ICMP)', () => {
 		it('should include all arguments', () => {
 			const options = {
 				type: 'ping' as PingOptions['type'],
 				target: 'google.com',
 				packets: 1,
+				protocol: 'ICMP',
+				port: 80,
 				inProgressUpdates: false,
-				ipVersion: 4,
+				ipVersion: 4 as const,
 			};
 
 			const args = argBuilder(options);
@@ -37,8 +39,10 @@ describe('ping command executor', () => {
 					type: 'ping' as PingOptions['type'],
 					target: 'google.com',
 					packets: 1,
+					protocol: 'ICMP',
+					port: 80,
 					inProgressUpdates: false,
-					ipVersion: 4,
+					ipVersion: 4 as const,
 				};
 
 				const args = argBuilder(options);
@@ -50,8 +54,10 @@ describe('ping command executor', () => {
 					type: 'ping' as PingOptions['type'],
 					target: 'google.com',
 					packets: 1,
+					protocol: 'ICMP',
+					port: 80,
 					inProgressUpdates: false,
-					ipVersion: 6,
+					ipVersion: 6 as const,
 				};
 
 				const args = argBuilder(options);
@@ -65,8 +71,10 @@ describe('ping command executor', () => {
 					type: 'ping' as PingOptions['type'],
 					target: 'google.com',
 					packets: 2,
+					protocol: 'ICMP',
+					port: 80,
 					inProgressUpdates: false,
-					ipVersion: 4,
+					ipVersion: 4 as const,
 				};
 
 				const args = argBuilder(options);
@@ -79,8 +87,10 @@ describe('ping command executor', () => {
 					type: 'ping' as PingOptions['type'],
 					target: 'google.com',
 					packets: 5,
+					protocol: 'ICMP',
+					port: 80,
 					inProgressUpdates: false,
-					ipVersion: 4,
+					ipVersion: 4 as const,
 				};
 
 				const args = argBuilder(options);
@@ -95,8 +105,10 @@ describe('ping command executor', () => {
 					type: 'ping' as PingOptions['type'],
 					target: 'abc.com',
 					packets: 2,
+					protocol: 'ICMP',
+					port: 80,
 					inProgressUpdates: false,
-					ipVersion: 4,
+					ipVersion: 4 as const,
 				};
 
 				const args = argBuilder(options);
@@ -124,15 +136,17 @@ describe('ping command executor', () => {
 					type: 'ping' as PingOptions['type'],
 					target: 'google.com',
 					packets: 3,
+					protocol: 'ICMP',
+					port: 80,
 					inProgressUpdates: true,
-					ipVersion: 4,
+					ipVersion: 4 as const,
 				};
 
 				const mockedCmd = getExecaMock();
 
-				const ping = new PingCommand((): any => mockedCmd);
+				const ping = new PingCommand();
 
-				const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+				const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
 
 				const { emitChunks, verifyChunks } = chunkOutput(rawOutput);
 
@@ -155,15 +169,17 @@ describe('ping command executor', () => {
 					type: 'ping' as PingOptions['type'],
 					target: 'google.com',
 					packets: 3,
+					protocol: 'ICMP',
+					port: 80,
 					inProgressUpdates: false,
-					ipVersion: 4,
+					ipVersion: 4 as const,
 				};
 
 				const mockedCmd = getExecaMock();
 
-				const ping = new PingCommand((): any => mockedCmd);
+				const ping = new PingCommand();
 
-				const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+				const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
 
 				const { emitChunks } = chunkOutput(rawOutput);
 
@@ -185,15 +201,17 @@ describe('ping command executor', () => {
 				type: 'ping' as PingOptions['type'],
 				target: 'google.com',
 				packets: 3,
+				protocol: 'ICMP',
+				port: 80,
 				inProgressUpdates: false,
-				ipVersion: 6,
+				ipVersion: 6 as const,
 			};
 
 			const mockedCmd = getExecaMock();
 
-			const ping = new PingCommand((): any => mockedCmd);
+			const ping = new PingCommand();
 
-			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
 
 			const { emitChunks } = chunkOutput(rawOutput);
 
@@ -214,15 +232,17 @@ describe('ping command executor', () => {
 				type: 'ping' as PingOptions['type'],
 				target: '2606:4700:4700::1111',
 				packets: 3,
+				protocol: 'ICMP',
+				port: 80,
 				inProgressUpdates: false,
-				ipVersion: 6,
+				ipVersion: 6 as const,
 			};
 
 			const mockedCmd = getExecaMock();
 
-			const ping = new PingCommand((): any => mockedCmd);
+			const ping = new PingCommand();
 
-			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
 
 			const { emitChunks } = chunkOutput(rawOutput);
 
@@ -243,15 +263,17 @@ describe('ping command executor', () => {
 				type: 'ping' as PingOptions['type'],
 				target: 'google.com',
 				packets: 3,
+				protocol: 'ICMP',
+				port: 80,
 				inProgressUpdates: true,
-				ipVersion: 4,
+				ipVersion: 4 as const,
 			};
 
 			const mockedCmd = getExecaMock();
 
-			const ping = new PingCommand((): any => mockedCmd);
+			const ping = new PingCommand();
 
-			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
 
 			const { emitChunks } = chunkOutput(rawOutput);
 			await emitChunks(mockedCmd.stdout);
@@ -273,15 +295,18 @@ describe('ping command executor', () => {
 				type: 'ping' as PingOptions['type'],
 				target: 'google.com',
 				packets: 3,
+				protocol: 'ICMP',
+				port: 80,
 				inProgressUpdates: true,
-				ipVersion: 4,
+				ipVersion: 4 as const,
 			};
 
 			const mockedCmd = getExecaMock();
 
-			const ping = new PingCommand((): any => mockedCmd);
 
-			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+			const ping = new PingCommand();
+
+			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
 			mockedCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
@@ -298,15 +323,17 @@ describe('ping command executor', () => {
 				type: 'ping' as PingOptions['type'],
 				target: 'google.com',
 				packets: 3,
+				protocol: 'ICMP',
+				port: 80,
 				inProgressUpdates: false,
-				ipVersion: 4,
+				ipVersion: 4 as const,
 			};
 
 			const mockedCmd = getExecaMock();
 
-			const ping = new PingCommand((): any => mockedCmd);
+			const ping = new PingCommand();
 
-			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
 
 			const { emitChunks } = chunkOutput(rawOutput);
 			await emitChunks(mockedCmd.stdout);
@@ -329,16 +356,18 @@ describe('ping command executor', () => {
 					type: 'ping' as PingOptions['type'],
 					target: 'google.com',
 					packets: 3,
+					protocol: 'ICMP',
+					port: 80,
 					inProgressUpdates: true,
-					ipVersion: 4,
+					ipVersion: 4 as const,
 				};
 
 				const execaError = execaSync('unknown-command', [], { reject: false });
 				execaError.stdout = rawOutput;
 				const mockedCmd = getExecaMock();
 
-				const ping = new PingCommand((): any => mockedCmd);
-				const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+				const ping = new PingCommand();
+				const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
 				mockedCmd.reject(execaError);
 				await runPromise;
 
@@ -356,16 +385,18 @@ describe('ping command executor', () => {
 				type: 'ping' as PingOptions['type'],
 				target: 'google.com',
 				packets: 3,
+				protocol: 'ICMP',
+				port: 80,
 				inProgressUpdates: true,
-				ipVersion: 4,
+				ipVersion: 4 as const,
 			};
 
 			const execaError = execaSync('unknown-command', [], { reject: false });
 			execaError.stdout = rawOutput;
 			const mockedCmd = getExecaMock();
 
-			const ping = new PingCommand((): any => mockedCmd);
-			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+			const ping = new PingCommand();
+			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
 			mockedCmd.reject(execaError);
 			await runPromise;
 
@@ -376,16 +407,18 @@ describe('ping command executor', () => {
 
 		it('should fail in case of output without header', async () => {
 			const mockedCmd = getExecaMock();
-			const ping = new PingCommand((): any => mockedCmd);
+			const ping = new PingCommand();
 			const options = {
 				type: 'ping' as PingOptions['type'],
 				target: 'google.com',
 				packets: 3,
+				protocol: 'ICMP',
+				port: 80,
 				inProgressUpdates: true,
-				ipVersion: 4,
+				ipVersion: 4 as const,
 			};
 
-			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
 			mockedCmd.resolve({ stdout: '' });
 			await runPromise;
 
@@ -405,16 +438,18 @@ describe('ping command executor', () => {
 
 		it('should fail in case of execa timeout', async () => {
 			const mockedCmd = getExecaMock();
-			const ping = new PingCommand((): any => mockedCmd);
+			const ping = new PingCommand();
 			const options = {
 				type: 'ping' as PingOptions['type'],
 				target: 'google.com',
 				packets: 3,
+				protocol: 'ICMP',
+				port: 80,
 				inProgressUpdates: true,
-				ipVersion: 4,
+				ipVersion: 4 as const,
 			};
 
-			const runPromise = ping.run(mockedSocket as any, 'measurement', 'test', options);
+			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
 			const timeoutError = new Error('Timeout') as ExecaError;
 			timeoutError.stderr = '';
 			timeoutError.timedOut = true;

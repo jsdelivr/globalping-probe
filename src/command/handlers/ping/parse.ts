@@ -8,10 +8,16 @@ type PingStats = {
 	drop?: number;
 };
 
-type PingTimings = {
+type IcmpTimings = {
 	ttl: number;
 	rtt: number;
 };
+
+type TcpTimings = {
+	rtt: number;
+};
+
+type PingTimings = IcmpTimings | TcpTimings;
 
 export type PingParseOutput = {
 	status: 'finished' | 'failed';

@@ -58,7 +58,7 @@ const logger = scopedLogger('general');
 const handlersMap = new Map<string, CommandInterface<unknown>>();
 const probeUuid = process.env['GP_PROBE_UUID'] || randomUUID();
 
-handlersMap.set('ping', process.env['FAKE_COMMANDS'] ? new FakePingCommand() : new PingCommand(pingCmd));
+handlersMap.set('ping', process.env['FAKE_COMMANDS'] ? new FakePingCommand() : new PingCommand());
 handlersMap.set('mtr', process.env['FAKE_COMMANDS'] ? new FakeMtrCommand() : new MtrCommand(mtrCmd));
 handlersMap.set('traceroute', new TracerouteCommand(traceCmd));
 handlersMap.set('dns', new DnsCommand(dnsCmd));
