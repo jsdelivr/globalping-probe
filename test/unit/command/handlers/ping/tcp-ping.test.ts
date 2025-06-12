@@ -155,13 +155,14 @@ describe('tcp-ping', () => {
 				return socketMock;
 			});
 
-			performanceNowStub.onFirstCall().returns(1000);
-			performanceNowStub.onSecondCall().returns(1010);
-			performanceNowStub.onThirdCall().returns(1000);
-			performanceNowStub.onCall(3).returns(1010);
-			performanceNowStub.onCall(4).returns(1000);
-			performanceNowStub.onCall(5).returns(1010);
-			performanceNowStub.onCall(6).returns(3000);
+			performanceNowStub.onCall(0).returns(1000);
+			performanceNowStub.onCall(1).returns(1000);
+			performanceNowStub.onCall(2).returns(1010);
+			performanceNowStub.onCall(3).returns(1000);
+			performanceNowStub.onCall(4).returns(1010);
+			performanceNowStub.onCall(5).returns(1000);
+			performanceNowStub.onCall(6).returns(1010);
+			performanceNowStub.onCall(7).returns(3000.75);
 
 			const results = await tcpPing(ipOptions);
 
@@ -184,6 +185,7 @@ describe('tcp-ping', () => {
 				rcv: 3,
 				drop: 0,
 				loss: 0,
+				time: 2001,
 			});
 
 			expect(socketMock.setTimeout.callCount).to.equal(3);
@@ -198,13 +200,14 @@ describe('tcp-ping', () => {
 				return socketMock;
 			});
 
-			performanceNowStub.onFirstCall().returns(1000);
-			performanceNowStub.onSecondCall().returns(1010);
-			performanceNowStub.onThirdCall().returns(1000);
-			performanceNowStub.onCall(3).returns(1010);
-			performanceNowStub.onCall(4).returns(1000);
-			performanceNowStub.onCall(5).returns(1010);
-			performanceNowStub.onCall(6).returns(3000);
+			performanceNowStub.onCall(0).returns(1000);
+			performanceNowStub.onCall(1).returns(1000);
+			performanceNowStub.onCall(2).returns(1010);
+			performanceNowStub.onCall(3).returns(1000);
+			performanceNowStub.onCall(4).returns(1010);
+			performanceNowStub.onCall(5).returns(1000);
+			performanceNowStub.onCall(6).returns(1010);
+			performanceNowStub.onCall(7).returns(3000.75);
 
 			const results = await tcpPing(options, () => [ resolvedIp ]);
 
@@ -226,6 +229,7 @@ describe('tcp-ping', () => {
 				rcv: 3,
 				drop: 0,
 				loss: 0,
+				time: 2001,
 			});
 
 			expect(socketMock.setTimeout.callCount).to.equal(3);
@@ -295,7 +299,7 @@ describe('tcp-ping', () => {
 			performanceNowStub.onCall(3).returns(1000); // Second ping
 			performanceNowStub.onCall(4).returns(1000); // Third ping
 			performanceNowStub.onCall(5).returns(1015);
-			performanceNowStub.onCall(6).returns(3000); // tcpPing end
+			performanceNowStub.onCall(6).returns(3000.75); // tcpPing end
 
 			const results = await tcpPing(options, () => [ resolvedIp ]);
 
@@ -307,6 +311,7 @@ describe('tcp-ping', () => {
 			expect(stats.rcv).to.equal(2); // Only 2 successful probes
 			expect(stats.drop).to.equal(1); // 1 failed probe
 			expect(stats.loss).to.be.closeTo(33.33, 0.01); // 33.33% loss
+			expect(stats.time).to.be.equal(2001);
 
 			expect(stats.min).to.equal(10);
 			expect(stats.max).to.equal(15);
@@ -328,8 +333,8 @@ describe('tcp-ping', () => {
 			performanceNowStub.onCall(3).returns(1000);
 			performanceNowStub.onCall(4).returns(1010);
 			performanceNowStub.onCall(5).returns(1000);
-			performanceNowStub.onCall(5).returns(1010);
-			performanceNowStub.onCall(6).returns(3000);
+			performanceNowStub.onCall(6).returns(1010);
+			performanceNowStub.onCall(7).returns(3000.75);
 
 			const onProgressSpy = sandbox.spy();
 

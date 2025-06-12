@@ -164,7 +164,7 @@ export async function tcpPing (
 		rcv: successTimings.length,
 		drop: packets - successTimings.length,
 		loss: packets > 0 ? ((packets - successTimings.length) / packets) * 100 : 0,
-		time: performance.now() - startTime,
+		time: Math.round(performance.now() - startTime),
 		mdev,
 	});
 
