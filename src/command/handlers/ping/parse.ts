@@ -1,3 +1,5 @@
+import is from '@sindresorhus/is';
+
 type PingStats = {
 	min?: number;
 	max?: number;
@@ -42,7 +44,7 @@ export default function parse (rawOutput: string): PingParseOutput {
 	}
 
 	const resolvedAddress = String(header?.groups?.['addr']);
-	const timeLines = lines.slice(1).map(l => parseStatsLine(l)).filter(Boolean) as PingTimings[];
+	const timeLines = lines.slice(1).map(l => parseStatsLine(l)).filter(is.truthy);
 
 	const resolvedHostname = (/(?<=from\s).*?(?=\s\(|:\s)/i.exec((lines[1] ?? '')))?.[0];
 	const summaryHeaderIndex = lines.findIndex(l => /^---\s(.*)\sstatistics ---/.test(l));

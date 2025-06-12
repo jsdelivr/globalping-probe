@@ -1,5 +1,6 @@
 import os from 'node:os';
 import config from 'config';
+import is from '@sindresorhus/is';
 import _ from 'lodash';
 import { scopedLogger } from '../lib/logger.js';
 import got, { RequestError } from 'got';
@@ -12,7 +13,7 @@ export const apiConnectAltIpsHandler = async ({ token, socketId, ip }: { token: 
 	const rejectedIps: string[] = [];
 	const addresses = _(os.networkInterfaces())
 		.values()
-		.filter((int): int is os.NetworkInterfaceInfo[] => !!int)
+		.filter(is.truthy)
 		.flatten()
 		.uniqBy('address')
 		.filter(address => !address.internal)
