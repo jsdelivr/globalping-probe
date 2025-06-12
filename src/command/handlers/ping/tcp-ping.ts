@@ -113,16 +113,16 @@ export async function tcpPing (
 		try {
 			const dnsResolver = dnsLookup(undefined, resolverFn);
 			[ address ] = await dnsResolver(target, { family: ipVersion });
-			const start = { type: 'start' as const, address, hostname: target, port };
-
-			results.push(start);
-
-			if (onProgress) {
-				onProgress(start);
-			}
 		} catch (e) {
 			return [{ type: 'error', message: (e as Error).message || '' }];
 		}
+	}
+
+	const start = { type: 'start' as const, address, hostname: target, port };
+	results.push(start);
+
+	if (onProgress) {
+		onProgress(start);
 	}
 
 	for (let i = 0; i < packets; i++) {

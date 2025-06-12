@@ -159,16 +159,16 @@ describe('tcp-ping', () => {
 			performanceNowStub.onCall(1).returns(1000);
 			performanceNowStub.onCall(2).returns(1010);
 			performanceNowStub.onCall(3).returns(1000);
-			performanceNowStub.onCall(4).returns(1010);
+			performanceNowStub.onCall(4).returns(1015);
 			performanceNowStub.onCall(5).returns(1000);
-			performanceNowStub.onCall(6).returns(1010);
+			performanceNowStub.onCall(6).returns(1020);
 			performanceNowStub.onCall(7).returns(3000.75);
 
 			const results = await tcpPing(ipOptions);
 
-			expect(results.length).to.equal(4); // 3 probes + 1 statistics
+			expect(results.length).to.equal(5); // 1 start + 3 probes + 1 statistics
 
-			expect(results[0]).to.deep.include({
+			expect(results[1]).to.deep.include({
 				type: 'probe',
 				address: ipTarget,
 				hostname: ipTarget,
@@ -176,7 +176,7 @@ describe('tcp-ping', () => {
 				success: true,
 			});
 
-			expect(results[3]).to.deep.include({
+			expect(results[4]).to.deep.include({
 				type: 'statistics',
 				hostname: ipTarget,
 				address: ipTarget,
@@ -186,6 +186,9 @@ describe('tcp-ping', () => {
 				drop: 0,
 				loss: 0,
 				time: 2001,
+				min: 10,
+				max: 20,
+				avg: 15,
 			});
 
 			expect(socketMock.setTimeout.callCount).to.equal(3);
@@ -204,9 +207,9 @@ describe('tcp-ping', () => {
 			performanceNowStub.onCall(1).returns(1000);
 			performanceNowStub.onCall(2).returns(1010);
 			performanceNowStub.onCall(3).returns(1000);
-			performanceNowStub.onCall(4).returns(1010);
+			performanceNowStub.onCall(4).returns(1015);
 			performanceNowStub.onCall(5).returns(1000);
-			performanceNowStub.onCall(6).returns(1010);
+			performanceNowStub.onCall(6).returns(1020);
 			performanceNowStub.onCall(7).returns(3000.75);
 
 			const results = await tcpPing(options, () => [ resolvedIp ]);
@@ -230,6 +233,9 @@ describe('tcp-ping', () => {
 				drop: 0,
 				loss: 0,
 				time: 2001,
+				min: 10,
+				max: 20,
+				avg: 15,
 			});
 
 			expect(socketMock.setTimeout.callCount).to.equal(3);
