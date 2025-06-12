@@ -1,0 +1,5 @@
+{"type":"start","address":"142.251.36.78","hostname":"google.com","port":80}
+{"type":"probe","address":"142.251.36.78","hostname":"google.com","port":80,"rtt":3.8647,"success":true}
+{"type":"probe","address":"142.251.36.78","hostname":"google.com","port":80,"success":false}
+{"type":"probe","address":"142.251.36.78","hostname":"google.com","port":80,"rtt":2.5451,"success":true}
+{"type":"statistics","address":"142.251.36.78","hostname":"google.com","min":2.545,"avg":3.205,"max":3.865,"time":12233,"loss":33.33,"total":3,"rcv":2,"drop":1,"mdev":0.660}
