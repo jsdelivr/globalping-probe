@@ -11,7 +11,7 @@ import type { CommandInterface } from '../types.js';
 import { callbackify } from '../lib/util.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
-import { dnsLookup, type ResolverType } from './handlers/http/dns-resolver.js';
+import { dnsLookup, type ResolverType } from './handlers/shared/dns-resolver.js';
 
 export type HttpOptions = {
 	type: 'http';

@@ -1,4 +1,4 @@
-import { isIP, BlockList } from 'net';
+import { isIP, BlockList } from 'node:net';
 
 const privateBlockList = new BlockList();
 

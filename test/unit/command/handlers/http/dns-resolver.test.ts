@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import * as td from 'testdouble';
 import { callbackify } from '../../../../../src/lib/util.js';
-import type { ResolverType, Options, ErrnoException, IpFamily } from '../../../../../src/command/handlers/http/dns-resolver.js';
+import type { ResolverType, Options, ErrnoException, IpFamily } from '../../../../../src/command/handlers/shared/dns-resolver.js';
 
 export const buildResolver = (ipList: string[]): ResolverType => (): Promise<string[]> => Promise.resolve(ipList);
 
@@ -20,7 +20,7 @@ describe('http helper', () => {
 
 	before(async () => {
 		await td.replaceEsm('node:dns', null, { promises: { Resolver: NativeResolverMock } });
-		({ dnsLookup } = await import('../../../../../src/command/handlers/http/dns-resolver.js'));
+		({ dnsLookup } = await import('../../../../../src/command/handlers/shared/dns-resolver.js'));
 	});
 
 	after(() => {
