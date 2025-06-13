@@ -77,12 +77,14 @@ class TcpServerFactory {
 	}
 }
 
-describe('TCP Ping Local Servers Tests', () => {
+describe('tcp-ping', () => {
 	const serverFactory = new TcpServerFactory();
 	const HOST = '127.0.0.1';
 	const TIMEOUT = 50;
 	const PACKETS = 3;
 	const INTERVAL = 20;
+
+	const allTestsSandbox = sinon.createSandbox();
 
 	// Ports for different server types
 	let openPort: number;
@@ -112,7 +114,7 @@ describe('TCP Ping Local Servers Tests', () => {
 
 		// We can't add a delay directly into the TCP handshake, so we emulate that by adding a delay on the emit() calls.
 		const emit = net.Socket.prototype.emit;
-		sinon.stub(net.Socket.prototype, 'emit').callsFake(function (name: string, ...args) {
+		allTestsSandbox.stub(net.Socket.prototype, 'emit').callsFake(function (name: string, ...args) {
 			if (![ 'connect' ].includes(name)) {
 				return emit.call(this, name, ...args);
 			}
@@ -137,11 +139,12 @@ describe('TCP Ping Local Servers Tests', () => {
 	afterEach(() => {
 		setServerDelay(0);
 		sandbox.reset();
+		sandbox.restore();
 	});
 
 	after(async () => {
 		await serverFactory.stopAllServers();
-		sinon.reset();
+		allTestsSandbox.restore();
 		td.reset();
 	});
 
