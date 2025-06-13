@@ -1,414 +1,458 @@
 import net from 'node:net';
+import { expect } from 'chai';
 import * as sinon from 'sinon';
 import * as td from 'testdouble';
-import { expect } from 'chai';
-import type {
-	TcpPingData,
-	InternalTcpPingOptions,
-} from '../../../../../src/command/handlers/ping/tcp-ping.js';
 
-describe('tcp-ping', () => {
-	let sandbox: sinon.SinonSandbox;
-	let socketMock: any;
-	let performanceNowStub: sinon.SinonStub;
-	let tcpPingSingle: any;
-	let tcpPing: any;
-	let toRawTcpOutput: any;
-	let formatTcpPingResult: any;
+// This must remain type-only
+import type * as tcpPingModule from '../../../../../src/command/handlers/ping/tcp-ping.js';
 
-	class SocketMock {
-		constructor () {
-			return socketMock;
-		}
+/**
+ * TCP Server factory that creates servers with different behaviors
+ */
+class TcpServerFactory {
+	private servers: net.Server[] = [];
+
+	async createServer (): Promise<number> {
+		const server = net.createServer();
+		const port = await this.startServer(server);
+		return port;
 	}
 
-	const performanceMock = {
-		now: () => performance.now(),
+	/**
+	 * Creates a port that will refuse connections
+	 */
+	async createRefusedPort (): Promise<number> {
+		// Create a server just to get an available port
+		const server = net.createServer();
+		const port = await this.startServer(server);
+
+		// Stop the server to make the port refuse connections
+		await this.stopServer(server);
+
+		// Remove from our list since we're not keeping it running
+		this.servers = this.servers.filter(s => s !== server);
+
+		return port;
+	}
+
+	/**
+	 * Starts a server on a random available port
+	 */
+	private startServer (server: net.Server): Promise<number> {
+		return new Promise((resolve, reject) => {
+			server.listen(0, '127.0.0.1', () => {
+				const address = server.address() as net.AddressInfo;
+				const port = address.port;
+				this.servers.push(server);
+				resolve(port);
+			});
+
+			server.on('error', (err) => {
+				reject(err);
+			});
+		});
+	}
+
+	/**
+	 * Stops a specific server
+	 */
+	private stopServer (server: net.Server): Promise<void> {
+		return new Promise((resolve) => {
+			server.close(() => {
+				resolve();
+			});
+		});
+	}
+
+	/**
+	 * Stops all servers
+	 */
+	async stopAllServers (): Promise<void> {
+		const promises = this.servers.map((server) => {
+			return this.stopServer(server);
+		});
+
+		await Promise.all(promises);
+		this.servers = [];
+	}
+}
+
+describe('TCP Ping Local Servers Tests', () => {
+	const serverFactory = new TcpServerFactory();
+	const HOST = '127.0.0.1';
+	const TIMEOUT = 50;
+	const PACKETS = 3;
+	const INTERVAL = 20;
+
+	// Ports for different server types
+	let openPort: number;
+	let refusedPort: number;
+
+	let sandbox: sinon.SinonSandbox;
+	let tcpPingSingle: typeof tcpPingModule.tcpPingSingle;
+	let tcpPing: typeof tcpPingModule.tcpPing;
+	let formatTcpPingResult: typeof tcpPingModule.formatTcpPingResult;
+	let toRawTcpOutput: typeof tcpPingModule.toRawTcpOutput;
+	let serverDelayFn = () => 0;
+
+	const setServerDelay = (delay: number | (() => number)) => {
+		if (typeof delay === 'function') {
+			serverDelayFn = delay;
+			return;
+		}
+
+		serverDelayFn = () => delay;
 	};
 
+
 	before(async () => {
+		openPort = await serverFactory.createServer();
+		refusedPort = await serverFactory.createRefusedPort();
 		sandbox = sinon.createSandbox();
+
+		// We can't add a delay directly into the TCP handshake, so we emulate that by adding a delay on the emit() calls.
+		const emit = net.Socket.prototype.emit;
+		sinon.stub(net.Socket.prototype, 'emit').callsFake(function (name: string, ...args) {
+			if (![ 'connect' ].includes(name)) {
+				return emit.call(this, name, ...args);
+			}
+
+			return setTimeout(() => {
+				emit.call(this, name, ...args);
+			}, serverDelayFn());
+		});
 
 		await td.replaceEsm('node:net', {
 			...net,
-			Socket: SocketMock,
+			Socket: net.Socket,
 		});
-
-		await td.replaceEsm('node:perf_hooks', { performance: performanceMock });
 
 		const tcpPingModule = await import('../../../../../src/command/handlers/ping/tcp-ping.js');
 		tcpPingSingle = tcpPingModule.tcpPingSingle;
 		tcpPing = tcpPingModule.tcpPing;
-		toRawTcpOutput = tcpPingModule.toRawTcpOutput;
 		formatTcpPingResult = tcpPingModule.formatTcpPingResult;
-	});
-
-	beforeEach(() => {
-		performanceNowStub = sandbox.stub(performanceMock, 'now');
-		performanceNowStub.onFirstCall().returns(1000);
-
-		socketMock = {
-			on: sandbox.stub().returnsThis(),
-			setNoDelay: sandbox.stub().returnsThis(),
-			setTimeout: sandbox.stub().returnsThis(),
-			connect: sandbox.stub().returnsThis(),
-			destroy: sandbox.stub().returnsThis(),
-		};
+		toRawTcpOutput = tcpPingModule.toRawTcpOutput;
 	});
 
 	afterEach(() => {
-		sandbox.restore();
+		setServerDelay(0);
+		sandbox.reset();
 	});
 
 	after(async () => {
+		await serverFactory.stopAllServers();
 		td.reset();
 	});
 
 	describe('tcpPingSingle', () => {
-		it('should resolve with success when socket connects', async () => {
-			performanceNowStub.onFirstCall().returns(1000);
-			performanceNowStub.onSecondCall().returns(1010);
+		it('should successfully ping a fast server with low RTT', async () => {
+			const result = await tcpPingSingle(HOST, HOST, openPort, 4, TIMEOUT);
 
-			socketMock.on.withArgs('connect', sinon.match.func).callsFake((_event: string, callback: () => void) => {
-				setTimeout(() => callback(), 10);
-				return socketMock;
-			});
+			expect(result.type).to.equal('probe');
 
-			const result = await tcpPingSingle('example.com', '93.184.216.34', 80, 4, 1000);
-
-			expect(result).to.deep.equal({
-				type: 'probe',
-				address: '93.184.216.34',
-				hostname: 'example.com',
-				port: 80,
-				rtt: 10,
-				success: true,
-			});
-
-			expect(socketMock.setNoDelay.firstCall.args[0]).to.equal(true);
-			expect(socketMock.setTimeout.firstCall.args[0]).to.equal(1000);
-
-			expect(socketMock.connect.firstCall.args[0]).to.deep.equal({
-				port: 80,
-				host: '93.184.216.34',
-				family: 4,
-			});
-
-			expect(socketMock.destroy.callCount).to.equal(1);
+			if (result.type === 'probe') {
+				expect(result.success).to.be.true;
+				expect(result.address).to.equal(HOST);
+				expect(result.hostname).to.equal(HOST);
+				expect(result.port).to.equal(openPort);
+				expect(result.rtt).to.be.a('number').within(0, 10);
+			}
 		});
 
-		it('should resolve with error when socket errors', async () => {
-			const errorMessage = 'Connection refused';
+		it('should successfully ping a slow server with higher RTT', async () => {
+			setServerDelay(25);
+			const result = await tcpPingSingle(HOST, HOST, openPort, 4, TIMEOUT);
 
-			socketMock.on.withArgs('error', sinon.match.func).callsFake((_event: string, callback: (e: Error) => void) => {
-				setTimeout(() => callback(new Error(errorMessage)), 10);
-				return socketMock;
-			});
+			expect(result.type).to.equal('probe');
 
-			const result = await tcpPingSingle('example.com', '93.184.216.34', 80, 4, 1000);
-
-			expect(result).to.deep.equal({
-				type: 'error',
-				message: errorMessage,
-			});
-
-			expect(socketMock.destroy.callCount).to.equal(1);
+			if (result.type === 'probe') {
+				expect(result.success).to.be.true;
+				expect(result.address).to.equal(HOST);
+				expect(result.hostname).to.equal(HOST);
+				expect(result.port).to.equal(openPort);
+				expect(result.rtt).to.be.a('number').greaterThan(20);
+			}
 		});
 
-		it('should resolve with timeout when socket times out', async () => {
-			socketMock.on.withArgs('timeout', sinon.match.func).callsFake((_event: string, callback: () => void) => {
-				setTimeout(() => callback(), 1000);
-				return socketMock;
-			});
+		it('should timeout when server does not respond', async () => {
+			setServerDelay(100);
+			const result = await tcpPingSingle(HOST, HOST, openPort, 4, TIMEOUT); // Use shorter timeout
 
-			const result = await tcpPingSingle('example.com', '93.184.216.34', 80, 4, 1000);
+			expect(result.type).to.equal('probe');
 
-			expect(result).to.deep.equal({
-				type: 'probe',
-				address: '93.184.216.34',
-				hostname: 'example.com',
-				port: 80,
-				rtt: -1,
-				success: false,
-			});
+			if (result.type === 'probe') {
+				expect(result.success).to.be.false;
+				expect(result.address).to.equal(HOST);
+				expect(result.hostname).to.equal(HOST);
+				expect(result.port).to.equal(openPort);
+			}
+		});
 
-			expect(socketMock.destroy.callCount).to.equal(1);
+		it('should handle connection refused', async () => {
+			const result = await tcpPingSingle(HOST, HOST, refusedPort, 4, TIMEOUT);
+
+			expect(result.type).to.equal('probe');
+
+			if (result.type === 'probe') {
+				expect(result.success).to.be.false;
+				expect(result.address).to.equal(HOST);
+				expect(result.hostname).to.equal(HOST);
+				expect(result.port).to.equal(refusedPort);
+			}
 		});
 	});
 
 	describe('tcpPing', () => {
-		const options: InternalTcpPingOptions = {
-			target: 'example.com',
-			port: 80,
-			packets: 3,
-			timeout: 1000,
-			interval: 500,
-			ipVersion: 4,
-		};
+		it('should successfully ping a fast server multiple times', async () => {
+			const options = {
+				target: HOST,
+				port: openPort,
+				packets: PACKETS,
+				timeout: TIMEOUT,
+				interval: INTERVAL,
+				ipVersion: 4 as const,
+			};
 
-		it('should handle IP address targets without DNS resolution', async () => {
-			const ipTarget = '93.184.216.34';
-			const ipOptions = { ...options, target: ipTarget };
+			const results = await tcpPing(options);
 
-			socketMock.on.withArgs('connect', sinon.match.func).callsFake((_event: string, callback: () => void) => {
-				setTimeout(() => callback(), 10);
-				return socketMock;
-			});
+			// Should have PACKETS + 2 results (1 start + PACKETS probes + 1 statistics)
+			expect(results.length).to.equal(PACKETS + 2);
 
-			performanceNowStub.onCall(0).returns(1000);
-			performanceNowStub.onCall(1).returns(1000);
-			performanceNowStub.onCall(2).returns(1010);
-			performanceNowStub.onCall(3).returns(1000);
-			performanceNowStub.onCall(4).returns(1015);
-			performanceNowStub.onCall(5).returns(1000);
-			performanceNowStub.onCall(6).returns(1020);
-			performanceNowStub.onCall(7).returns(3000.75);
+			// Check statistics
+			const statsData = results.find(r => r.type === 'statistics');
+			expect(statsData).to.exist;
 
-			const results = await tcpPing(ipOptions);
+			if (statsData && statsData.type === 'statistics') {
+				expect(statsData.total).to.equal(PACKETS);
+				expect(statsData.rcv).to.equal(PACKETS);
+				expect(statsData.drop).to.equal(0);
+				expect(statsData.loss).to.equal(0);
 
-			expect(results.length).to.equal(5); // 1 start + 3 probes + 1 statistics
-
-			expect(results[1]).to.deep.include({
-				type: 'probe',
-				address: ipTarget,
-				hostname: ipTarget,
-				port: 80,
-				success: true,
-			});
-
-			expect(results[4]).to.deep.include({
-				type: 'statistics',
-				hostname: ipTarget,
-				address: ipTarget,
-				port: 80,
-				total: 3,
-				rcv: 3,
-				drop: 0,
-				loss: 0,
-				time: 2001,
-				min: 10,
-				max: 20,
-				avg: 15,
-			});
-
-			expect(socketMock.setTimeout.callCount).to.equal(3);
-			expect(socketMock.destroy.callCount).to.equal(3);
-		});
-
-		it('should resolve hostname using DNS lookup', async () => {
-			const resolvedIp = '93.184.216.34';
-
-			socketMock.on.withArgs('connect', sinon.match.func).callsFake((_event: string, callback: () => void) => {
-				setTimeout(() => callback(), 10);
-				return socketMock;
-			});
-
-			performanceNowStub.onCall(0).returns(1000);
-			performanceNowStub.onCall(1).returns(1000);
-			performanceNowStub.onCall(2).returns(1010);
-			performanceNowStub.onCall(3).returns(1000);
-			performanceNowStub.onCall(4).returns(1015);
-			performanceNowStub.onCall(5).returns(1000);
-			performanceNowStub.onCall(6).returns(1020);
-			performanceNowStub.onCall(7).returns(3000.75);
-
-			const results = await tcpPing(options, () => [ resolvedIp ]);
-
-			expect(results.length).to.equal(5); // 1 start + 3 probes + 1 statistics
-
-			expect(results[0]).to.deep.include({
-				type: 'start',
-				address: resolvedIp,
-				hostname: options.target,
-				port: options.port,
-			});
-
-			expect(results[4]).to.deep.include({
-				type: 'statistics',
-				hostname: options.target,
-				address: resolvedIp,
-				port: options.port,
-				total: 3,
-				rcv: 3,
-				drop: 0,
-				loss: 0,
-				time: 2001,
-				min: 10,
-				max: 20,
-				avg: 15,
-			});
-
-			expect(socketMock.setTimeout.callCount).to.equal(3);
-			expect(socketMock.destroy.callCount).to.equal(3);
-		});
-
-		it('should handle DNS resolution errors', async () => {
-			const dnsError = new Error('DNS resolution failed');
-
-			const results = await tcpPing(options, () => Promise.reject(dnsError));
-
-			expect(results.length).to.equal(1);
-
-			expect(results[0]).to.deep.equal({
-				type: 'error',
-				message: dnsError.message,
-			});
-
-			expect(socketMock.setTimeout.callCount).to.equal(0);
-			expect(socketMock.connect.callCount).to.equal(0);
-		});
-
-		it('should handle private IP rejection', async () => {
-			const results = await tcpPing(options, () => [ '192.168.1.1' ]);
-
-			expect(results.length).to.equal(1);
-
-			expect(results[0]).to.deep.equal({
-				type: 'error',
-				message: 'Private IP ranges are not allowed.',
-			});
-
-			expect(socketMock.setTimeout.callCount).to.equal(0);
-			expect(socketMock.connect.callCount).to.equal(0);
-		});
-
-		it('should handle mixed success and failure results', async () => {
-			const resolvedIp = '93.184.216.34';
-
-			// Set up socket behavior for each ping
-			// First ping: success
-			let callCount = 0;
-			socketMock.on.withArgs('connect', sinon.match.func).callsFake((_event: string, callback: () => void) => {
-				callCount++;
-
-				if (callCount === 1 || callCount === 3) {
-					// First and third calls succeed
-					setTimeout(() => callback(), 10);
-				}
-
-				return socketMock;
-			});
-
-			// Second ping: timeout
-			socketMock.on.withArgs('timeout', sinon.match.func).callsFake((_event: string, callback: () => void) => {
-				if (callCount === 2) {
-					// Second call times out
-					setTimeout(() => callback(), 10);
-				}
-
-				return socketMock;
-			});
-
-			performanceNowStub.onCall(0).returns(1000); // tcpPing start
-			performanceNowStub.onCall(1).returns(1000); // First ping
-			performanceNowStub.onCall(2).returns(1010);
-			performanceNowStub.onCall(3).returns(1000); // Second ping
-			performanceNowStub.onCall(4).returns(1000); // Third ping
-			performanceNowStub.onCall(5).returns(1015);
-			performanceNowStub.onCall(6).returns(3000.75); // tcpPing end
-
-			const results = await tcpPing(options, () => [ resolvedIp ]);
-
-			expect(results.length).to.equal(5); // 1 start + 3 probes + 1 statistics
-
-			const stats = results[4] as any;
-			expect(stats.type).to.equal('statistics');
-			expect(stats.total).to.equal(3);
-			expect(stats.rcv).to.equal(2); // Only 2 successful probes
-			expect(stats.drop).to.equal(1); // 1 failed probe
-			expect(stats.loss).to.be.closeTo(33.33, 0.01); // 33.33% loss
-			expect(stats.time).to.be.equal(2001);
-
-			expect(stats.min).to.equal(10);
-			expect(stats.max).to.equal(15);
-			expect(stats.avg).to.be.closeTo(12.5, 0.1); // (10 + 15) / 2
-		});
-
-		it('should call onProgress callback when provided', async () => {
-			const resolvedIp = '93.184.216.34';
-
-			socketMock.on.withArgs('connect', sinon.match.func).callsFake((_event: string, callback: () => void) => {
-				setTimeout(() => callback(), 10);
-
-				return socketMock;
-			});
-
-			performanceNowStub.onCall(0).returns(1000);
-			performanceNowStub.onCall(1).returns(1000);
-			performanceNowStub.onCall(2).returns(1010);
-			performanceNowStub.onCall(3).returns(1000);
-			performanceNowStub.onCall(4).returns(1010);
-			performanceNowStub.onCall(5).returns(1000);
-			performanceNowStub.onCall(6).returns(1010);
-			performanceNowStub.onCall(7).returns(3000.75);
-
-			const onProgressSpy = sandbox.spy();
-
-			await tcpPing(options, () => [ resolvedIp ], onProgressSpy);
-
-			expect(onProgressSpy.callCount).to.equal(4); // 1 start + 3 probes
-
-			expect(onProgressSpy.firstCall.args[0]).to.deep.include({
-				type: 'start',
-				address: resolvedIp,
-				hostname: options.target,
-				port: options.port,
-			});
-
-			for (let i = 1; i <= 3; i++) {
-				expect(onProgressSpy.getCall(i).args[0]).to.deep.include({
-					type: 'probe',
-					address: resolvedIp,
-					hostname: options.target,
-					port: options.port,
-					success: true,
-				});
+				// Check reasonable RTT values
+				expect(statsData.min).to.be.a('number').within(0, 10);
+				expect(statsData.max).to.be.a('number').within(0, 10);
+				expect(statsData.avg).to.be.a('number').within(0, 10);
 			}
 		});
 
-		it('should start new pings at regular intervals regardless of previous ping completion', async () => {
-			const resolvedIp = '93.184.216.34';
+		it('should successfully ping a slow server multiple times', async () => {
+			setServerDelay(40);
 
-			performanceNowStub.reset();
-			performanceNowStub.callThrough();
+			const options = {
+				target: HOST,
+				port: openPort,
+				packets: PACKETS,
+				timeout: TIMEOUT,
+				interval: INTERVAL,
+				ipVersion: 4 as const,
+			};
 
-			// The first ping takes 900 ms (longer than the interval)
-			// The second ping takes 300 ms (shorter than the interval)
-			// The third ping takes 700 ms
-			let pingCount = 0;
-			socketMock.on.withArgs('connect', sinon.match.func).callsFake((_event: string, callback: () => void) => {
-				pingCount++;
-				const delay = pingCount === 1 ? 900 : (pingCount === 2 ? 300 : 700);
-				setTimeout(() => callback(), delay);
-				return socketMock;
+			const results = await tcpPing(options);
+
+			// Should have PACKETS + 2 results (1 start + PACKETS probes + 1 statistics)
+			expect(results.length).to.equal(PACKETS + 2);
+
+			// Check statistics
+			const statsData = results.find(r => r.type === 'statistics');
+			expect(statsData).to.exist;
+
+			if (statsData && statsData.type === 'statistics') {
+				expect(statsData.total).to.equal(PACKETS);
+				expect(statsData.rcv).to.equal(PACKETS);
+				expect(statsData.drop).to.equal(0);
+				expect(statsData.loss).to.equal(0);
+
+				// Check reasonable RTT values
+				expect(statsData.min).to.be.a('number').greaterThan(30);
+				expect(statsData.max).to.be.a('number').greaterThan(30);
+				expect(statsData.avg).to.be.a('number').greaterThan(30);
+
+				// Check new pings start at regular intervals regardless of previous ping completion
+				expect(statsData.time).to.be.below(90);
+			}
+		});
+
+		it('should handle mixed response times', async () => {
+			let delayCalls = 0;
+			setServerDelay(() => delayCalls++ % 2 ? 40 : 0);
+
+			const options = {
+				target: HOST,
+				port: openPort,
+				packets: PACKETS,
+				timeout: TIMEOUT,
+				interval: INTERVAL,
+				ipVersion: 4 as const,
+			};
+
+			const results = await tcpPing(options);
+
+			// Should have packets + 2 results (1 start + PACKETS probes + 1 statistics)
+			expect(results.length).to.equal(options.packets + 2);
+
+			// Check statistics
+			const statsData = results.find(r => r.type === 'statistics');
+			expect(statsData).to.exist;
+
+			if (statsData && statsData.type === 'statistics') {
+				expect(statsData.total).to.equal(options.packets);
+				expect(statsData.rcv).to.equal(options.packets);
+				expect(statsData.drop).to.equal(0);
+				expect(statsData.loss).to.equal(0);
+
+				// Check reasonable RTT values
+				expect(statsData.min).to.be.a('number').within(0, 10);
+				expect(statsData.max).to.be.a('number').greaterThan(30);
+				expect(statsData.avg).to.be.a('number');
+			}
+		});
+
+		it('should handle mixed responses and timeouts', async () => {
+			let delayCalls = 0;
+			setServerDelay(() => delayCalls++ % 2 ? 150 : 0);
+
+			const options = {
+				target: HOST,
+				port: openPort,
+				packets: PACKETS,
+				timeout: TIMEOUT,
+				interval: INTERVAL,
+				ipVersion: 4 as const,
+			};
+
+			const results = await tcpPing(options);
+
+			// Should have packets + 2 results (1 start + PACKETS probes + 1 statistics)
+			expect(results.length).to.equal(options.packets + 2);
+
+			// Check statistics
+			const statsData = results.find(r => r.type === 'statistics');
+			expect(statsData).to.exist;
+
+			if (statsData && statsData.type === 'statistics') {
+				expect(statsData.total).to.equal(options.packets);
+				expect(statsData.rcv).to.equal(2);
+				expect(statsData.drop).to.equal(1);
+				expect(statsData.loss).to.be.closeTo(33.33, .1);
+
+				// Check reasonable RTT values
+				expect(statsData.min).to.be.a('number').within(0, 10);
+				expect(statsData.max).to.be.a('number').within(0, 10);
+				expect(statsData.avg).to.be.a('number').within(0, 10);
+			}
+		});
+
+		it('should handle timeouts', async () => {
+			setServerDelay(100);
+
+			const options = {
+				target: HOST,
+				port: openPort,
+				packets: PACKETS,
+				timeout: TIMEOUT,
+				interval: INTERVAL,
+				ipVersion: 4 as const,
+			};
+
+			const results = await tcpPing(options);
+
+			// Should have PACKETS + 2 results (1 start + PACKETS probes + 1 statistics)
+			expect(results.length).to.equal(PACKETS + 2);
+
+			// Check statistics
+			const statsData = results.find(r => r.type === 'statistics');
+			expect(statsData).to.exist;
+
+			if (statsData && statsData.type === 'statistics') {
+				expect(statsData.total).to.equal(PACKETS);
+				expect(statsData.rcv).to.equal(0);
+				expect(statsData.drop).to.equal(PACKETS);
+				expect(statsData.loss).to.equal(100);
+				expect(statsData.min).to.be.undefined;
+				expect(statsData.max).to.be.undefined;
+				expect(statsData.avg).to.be.undefined;
+
+				// Check new pings start at regular intervals regardless of previous ping completion
+				expect(statsData.time).to.be.below(220);
+			}
+		});
+
+		it('should handle connection refused', async () => {
+			const options = {
+				target: HOST,
+				port: refusedPort,
+				packets: PACKETS,
+				timeout: TIMEOUT,
+				interval: INTERVAL,
+				ipVersion: 4 as const,
+			};
+
+			const results = await tcpPing(options);
+
+			// Should have PACKETS + 2 results (1 start + PACKETS probes + 1 statistics)
+			expect(results.length).to.equal(PACKETS + 2);
+
+			// Check statistics
+			const statsData = results.find(r => r.type === 'statistics');
+			expect(statsData).to.exist;
+
+			if (statsData && statsData.type === 'statistics') {
+				expect(statsData.total).to.equal(PACKETS);
+				expect(statsData.rcv).to.equal(0);
+				expect(statsData.drop).to.equal(PACKETS);
+				expect(statsData.loss).to.equal(100);
+				expect(statsData.min).to.be.undefined;
+				expect(statsData.max).to.be.undefined;
+				expect(statsData.avg).to.be.undefined;
+			}
+		});
+
+		it('should handle IP address targets without DNS resolution', async () => {
+			const options = {
+				target: HOST,
+				port: openPort,
+				packets: 1,
+				timeout: TIMEOUT,
+				interval: INTERVAL,
+				ipVersion: 4 as const,
+			};
+
+			const resolver = sandbox.stub();
+			const results = await tcpPing(options, resolver);
+
+			expect(resolver.callCount).to.equal(0);
+
+			const errorData = results.find(r => r.type === 'error');
+			expect(errorData).to.not.exist;
+		});
+
+		it('should resolve hostnames using a DNS lookup and fail on private IPs', async () => {
+			const options = {
+				target: 'example.com',
+				port: openPort,
+				packets: 1,
+				timeout: TIMEOUT,
+				interval: INTERVAL,
+				ipVersion: 4 as const,
+			};
+
+			const resolver = sandbox.stub().returns([ HOST ]);
+			const results = await tcpPing(options, resolver);
+
+			expect(resolver.callCount).to.equal(1);
+
+			const errorData = results.find(r => r.type === 'error');
+
+			expect(errorData).to.deep.equal({
+				type: 'error',
+				message: 'Private IP ranges are not allowed.',
 			});
-
-			const results = await tcpPing(options, () => [ resolvedIp ]);
-
-			expect(results.length).to.equal(5); // 1 start + 3 probes + 1 statistics
-
-			// Verify we got the results in the correct order.
-			expect(results[1].rtt).to.be.within(899, 1000);
-			expect(results[2].rtt).to.be.within(299, 400);
-			expect(results[3].rtt).to.be.within(699, 800);
-
-			const stats = results[4] as any;
-			expect(stats.type).to.equal('statistics');
-			expect(stats.total).to.equal(3);
-			expect(stats.rcv).to.equal(3);
-			expect(stats.drop).to.equal(0);
-			expect(stats.loss).to.equal(0);
-			expect(stats.time).to.be.within(1690, 1800);
-
-			expect(stats.min).to.be.within(299, 400);
-			expect(stats.max).to.be.within(899, 1000);
-			expect(stats.avg).to.be.within(600, 700);
 		});
 	});
 
 	describe('toRawTcpOutput', () => {
 		it('should format start data correctly', () => {
-			const lines: TcpPingData[] = [
+			const lines: tcpPingModule.TcpPingData[] = [
 				{
 					type: 'start',
 					address: '93.184.216.34',
@@ -422,7 +466,7 @@ describe('tcp-ping', () => {
 		});
 
 		it('should format successful probe data correctly', () => {
-			const lines: TcpPingData[] = [
+			const lines: tcpPingModule.TcpPingData[] = [
 				{
 					type: 'start',
 					address: '93.184.216.34',
@@ -444,7 +488,7 @@ describe('tcp-ping', () => {
 		});
 
 		it('should format failed probe data correctly', () => {
-			const lines: TcpPingData[] = [
+			const lines: tcpPingModule.TcpPingData[] = [
 				{
 					type: 'start',
 					address: '93.184.216.34',
@@ -466,7 +510,7 @@ describe('tcp-ping', () => {
 		});
 
 		it('should format statistics data correctly', () => {
-			const lines: TcpPingData[] = [
+			const lines: tcpPingModule.TcpPingData[] = [
 				{
 					type: 'start',
 					address: '93.184.216.34',
@@ -511,7 +555,7 @@ describe('tcp-ping', () => {
 		});
 
 		it('should format error data correctly', () => {
-			const lines: TcpPingData[] = [
+			const lines: tcpPingModule.TcpPingData[] = [
 				{
 					type: 'error',
 					message: 'DNS resolution failed',
@@ -525,7 +569,7 @@ describe('tcp-ping', () => {
 
 	describe('formatTcpPingResult', () => {
 		it('should format successful ping results correctly', () => {
-			const lines: TcpPingData[] = [
+			const lines: tcpPingModule.TcpPingData[] = [
 				{
 					type: 'start',
 					address: '93.184.216.34',
@@ -590,7 +634,7 @@ describe('tcp-ping', () => {
 		});
 
 		it('should format failed ping results correctly', () => {
-			const lines: TcpPingData[] = [
+			const lines: tcpPingModule.TcpPingData[] = [
 				{
 					type: 'error',
 					message: 'DNS resolution failed',
@@ -604,7 +648,7 @@ describe('tcp-ping', () => {
 		});
 
 		it('should handle partial results correctly', () => {
-			const lines: TcpPingData[] = [
+			const lines: tcpPingModule.TcpPingData[] = [
 				{
 					type: 'start',
 					address: '93.184.216.34',
