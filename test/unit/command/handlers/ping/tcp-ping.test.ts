@@ -141,6 +141,7 @@ describe('TCP Ping Local Servers Tests', () => {
 
 	after(async () => {
 		await serverFactory.stopAllServers();
+		sinon.reset();
 		td.reset();
 	});
 
