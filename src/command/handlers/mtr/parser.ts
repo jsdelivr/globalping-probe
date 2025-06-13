@@ -1,3 +1,4 @@
+import is from '@sindresorhus/is';
 import _ from 'lodash';
 import type {
 	HopStatsType,
@@ -258,7 +259,7 @@ export const MtrParser = {
 
 		stats.total = hop.timings.length;
 
-		const timesArray = hop.timings.filter(t => t.rtt).map(t => t.rtt) as number[];
+		const timesArray = hop.timings.map(t => t.rtt).filter(is.truthy);
 
 		if (timesArray.length > 0) {
 			stats.min = Math.min(...timesArray);

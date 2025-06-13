@@ -21,9 +21,10 @@ const fakeLocation = {
 describe('index module', () => {
 	let sandbox: sinon.SinonSandbox;
 	const execaStub = sinon.stub();
-	const runStub = sinon.stub();
+	const runIcmpStub = sinon.stub();
 	const PingCommandStub = sinon.stub().returns({
-		run: runStub,
+		run (...args: unknown[]) { return this.runIcmp(pingCmdStub, ...args); },
+		runIcmp: runIcmpStub,
 	});
 	const pingCmdStub = sinon.stub().returns({ stdout: pingStdout });
 	const statusManagerStub = sinon.createStubInstance(StatusManager);
@@ -65,7 +66,7 @@ describe('index module', () => {
 
 	afterEach(() => {
 		execaStub.reset();
-		runStub.reset();
+		runIcmpStub.reset();
 
 		for (const stub of Object.values(handlers)) {
 			stub.reset();
@@ -98,7 +99,7 @@ describe('index module', () => {
 		expect((execaStub.firstCall.args[0] as string).endsWith('/src/sh/unbuffer.sh')).to.be.true;
 		expect(initStatusManagerStub.callCount).to.equal(1);
 		expect(handlers['probe:measurement:ack'].notCalled).to.be.true;
-		expect(runStub.notCalled).to.be.true;
+		expect(runIcmpStub.notCalled).to.be.true;
 	});
 
 	it('should initialize and connect to the API server', async () => {
@@ -159,13 +160,13 @@ describe('index module', () => {
 		mockSocket.emit('probe:measurement:request', { measurementId: 'measurementid', testId: 'testid', measurement: { type: 'ping' } });
 
 		expect(PingCommandStub.calledOnce).to.be.true;
-		expect(PingCommandStub.firstCall.args[0]).to.equal(pingCmdStub);
 		expect(handlers['probe:measurement:ack'].calledOnce).to.be.true;
-		expect(runStub.calledOnce).to.be.true;
-		expect(runStub.firstCall.args[0]).to.equal(mockSocket);
-		expect(runStub.firstCall.args[1]).to.equal('measurementid');
-		expect(runStub.firstCall.args[2]).to.equal('testid');
-		expect(runStub.firstCall.args[3]).to.deep.equal({ type: 'ping' });
+		expect(runIcmpStub.calledOnce).to.be.true;
+		expect(runIcmpStub.firstCall.args[0]).to.equal(pingCmdStub);
+		expect(runIcmpStub.firstCall.args[1]).to.equal(mockSocket);
+		expect(runIcmpStub.firstCall.args[2]).to.equal('measurementid');
+		expect(runIcmpStub.firstCall.args[3]).to.equal('testid');
+		expect(runIcmpStub.firstCall.args[4]).to.deep.equal({ type: 'ping' });
 	});
 
 	it('should return error message in case of error', async () => {
@@ -173,7 +174,7 @@ describe('index module', () => {
 		mockSocket.emit('connect');
 		mockSocket.emit('api:connect:location', fakeLocation);
 		await sandbox.clock.nextAsync();
-		runStub.rejects(new Error('Some error message'));
+		runIcmpStub.rejects(new Error('Some error message'));
 
 		mockSocket.emit('probe:measurement:request', { measurementId: 'measurementid', testId: 'testid', measurement: { type: 'ping' } });
 		const emitSpy = sinon.spy(mockSocket, 'emit');

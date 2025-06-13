@@ -26,7 +26,7 @@ export const buildResolver = (resolverAddr: string | undefined, family: IpFamily
 export const dnsLookup = (resolverAddr: string | undefined, resolverFn?: ResolverType) => async (
 	hostname: string,
 	options: Options,
-): Promise<Error | ErrnoException | [string, number]> => {
+): Promise<[string, number]> => {
 	const resolver = resolverFn ?? buildResolver(resolverAddr, options.family);
 
 	const result = await resolver(hostname, { ttl: false });
@@ -34,6 +34,10 @@ export const dnsLookup = (resolverAddr: string | undefined, resolverFn?: Resolve
 	const validIps = result.map(r => isRecordWithTtl(r) ? r.address : r).filter(r => !isIpPrivate(r));
 
 	if (validIps.length === 0) {
+		if (result.length) {
+			throw new Error(`Private IP ranges are not allowed.`);
+		}
+
 		throw new Error(`ENODATA ${hostname}`);
 	}
 

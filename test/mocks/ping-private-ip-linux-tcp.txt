@@ -1,0 +1,1 @@
+{"type":"error","message":"Private IP ranges are not allowed."}

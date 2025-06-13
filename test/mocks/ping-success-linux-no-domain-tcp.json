@@ -1,0 +1,30 @@
+{
+	"testId": "test",
+	"measurementId": "measurement",
+	"result": {
+		"status": "finished",
+		"resolvedAddress": "1.1.1.1",
+		"resolvedHostname": "1.1.1.1",
+		"stats": {
+			"min": 3.107,
+			"avg": 3.739,
+			"max": 4.169,
+			"total": 3,
+			"loss": 0,
+			"rcv": 3,
+			"drop": 0
+		},
+		"timings": [
+			{
+				"rtt": 4.17
+			},
+			{
+				"rtt": 3.94
+			},
+			{
+				"rtt": 3.11
+			}
+		],
+		"rawOutput": "PING 1.1.1.1 (1.1.1.1) on port 53.\nReply from 1.1.1.1 (1.1.1.1) on port 53: tcp_conn=1 time=4.17 ms\nReply from 1.1.1.1 (1.1.1.1) on port 53: tcp_conn=2 time=3.94 ms\nReply from 1.1.1.1 (1.1.1.1) on port 53: tcp_conn=3 time=3.11 ms\n\n--- 1.1.1.1 (1.1.1.1) ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 3000 ms\nrtt min/avg/max/mdev = 3.107/3.739/4.169/0.457 ms"
+	}
+}

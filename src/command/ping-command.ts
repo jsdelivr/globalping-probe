@@ -9,13 +9,16 @@ import { isIpPrivate } from '../lib/private-ip.js';
 import { scopedLogger } from '../lib/logger.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import parse, { type PingParseOutput } from './handlers/ping/parse.js';
+import { tcpPing, formatTcpPingResult, TcpPingData } from './handlers/ping/tcp-ping.js';
 
 export type PingOptions = {
 	type: 'ping';
 	inProgressUpdates: boolean;
 	target: string;
 	packets: number;
-	ipVersion: number;
+	protocol: string;
+	port: number;
+	ipVersion: 4 | 6;
 };
 
 const allowedIpVersions = [ 4, 6 ];
@@ -25,6 +28,8 @@ const pingOptionsSchema = Joi.object<PingOptions>({
 	inProgressUpdates: Joi.boolean(),
 	target: Joi.string(),
 	packets: Joi.number().min(1).max(16).default(3),
+	protocol: Joi.string().default('ICMP'),
+	port: Joi.number().default(80),
 	ipVersion: Joi.when(Joi.ref('target'), {
 		is: Joi.string().ip({ version: [ 'ipv4' ], cidr: 'forbidden' }).required(),
 		then: Joi.valid(4).default(4),
@@ -42,7 +47,7 @@ export type PingParseOutputJson = {
 	resolvedHostname: string | null;
 	resolvedAddress: string | null;
 	timings: Array<{
-		ttl: number;
+		ttl?: number;
 		rtt: number;
 	}>;
 	stats: {
@@ -77,8 +82,6 @@ export const pingCmd = (options: PingOptions): ExecaChildProcess => {
 };
 
 export class PingCommand implements CommandInterface<PingOptions> {
-	constructor (private readonly cmd: typeof pingCmd) {}
-
 	async run (socket: Socket, measurementId: string, testId: string, options: PingOptions): Promise<void> {
 		const validationResult = pingOptionsSchema.validate(options);
 
@@ -87,11 +90,18 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		}
 
 		const { value: cmdOptions } = validationResult;
+
+		return cmdOptions.protocol === 'TCP'
+			? this.runTcp(tcpPing, socket, measurementId, testId, cmdOptions)
+			: this.runIcmp(pingCmd, socket, measurementId, testId, cmdOptions);
+	}
+
+	async runIcmp (cmdFn: typeof pingCmd, socket: Socket, measurementId: string, testId: string, cmdOptions: PingOptions): Promise<void> {
 		const buffer = new ProgressBuffer(socket, testId, measurementId, 'append');
 		let isResultPrivate = false;
 		let result: PingParseOutput;
 
-		const cmd = this.cmd(cmdOptions);
+		const cmd = cmdFn(cmdOptions);
 
 		if (cmdOptions.inProgressUpdates) {
 			const pStdout: string[] = [];
@@ -144,6 +154,24 @@ export class PingCommand implements CommandInterface<PingOptions> {
 				rawOutput: 'Private IP ranges are not allowed.',
 			};
 		}
+
+		buffer.pushResult(this.toJsonOutput(result));
+	}
+
+	async runTcp (cmdFn: typeof tcpPing, socket: Socket, measurementId: string, testId: string, cmdOptions: PingOptions): Promise<void> {
+		const buffer = new ProgressBuffer(socket, testId, measurementId, 'diff');
+		const progress: Array<TcpPingData> = [];
+
+		const progressHandler = cmdOptions.inProgressUpdates ? (progressResult: TcpPingData) => {
+			progress.push(progressResult);
+
+			buffer.pushProgress({
+				rawOutput: formatTcpPingResult(progress).rawOutput,
+			});
+		} : undefined;
+
+		const tcpPingResult = await cmdFn({ ...cmdOptions, timeout: 10_000, interval: 500 }, progressHandler);
+		const result = formatTcpPingResult(tcpPingResult);
 
 		buffer.pushResult(this.toJsonOutput(result));
 	}

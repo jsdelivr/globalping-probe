@@ -11,6 +11,7 @@
 		"url": "git+https://github.com/jsdelivr/globalping-probe.git"
 	},
 	"dependencies": {
+		"@sindresorhus/is": "^7.0.2",
 		"config": "^3.3.12",
 		"config-mapper-env": "^3.0.1",
 		"execa": "^8.0.1",

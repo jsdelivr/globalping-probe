@@ -2,6 +2,7 @@ import config from 'config';
 import type { ExecaChildProcess, ExecaError } from 'execa';
 import type { Socket } from 'socket.io-client';
 import parse, { PingParseOutput } from '../command/handlers/ping/parse.js';
+import type { IpFamily } from '../command/handlers/shared/dns-resolver.js';
 import type { PingOptions } from '../command/ping-command.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { hasRequired } from './dependencies.js';
@@ -102,10 +103,10 @@ export class StatusManager {
 		}, INTERVAL_TIME);
 	}
 
-	private async pingTest (ipVersion: number) {
+	private async pingTest (ipVersion: IpFamily) {
 		const packets = config.get<number>('status.numberOfPackets');
 		const targets = [ 'a.gtld-servers.net', 'k.root-servers.net', 'ns1.dns.nl' ];
-		const results = await Promise.allSettled(targets.map(target => this.pingCmd({ type: 'ping', ipVersion, target, packets, inProgressUpdates: false })));
+		const results = await Promise.allSettled(targets.map(target => this.pingCmd({ type: 'ping', ipVersion, target, packets, protocol: 'ICMP', port: 80, inProgressUpdates: false })));
 
 		const rejectedResults: Array<{ target: string; reason: ExecaError }> = [];
 		const successfulResults: Array<{ target: string; result: PingParseOutput }> = [];

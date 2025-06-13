@@ -1,0 +1,30 @@
+{
+	"testId": "test",
+	"measurementId": "measurement",
+	"result": {
+		"status": "finished",
+		"resolvedAddress": "142.251.36.142",
+		"resolvedHostname": "google.com",
+		"stats": {
+			"min": 3.121,
+			"avg": 3.212,
+			"max": 3.327,
+			"total": 3,
+			"loss": 0,
+			"rcv": 3,
+			"drop": 0
+		},
+		"timings": [
+			{
+				"rtt": 3.19
+			},
+			{
+				"rtt": 3.12
+			},
+			{
+				"rtt": 3.33
+			}
+		],
+		"rawOutput": "PING google.com (142.251.36.142) on port 80.\nReply from google.com (142.251.36.142) on port 80: tcp_conn=1 time=3.19 ms\nReply from google.com (142.251.36.142) on port 80: tcp_conn=2 time=3.12 ms\nReply from google.com (142.251.36.142) on port 80: tcp_conn=3 time=3.33 ms\n\n--- google.com (142.251.36.142) ping statistics ---\n3 packets transmitted, 3 received, 0% packet loss, time 3001 ms\nrtt min/avg/max/mdev = 3.121/3.212/3.327/0.086 ms"
+	}
+}
