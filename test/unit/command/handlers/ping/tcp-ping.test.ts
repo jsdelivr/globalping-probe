@@ -176,7 +176,7 @@ describe('TCP Ping Local Servers Tests', () => {
 
 		it('should timeout when server does not respond', async () => {
 			setServerDelay(100);
-			const result = await tcpPingSingle(HOST, HOST, openPort, 4, TIMEOUT); // Use shorter timeout
+			const result = await tcpPingSingle(HOST, HOST, openPort, 4, TIMEOUT);
 
 			expect(result.type).to.equal('probe');
 
