@@ -104,7 +104,7 @@ export class StatusManager {
 
 	private async pingTest (ipVersion: number) {
 		const packets = config.get<number>('status.numberOfPackets');
-		const targets = [ 'ns1.registry.in', 'k.root-servers.net', 'ns1.dns.nl' ];
+		const targets = [ 'a.gtld-servers.net', 'k.root-servers.net', 'ns1.dns.nl' ];
 		const results = await Promise.allSettled(targets.map(target => this.pingCmd({ type: 'ping', ipVersion, target, packets, inProgressUpdates: false })));
 
 		const rejectedResults: Array<{ target: string; reason: ExecaError }> = [];
