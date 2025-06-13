@@ -10,7 +10,6 @@ import { scopedLogger } from '../lib/logger.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import parse, { type PingParseOutput } from './handlers/ping/parse.js';
 import { tcpPing, formatTcpPingResult, TcpPingData } from './handlers/ping/tcp-ping.js';
-import { ResolverType } from './handlers/shared/dns-resolver.js';
 
 export type PingOptions = {
 	type: 'ping';
@@ -159,7 +158,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		buffer.pushResult(this.toJsonOutput(result));
 	}
 
-	async runTcp (cmdFn: typeof tcpPing, socket: Socket, measurementId: string, testId: string, cmdOptions: PingOptions, resolverFn?: ResolverType): Promise<void> {
+	async runTcp (cmdFn: typeof tcpPing, socket: Socket, measurementId: string, testId: string, cmdOptions: PingOptions): Promise<void> {
 		const buffer = new ProgressBuffer(socket, testId, measurementId, 'diff');
 		const progress: Array<TcpPingData> = [];
 
@@ -171,7 +170,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			});
 		} : undefined;
 
-		const tcpPingResult = await cmdFn({ ...cmdOptions, timeout: 10_000, interval: 500 }, resolverFn, progressHandler);
+		const tcpPingResult = await cmdFn({ ...cmdOptions, timeout: 10_000, interval: 500 }, progressHandler);
 		const result = formatTcpPingResult(tcpPingResult);
 
 		buffer.pushResult(this.toJsonOutput(result));

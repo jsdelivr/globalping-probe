@@ -98,8 +98,8 @@ export async function tcpPingSingle (hostname: string, address: string, port: nu
  */
 export async function tcpPing (
 	options: InternalTcpPingOptions,
-	resolverFn?: ResolverType,
 	onProgress?: (result: TcpPingData) => void,
+	resolverFn?: ResolverType,
 ): Promise<Array<TcpPingData>> {
 	const { target, port, packets, timeout, interval, ipVersion } = options;
 	const startTime = performance.now();

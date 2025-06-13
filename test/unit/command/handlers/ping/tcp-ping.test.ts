@@ -422,7 +422,7 @@ describe('tcp-ping', () => {
 			};
 
 			const resolver = sandbox.stub();
-			const results = await tcpPing(options, resolver);
+			const results = await tcpPing(options, () => {}, resolver);
 
 			expect(resolver.callCount).to.equal(0);
 
@@ -441,7 +441,7 @@ describe('tcp-ping', () => {
 			};
 
 			const resolver = sandbox.stub().returns([ HOST ]);
-			const results = await tcpPing(options, resolver);
+			const results = await tcpPing(options, () => {}, resolver);
 
 			expect(resolver.callCount).to.equal(1);
 

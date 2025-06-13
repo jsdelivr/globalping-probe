@@ -11,7 +11,7 @@ import type { CommandInterface } from '../types.js';
 import { callbackify } from '../lib/util.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
-import { dnsLookup, type ResolverType } from './handlers/shared/dns-resolver.js';
+import { dnsLookup } from './handlers/shared/dns-resolver.js';
 
 export type HttpOptions = {
 	type: 'http';
@@ -142,9 +142,9 @@ export const urlBuilder = (options: HttpOptions): string => {
 	return url;
 };
 
-export const httpCmd = (options: HttpOptions, resolverFn?: ResolverType): Request => {
+export const httpCmd = (options: HttpOptions): Request => {
 	const url = urlBuilder(options);
-	const dnsResolver = callbackify(dnsLookup(options.resolver, resolverFn), true);
+	const dnsResolver = callbackify(dnsLookup(options.resolver), true);
 
 	const options_ = {
 		method: options.request.method as HTTPAlias,

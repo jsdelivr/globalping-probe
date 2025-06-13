@@ -124,7 +124,7 @@ describe('ping command executor', () => {
 		const mockedSocket = sandbox.createStubInstance(Socket);
 
 		const fakeTcpHandler = (emit: (cb: (chunk: unknown) => void) => Promise<void>) => {
-			return async (_options: never, _resolverFn?: never, onProgress?: (result: any) => void) => {
+			return async (_options: never, onProgress?: (result: any) => void) => {
 				const chunks = [];
 
 				await emit((chunk) => {
