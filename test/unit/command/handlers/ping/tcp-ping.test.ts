@@ -258,7 +258,7 @@ describe('tcp-ping', () => {
 			expect(socketMock.connect.callCount).to.equal(0);
 		});
 
-		it('should handle DNS resolution errors', async () => {
+		it('should handle private IP rejection', async () => {
 			const results = await tcpPing(options, () => [ '192.168.1.1' ]);
 
 			expect(results.length).to.equal(1);
