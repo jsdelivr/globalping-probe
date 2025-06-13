@@ -73,8 +73,8 @@ export async function tcpPingSingle (hostname: string, address: string, port: nu
 			socket.destroy();
 		});
 
-		socket.on('error', (error) => {
-			resolve({ type: 'error', message: error.message });
+		socket.on('error', () => {
+			resolve({ type: 'probe', address, hostname, port, rtt: -1, success: false });
 			socket.destroy();
 		});
 
