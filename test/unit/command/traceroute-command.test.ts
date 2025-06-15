@@ -157,14 +157,14 @@ describe('trace command', () => {
 				const ping = new TracerouteCommand((): any => mockCmd);
 				const runPromise = ping.run(mockSocket as any, 'measurement', 'test', options);
 
-				const { emitChunks, verifyChunks } = chunkOutput(rawOutput);
+				const { lines, emitChunks, verifyChunks } = chunkOutput(rawOutput);
 
 				await emitChunks(mockCmd.stdout);
 
 				mockCmd.resolve({ stdout: rawOutput });
 				await runPromise;
 
-				verifyChunks(mockSocket);
+				verifyChunks(mockSocket, lines.map(line => line.replace('192.168.0.1', '_gateway')));
 
 				expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 			});

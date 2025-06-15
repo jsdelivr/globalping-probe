@@ -7,9 +7,10 @@ import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { isIpPrivate } from '../lib/private-ip.js';
 import { scopedLogger } from '../lib/logger.js';
+import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 
-const reHost = /(\S+?)(?:%\w+)?\s+\(((?:\d+\.){3}\d+|[\da-fA-F:]+)(?:%\w+)?\)/;
+const reHost = /(\S+?)(%\w+)?(\s+)\(((?:\d+\.){3}\d+|[\da-fA-F:]+)(%\w+)?\)/;
 const reRtt = /(\d+(?:\.?\d+)?)\s+ms(!\S*)?/g;
 
 export type TraceOptions = {
@@ -108,24 +109,26 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		}
 
 		const { value: cmdOptions } = validationResult;
-		const buffer = new ProgressBuffer(socket, testId, measurementId, 'append');
+		const buffer = new ProgressBuffer(socket, testId, measurementId, 'diff');
 		let isResultPrivate = false;
 		let result = {};
 
 		const cmd = this.cmd(cmdOptions);
 
-		if (cmdOptions.inProgressUpdates) {
+		if (cmd.stdout && cmdOptions.inProgressUpdates) {
 			const pStdout: string[] = [];
-			cmd.stdout?.on('data', (data: Buffer) => {
-				pStdout.push(data.toString());
-				const isValid = this.validatePartialResult(pStdout.join(''), cmd);
+			byLine(cmd.stdout, (data) => {
+				pStdout.push(data);
+
+				const parsed = this.parse(pStdout.join(''));
+				const isValid = this.validatePartialResult(parsed, cmd);
 
 				if (!isValid) {
 					isResultPrivate = !isValid;
 					return;
 				}
 
-				buffer.pushProgress({ rawOutput: data.toString() });
+				buffer.pushProgress({ rawOutput: parsed.rawOutput });
 			});
 		}
 
@@ -168,10 +171,8 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		buffer.pushResult(result);
 	}
 
-	private validatePartialResult (rawOutput: string, cmd: ExecaChildProcess): boolean {
-		const parseResult = this.parse(rawOutput);
-
-		if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
+	private validatePartialResult (parsedOutput: ParsedOutput, cmd: ExecaChildProcess): boolean {
+		if (isIpPrivate(parsedOutput.resolvedAddress ?? '')) {
 			cmd.kill('SIGKILL');
 			return false;
 		}
@@ -196,6 +197,11 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 			};
 		}
 
+		// Hide the gateway hostname.
+		if (lines[1]) {
+			lines[1] = lines[1].replace(reHost, '_gateway$3($4$5)');
+		}
+
 		const hops = lines.slice(1).map(l => this.parseLine(l));
 		const hostname = hops[hops.length - 1]?.resolvedHostname;
 
@@ -203,7 +209,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 			resolvedAddress: String(header.resolvedAddress),
 			resolvedHostname: String(hostname),
 			hops,
-			rawOutput,
+			rawOutput: lines.join('\n'),
 		};
 	}
 
@@ -224,13 +230,13 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 	private parseHeader (line: string) {
 		const hostMatch = reHost.exec(line);
 
-		if (!hostMatch || hostMatch.length < 3) {
+		if (!hostMatch || hostMatch.length < 5) {
 			return;
 		}
 
 		return {
 			host: hostMatch[0] ?? '',
-			resolvedAddress: hostMatch[2],
+			resolvedAddress: hostMatch[4],
 		};
 	}
 
@@ -240,7 +246,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 
 		return {
 			resolvedHostname: hostMatch?.[1] ?? '*',
-			resolvedAddress: hostMatch?.[2] ?? '*',
+			resolvedAddress: hostMatch?.[4] ?? '*',
 			timings: rttList.map(rtt => ({ rtt })),
 		};
 	}

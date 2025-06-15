@@ -127,7 +127,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 				try {
 					output = this.rewrite(pStdout.join(''), cmdOptions.trace);
 					const parsedResult = this.parse(output, cmdOptions.trace);
-					const isValid = this.validatePartialResult(output, cmd, cmdOptions);
+					const isValid = this.validatePartialResult(parsedResult, cmd, cmdOptions);
 
 					if (!isValid && !(parsedResult instanceof Error)) {
 						isResultPrivate = this.hasResultPrivateIp(parsedResult, cmdOptions.target);
@@ -193,14 +193,12 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		buffer.pushResult(this.toJsonOutput(result, cmdOptions.trace));
 	}
 
-	private validatePartialResult (rawOutput: string, cmd: ExecaChildProcess, options: DnsOptions): boolean {
-		const result = this.parse(rawOutput, options.trace);
-
-		if (result instanceof Error) {
-			return result.message.includes('connection refused');
+	private validatePartialResult (parsedResult: Error | DnsParseResponseClassic | DnsParseResponseTrace, cmd: ExecaChildProcess, options: DnsOptions): boolean {
+		if (parsedResult instanceof Error) {
+			return parsedResult.message.includes('connection refused');
 		}
 
-		if (this.hasResultPrivateIp(result, options.target)) {
+		if (this.hasResultPrivateIp(parsedResult, options.target)) {
 			cmd.kill('SIGKILL');
 			return false;
 		}
