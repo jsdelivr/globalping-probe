@@ -7,7 +7,7 @@
 		"resolvedHostname": "142.250.160.116",
 		"hops": [
 			{
-				"resolvedHostname": "192.168.0.1",
+				"resolvedHostname": "_gateway",
 				"resolvedAddress": "192.168.0.1",
 				"timings": [
 					{ "rtt": 1.619 },
@@ -49,6 +49,6 @@
 				]
 			}
 		],
-		"rawOutput": "traceroute to hello.com (216.239.38.21), 20 hops max, 60 byte packets\n 1  192.168.0.1 (192.168.0.1)  1.619 ms  2.465 ms\n 2  * *\n 3  lutn-core-2a-xe-7114-0.network.virginmedia.net (62.252.67.181)  27.688 ms  27.991 ms\n 4  * *\n 5  eislou2-ic-4-ae0-0.network.virginmedia.net (62.254.59.130)  28.512 ms  28.192 ms\n 6  142.250.160.116 (142.250.160.116)  28.629 ms  35.934 ms"
+		"rawOutput": "traceroute to hello.com (216.239.38.21), 20 hops max, 60 byte packets\n 1  _gateway (192.168.0.1)  1.619 ms  2.465 ms\n 2  * *\n 3  lutn-core-2a-xe-7114-0.network.virginmedia.net (62.252.67.181)  27.688 ms  27.991 ms\n 4  * *\n 5  eislou2-ic-4-ae0-0.network.virginmedia.net (62.254.59.130)  28.512 ms  28.192 ms\n 6  142.250.160.116 (142.250.160.116)  28.629 ms  35.934 ms"
 	}
 }

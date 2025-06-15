@@ -7,6 +7,7 @@ import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { isIpPrivate } from '../lib/private-ip.js';
 import { scopedLogger } from '../lib/logger.js';
+import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import parse, { type PingParseOutput } from './handlers/ping/parse.js';
 import { tcpPing, formatTcpPingResult, TcpPingData } from './handlers/ping/tcp-ping.js';
@@ -103,18 +104,20 @@ export class PingCommand implements CommandInterface<PingOptions> {
 
 		const cmd = cmdFn(cmdOptions);
 
-		if (cmdOptions.inProgressUpdates) {
+		if (cmd.stdout && cmdOptions.inProgressUpdates) {
 			const pStdout: string[] = [];
-			cmd.stdout?.on('data', (data: Buffer) => {
-				pStdout.push(data.toString());
-				const isValid = this.validatePartialResult(pStdout.join(''), cmd);
+			byLine(cmd.stdout, (data) => {
+				pStdout.push(data);
+
+				const parsed = parse(pStdout.join(''));
+				const isValid = this.validatePartialResult(parsed, cmd);
 
 				if (!isValid) {
 					isResultPrivate = !isValid;
 					return;
 				}
 
-				buffer.pushProgress({ rawOutput: data.toString() });
+				buffer.pushProgress({ rawOutput: data });
 			});
 		}
 
@@ -176,10 +179,8 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		buffer.pushResult(this.toJsonOutput(result));
 	}
 
-	private validatePartialResult (rawOutput: string, cmd: ExecaChildProcess): boolean {
-		const parseResult = parse(rawOutput);
-
-		if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
+	private validatePartialResult (parsedOutput: PingParseOutput, cmd: ExecaChildProcess): boolean {
+		if (isIpPrivate(parsedOutput.resolvedAddress ?? '')) {
 			cmd.kill('SIGKILL');
 			return false;
 		}
