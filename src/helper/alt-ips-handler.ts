@@ -63,12 +63,12 @@ const sendToken = async (ip: string, dnsLookupIpVersion: 4 | 6, token: string, s
 			socketId,
 		},
 		retry: {
-			limit: 1,
+			limit: 2,
 			methods: [ 'POST' ],
 			statusCodes: [ 504 ],
 		},
 		timeout: {
-			request: 10000,
+			request: 15_000,
 		},
 		responseType: 'json',
 	});
