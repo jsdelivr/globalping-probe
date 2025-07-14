@@ -90,9 +90,9 @@ function parseSummary (lines: string[]): PingStats {
 		const rcvMatch = /\b(?<rcv>\d+)\s(received|packets received)/.exec(packets);
 		const lossMatch = /\b(?<loss>\d*(?:\.\d+)?)%\spacket\sloss/.exec(packets);
 
-		stats.total = Number.parseInt(totalMatch?.groups?.['total'] ?? '-1', 10);
-		stats.rcv = Number.parseInt(rcvMatch?.groups?.['rcv'] ?? '-1', 10);
-		stats.loss = Number.parseFloat(lossMatch?.groups?.['loss'] ?? '-1');
+		stats.total = Number.parseInt(totalMatch?.groups?.['total'] ?? '0', 10);
+		stats.rcv = Number.parseInt(rcvMatch?.groups?.['rcv'] ?? '0', 10);
+		stats.loss = Number.parseFloat(lossMatch?.groups?.['loss'] ?? '0');
 		stats.drop = stats.total - stats.rcv;
 	}
 
