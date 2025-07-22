@@ -84,7 +84,7 @@ export type OutputJson = {
 };
 
 export type Timings = {
-	[k: string]: number | Record<string, unknown> | undefined;
+	[k: string]: number | Record<string, unknown> | undefined | null;
 	phases: Record<string, number | undefined>;
 };
 
@@ -203,7 +203,9 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 			if (result.status === 'finished') {
 				const { total, download } = this.parseStreamTimings(stream);
-				result.timings = { ...result.timings, total, download };
+				const timings = { ...result.timings, total, download };
+				validateTimings(timings);
+				result.timings = timings;
 			}
 
 			let rawOutput;
@@ -296,6 +298,13 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				...result,
 				...this.parseResponse(resp, tlsDetails),
 			};
+		};
+
+		const validateTimings = (timings: Record<string, unknown>) => {
+			if (Object.values(timings).some(value => value && typeof value === 'number' && value < 0)) {
+				result.status = 'failed';
+				result.error = `Negative timing value was reported: ${JSON.stringify({ resultTimings: result.timings, streamTimings: stream.timings, timings })}`;
+			}
 		};
 
 		const pStream = new Promise((_resolve) => {
