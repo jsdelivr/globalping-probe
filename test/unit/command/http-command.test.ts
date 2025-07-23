@@ -992,7 +992,7 @@ describe('http command', () => {
 					headers: { test: 'abc' },
 					rawHeaders: 'test: abc',
 					rawBody: 'abcdefghijklmno',
-					rawOutput: 'Negative timing value was reported: {"resultTimings":{"firstByte":1,"dns":5,"tls":2,"tcp":2},"streamTimings":{"start":1689320000000,"response":1689320000050,"phases":{"tls":2,"tcp":2,"dns":5,"download":-1,"total":2,"firstByte":1}},"timings":{"firstByte":1,"dns":5,"tls":2,"tcp":2,"total":2,"download":-1}}',
+					rawOutput: 'Negative timing value reported: {"resultTimings":{"firstByte":1,"dns":5,"tls":2,"tcp":2},"streamTimings":{"start":1689320000000,"response":1689320000050,"phases":{"tls":2,"tcp":2,"dns":5,"download":-1,"total":2,"firstByte":1}},"timings":{"firstByte":1,"dns":5,"tls":2,"tcp":2,"total":2,"download":-1}}',
 					truncated: false,
 					statusCode: 200,
 					statusCodeName: 'OK',

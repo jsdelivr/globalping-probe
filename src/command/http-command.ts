@@ -303,7 +303,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		const validateTimings = (timings: Record<string, unknown>) => {
 			if (Object.values(timings).some(value => value && typeof value === 'number' && value < 0)) {
 				result.status = 'failed';
-				result.error = `Negative timing value was reported: ${JSON.stringify({ resultTimings: result.timings, streamTimings: stream.timings, timings })}`;
+				result.error = `Negative timing value reported: ${JSON.stringify({ resultTimings: result.timings, streamTimings: stream.timings, timings })}`;
 			}
 		};
 
