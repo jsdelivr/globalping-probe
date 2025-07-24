@@ -928,6 +928,80 @@ describe('http command', () => {
 			});
 		});
 
+		it('should fail and send stringified values if some timings are negative', async () => {
+			const options = {
+				type: 'http' as const,
+				target: 'google.com',
+				inProgressUpdates: false,
+				protocol: 'HTTP',
+				request: {
+					method: 'GET',
+					path: '/',
+					query: '',
+				},
+				ipVersion: 4,
+			};
+
+			const response: StreamResponse = {
+				socket: {},
+				statusCode: 200,
+				statusMessage: 'OK',
+				httpVersion: '1.1',
+				timings: {
+					start: 1689320000000,
+					response: 1689320000050,
+					end: undefined,
+					phases: {
+						tls: 2,
+						tcp: 2,
+						dns: 5,
+						download: -1,
+						total: 2,
+						firstByte: 1,
+					},
+				},
+				headers: { test: 'abc' },
+				rawHeaders: [ 'test', 'abc' ],
+			};
+
+			const stream = new Stream(response, '1.1.1.1');
+			const mockHttpCmd = (): Request => stream as never;
+
+			const http = new HttpCommand(mockHttpCmd);
+			const cmd = http.run(mockedSocket as any, 'measurement', 'test', options);
+
+			stream.emit('response', response);
+
+			for (const data of [ 'abc', 'def', 'ghi', 'jkl', 'mno' ]) {
+				stream.emit('data', Buffer.from(data));
+			}
+
+			stream.emit('end');
+
+			await cmd;
+
+			expect(mockedSocket.emit.callCount).to.equal(1);
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+
+			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal({
+				testId: 'test',
+				measurementId: 'measurement',
+				result: {
+					status: 'failed',
+					resolvedAddress: '1.1.1.1',
+					headers: { test: 'abc' },
+					rawHeaders: 'test: abc',
+					rawBody: 'abcdefghijklmno',
+					rawOutput: 'Negative timing value reported: {"resultTimings":{"firstByte":1,"dns":5,"tls":2,"tcp":2},"streamTimings":{"start":1689320000000,"response":1689320000050,"phases":{"tls":2,"tcp":2,"dns":5,"download":-1,"total":2,"firstByte":1}},"timings":{"firstByte":1,"dns":5,"tls":2,"tcp":2,"total":2,"download":-1}}',
+					truncated: false,
+					statusCode: 200,
+					statusCodeName: 'OK',
+					timings: { total: 2, download: -1, firstByte: 1, dns: 5, tls: 2, tcp: 2 },
+					tls: null,
+				},
+			});
+		});
+
 		it('should emit headers (rawOutput - HEAD request)', async () => {
 			const options = {
 				type: 'http' as const,

@@ -1,4 +1,3 @@
-/* eslint-disable no-var */
 import type { chaiSnapshotPlugin } from './plugins/snapshot/index.js';
 
 declare global {
