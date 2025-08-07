@@ -62,6 +62,11 @@
 		"tsx": "^4.20.3",
 		"typescript": "^5.8.3"
 	},
+	"overrides": {
+		"got": {
+			"@szmarczak/http-timer": "5.0.1"
+		}
+	},
 	"scripts": {
 		"postinstall": "patch-package",
 		"build": "tsc && npm run copy:sh",
