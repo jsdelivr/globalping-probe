@@ -409,8 +409,8 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		};
 
 		// Fixes https://github.com/szmarczak/http-timer/issues/35
-		if (isIP(cmdOptions.target) && timings.tcp === 0 && timings.dns !== null) {
-			timings.tcp = timings.dns;
+		if (isIP(cmdOptions.target) && timings.dns !== null) {
+			timings.tcp = (timings.tcp ?? 0) + timings.dns;
 			timings.dns = 0;
 		}
 
