@@ -1,5 +1,5 @@
 import type { Certificate, TLSSocket } from 'node:tls';
-import { isIPv6, type Socket as NetSocket } from 'node:net';
+import { isIP, isIPv6, type Socket as NetSocket } from 'node:net';
 import http from 'node:http';
 import https from 'node:https';
 import http2 from 'http2-wrapper';
@@ -288,7 +288,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			}
 		};
 
-		const onResponse = (resp: Response) => {
+		const onResponse = (resp: Response, cmdOptions: HttpOptions) => {
 			// HTTP2 cert only available in the final response
 			if (!tlsDetails && isTlsSocket(resp.socket)) {
 				tlsDetails = captureTlsDetails(resp.socket);
@@ -296,7 +296,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 			result = {
 				...result,
-				...this.parseResponse(resp, tlsDetails),
+				...this.parseResponse(resp, tlsDetails, cmdOptions),
 			};
 		};
 
@@ -313,7 +313,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			};
 
 			stream.on('data', onData);
-			stream.on('response', onResponse);
+			stream.on('response', (resp: Response) => onResponse(resp, cmdOptions));
 			stream.on('socket', onSocket);
 
 			stream.on('error', (error: RequestError) => {
@@ -387,7 +387,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		return { total, download };
 	}
 
-	private parseResponse (resp: Response, tlsDetails: TlsDetails | undefined) {
+	private parseResponse (resp: Response, tlsDetails: TlsDetails | undefined, cmdOptions: HttpOptions) {
 		const result = getInitialResult();
 
 		result.rawHeaders = _.chunk(resp.rawHeaders, 2)
@@ -401,12 +401,20 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		result.statusCodeName = resp.statusMessage ?? '';
 		result.httpVersion = resp.httpVersion;
 
-		result.timings = {
+		const timings = {
 			firstByte: resp.timings.phases.firstByte ?? null,
 			dns: resp.timings.phases.dns ?? null,
 			tls: resp.timings.phases.tls ?? null,
 			tcp: resp.timings.phases.tcp ?? null,
 		};
+
+		// Fixes https://github.com/szmarczak/http-timer/issues/35
+		if (isIP(cmdOptions.target) && timings.dns !== null) {
+			timings.tcp = (timings.tcp ?? 0) + timings.dns;
+			timings.dns = 0;
+		}
+
+		result.timings = timings;
 
 		if (tlsDetails) {
 			result.tls = {
