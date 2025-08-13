@@ -1,7 +1,11 @@
 export const getFakeIp = (workerId: number = 0) => {
-	const first3Octets = process.env['FAKE_IP_FIRST_3_OCTETS']!;
+	const firstOctets = process.env['FAKE_IP_FIRST_OCTETS']!;
+	const octests = firstOctets.split('.');
 
-	const octet4 = workerId % 256;
+	const octet1 = octests[0] || (workerId % 256);
+	const octet2 = octests[1] || (workerId % 256);
+	const octet3 = octests[2] || (workerId % 256);
+	const octet4 = octests[3] || (workerId % 256);
 
-	return `${first3Octets}.${octet4}`;
+	return `${octet1}.${octet2}.${octet3}.${octet4}`;
 };
