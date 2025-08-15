@@ -18,7 +18,7 @@ docker run -d --log-driver local --network host --restart=always --name globalpi
 ```
 
 > [!TIP]
-> For automation, consider using our [universal installation script for Linux servers](https://gist.github.com/jimaek/7b8312c2c37f9002a5cc0108ebfd43e1) and adapt it as needed.
+> For automation, consider using our [universal installation script for Linux servers](https://gist.github.com/jimaek/7b8312c2c37f9002a5cc0108ebfd43e1) and adapting it as needed.
 
 ### Podman alternative
 For users opting for Podman, [follow the instructions here](https://linuxhandbook.com/autostart-podman-containers/) to make sure the container automatically starts on boot. Also, check the container logs to see if it started successfully, as Podman may still require additional permissions.
@@ -105,7 +105,7 @@ The hardware probe package includes everything you need to get started:
 - SD card with pre-installed OS and probe container
 - Ethernet patch cable
 
-To request a probe, become GitHub Sponsor and [fill out this form](https://docs.google.com/forms/d/e/1FAIpQLSetKnI7CheDuwgl8QeARu2XzhXTXmek0GdKkpN5MW7WV3pVtw/viewform).
+To request a probe, become a GitHub Sponsor and [fill out this form](https://docs.google.com/forms/d/e/1FAIpQLSetKnI7CheDuwgl8QeARu2XzhXTXmek0GdKkpN5MW7WV3pVtw/viewform).
 
 > [!TIP]
 > You can also explore the hardware probe's firmware and build your own version. Learn more [here](https://github.com/jsdelivr/globalping-hwprobe).
