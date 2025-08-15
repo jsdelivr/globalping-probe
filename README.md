@@ -77,7 +77,7 @@ docker run -d --log-driver local --network host --restart=always --name globalpi
 ## Limitations
 - You can run only one (1) probe per IP address.
 - We disconnect probes that we can't reliably resolve to a physical location.
-- We block probes from IP addresses associated with anonymous proxies, Tor, and VPN services.
+- We block probes whose traffic is routed through anonymous proxies, Tor exit nodes, or VPN services.
 
 
 ## Security
