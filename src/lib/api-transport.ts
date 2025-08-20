@@ -22,10 +22,10 @@ type Info = {
 };
 
 class ApiTransport extends Transport {
-	public sendingEnabled: boolean;
-	public bufferSize: number;
-	public sendInterval: number;
 	public socket: Socket | undefined;
+	private sendingEnabled: boolean;
+	private bufferSize: number;
+	private sendInterval: number;
 	private logBuffer: Info[] = [];
 	private droppedLogs: number = 0;
 	private timer: NodeJS.Timeout | undefined = undefined;
@@ -75,6 +75,14 @@ class ApiTransport extends Transport {
 		this.socket.emit('probe:logs', payload);
 		this.logBuffer = [];
 		this.droppedLogs = 0;
+	}
+
+	getCurrentSettings () {
+		return {
+			sendingEnabled: this.sendingEnabled,
+			bufferSize: this.bufferSize,
+			sendInterval: this.sendInterval,
+		};
 	}
 
 	updateSettings (data: ApiTransportSettings) {

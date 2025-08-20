@@ -29,9 +29,11 @@ describe('ApiTransport', () => {
 	describe('constructor', () => {
 		it('should set default options if none are provided', () => {
 			const transport = new ApiTransport();
-			expect(transport.sendingEnabled).to.be.false;
-			expect(transport.bufferSize).to.equal(100);
-			expect(transport.sendInterval).to.equal(10000);
+			const { sendingEnabled, bufferSize, sendInterval } = transport.getCurrentSettings();
+
+			expect(sendingEnabled).to.be.false;
+			expect(bufferSize).to.equal(100);
+			expect(sendInterval).to.equal(10000);
 		});
 
 		it('should set provided options', () => {
@@ -41,9 +43,11 @@ describe('ApiTransport', () => {
 				sendInterval: 5000,
 			};
 			const transport = new ApiTransport(options);
-			expect(transport.sendingEnabled).to.be.true;
-			expect(transport.bufferSize).to.equal(50);
-			expect(transport.sendInterval).to.equal(5000);
+			const { sendingEnabled, bufferSize, sendInterval } = transport.getCurrentSettings();
+
+			expect(sendingEnabled).to.be.true;
+			expect(bufferSize).to.equal(50);
+			expect(sendInterval).to.equal(5000);
 		});
 	});
 
@@ -143,10 +147,11 @@ describe('ApiTransport', () => {
 			const { transport, logger } = createTransportAndLogger({ sendingEnabled: false, sendInterval: 10000 });
 
 			transport.updateSettings({ enabled: true, bufferSize: 10, sendInterval: 5000 });
+			const { sendingEnabled, bufferSize, sendInterval } = transport.getCurrentSettings();
 
-			expect(transport.sendingEnabled).to.be.true;
-			expect(transport.bufferSize).to.equal(10);
-			expect(transport.sendInterval).to.equal(5000);
+			expect(sendingEnabled).to.be.true;
+			expect(bufferSize).to.equal(10);
+			expect(sendInterval).to.equal(5000);
 
 			logger.info('test');
 			await sandbox.clock.tickAsync(5000);
@@ -155,10 +160,13 @@ describe('ApiTransport', () => {
 
 		it('should only update provided settings', () => {
 			const transport = new ApiTransport({ sendingEnabled: false, bufferSize: 100, sendInterval: 10000 });
+
 			transport.updateSettings({ enabled: true });
-			expect(transport.sendingEnabled).to.be.true;
-			expect(transport.bufferSize).to.equal(100);
-			expect(transport.sendInterval).to.equal(10000);
+			const { sendingEnabled, bufferSize, sendInterval } = transport.getCurrentSettings();
+
+			expect(sendingEnabled).to.be.true;
+			expect(bufferSize).to.equal(100);
+			expect(sendInterval).to.equal(10000);
 		});
 
 		it('should not emit after disabling sending', async () => {
