@@ -7,10 +7,11 @@ export type ApiTransportSettings = {
 	sendInterval?: number;
 };
 
-type ApiTransportOptions = Transport.TransportStreamOptions & {
-	sendingEnabled: boolean;
-	bufferSize: number;
-	sendInterval: number; // how often logs should be sent (ms)
+export type ApiTransportOptions = Transport.TransportStreamOptions & {
+	sendingEnabled?: boolean;
+	bufferSize?: number;
+	sendInterval?: number; // how often logs should be sent (ms)
+	socket?: Socket;
 };
 
 type Info = {
@@ -24,7 +25,7 @@ class ApiTransport extends Transport {
 	public sendingEnabled: boolean;
 	public bufferSize: number;
 	public sendInterval: number;
-	public socket: Socket | undefined = undefined;
+	public socket: Socket | undefined;
 	private logBuffer: Info[] = [];
 	private droppedLogs: number = 0;
 	private timer: NodeJS.Timeout | undefined = undefined;
@@ -34,6 +35,7 @@ class ApiTransport extends Transport {
 		this.sendingEnabled = opts?.sendingEnabled ?? false;
 		this.bufferSize = opts?.bufferSize ?? 100;
 		this.sendInterval = opts?.sendInterval ?? 10000;
+		this.socket = opts?.socket;
 		this._setInterval();
 	}
 
