@@ -7,12 +7,7 @@ export type ApiTransportSettings = {
 	sendInterval?: number;
 };
 
-export type ApiTransportOptions = Transport.TransportStreamOptions & {
-	sendingEnabled?: boolean;
-	bufferSize?: number;
-	sendInterval?: number; // how often logs should be sent (ms)
-	socket?: Socket;
-};
+export type ApiTransportOptions = Transport.TransportStreamOptions & ApiTransportSettings & { socket?: Socket };
 
 type Info = {
 	message: string;
