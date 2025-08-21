@@ -2,7 +2,7 @@ import Transport from 'winston-transport';
 import { Socket } from 'socket.io-client';
 
 export type ApiTransportSettings = {
-	enabled?: boolean;
+	sendingEnabled?: boolean;
 	bufferSize?: number;
 	sendInterval?: number;
 };
@@ -86,7 +86,7 @@ class ApiTransport extends Transport {
 	}
 
 	updateSettings (data: ApiTransportSettings) {
-		this.sendingEnabled = data.enabled ?? this.sendingEnabled;
+		this.sendingEnabled = data.sendingEnabled ?? this.sendingEnabled;
 		this.bufferSize = data.bufferSize ?? this.bufferSize;
 		this.sendInterval = data.sendInterval ?? this.sendInterval;
 		this._setInterval();

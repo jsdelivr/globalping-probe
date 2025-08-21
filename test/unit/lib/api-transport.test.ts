@@ -146,7 +146,7 @@ describe('ApiTransport', () => {
 		it('should update settings and reset interval', async () => {
 			const { transport, logger } = createTransportAndLogger({ sendingEnabled: false, sendInterval: 10000 });
 
-			transport.updateSettings({ enabled: true, bufferSize: 10, sendInterval: 5000 });
+			transport.updateSettings({ sendingEnabled: true, bufferSize: 10, sendInterval: 5000 });
 			const { sendingEnabled, bufferSize, sendInterval } = transport.getCurrentSettings();
 
 			expect(sendingEnabled).to.be.true;
@@ -161,7 +161,7 @@ describe('ApiTransport', () => {
 		it('should only update provided settings', () => {
 			const transport = new ApiTransport({ sendingEnabled: false, bufferSize: 100, sendInterval: 10000 });
 
-			transport.updateSettings({ enabled: true });
+			transport.updateSettings({ sendingEnabled: true });
 			const { sendingEnabled, bufferSize, sendInterval } = transport.getCurrentSettings();
 
 			expect(sendingEnabled).to.be.true;
@@ -172,7 +172,7 @@ describe('ApiTransport', () => {
 		it('should not emit after disabling sending', async () => {
 			const { transport, logger } = createTransportAndLogger({ sendingEnabled: false, sendInterval: 10000 });
 
-			transport.updateSettings({ enabled: false });
+			transport.updateSettings({ sendingEnabled: false });
 
 			logger.info('test');
 			await sandbox.clock.tickAsync(10000);
