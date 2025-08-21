@@ -28,9 +28,9 @@ export type DnsParseResponseJson = DnsParseLoopResponseJson & {
 	rawOutput: string;
 };
 
-const QUERY_TIME_REG_EXP = /Query\s+time:\s+(\d+)/g;
-const RESOLVER_REG_EXP = /SERVER:.*\((.*?)\)/g;
-const STATUS_CODE_NAME_REG_EXP = /status:\s*([A-Z]+)/g;
+const QUERY_TIME_REG_EXP = /Query\s+time:\s+(\d+)/;
+const RESOLVER_REG_EXP = /SERVER:.*?\((.*?)\)/;
+const STATUS_CODE_NAME_REG_EXP = /status:\s*([A-Z]+)/;
 
 export const ClassicDigParser = {
 	rewrite (rawOutput: string): string {
