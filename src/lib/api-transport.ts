@@ -37,8 +37,6 @@ class ApiTransport extends Transport {
 	override log (info: Info, callback?: () => void) {
 		setImmediate(() => this.emit('logged', info));
 
-		console.log(info);
-
 		this.logBuffer.push(info);
 		const bufferLength = this.logBuffer.length;
 		const bufferOverflow = bufferLength - this.bufferSize;
