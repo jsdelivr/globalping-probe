@@ -2,6 +2,9 @@
 import process from 'node:process';
 import { inspect } from 'node:util';
 import * as winston from 'winston';
+import ApiTransport from './api-transport.js';
+
+export const apiTransport = new ApiTransport();
 
 const objectFormatter = (object: Record<string, any>) => {
 	const entries = Object.entries(object).map(([ key, value ]) => {
@@ -40,6 +43,7 @@ const logger = winston.createLogger({
 	),
 	transports: [
 		new winston.transports.Console(),
+		apiTransport,
 	],
 });
 
