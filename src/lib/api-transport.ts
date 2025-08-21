@@ -13,7 +13,7 @@ type Info = {
 	message: string;
 	timestamp: string;
 	level: string;
-	type: string;
+	scope: string;
 };
 
 class ApiTransport extends Transport {
@@ -36,6 +36,8 @@ class ApiTransport extends Transport {
 
 	override log (info: Info, callback?: () => void) {
 		setImmediate(() => this.emit('logged', info));
+
+		console.log(info);
 
 		this.logBuffer.push(info);
 		const bufferLength = this.logBuffer.length;
