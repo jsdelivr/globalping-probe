@@ -26,7 +26,7 @@ export type DnsParseLoopResponseJson = {
 
 export const isDnsSection = (output: unknown): output is DnsSection => typeof (output as DnsSection) !== 'undefined';
 
-export const SECTION_REG_EXP = /(;; )(\S+)( SECTION:)/g;
+export const SECTION_REG_EXP = /(;; )(\S+)( SECTION:)/;
 export const NEW_LINE_REG_EXP = /\r?\n/;
 export const IP_REG_EXP = ipRegex();
 
