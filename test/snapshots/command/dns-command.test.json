@@ -123,7 +123,7 @@
 				"timings": {
 					"total": 0
 				},
-				"resolver": "TCP"
+				"resolver": "8.8.8.8"
 			}
 		}
 	],
@@ -204,7 +204,7 @@
 				"timings": {
 					"total": 39
 				},
-				"resolver": "UDP"
+				"resolver": "8.8.8.8"
 			}
 		}
 	],
@@ -455,7 +455,7 @@
 				"timings": {
 					"total": 119
 				},
-				"resolver": "TCP"
+				"resolver": "8.8.8.8"
 			}
 		}
 	],
@@ -990,7 +990,7 @@
 				"timings": {
 					"total": 27
 				},
-				"resolver": "UDP"
+				"resolver": "8.8.8.8"
 			}
 		}
 	]

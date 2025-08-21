@@ -29,7 +29,7 @@ export type DnsParseResponseJson = DnsParseLoopResponseJson & {
 };
 
 const QUERY_TIME_REG_EXP = /Query\s+time:\s+(\d+)/g;
-const RESOLVER_REG_EXP = /SERVER:.*\((.*?)\)/g;
+const RESOLVER_REG_EXP = /SERVER:.*?\((.*?)\)/g;
 const STATUS_CODE_NAME_REG_EXP = /status:\s*([A-Z]+)/g;
 
 export const ClassicDigParser = {
