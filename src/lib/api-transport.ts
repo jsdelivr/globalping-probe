@@ -31,7 +31,7 @@ class ApiTransport extends Transport {
 		this.bufferSize = opts?.bufferSize ?? 100;
 		this.sendInterval = opts?.sendInterval ?? 10000;
 		this.socket = opts?.socket;
-		this.setInterval();
+		this.setTimeout();
 	}
 
 	override log (info: Info, callback?: () => void) {
@@ -65,20 +65,22 @@ class ApiTransport extends Transport {
 		this.sendingEnabled = data.sendingEnabled ?? this.sendingEnabled;
 		this.bufferSize = data.bufferSize ?? this.bufferSize;
 		this.sendInterval = data.sendInterval ?? this.sendInterval;
-		this.setInterval();
+		this.setTimeout();
 	}
 
-	private setInterval () {
-		this.timer && clearInterval(this.timer);
+	private setTimeout () {
+		clearTimeout(this.timer);
 
 		if (this.sendingEnabled) {
-			this.timer = setInterval(() => this.sendLogs(), this.sendInterval);
+			this.timer = setTimeout(() => {
+				void this.sendLogs();
+			}, this.sendInterval);
 		}
 	}
 
-	private sendLogs () {
+	private async sendLogs () {
 		if (!this.sendingEnabled || !this.socket?.connected || !this.logBuffer.length) {
-			return;
+			return this.setTimeout();
 		}
 
 		const payload = {
@@ -86,9 +88,24 @@ class ApiTransport extends Transport {
 			skipped: this.droppedLogs,
 		};
 
-		this.socket.emit('probe:logs', payload);
-		this.logBuffer = [];
-		this.droppedLogs = 0;
+		const droppedInPayload = this.droppedLogs;
+		const presentInPayload = this.logBuffer.length;
+
+		const response: unknown = await this.socket.emitWithAck('probe:logs', payload);
+
+		if (response === 'success') {
+			const droppedWhileAwaiting = this.droppedLogs - droppedInPayload;
+			const oldLogsRemaining = presentInPayload - droppedWhileAwaiting;
+
+			if (oldLogsRemaining >= 0) {
+				this.logBuffer = this.logBuffer.slice(oldLogsRemaining);
+				this.droppedLogs = 0;
+			} else {
+				this.droppedLogs = -oldLogsRemaining; // === droppedWhileAwaiting - presentInPayload
+			}
+		}
+
+		this.setTimeout();
 	}
 }
 
