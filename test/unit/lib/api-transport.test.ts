@@ -66,7 +66,7 @@ describe('ApiTransport', () => {
 		it('should handle buffer overflow by dropping oldest logs', async () => {
 			const { transport, logger } = createTransportAndLogger({ bufferSize: 2, sendingEnabled: true, sendInterval: 1000 });
 
-			transport.socket = socket;
+			transport.setSocket(socket);
 
 			logger.info('log 1');
 			logger.info('log 2');

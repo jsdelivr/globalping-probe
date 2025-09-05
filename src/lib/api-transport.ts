@@ -17,7 +17,7 @@ type Info = {
 };
 
 class ApiTransport extends Transport {
-	public socket: Socket | undefined;
+	private socket: Socket | undefined;
 	private sendingEnabled: boolean;
 	private bufferSize: number;
 	private sendInterval: number;
@@ -31,7 +31,7 @@ class ApiTransport extends Transport {
 		this.bufferSize = opts?.bufferSize ?? 100;
 		this.sendInterval = opts?.sendInterval ?? 10000;
 		this.socket = opts?.socket;
-		this._setInterval();
+		this.setInterval();
 	}
 
 	override log (info: Info, callback?: () => void) {
@@ -49,27 +49,8 @@ class ApiTransport extends Transport {
 		callback && callback();
 	}
 
-	_setInterval () {
-		this.timer && clearInterval(this.timer);
-
-		if (this.sendingEnabled) {
-			this.timer = setInterval(() => this._sendLogs(), this.sendInterval);
-		}
-	}
-
-	_sendLogs () {
-		if (!this.sendingEnabled || !this.socket?.connected || !this.logBuffer.length) {
-			return;
-		}
-
-		const payload = {
-			logs: this.logBuffer,
-			skipped: this.droppedLogs,
-		};
-
-		this.socket.emit('probe:logs', payload);
-		this.logBuffer = [];
-		this.droppedLogs = 0;
+	setSocket (socket: Socket) {
+		this.socket = socket;
 	}
 
 	getCurrentSettings () {
@@ -84,7 +65,30 @@ class ApiTransport extends Transport {
 		this.sendingEnabled = data.sendingEnabled ?? this.sendingEnabled;
 		this.bufferSize = data.bufferSize ?? this.bufferSize;
 		this.sendInterval = data.sendInterval ?? this.sendInterval;
-		this._setInterval();
+		this.setInterval();
+	}
+
+	private setInterval () {
+		this.timer && clearInterval(this.timer);
+
+		if (this.sendingEnabled) {
+			this.timer = setInterval(() => this.sendLogs(), this.sendInterval);
+		}
+	}
+
+	private sendLogs () {
+		if (!this.sendingEnabled || !this.socket?.connected || !this.logBuffer.length) {
+			return;
+		}
+
+		const payload = {
+			logs: this.logBuffer,
+			skipped: this.droppedLogs,
+		};
+
+		this.socket.emit('probe:logs', payload);
+		this.logBuffer = [];
+		this.droppedLogs = 0;
 	}
 }
 

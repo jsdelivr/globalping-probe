@@ -104,7 +104,7 @@ function connect (workerId?: number) {
 	});
 
 	runStatsAgent(socket, worker);
-	apiTransport.socket = socket;
+	apiTransport.setSocket(socket);
 
 	const statusManager = initStatusManager(socket, pingCmd);
 	const errorHandler = initErrorHandler(socket);
