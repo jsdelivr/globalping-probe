@@ -1,5 +1,6 @@
 import Transport from 'winston-transport';
 import { Socket } from 'socket.io-client';
+import { Logger } from 'winston';
 
 export type ApiTransportSettings = {
 	sendingEnabled?: boolean;
@@ -17,6 +18,7 @@ type Info = {
 };
 
 class ApiTransport extends Transport {
+	private logger: Logger | undefined;
 	private socket: Socket | undefined;
 	private sendingEnabled: boolean;
 	private bufferSize: number;
@@ -53,6 +55,10 @@ class ApiTransport extends Transport {
 		this.socket = socket;
 	}
 
+	setLogger (logger: Logger) {
+		this.logger = logger;
+	}
+
 	getCurrentSettings () {
 		return {
 			sendingEnabled: this.sendingEnabled,
@@ -84,28 +90,32 @@ class ApiTransport extends Transport {
 		}
 
 		const payload = {
-			logs: this.logBuffer,
+			logs: this.logBuffer.slice(),
 			skipped: this.droppedLogs,
 		};
 
-		const droppedInPayload = this.droppedLogs;
-		const presentInPayload = this.logBuffer.length;
+		const droppedInPayload = payload.skipped;
+		const presentInPayload = payload.logs.length;
 
-		const response: unknown = await this.socket.emitWithAck('probe:logs', payload);
+		try {
+			const response: unknown = await this.socket.emitWithAck('probe:logs', payload);
 
-		if (response === 'success') {
-			const droppedWhileAwaiting = this.droppedLogs - droppedInPayload;
-			const oldLogsRemaining = presentInPayload - droppedWhileAwaiting;
+			if (response === 'success') {
+				const droppedWhileAwaiting = this.droppedLogs - droppedInPayload;
+				const oldLogsRemaining = presentInPayload - droppedWhileAwaiting;
 
-			if (oldLogsRemaining >= 0) {
-				this.logBuffer = this.logBuffer.slice(oldLogsRemaining);
-				this.droppedLogs = 0;
-			} else {
-				this.droppedLogs = -oldLogsRemaining; // === droppedWhileAwaiting - presentInPayload
+				if (oldLogsRemaining >= 0) {
+					this.logBuffer = this.logBuffer.slice(oldLogsRemaining);
+					this.droppedLogs = 0;
+				} else {
+					this.droppedLogs = -oldLogsRemaining; // === droppedWhileAwaiting - presentInPayload
+				}
 			}
+		} catch (e) {
+			this.logger?.error('Failed to send logs to the API.', e);
+		} finally {
+			this.setTimeout();
 		}
-
-		this.setTimeout();
 	}
 }
 

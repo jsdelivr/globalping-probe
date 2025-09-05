@@ -48,3 +48,5 @@ const logger = winston.createLogger({
 });
 
 export const scopedLogger = (scope: string): winston.Logger => logger.child({ scope });
+
+apiTransport.setLogger(scopedLogger('api-transport'));
