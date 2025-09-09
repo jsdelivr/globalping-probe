@@ -154,7 +154,7 @@ function connect (workerId?: number) {
 			});
 		})
 		.on('probe:adoption:code', logAdoptionCode)
-		.on('api:logging:set', (data: ApiTransportSettings) => apiLogsTransport.updateSettings(data));
+		.on('api:logs-transport:set', (data: ApiTransportSettings) => apiLogsTransport.updateSettings(data));
 
 	process.on('SIGTERM', () => {
 		logger.debug('SIGTERM received.');
