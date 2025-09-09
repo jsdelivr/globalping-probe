@@ -17,7 +17,7 @@ type Info = {
 	scope: string;
 };
 
-class ApiTransport extends Transport {
+class ApiLogsTransport extends Transport {
 	private logger: Logger | undefined;
 	private socket: Socket | undefined;
 	private isActive: boolean;
@@ -119,4 +119,4 @@ class ApiTransport extends Transport {
 	}
 }
 
-export default ApiTransport;
+export default ApiLogsTransport;

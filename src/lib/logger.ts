@@ -2,9 +2,9 @@
 import process from 'node:process';
 import { inspect } from 'node:util';
 import * as winston from 'winston';
-import ApiTransport from './api-transport.js';
+import ApiLogsTransport from './api-logs-transport.js';
 
-export const apiTransport = new ApiTransport();
+export const apiLogsTransport = new ApiLogsTransport();
 
 const objectFormatter = (object: Record<string, any>) => {
 	const entries = Object.entries(object).map(([ key, value ]) => {
@@ -43,10 +43,10 @@ const logger = winston.createLogger({
 	),
 	transports: [
 		new winston.transports.Console(),
-		apiTransport,
+		apiLogsTransport,
 	],
 });
 
 export const scopedLogger = (scope: string): winston.Logger => logger.child({ scope });
 
-apiTransport.setLogger(scopedLogger('api-transport'));
+apiLogsTransport.setLogger(scopedLogger('api-logs-transport'));

@@ -10,8 +10,8 @@ import physicalCpuCount from 'physical-cpu-count';
 import { getFakeIp } from './lib/fake-ip.js';
 import type { CommandInterface, MeasurementRequest } from './types.js';
 import { loadAll as loadAllDeps } from './lib/dependencies.js';
-import { apiTransport, scopedLogger } from './lib/logger.js';
-import { ApiTransportSettings } from './lib/api-transport.js';
+import { apiLogsTransport, scopedLogger } from './lib/logger.js';
+import { ApiTransportSettings } from './lib/api-logs-transport.js';
 import { initErrorHandler } from './helper/api-error-handler.js';
 import { handleTestError } from './helper/test-error-handler.js';
 import { apiConnectLocationHandler } from './helper/api-connect-handler.js';
@@ -104,7 +104,7 @@ function connect (workerId?: number) {
 	});
 
 	runStatsAgent(socket, worker);
-	apiTransport.setSocket(socket);
+	apiLogsTransport.setSocket(socket);
 
 	const statusManager = initStatusManager(socket, pingCmd);
 	const errorHandler = initErrorHandler(socket);
@@ -154,7 +154,7 @@ function connect (workerId?: number) {
 			});
 		})
 		.on('probe:adoption:code', logAdoptionCode)
-		.on('api:logging:set', (data: ApiTransportSettings) => apiTransport.updateSettings(data));
+		.on('api:logging:set', (data: ApiTransportSettings) => apiLogsTransport.updateSettings(data));
 
 	process.on('SIGTERM', () => {
 		logger.debug('SIGTERM received.');

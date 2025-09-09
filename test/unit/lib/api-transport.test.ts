@@ -1,11 +1,11 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import * as winston from 'winston';
-import ApiTransport, { type ApiTransportOptions } from '../../../src/lib/api-transport.js';
+import ApiLogsTransport, { type ApiTransportOptions } from '../../../src/lib/api-logs-transport.js';
 import { Socket } from 'socket.io-client';
 import { useSandboxWithFakeTimers } from '../../utils.js';
 
-describe('ApiTransport', () => {
+describe('ApiLogsTransport', () => {
 	let sandbox: sinon.SinonSandbox;
 	let socket: sinon.SinonStubbedInstance<Socket>;
 	const ACK_DELAY = 50;
@@ -19,7 +19,7 @@ describe('ApiTransport', () => {
 	};
 
 	const createTransportAndLogger = (options: ApiTransportOptions) => {
-		const transport = new ApiTransport({ ...options, socket });
+		const transport = new ApiLogsTransport({ ...options, socket });
 		const logger = winston.createLogger({ transports: [ transport ] });
 
 		return { transport, logger };
@@ -38,7 +38,7 @@ describe('ApiTransport', () => {
 
 	describe('constructor', () => {
 		it('should set default options if none are provided', () => {
-			const transport = new ApiTransport();
+			const transport = new ApiLogsTransport();
 			const { sendingEnabled, bufferSize, sendInterval } = transport.getCurrentSettings();
 
 			expect(sendingEnabled).to.be.false;
@@ -52,7 +52,7 @@ describe('ApiTransport', () => {
 				bufferSize: 50,
 				sendInterval: 5000,
 			};
-			const transport = new ApiTransport(options);
+			const transport = new ApiLogsTransport(options);
 			const { sendingEnabled, bufferSize, sendInterval } = transport.getCurrentSettings();
 
 			expect(sendingEnabled).to.be.true;
@@ -286,7 +286,7 @@ describe('ApiTransport', () => {
 		});
 
 		it('should only update provided settings', () => {
-			const transport = new ApiTransport({ sendingEnabled: false, maxBufferSize: 100, sendInterval: 10000 });
+			const transport = new ApiLogsTransport({ sendingEnabled: false, maxBufferSize: 100, sendInterval: 10000 });
 
 			transport.updateSettings({ sendingEnabled: true });
 			const { sendingEnabled, bufferSize, sendInterval } = transport.getCurrentSettings();
