@@ -3,8 +3,8 @@ import { Socket } from 'socket.io-client';
 import { Logger } from 'winston';
 
 export type ApiTransportSettings = {
-	sendingEnabled?: boolean;
-	bufferSize?: number;
+	isActive?: boolean;
+	maxBufferSize?: number;
 	sendInterval?: number;
 };
 
@@ -20,8 +20,8 @@ type Info = {
 class ApiTransport extends Transport {
 	private logger: Logger | undefined;
 	private socket: Socket | undefined;
-	private sendingEnabled: boolean;
-	private bufferSize: number;
+	private isActive: boolean;
+	private maxBufferSize: number;
 	private sendInterval: number;
 	private logBuffer: Info[] = [];
 	private droppedLogs: number = 0;
@@ -29,11 +29,11 @@ class ApiTransport extends Transport {
 
 	constructor (opts?: ApiTransportOptions) {
 		super(opts);
-		this.sendingEnabled = opts?.sendingEnabled ?? false;
-		this.bufferSize = opts?.bufferSize ?? 100;
+		this.isActive = opts?.isActive ?? false;
+		this.maxBufferSize = opts?.maxBufferSize ?? 100;
 		this.sendInterval = opts?.sendInterval ?? 10000;
 		this.socket = opts?.socket;
-		this.setTimeout();
+		this.scheduleSend();
 	}
 
 	override log (info: Info, callback?: () => void) {
@@ -41,7 +41,7 @@ class ApiTransport extends Transport {
 
 		this.logBuffer.push(info);
 		const bufferLength = this.logBuffer.length;
-		const bufferOverflow = bufferLength - this.bufferSize;
+		const bufferOverflow = bufferLength - this.maxBufferSize;
 
 		if (bufferOverflow > 0) {
 			this.logBuffer = this.logBuffer.slice(bufferOverflow);
@@ -61,23 +61,23 @@ class ApiTransport extends Transport {
 
 	getCurrentSettings () {
 		return {
-			sendingEnabled: this.sendingEnabled,
-			bufferSize: this.bufferSize,
+			isActive: this.isActive,
+			bufferSize: this.maxBufferSize,
 			sendInterval: this.sendInterval,
 		};
 	}
 
-	updateSettings (data: ApiTransportSettings) {
-		this.sendingEnabled = data.sendingEnabled ?? this.sendingEnabled;
-		this.bufferSize = data.bufferSize ?? this.bufferSize;
-		this.sendInterval = data.sendInterval ?? this.sendInterval;
-		this.setTimeout();
+	updateSettings (settings: ApiTransportSettings) {
+		this.isActive = settings.isActive ?? this.isActive;
+		this.maxBufferSize = settings.maxBufferSize ?? this.maxBufferSize;
+		this.sendInterval = settings.sendInterval ?? this.sendInterval;
+		this.scheduleSend();
 	}
 
-	private setTimeout () {
+	private scheduleSend () {
 		clearTimeout(this.timer);
 
-		if (this.sendingEnabled) {
+		if (this.isActive) {
 			this.timer = setTimeout(() => {
 				void this.sendLogs();
 			}, this.sendInterval);
@@ -85,8 +85,8 @@ class ApiTransport extends Transport {
 	}
 
 	private async sendLogs () {
-		if (!this.sendingEnabled || !this.socket?.connected || !this.logBuffer.length) {
-			return this.setTimeout();
+		if (!this.isActive || !this.socket?.connected || !this.logBuffer.length) {
+			return this.scheduleSend();
 		}
 
 		const payload = {
@@ -105,7 +105,7 @@ class ApiTransport extends Transport {
 				const oldLogsRemaining = presentInPayload - droppedWhileAwaiting;
 
 				if (oldLogsRemaining >= 0) {
-					this.logBuffer = this.logBuffer.slice(oldLogsRemaining);
+					this.logBuffer.splice(0, oldLogsRemaining);
 					this.droppedLogs = 0;
 				} else {
 					this.droppedLogs = -oldLogsRemaining; // === droppedWhileAwaiting - presentInPayload
@@ -114,7 +114,7 @@ class ApiTransport extends Transport {
 		} catch (e) {
 			this.logger?.error('Failed to send logs to the API.', e);
 		} finally {
-			this.setTimeout();
+			this.scheduleSend();
 		}
 	}
 }

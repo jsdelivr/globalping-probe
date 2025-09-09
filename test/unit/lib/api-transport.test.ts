@@ -74,7 +74,7 @@ describe('ApiTransport', () => {
 		});
 
 		it('should handle buffer overflow by dropping oldest logs', async () => {
-			const { transport, logger } = createTransportAndLogger({ bufferSize: 2, sendingEnabled: true, sendInterval: 1000 });
+			const { transport, logger } = createTransportAndLogger({ maxBufferSize: 2, sendingEnabled: true, sendInterval: 1000 });
 
 			transport.setSocket(socket);
 
@@ -137,7 +137,7 @@ describe('ApiTransport', () => {
 		});
 
 		it('should not indicate dropped logs if only sent logs are dropped before emit ack', async () => {
-			const { logger } = createTransportAndLogger({ sendingEnabled: true, sendInterval: 100, bufferSize: 3 });
+			const { logger } = createTransportAndLogger({ sendingEnabled: true, sendInterval: 100, maxBufferSize: 3 });
 
 			logger.info('test1');
 			logger.info('test2');
@@ -172,7 +172,7 @@ describe('ApiTransport', () => {
 		});
 
 		it('should calculate dropped logs correctly when unsent logs are dropped before emit ack', async () => {
-			const { logger } = createTransportAndLogger({ sendingEnabled: true, sendInterval: 100, bufferSize: 2 });
+			const { logger } = createTransportAndLogger({ sendingEnabled: true, sendInterval: 100, maxBufferSize: 2 });
 
 			logger.info('test1');
 			logger.info('test2');
@@ -196,7 +196,7 @@ describe('ApiTransport', () => {
 		});
 
 		it('should resend logs if emit ack fails until success', async () => {
-			const { logger } = createTransportAndLogger({ sendingEnabled: true, sendInterval: 100, bufferSize: 2 });
+			const { logger } = createTransportAndLogger({ sendingEnabled: true, sendInterval: 100, maxBufferSize: 2 });
 
 			setEmitWithAckResponse('error');
 
@@ -223,7 +223,7 @@ describe('ApiTransport', () => {
 		});
 
 		it('should drop old logs when emit fails', async () => {
-			const { logger } = createTransportAndLogger({ sendingEnabled: true, sendInterval: 100, bufferSize: 2 });
+			const { logger } = createTransportAndLogger({ sendingEnabled: true, sendInterval: 100, maxBufferSize: 2 });
 
 			setEmitWithAckResponse('error');
 
@@ -273,7 +273,7 @@ describe('ApiTransport', () => {
 		it('should update settings and reset interval', async () => {
 			const { transport, logger } = createTransportAndLogger({ sendingEnabled: false, sendInterval: 10000 });
 
-			transport.updateSettings({ sendingEnabled: true, bufferSize: 10, sendInterval: 5000 });
+			transport.updateSettings({ sendingEnabled: true, maxBufferSize: 10, sendInterval: 5000 });
 			const { sendingEnabled, bufferSize, sendInterval } = transport.getCurrentSettings();
 
 			expect(sendingEnabled).to.be.true;
@@ -286,7 +286,7 @@ describe('ApiTransport', () => {
 		});
 
 		it('should only update provided settings', () => {
-			const transport = new ApiTransport({ sendingEnabled: false, bufferSize: 100, sendInterval: 10000 });
+			const transport = new ApiTransport({ sendingEnabled: false, maxBufferSize: 100, sendInterval: 10000 });
 
 			transport.updateSettings({ sendingEnabled: true });
 			const { sendingEnabled, bufferSize, sendInterval } = transport.getCurrentSettings();
