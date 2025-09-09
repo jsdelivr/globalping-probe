@@ -4,8 +4,8 @@ import { Logger } from 'winston';
 
 export type ApiTransportSettings = {
 	isActive?: boolean;
-	maxBufferSize?: number;
 	sendInterval?: number;
+	maxBufferSize?: number;
 };
 
 export type ApiTransportOptions = Transport.TransportStreamOptions & ApiTransportSettings & { socket?: Socket };
@@ -21,8 +21,8 @@ class ApiLogsTransport extends Transport {
 	private logger: Logger | undefined;
 	private socket: Socket | undefined;
 	private isActive: boolean;
-	private maxBufferSize: number;
 	private sendInterval: number;
+	private maxBufferSize: number;
 	private logBuffer: Info[] = [];
 	private droppedLogs: number = 0;
 	private timer: NodeJS.Timeout | undefined = undefined;
@@ -30,8 +30,8 @@ class ApiLogsTransport extends Transport {
 	constructor (opts?: ApiTransportOptions) {
 		super(opts);
 		this.isActive = opts?.isActive ?? false;
-		this.maxBufferSize = opts?.maxBufferSize ?? 100;
 		this.sendInterval = opts?.sendInterval ?? 10000;
+		this.maxBufferSize = opts?.maxBufferSize ?? 100;
 		this.socket = opts?.socket;
 		this.scheduleSend();
 	}
@@ -62,15 +62,15 @@ class ApiLogsTransport extends Transport {
 	getCurrentSettings () {
 		return {
 			isActive: this.isActive,
-			bufferSize: this.maxBufferSize,
 			sendInterval: this.sendInterval,
+			maxBufferSize: this.maxBufferSize,
 		};
 	}
 
 	updateSettings (settings: ApiTransportSettings) {
 		this.isActive = settings.isActive ?? this.isActive;
-		this.maxBufferSize = settings.maxBufferSize ?? this.maxBufferSize;
 		this.sendInterval = settings.sendInterval ?? this.sendInterval;
+		this.maxBufferSize = settings.maxBufferSize ?? this.maxBufferSize;
 		this.scheduleSend();
 	}
 

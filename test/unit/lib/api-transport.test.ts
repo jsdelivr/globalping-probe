@@ -39,31 +39,31 @@ describe('ApiLogsTransport', () => {
 	describe('constructor', () => {
 		it('should set default options if none are provided', () => {
 			const transport = new ApiLogsTransport();
-			const { sendingEnabled, bufferSize, sendInterval } = transport.getCurrentSettings();
+			const { isActive, maxBufferSize, sendInterval } = transport.getCurrentSettings();
 
-			expect(sendingEnabled).to.be.false;
-			expect(bufferSize).to.equal(100);
+			expect(isActive).to.be.false;
+			expect(maxBufferSize).to.equal(100);
 			expect(sendInterval).to.equal(10000);
 		});
 
 		it('should set provided options', () => {
 			const options = {
-				sendingEnabled: true,
-				bufferSize: 50,
+				isActive: true,
+				maxBufferSize: 50,
 				sendInterval: 5000,
 			};
 			const transport = new ApiLogsTransport(options);
-			const { sendingEnabled, bufferSize, sendInterval } = transport.getCurrentSettings();
+			const { isActive, maxBufferSize, sendInterval } = transport.getCurrentSettings();
 
-			expect(sendingEnabled).to.be.true;
-			expect(bufferSize).to.equal(50);
+			expect(isActive).to.be.true;
+			expect(maxBufferSize).to.equal(50);
 			expect(sendInterval).to.equal(5000);
 		});
 	});
 
 	describe('logging', () => {
 		it('should emit "logged" event when a log is created', (done) => {
-			const { transport, logger } = createTransportAndLogger({ sendingEnabled: true, sendInterval: 1000 });
+			const { transport, logger } = createTransportAndLogger({ isActive: true, sendInterval: 1000 });
 
 			transport.on('logged', (info) => {
 				expect(info).to.have.property('message', 'test log');
@@ -74,7 +74,7 @@ describe('ApiLogsTransport', () => {
 		});
 
 		it('should handle buffer overflow by dropping oldest logs', async () => {
-			const { transport, logger } = createTransportAndLogger({ maxBufferSize: 2, sendingEnabled: true, sendInterval: 1000 });
+			const { transport, logger } = createTransportAndLogger({ maxBufferSize: 2, isActive: true, sendInterval: 1000 });
 
 			transport.setSocket(socket);
 
@@ -104,7 +104,7 @@ describe('ApiLogsTransport', () => {
 		});
 
 		it('should not send logs if socket is not connected', async () => {
-			const { logger } = createTransportAndLogger({ sendingEnabled: true, sendInterval: 1000 });
+			const { logger } = createTransportAndLogger({ isActive: true, sendInterval: 1000 });
 			socket.connected = false;
 
 			logger.info('test');
@@ -114,13 +114,13 @@ describe('ApiLogsTransport', () => {
 		});
 
 		it('should not send logs if buffer is empty', async () => {
-			createTransportAndLogger({ sendingEnabled: true, sendInterval: 100 });
+			createTransportAndLogger({ isActive: true, sendInterval: 100 });
 			await sandbox.clock.tickAsync(1000);
 			expect(socket.emitWithAck.called).to.be.false;
 		});
 
 		it('should send logs and clear buffer', async () => {
-			const { logger } = createTransportAndLogger({ sendingEnabled: true, sendInterval: 100 });
+			const { logger } = createTransportAndLogger({ isActive: true, sendInterval: 100 });
 
 			logger.info('test');
 			await sandbox.clock.tickAsync(1000);
@@ -137,7 +137,7 @@ describe('ApiLogsTransport', () => {
 		});
 
 		it('should not indicate dropped logs if only sent logs are dropped before emit ack', async () => {
-			const { logger } = createTransportAndLogger({ sendingEnabled: true, sendInterval: 100, maxBufferSize: 3 });
+			const { logger } = createTransportAndLogger({ isActive: true, sendInterval: 100, maxBufferSize: 3 });
 
 			logger.info('test1');
 			logger.info('test2');
@@ -172,7 +172,7 @@ describe('ApiLogsTransport', () => {
 		});
 
 		it('should calculate dropped logs correctly when unsent logs are dropped before emit ack', async () => {
-			const { logger } = createTransportAndLogger({ sendingEnabled: true, sendInterval: 100, maxBufferSize: 2 });
+			const { logger } = createTransportAndLogger({ isActive: true, sendInterval: 100, maxBufferSize: 2 });
 
 			logger.info('test1');
 			logger.info('test2');
@@ -196,7 +196,7 @@ describe('ApiLogsTransport', () => {
 		});
 
 		it('should resend logs if emit ack fails until success', async () => {
-			const { logger } = createTransportAndLogger({ sendingEnabled: true, sendInterval: 100, maxBufferSize: 2 });
+			const { logger } = createTransportAndLogger({ isActive: true, sendInterval: 100, maxBufferSize: 2 });
 
 			setEmitWithAckResponse('error');
 
@@ -223,7 +223,7 @@ describe('ApiLogsTransport', () => {
 		});
 
 		it('should drop old logs when emit fails', async () => {
-			const { logger } = createTransportAndLogger({ sendingEnabled: true, sendInterval: 100, maxBufferSize: 2 });
+			const { logger } = createTransportAndLogger({ isActive: true, sendInterval: 100, maxBufferSize: 2 });
 
 			setEmitWithAckResponse('error');
 
@@ -255,7 +255,7 @@ describe('ApiLogsTransport', () => {
 
 		it('should send logs periodically', async () => {
 			const sendInterval = 5000;
-			const { logger } = createTransportAndLogger({ sendingEnabled: true, sendInterval });
+			const { logger } = createTransportAndLogger({ isActive: true, sendInterval });
 
 			logger.info('test');
 			expect(socket.emitWithAck.called).to.be.false;
@@ -271,13 +271,13 @@ describe('ApiLogsTransport', () => {
 
 	describe('updateSettings', () => {
 		it('should update settings and reset interval', async () => {
-			const { transport, logger } = createTransportAndLogger({ sendingEnabled: false, sendInterval: 10000 });
+			const { transport, logger } = createTransportAndLogger({ isActive: false, sendInterval: 10000 });
 
-			transport.updateSettings({ sendingEnabled: true, maxBufferSize: 10, sendInterval: 5000 });
-			const { sendingEnabled, bufferSize, sendInterval } = transport.getCurrentSettings();
+			transport.updateSettings({ isActive: true, maxBufferSize: 10, sendInterval: 5000 });
+			const { isActive, maxBufferSize, sendInterval } = transport.getCurrentSettings();
 
-			expect(sendingEnabled).to.be.true;
-			expect(bufferSize).to.equal(10);
+			expect(isActive).to.be.true;
+			expect(maxBufferSize).to.equal(10);
 			expect(sendInterval).to.equal(5000);
 
 			logger.info('test');
@@ -286,21 +286,21 @@ describe('ApiLogsTransport', () => {
 		});
 
 		it('should only update provided settings', () => {
-			const transport = new ApiLogsTransport({ sendingEnabled: false, maxBufferSize: 100, sendInterval: 10000 });
+			const transport = new ApiLogsTransport({ isActive: false, maxBufferSize: 100, sendInterval: 10000 });
 
-			transport.updateSettings({ sendingEnabled: true });
-			const { sendingEnabled, bufferSize, sendInterval } = transport.getCurrentSettings();
+			transport.updateSettings({ isActive: true });
+			const { isActive, maxBufferSize, sendInterval } = transport.getCurrentSettings();
 
-			expect(sendingEnabled).to.be.true;
-			expect(bufferSize).to.equal(100);
+			expect(isActive).to.be.true;
+			expect(maxBufferSize).to.equal(100);
 			expect(sendInterval).to.equal(10000);
 		});
 
 		it('should not emit after disabling sending', async () => {
-			const { transport, logger } = createTransportAndLogger({ sendingEnabled: true, sendInterval: 10000 });
+			const { transport, logger } = createTransportAndLogger({ isActive: true, sendInterval: 10000 });
 
 			logger.info('test');
-			transport.updateSettings({ sendingEnabled: false });
+			transport.updateSettings({ isActive: false });
 
 			await sandbox.clock.tickAsync(10000);
 			expect(socket.emitWithAck.called).to.be.false;
