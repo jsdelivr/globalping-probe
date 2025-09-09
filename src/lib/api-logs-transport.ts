@@ -44,7 +44,7 @@ class ApiLogsTransport extends Transport {
 		const bufferOverflow = bufferLength - this.maxBufferSize;
 
 		if (bufferOverflow > 0) {
-			this.logBuffer = this.logBuffer.slice(bufferOverflow);
+			this.logBuffer.splice(0, bufferOverflow);
 			this.droppedLogs += bufferOverflow;
 		}
 
