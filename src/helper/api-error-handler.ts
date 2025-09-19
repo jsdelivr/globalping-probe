@@ -25,7 +25,7 @@ class ErrorHandler {
 
 
 		if (error.message.startsWith('invalid probe version')) {
-			logger.debug('Detected an outdated probe. Restarting.');
+			logger.info('Detected an outdated probe. Restarting.');
 			process.exit();
 		}
 

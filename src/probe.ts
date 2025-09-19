@@ -111,7 +111,7 @@ function connect (workerId?: number) {
 
 	socket
 		.on('probe:sigkill', () => {
-			logger.debug(`'probe:sigkill' requested. Killing the probe.`);
+			logger.info(`Probe restart requested by the API. Exiting...`);
 			process.exit();
 		})
 		.on('connect', () => {
@@ -133,7 +133,7 @@ function connect (workerId?: number) {
 
 			const { measurementId, testId, measurement } = data;
 
-			logger.debug(`'${measurement.type}' request ${measurementId} received.`);
+			logger.debug(`${measurement.type} request ${measurementId} received.`);
 
 			socket.emit('probe:measurement:ack', null, async () => {
 				const handler = handlersMap.get(measurement.type);
@@ -157,12 +157,12 @@ function connect (workerId?: number) {
 		.on('api:logs-transport:set', (data: ApiTransportSettings) => apiLogsTransport.updateSettings(data));
 
 	process.on('SIGTERM', () => {
-		logger.debug('SIGTERM received.');
+		logger.info('SIGTERM received.');
 
 		statusManager.stop('sigterm');
 
 		const closeTimeout = setTimeout(() => {
-			logger.debug('SIGTERM timeout. Force close.');
+			logger.warn('SIGTERM timeout. Force closing.');
 			forceCloseProcess();
 		}, 60_000);
 
