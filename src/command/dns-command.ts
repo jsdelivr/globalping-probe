@@ -103,7 +103,7 @@ export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
 export class DnsCommand implements CommandInterface<DnsOptions> {
 	constructor (private readonly cmd: typeof dnsCmd) {}
 
-	async run (socket: Socket, measurementId: string, testId: string, options: DnsOptions): Promise<void> {
+	async run (socket: Socket, measurementId: string, testId: string, options: DnsOptions): Promise<unknown> {
 		const validationResult = dnsOptionsSchema.validate(options);
 
 		if (validationResult.error) {
@@ -190,7 +190,9 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			};
 		}
 
-		buffer.pushResult(this.toJsonOutput(result, cmdOptions.trace));
+		const out = this.toJsonOutput(result, cmdOptions.trace);
+		buffer.pushResult(out);
+		return out;
 	}
 
 	private validatePartialResult (parsedResult: Error | DnsParseResponseClassic | DnsParseResponseTrace, cmd: ExecaChildProcess, options: DnsOptions): boolean {

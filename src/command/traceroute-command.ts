@@ -101,7 +101,7 @@ export const traceCmd = (options: TraceOptions): ExecaChildProcess => {
 export class TracerouteCommand implements CommandInterface<TraceOptions> {
 	constructor (private readonly cmd: typeof traceCmd) {}
 
-	async run (socket: Socket, measurementId: string, testId: string, options: TraceOptions): Promise<void> {
+	async run (socket: Socket, measurementId: string, testId: string, options: TraceOptions): Promise<unknown> {
 		const validationResult = traceOptionsSchema.validate(options);
 
 		if (validationResult.error) {
@@ -169,6 +169,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		}
 
 		buffer.pushResult(result);
+		return result;
 	}
 
 	private validatePartialResult (parsedOutput: ParsedOutput, cmd: ExecaChildProcess): boolean {

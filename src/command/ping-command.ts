@@ -83,7 +83,7 @@ export const pingCmd = (options: PingOptions): ExecaChildProcess => {
 };
 
 export class PingCommand implements CommandInterface<PingOptions> {
-	async run (socket: Socket, measurementId: string, testId: string, options: PingOptions): Promise<void> {
+	async run (socket: Socket, measurementId: string, testId: string, options: PingOptions): Promise<unknown> {
 		const validationResult = pingOptionsSchema.validate(options);
 
 		if (validationResult.error) {
@@ -97,7 +97,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			: this.runIcmp(pingCmd, socket, measurementId, testId, cmdOptions);
 	}
 
-	async runIcmp (cmdFn: typeof pingCmd, socket: Socket, measurementId: string, testId: string, cmdOptions: PingOptions): Promise<void> {
+	async runIcmp (cmdFn: typeof pingCmd, socket: Socket, measurementId: string, testId: string, cmdOptions: PingOptions): Promise<unknown> {
 		const buffer = new ProgressBuffer(socket, testId, measurementId, 'append');
 		let isResultPrivate = false;
 		let result: PingParseOutput;
@@ -158,10 +158,12 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			};
 		}
 
-		buffer.pushResult(this.toJsonOutput(result));
+		const out = this.toJsonOutput(result);
+		buffer.pushResult(out);
+		return out;
 	}
 
-	async runTcp (cmdFn: typeof tcpPing, socket: Socket, measurementId: string, testId: string, cmdOptions: PingOptions): Promise<void> {
+	async runTcp (cmdFn: typeof tcpPing, socket: Socket, measurementId: string, testId: string, cmdOptions: PingOptions): Promise<unknown> {
 		const buffer = new ProgressBuffer(socket, testId, measurementId, 'diff');
 		const progress: Array<TcpPingData> = [];
 
@@ -176,7 +178,9 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		const tcpPingResult = await cmdFn({ ...cmdOptions, timeout: 10_000, interval: 500 }, progressHandler);
 		const result = formatTcpPingResult(tcpPingResult);
 
-		buffer.pushResult(this.toJsonOutput(result));
+		const out = this.toJsonOutput(result);
+		buffer.pushResult(out);
+		return out;
 	}
 
 	private validatePartialResult (parsedOutput: PingParseOutput, cmd: ExecaChildProcess): boolean {
