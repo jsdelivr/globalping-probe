@@ -184,7 +184,7 @@ const isTlsSocket = (socket: unknown): socket is TLSSocket => Boolean((socket as
 export class HttpCommand implements CommandInterface<HttpOptions> {
 	constructor (private readonly cmd: typeof httpCmd) {}
 
-	async run (socket: Socket, measurementId: string, testId: string, options: HttpOptions): Promise<void> {
+	async run (socket: Socket, measurementId: string, testId: string, options: HttpOptions): Promise<unknown> {
 		const validationResult = httpOptionsSchema.validate(options);
 
 		if (validationResult.error) {
@@ -198,7 +198,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		let result = getInitialResult();
 		let tlsDetails: TlsDetails | undefined;
 
-		const respond = (resolveStream: () => void) => {
+		const respond = (resolveStream: (out: unknown) => void) => {
 			result.resolvedAddress = stream.ip ?? '';
 
 			if (result.status === 'finished') {
@@ -220,7 +220,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.rawHeaders}\n\n${result.rawBody}`;
 			}
 
-			buffer.pushResult(this.toJsonOutput({
+			const out = this.toJsonOutput({
 				status: result.status,
 				resolvedAddress: result.resolvedAddress,
 				headers: result.headers,
@@ -232,9 +232,10 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 				statusCodeName: result.statusCodeName,
 				timings: result.timings,
 				tls: result.tls,
-			}));
+			});
 
-			resolveStream();
+			buffer.pushResult(out);
+			resolveStream(out);
 		};
 
 		const captureTlsDetails = (socket: TLSSocket): TlsDetails | undefined => {
@@ -308,8 +309,8 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		};
 
 		const pStream = new Promise((_resolve) => {
-			const resolve = () => {
-				_resolve(null);
+			const resolve = (out: unknown) => {
+				_resolve(out);
 			};
 
 			stream.on('data', onData);
@@ -336,7 +337,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 			});
 		});
 
-		await pStream;
+		return pStream;
 	}
 
 	private toJsonOutput (input: Output): OutputJson {

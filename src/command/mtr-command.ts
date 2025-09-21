@@ -84,7 +84,7 @@ export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
 export class MtrCommand implements CommandInterface<MtrOptions> {
 	constructor (private readonly cmd: typeof mtrCmd, readonly dnsResolver: DnsResolver = dns.promises.resolve) {}
 
-	async run (socket: Socket, measurementId: string, testId: string, options: MtrOptions): Promise<void> {
+	async run (socket: Socket, measurementId: string, testId: string, options: MtrOptions): Promise<unknown> {
 		const validationResult = mtrOptionsSchema.validate(options);
 
 		if (validationResult.error) {
@@ -153,7 +153,9 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			!result.rawOutput && (result.rawOutput = 'Test failed. Please try again.');
 		}
 
-		buffer.pushResult(this.toJsonOutput(result));
+		const out = this.toJsonOutput(result);
+		buffer.pushResult(out);
+		return out;
 	}
 
 	async parseResult (data: string[], isFinalResult = false): Promise<ResultType> {

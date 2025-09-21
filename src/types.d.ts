@@ -12,7 +12,7 @@ type MeasurementRequest = {
 };
 
 interface CommandInterface<OPT> {
-	run(socket: Socket, measurementId: string, testId: string, options: OPT): Promise<void>;
+	run(socket: Socket, measurementId: string, testId: string, options: OPT): Promise<unknown>;
 }
 
 type Probe = {

@@ -58,6 +58,7 @@ await loadAllDeps();
 const logger = scopedLogger('general');
 const handlersMap = new Map<string, CommandInterface<unknown>>();
 const probeUuid = process.env['GP_PROBE_UUID'] || randomUUID();
+const logMeasurementResults = process.env['GP_LOG_MEASUREMENT_RESULTS'] === 'true';
 
 handlersMap.set('ping', process.env['FAKE_COMMANDS'] ? new FakePingCommand() : new PingCommand());
 handlersMap.set('mtr', process.env['FAKE_COMMANDS'] ? new FakeMtrCommand() : new MtrCommand(mtrCmd));
@@ -145,7 +146,8 @@ function connect (workerId?: number) {
 				worker.jobs.set(measurementId, Date.now());
 
 				try {
-					await handler.run(socket, measurementId, testId, measurement);
+					const out = await handler.run(socket, measurementId, testId, measurement);
+					logMeasurementResults && logger.silly(`${measurement.type} request ${measurementId} result: ${JSON.stringify(out)}`);
 				} catch (error: unknown) {
 					handleTestError(error, socket, measurementId, testId);
 				} finally {

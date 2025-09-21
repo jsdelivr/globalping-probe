@@ -4,7 +4,8 @@ import { inspect } from 'node:util';
 import * as winston from 'winston';
 import ApiLogsTransport from './api-logs-transport.js';
 
-export const apiLogsTransport = new ApiLogsTransport();
+export const apiLogsTransport = new ApiLogsTransport({ level: 'debug' });
+const consoleLogLevel = getConsoleLogLevel();
 
 const objectFormatter = (object: Record<string, any>) => {
 	const entries = Object.entries(object).map(([ key, value ]) => {
@@ -42,7 +43,7 @@ const logger = winston.createLogger({
 		}),
 	),
 	transports: [
-		new winston.transports.Console(),
+		new winston.transports.Console({ level: consoleLogLevel }),
 		apiLogsTransport,
 	],
 });
@@ -50,3 +51,13 @@ const logger = winston.createLogger({
 export const scopedLogger = (scope: string): winston.Logger => logger.child({ scope });
 
 apiLogsTransport.setLogger(scopedLogger('api-logs-transport'));
+
+function getConsoleLogLevel () {
+	const logLevel = process.env['GP_LOG_LEVEL']?.toLowerCase();
+
+	if (logLevel && Object.keys(winston.config.npm.levels).includes(logLevel)) {
+		return logLevel;
+	}
+
+	return 'silly';
+}
