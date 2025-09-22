@@ -43,8 +43,7 @@ class AltIpsManager {
 	}
 
 
-	async refreshAltIps (): Promise<void> {
-		const acceptedIps = [ this.ip ];
+	private async refreshAltIps (): Promise<void> {
 		const rejectedIps: string[] = [];
 		const addresses = _(os.networkInterfaces())
 			.values()
@@ -73,21 +72,21 @@ class AltIpsManager {
 			}
 		});
 
-		const uniqAcceptedIps = _(acceptedIps).uniq().value();
-		const uniqRejectedIps = _(rejectedIps).uniq().value();
+		this.socket.emit('probe:alt-ips', ipsToTokens, (addedAltIps: string[]) => {
+			const uniqAcceptedIps = [ this.ip, ...addedAltIps ];
+			const uniqRejectedIps = _(rejectedIps).uniq().value();
 
-		this.socket.emit('probe:alt-ips', ipsToTokens);
+			if (uniqRejectedIps.length > 0) {
+				altIpsLogger.info(`IP ${pluralize('address', 'addresses', uniqRejectedIps.length)} rejected by the API: ${uniqRejectedIps.join(', ')}.`);
+			}
 
-		if (uniqRejectedIps.length > 0) {
-			altIpsLogger.info(`IP ${pluralize('address', 'addresses', uniqRejectedIps.length)} rejected by the API: ${uniqRejectedIps.join(', ')}.`);
-		}
-
-		if (uniqAcceptedIps.length > 0) {
-			mainLogger.info(`IP ${pluralize('address', 'addresses', uniqAcceptedIps.length)} of the probe: ${uniqAcceptedIps.join(', ')}.`);
-		}
+			if (uniqAcceptedIps.length > 0) {
+				mainLogger.info(`IP ${pluralize('address', 'addresses', uniqAcceptedIps.length)} of the probe: ${uniqAcceptedIps.join(', ')}.`);
+			}
+		});
 	}
 
-	async getAltIpToken (ip: string, dnsLookupIpVersion: 4 | 6) {
+	private async getAltIpToken (ip: string, dnsLookupIpVersion: 4 | 6) {
 		const httpHost = config.get<string>('api.httpHost');
 		const response = await got.post<{ ip: string; token: string }>(`${httpHost}/alternative-ip`, {
 			localAddress: ip,
