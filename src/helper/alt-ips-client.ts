@@ -10,7 +10,7 @@ import { pluralize } from '../lib/util.js';
 const mainLogger = scopedLogger('general');
 const altIpsLogger = scopedLogger('api:connect:alt-ips-handler');
 
-class AltIpsManager {
+class AltIpsClient {
 	private readonly INTERVAL_TIME = 10 * 60 * 1000;
 
 	socket: Socket;
@@ -106,12 +106,12 @@ class AltIpsManager {
 	}
 }
 
-let altIpsManager: AltIpsManager | null = null;
+let altIpsClient: AltIpsClient | null = null;
 
 export const ipHandler = (socket: Socket) => ({ ip }: { ip: string }) => {
-	if (!altIpsManager) {
-		altIpsManager = new AltIpsManager(socket, ip);
+	if (!altIpsClient) {
+		altIpsClient = new AltIpsClient(socket, ip);
 	} else {
-		altIpsManager.updateConfig(socket, ip);
+		altIpsClient.updateConfig(socket, ip);
 	}
 };

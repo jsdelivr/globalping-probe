@@ -15,7 +15,7 @@ import { ApiTransportSettings } from './lib/api-logs-transport.js';
 import { initErrorHandler } from './helper/api-error-handler.js';
 import { handleTestError } from './helper/test-error-handler.js';
 import { apiConnectLocationHandler } from './helper/api-connect-handler.js';
-import { ipHandler } from './helper/alt-ips-manager.js';
+import { ipHandler } from './helper/alt-ips-client.js';
 import { adoptionStatusHandler } from './helper/adoption-status-handler.js';
 import { dnsCmd, DnsCommand } from './command/dns-command.js';
 import { pingCmd, PingCommand } from './command/ping-command.js';
