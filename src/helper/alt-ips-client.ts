@@ -72,9 +72,9 @@ class AltIpsClient {
 			}
 		});
 
-		this.socket.emit('probe:alt-ips', ipsToTokens, (addedAltIps: string[]) => {
+		this.socket.emit('probe:alt-ips', ipsToTokens, ({ addedAltIps, rejectedAltIps }: { addedAltIps: string[]; rejectedAltIps: string[] }) => {
 			const uniqAcceptedIps = [ this.ip, ...addedAltIps ];
-			const uniqRejectedIps = _(rejectedIps).uniq().value();
+			const uniqRejectedIps = _([ ...rejectedIps, ...rejectedAltIps ]).uniq().value();
 
 			if (uniqRejectedIps.length > 0) {
 				altIpsLogger.info(`IP ${pluralize('address', 'addresses', uniqRejectedIps.length)} rejected by the API: ${uniqRejectedIps.join(', ')}.`);
