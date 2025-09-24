@@ -12,10 +12,10 @@ const altIpsLogger = scopedLogger('api:connect:alt-ips-handler');
 
 export class AltIpsClient {
 	private readonly INTERVAL_TIME = 10 * 60 * 1000;
-
-	socket: Socket;
-	ip: string;
 	private timer?: NodeJS.Timeout;
+	private socket: Socket;
+	private ip: string;
+	private currentIps: string[] = [];
 
 	constructor (socket: Socket, ip: string) {
 		this.socket = socket;
@@ -72,14 +72,16 @@ export class AltIpsClient {
 		});
 
 		this.socket.emit('probe:alt-ips', ipsToTokens, ({ addedAltIps, rejectedAltIps }: { addedAltIps: string[]; rejectedAltIps: string[] }) => {
-			const uniqAcceptedIps = [ this.ip, ...addedAltIps ];
+			const uniqAcceptedIps = [ this.ip, ...addedAltIps.sort() ];
 			const uniqRejectedIps = _([ ...rejectedIps, ...rejectedAltIps ]).uniq().value();
+			const ipsChanged = !_.isEqual(uniqAcceptedIps, this.currentIps);
+			this.currentIps = uniqAcceptedIps;
 
-			if (uniqRejectedIps.length > 0) {
+			if (uniqRejectedIps.length > 0 && ipsChanged) {
 				altIpsLogger.info(`IP ${pluralize('address', 'addresses', uniqRejectedIps.length)} rejected by the API: ${uniqRejectedIps.join(', ')}.`);
 			}
 
-			if (uniqAcceptedIps.length > 0) {
+			if (uniqAcceptedIps.length > 0 && ipsChanged) {
 				mainLogger.info(`IP ${pluralize('address', 'addresses', uniqAcceptedIps.length)} of the probe: ${uniqAcceptedIps.join(', ')}.`);
 			}
 		});
