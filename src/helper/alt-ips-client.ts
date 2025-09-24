@@ -43,7 +43,6 @@ export class AltIpsClient {
 
 
 	async refreshAltIps (): Promise<void> {
-		const rejectedIps: string[] = [];
 		const addresses = _(os.networkInterfaces())
 			.values()
 			.filter(is.truthy)
@@ -55,16 +54,18 @@ export class AltIpsClient {
 			.value();
 
 		const results = await Promise.allSettled(addresses.map(({ address, family }) => this.getAltIpToken(address, family === 'IPv6' ? 6 : 4)));
-		const ipsToTokens: Record<string, string> = {};
 
+		const ipsToTokens: Record<string, string> = {};
+		const rejectedIps: string[] = [];
+		const requestErrors: unknown[] = [];
 		results.forEach((result, index) => {
 			if (result.status === 'fulfilled') {
 				ipsToTokens[result.value.ip] = result.value.token;
 			} else {
 				if (!(result.reason instanceof RequestError)) {
-					altIpsLogger.warn(result.reason);
+					requestErrors.push(result.reason);
 				} else if (result.reason.response?.statusCode !== 400) {
-					altIpsLogger.warn(`${result.reason.message} (via ${result.reason.options.localAddress}).`);
+					requestErrors.push(`${result.reason.message} (via ${result.reason.options.localAddress}).`);
 				} else {
 					rejectedIps.push(addresses[index]!.address);
 				}
@@ -84,6 +85,10 @@ export class AltIpsClient {
 			if (uniqAcceptedIps.length > 0 && ipsChanged) {
 				mainLogger.info(`IP ${pluralize('address', 'addresses', uniqAcceptedIps.length)} of the probe: ${uniqAcceptedIps.join(', ')}.`);
 			}
+
+			if (requestErrors.length > 0 && ipsChanged) {
+				requestErrors.forEach(error => altIpsLogger.warn(error));
+			}
 		});
 	}
 
@@ -93,7 +98,7 @@ export class AltIpsClient {
 			localAddress: ip,
 			dnsLookupIpVersion,
 			retry: {
-				limit: 2,
+				limit: 1,
 				methods: [ 'POST' ],
 				statusCodes: [ 504 ],
 			},
