@@ -163,7 +163,6 @@ let statusManager: StatusManager;
 
 export const initStatusManager = (socket: Socket, pingCmd: (options: PingOptions) => ExecaChildProcess) => {
 	statusManager = new StatusManager(socket, pingCmd);
-	statusManager.start().catch(error => logger.error(error));
 	return statusManager;
 };
 

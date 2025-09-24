@@ -115,9 +115,10 @@ function connect (workerId?: number) {
 			logger.info(`Probe restart requested by the API. Exiting...`);
 			process.exit();
 		})
-		.on('connect', () => {
-			statusManager.sendStatus();
+		.on('connect', async () => {
 			logger.debug('Connection to API established.');
+			statusManager.sendStatus();
+			await statusManager.start();
 		})
 		.on('disconnect', errorHandler.handleDisconnect)
 		.on('connect_error', errorHandler.connectError)
