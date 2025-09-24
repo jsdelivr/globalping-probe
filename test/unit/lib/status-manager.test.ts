@@ -4,15 +4,16 @@ import { expect } from 'chai';
 import * as td from 'testdouble';
 import type { ExecaChildProcess } from 'execa';
 import { getCmdMock, useSandboxWithFakeTimers } from '../../utils.js';
-import type { StatusManager } from '../../../src/lib/status-manager.js';
+import type { StatusManager as StatusManagerType } from '../../../src/lib/status-manager.js';
 import type { PingOptions } from '../../../src/command/ping-command.js';
 
 const pingSuccess = getCmdMock('ping-success-linux');
 const pingPacketLoss = getCmdMock('ping-packet-loss-linux');
 
 describe('StatusManager', () => {
-	let initStatusManager: (socket: Socket, pingCmd: (options: PingOptions) => ExecaChildProcess) => StatusManager;
-	let getStatusManager: () => StatusManager;
+	let StatusManager: typeof StatusManagerType;
+	let initStatusManager: (socket: Socket, pingCmd: (options: PingOptions) => ExecaChildProcess) => StatusManagerType;
+	let getStatusManager: () => StatusManagerType;
 	let sandbox: sinon.SinonSandbox;
 	let socket: sinon.SinonStubbedInstance<Socket>;
 	const pingCmd = sinon.stub().resolves({ stdout: pingSuccess });
@@ -20,7 +21,7 @@ describe('StatusManager', () => {
 
 	before(async () => {
 		await td.replaceEsm('../../../src/lib/dependencies.ts', { hasRequired });
-		({ initStatusManager, getStatusManager } = await import('../../../src/lib/status-manager.js'));
+		({ StatusManager, initStatusManager, getStatusManager } = await import('../../../src/lib/status-manager.js'));
 	});
 
 	beforeEach(() => {
@@ -37,7 +38,7 @@ describe('StatusManager', () => {
 	});
 
 	it('should create a manager with the `initializing` status, `isIpv4Supported` and `isIpv6Supported` are false', () => {
-		const statusManager = initStatusManager(socket, pingCmd);
+		const statusManager = new StatusManager(socket, pingCmd);
 		expect(statusManager.getStatus()).to.equal('initializing');
 		expect(statusManager.getIsIPv4Supported()).to.equal(false);
 		expect(statusManager.getIsIPv6Supported()).to.equal(false);
@@ -45,7 +46,7 @@ describe('StatusManager', () => {
 	});
 
 	it('should change status to `unbuffer-missing` if unbuffer is not available', async () => {
-		const statusManager = initStatusManager(socket, pingCmd);
+		const statusManager = new StatusManager(socket, pingCmd);
 		hasRequired.resolves(false);
 		await statusManager.start();
 		expect(statusManager.getStatus()).to.equal('unbuffer-missing');
@@ -56,7 +57,7 @@ describe('StatusManager', () => {
 	});
 
 	it('should change status to `ping-test-failed` if unbuffer is available but ping test failed', async () => {
-		const statusManager = initStatusManager(socket, pingCmd);
+		const statusManager = new StatusManager(socket, pingCmd);
 		pingCmd.rejects({ stdout: 'host not found' });
 		await statusManager.start();
 		expect(pingCmd.callCount).to.equal(6);
@@ -74,7 +75,7 @@ describe('StatusManager', () => {
 	});
 
 	it('should change status to `ping-test-failed` if 2 of 3 ping tests rejects, no ip version is supported', async () => {
-		const statusManager = initStatusManager(socket, pingCmd);
+		const statusManager = new StatusManager(socket, pingCmd);
 		pingCmd.onFirstCall().rejects({ stdout: 'host not found' });
 		pingCmd.onSecondCall().rejects({ stdout: 'host not found' });
 		pingCmd.onCall(4).rejects({ stdout: 'host not found' });
@@ -89,7 +90,7 @@ describe('StatusManager', () => {
 	});
 
 	it('should change status to `ready` if 1 of 3 ping tests rejects, both ip versions are supported', async () => {
-		const statusManager = initStatusManager(socket, pingCmd);
+		const statusManager = new StatusManager(socket, pingCmd);
 		pingCmd.onFirstCall().rejects({ stdout: 'host not found' });
 		pingCmd.onCall(4).rejects({ stdout: 'host not found' });
 		await statusManager.start();
@@ -102,7 +103,7 @@ describe('StatusManager', () => {
 	});
 
 	it('should change status to `ping-test-failed` if 2 of 3 ping tests resolves with packet loss', async () => {
-		const statusManager = initStatusManager(socket, pingCmd);
+		const statusManager = new StatusManager(socket, pingCmd);
 		pingCmd.onFirstCall().resolves({ stdout: pingPacketLoss });
 		pingCmd.onSecondCall().resolves({ stdout: pingPacketLoss });
 		pingCmd.onCall(4).resolves({ stdout: pingPacketLoss });
@@ -117,7 +118,7 @@ describe('StatusManager', () => {
 	});
 
 	it('should change status to `ready` if 1 of 3 ping tests resolves with packet loss', async () => {
-		const statusManager = initStatusManager(socket, pingCmd);
+		const statusManager = new StatusManager(socket, pingCmd);
 		pingCmd.onFirstCall().resolves({ stdout: pingPacketLoss });
 		pingCmd.onCall(4).resolves({ stdout: pingPacketLoss });
 		await statusManager.start();
@@ -130,7 +131,7 @@ describe('StatusManager', () => {
 	});
 
 	it('should change status to `ready` if 3 of 3 ping tests resolves', async () => {
-		const statusManager = initStatusManager(socket, pingCmd);
+		const statusManager = new StatusManager(socket, pingCmd);
 		await statusManager.start();
 		expect(pingCmd.callCount).to.equal(6);
 		expect(pingCmd.args[0]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'a.gtld-servers.net', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
@@ -147,7 +148,7 @@ describe('StatusManager', () => {
 	});
 
 	it('should run check in a fixed intervals and do emit with a status every time', async () => {
-		const statusManager = initStatusManager(socket, pingCmd);
+		const statusManager = new StatusManager(socket, pingCmd);
 		expect(pingCmd.callCount).to.equal(0);
 		await statusManager.start();
 		expect(pingCmd.callCount).to.equal(6);
@@ -161,7 +162,7 @@ describe('StatusManager', () => {
 	});
 
 	it('should update the status during regular checks', async () => {
-		const statusManager = initStatusManager(socket, pingCmd);
+		const statusManager = new StatusManager(socket, pingCmd);
 
 		await statusManager.start();
 		expect(statusManager.getStatus()).to.equal('ready');
@@ -194,7 +195,7 @@ describe('StatusManager', () => {
 	});
 
 	it('should update the status during regular checks, different values for ipv4 and ipv6', async () => {
-		const statusManager = initStatusManager(socket, pingCmd);
+		const statusManager = new StatusManager(socket, pingCmd);
 
 		await statusManager.start();
 		expect(statusManager.getStatus()).to.equal('ready');
@@ -239,7 +240,7 @@ describe('StatusManager', () => {
 	});
 
 	it('should stop updating the status during regular checks after .stop() call', async () => {
-		const statusManager = initStatusManager(socket, pingCmd);
+		const statusManager = new StatusManager(socket, pingCmd);
 
 		await statusManager.start();
 		expect(statusManager.getStatus()).to.equal('ready');
