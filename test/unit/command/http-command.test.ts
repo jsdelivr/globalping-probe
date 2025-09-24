@@ -83,6 +83,7 @@ describe('http command', () => {
 
 	afterEach(() => {
 		sandbox.restore();
+		nock.cleanAll();
 	});
 
 	describe('url builder', () => {
