@@ -53,41 +53,35 @@ export class AltIpsClient {
 			.filter(address => !address.address.startsWith('169.254.')) // filter out link-local addresses
 			.value();
 
-		const results = await Promise.allSettled(addresses.map(({ address, family }) => this.getAltIpToken(address, family === 'IPv6' ? 6 : 4)));
+		const results = await Promise.allSettled([].map(({ address, family }) => this.getAltIpToken(address, family === 'IPv6' ? 6 : 4)));
 
-		const ipsToTokens: Record<string, string> = {};
-		const rejectedIps: string[] = [];
-		const requestErrors: unknown[] = [];
+		const ipsToTokens: [string, string][] = [];
+		const rejectedLocalIpsToResons: Record<string, string> = {};
 		results.forEach((result, index) => {
 			if (result.status === 'fulfilled') {
-				ipsToTokens[result.value.ip] = result.value.token;
+				ipsToTokens.push([ result.value.ip, result.value.token ]);
 			} else {
-				if (!(result.reason instanceof RequestError)) {
-					requestErrors.push(result.reason);
-				} else if (result.reason.response?.statusCode !== 400) {
-					requestErrors.push(`${result.reason.message} (via ${result.reason.options.localAddress}).`);
+				if (result.reason instanceof RequestError) {
+					rejectedLocalIpsToResons[`${addresses[index]!.address} (local)`] = result.reason.message;
 				} else {
-					rejectedIps.push(addresses[index]!.address);
+					rejectedLocalIpsToResons[`${addresses[index]!.address} (local)`] = (result.reason as Error).toString();
 				}
 			}
 		});
 
-		this.socket.emit('probe:alt-ips', ipsToTokens, ({ addedAltIps, rejectedAltIps }: { addedAltIps: string[]; rejectedAltIps: string[] }) => {
+		this.socket.emit('probe:alt-ips', ipsToTokens, ({ addedAltIps, rejectedIpsToResons }: { addedAltIps: string[]; rejectedIpsToResons: Record<string, string> }) => {
 			const uniqAcceptedIps = [ this.ip, ...addedAltIps.sort() ];
-			const uniqRejectedIps = _([ ...rejectedIps, ...rejectedAltIps ]).uniq().value();
+			const uniqRejectedIps = { ...rejectedLocalIpsToResons, ...rejectedIpsToResons };
 			const ipsChanged = !_.isEqual(uniqAcceptedIps, this.currentIps);
 			this.currentIps = uniqAcceptedIps;
 
-			if (uniqRejectedIps.length > 0 && ipsChanged) {
-				altIpsLogger.info(`IP ${pluralize('address', 'addresses', uniqRejectedIps.length)} rejected by the API: ${uniqRejectedIps.join(', ')}.`);
+			if (!_.isEmpty(uniqRejectedIps) && ipsChanged) {
+				altIpsLogger.warn(`${pluralize('IP', 'IPs', Object.keys(uniqRejectedIps).length)} rejected by the API: 
+${Object.entries(uniqRejectedIps).map(([ ip, error ]) => `${ip}: ${error}`).join('\n')}`);
 			}
 
 			if (uniqAcceptedIps.length > 0 && ipsChanged) {
-				mainLogger.info(`IP ${pluralize('address', 'addresses', uniqAcceptedIps.length)} of the probe: ${uniqAcceptedIps.join(', ')}.`);
-			}
-
-			if (requestErrors.length > 0 && ipsChanged) {
-				requestErrors.forEach(error => altIpsLogger.warn(error));
+				mainLogger.info(`${pluralize('IP', 'IPs', uniqAcceptedIps.length)} of the probe: ${uniqAcceptedIps.join(', ')}.`);
 			}
 		});
 	}
