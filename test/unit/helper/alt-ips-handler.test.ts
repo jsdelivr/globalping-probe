@@ -126,11 +126,11 @@ describe('apiConnectAltIpsHandler', async () => {
 		expect(emit.callCount).to.equal(1);
 		expect(emit.firstCall.args[0]).to.equal('probe:alt-ips');
 
-		expect(emit.firstCall.args[1]).to.deep.equal({
-			'2.2.2.2': 'token-2.2.2.2',
-			'3.3.3.3': 'token-3.3.3.3',
-			'44::44:44': 'token-44::44:44',
-		});
+		expect(emit.firstCall.args[1]).to.deep.equal([
+			[ '2.2.2.2', 'token-2.2.2.2' ],
+			[ '3.3.3.3', 'token-3.3.3.3' ],
+			[ '44::44:44', 'token-44::44:44' ],
+		]);
 
 		expect(nock.isDone()).to.equal(true);
 	});

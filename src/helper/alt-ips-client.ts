@@ -53,7 +53,7 @@ export class AltIpsClient {
 			.filter(address => !address.address.startsWith('169.254.')) // filter out link-local addresses
 			.value();
 
-		const results = await Promise.allSettled([].map(({ address, family }) => this.getAltIpToken(address, family === 'IPv6' ? 6 : 4)));
+		const results = await Promise.allSettled(addresses.map(({ address, family }) => this.getAltIpToken(address, family === 'IPv6' ? 6 : 4)));
 
 		const ipsToTokens: [string, string][] = [];
 		const rejectedLocalIpsToResons: Record<string, string> = {};
