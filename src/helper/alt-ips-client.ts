@@ -71,8 +71,9 @@ export class AltIpsClient {
 		});
 
 		this.socket.emit('probe:alt-ips', ipsToTokens, ({ addedAltIps, rejectedIpsToResons }: { addedAltIps: string[]; rejectedIpsToResons: Record<string, string> }) => {
-			const rejectedIps = { ...rejectedLocalIpsToResons, ...rejectedIpsToResons };
 			const uniqAcceptedIps = [ this.ip, ...addedAltIps.sort() ];
+			const rejectedIps = { ...rejectedLocalIpsToResons, ...rejectedIpsToResons };
+			uniqAcceptedIps.forEach(ip => delete rejectedIps[ip]);
 			const uniqRejectedIps = Object.keys(rejectedIps).sort();
 			const ipsChanged = !_.isEqual(uniqAcceptedIps, this.currentIps) || !_.isEqual(uniqRejectedIps, this.currentRejectedIps);
 			this.currentIps = uniqAcceptedIps;
