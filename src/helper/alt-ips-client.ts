@@ -16,6 +16,7 @@ export class AltIpsClient {
 	private socket: Socket;
 	private ip: string;
 	private currentIps: string[] = [];
+	private currentRejectedIps: string[] = [];
 
 	constructor (socket: Socket, ip: string) {
 		this.socket = socket;
@@ -70,14 +71,16 @@ export class AltIpsClient {
 		});
 
 		this.socket.emit('probe:alt-ips', ipsToTokens, ({ addedAltIps, rejectedIpsToResons }: { addedAltIps: string[]; rejectedIpsToResons: Record<string, string> }) => {
+			const rejectedIps = { ...rejectedLocalIpsToResons, ...rejectedIpsToResons };
 			const uniqAcceptedIps = [ this.ip, ...addedAltIps.sort() ];
-			const uniqRejectedIps = { ...rejectedLocalIpsToResons, ...rejectedIpsToResons };
-			const ipsChanged = !_.isEqual(uniqAcceptedIps, this.currentIps);
+			const uniqRejectedIps = Object.keys(rejectedIps).sort();
+			const ipsChanged = !_.isEqual(uniqAcceptedIps, this.currentIps) || !_.isEqual(uniqRejectedIps, this.currentRejectedIps);
 			this.currentIps = uniqAcceptedIps;
+			this.currentRejectedIps = uniqRejectedIps;
 
-			if (!_.isEmpty(uniqRejectedIps) && ipsChanged) {
-				altIpsLogger.warn(`${pluralize('IP', 'IPs', Object.keys(uniqRejectedIps).length)} rejected by the API: 
-${Object.entries(uniqRejectedIps).map(([ ip, error ]) => `${ip}: ${error}`).join('\n')}`);
+			if (!_.isEmpty(rejectedIps) && ipsChanged) {
+				altIpsLogger.warn(`${pluralize('IP', 'IPs', Object.keys(rejectedIps).length)} rejected by the API: 
+${Object.entries(rejectedIps).map(([ ip, error ]) => `${ip}: ${error}`).join('\n')}`);
 			}
 
 			if (uniqAcceptedIps.length > 0 && ipsChanged) {
