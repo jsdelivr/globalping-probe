@@ -57,22 +57,22 @@ export class AltIpsClient {
 		const results = await Promise.allSettled(addresses.map(({ address, family }) => this.getAltIpToken(address, family === 'IPv6' ? 6 : 4)));
 
 		const ipsToTokens: [string, string][] = [];
-		const rejectedLocalIpsToResons: Record<string, string> = {};
+		const rejectedLocalIpsToReasons: Record<string, string> = {};
 		results.forEach((result, index) => {
 			if (result.status === 'fulfilled') {
 				ipsToTokens.push([ result.value.ip, result.value.token ]);
 			} else {
 				if (result.reason instanceof RequestError) {
-					rejectedLocalIpsToResons[`${addresses[index]!.address} (local)`] = result.reason.message;
+					rejectedLocalIpsToReasons[`${addresses[index]!.address} (local)`] = result.reason.message;
 				} else {
-					rejectedLocalIpsToResons[`${addresses[index]!.address} (local)`] = (result.reason as Error).toString();
+					rejectedLocalIpsToReasons[`${addresses[index]!.address} (local)`] = (result.reason as Error).toString();
 				}
 			}
 		});
 
-		this.socket.emit('probe:alt-ips', ipsToTokens, ({ addedAltIps, rejectedIpsToResons }: { addedAltIps: string[]; rejectedIpsToResons: Record<string, string> }) => {
+		this.socket.emit('probe:alt-ips', ipsToTokens, ({ addedAltIps, rejectedIpsToReasons }: { addedAltIps: string[]; rejectedIpsToReasons: Record<string, string> }) => {
 			const uniqAcceptedIps = [ this.ip, ...addedAltIps.sort() ];
-			const rejectedIps = { ...rejectedLocalIpsToResons, ...rejectedIpsToResons };
+			const rejectedIps = { ...rejectedLocalIpsToReasons, ...rejectedIpsToReasons };
 			uniqAcceptedIps.forEach(ip => delete rejectedIps[ip]);
 			const uniqRejectedIps = Object.keys(rejectedIps).sort();
 			const ipsChanged = !_.isEqual(uniqAcceptedIps, this.currentIps) || !_.isEqual(uniqRejectedIps, this.currentRejectedIps);
