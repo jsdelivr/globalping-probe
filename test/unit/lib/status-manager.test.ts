@@ -63,10 +63,10 @@ describe('StatusManager', () => {
 		expect(pingCmd.callCount).to.equal(6);
 		expect(pingCmd.args[0]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'a.gtld-servers.net', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
 		expect(pingCmd.args[1]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'k.root-servers.net', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[2]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'ns1.dns.nl', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
+		expect(pingCmd.args[2]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'time.apple.com', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
 		expect(pingCmd.args[3]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'a.gtld-servers.net', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
 		expect(pingCmd.args[4]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'k.root-servers.net', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[5]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'ns1.dns.nl', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
+		expect(pingCmd.args[5]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'time.apple.com', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
 		expect(statusManager.getStatus()).to.equal('ping-test-failed');
 		expect(socket.emit.callCount).to.equal(3);
 		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'ping-test-failed' ]);
@@ -136,10 +136,10 @@ describe('StatusManager', () => {
 		expect(pingCmd.callCount).to.equal(6);
 		expect(pingCmd.args[0]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'a.gtld-servers.net', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
 		expect(pingCmd.args[1]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'k.root-servers.net', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[2]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'ns1.dns.nl', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
+		expect(pingCmd.args[2]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'time.apple.com', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
 		expect(pingCmd.args[3]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'a.gtld-servers.net', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
 		expect(pingCmd.args[4]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'k.root-servers.net', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[5]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'ns1.dns.nl', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
+		expect(pingCmd.args[5]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'time.apple.com', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
 		expect(statusManager.getStatus()).to.equal('ready');
 		expect(socket.emit.callCount).to.equal(3);
 		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'ready' ]);
