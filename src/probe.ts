@@ -15,7 +15,7 @@ import { ApiTransportSettings } from './lib/api-logs-transport.js';
 import { initErrorHandler } from './helper/api-error-handler.js';
 import { handleTestError } from './helper/test-error-handler.js';
 import { apiConnectLocationHandler } from './helper/api-connect-handler.js';
-import { apiConnectAltIpsHandler } from './helper/alt-ips-handler.js';
+import { ipHandler } from './helper/alt-ips-client.js';
 import { adoptionStatusHandler } from './helper/adoption-status-handler.js';
 import { dnsCmd, DnsCommand } from './command/dns-command.js';
 import { pingCmd, PingCommand } from './command/ping-command.js';
@@ -115,15 +115,16 @@ function connect (workerId?: number) {
 			logger.info(`Probe restart requested by the API. Exiting...`);
 			process.exit();
 		})
-		.on('connect', () => {
-			statusManager.sendStatus();
+		.on('connect', async () => {
 			logger.debug('Connection to API established.');
+			statusManager.sendStatus();
+			await statusManager.start();
 		})
 		.on('disconnect', errorHandler.handleDisconnect)
 		.on('connect_error', errorHandler.connectError)
 		.on('api:connect:location', apiConnectLocationHandler(socket))
 		.on('api:connect:adoption', adoptionStatusHandler)
-		.on('api:connect:alt-ips-token', apiConnectAltIpsHandler)
+		.on('api:connect:ip', ipHandler(socket))
 		.on('probe:measurement:request', (data: MeasurementRequest) => {
 			const status = statusManager.getStatus();
 

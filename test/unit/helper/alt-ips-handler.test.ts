@@ -2,19 +2,20 @@ import * as td from 'testdouble';
 import sinon from 'sinon';
 import nock from 'nock';
 import { expect } from 'chai';
+import type { Socket } from 'socket.io-client';
 
-import type { apiConnectAltIpsHandler as apiConnectAltIpsHandlerSrc } from '../../../src/helper/alt-ips-handler.js';
+import type { AltIpsClient as AltIpsClientType } from '../../../src/helper/alt-ips-client.js';
 
 describe('apiConnectAltIpsHandler', async () => {
 	const networkInterfaces = sinon.stub();
-	let apiConnectAltIpsHandler: typeof apiConnectAltIpsHandlerSrc;
+	let AltIpsClient: typeof AltIpsClientType;
 
 	before(async () => {
 		await td.replaceEsm('node:os', {}, {
 			networkInterfaces,
 		});
 
-		({ apiConnectAltIpsHandler } = await import('../../../src/helper/alt-ips-handler.js'));
+		({ AltIpsClient } = await import('../../../src/helper/alt-ips-client.js'));
 	});
 
 	beforeEach(() => {
@@ -95,24 +96,42 @@ describe('apiConnectAltIpsHandler', async () => {
 
 	it('should send alt ip request through valid addresses', async () => {
 		const reqs = [];
-		const nockRequest = nock('https://api.globalping.io/v1').persist()
-			.post('/alternative-ip', (body) => {
-				expect(body).to.deep.equal({ token: 'token', socketId: 'socketId' });
-				return true;
-			}).reply(200, function () {
+
+		nock('https://api.globalping.io/v1')
+			.post('/alternative-ip').reply(200, function () {
 				reqs.push(this.req);
+				return { ip: '2.2.2.2', token: 'token-2.2.2.2' };
 			});
 
-		await apiConnectAltIpsHandler({
-			token: 'token',
-			socketId: 'socketId',
-			ip: '3.3.3.3',
-		});
+		nock('https://api.globalping.io/v1')
+			.post('/alternative-ip').reply(200, function () {
+				reqs.push(this.req);
+				return { ip: '3.3.3.3', token: 'token-3.3.3.3' };
+			});
+
+		nock('https://api.globalping.io/v1')
+			.post('/alternative-ip').reply(200, function () {
+				reqs.push(this.req);
+				return { ip: '44::44:44', token: 'token-44::44:44' };
+			});
+
+		const emit = sinon.stub();
+		const altIpsClient = new AltIpsClient({ emit } as unknown as Socket, '1.1.1.1');
+		await altIpsClient.refreshAltIps();
 
 		expect(reqs.length).to.equal(3);
 		expect(reqs[0].options.localAddress).to.equal('1.0.1.0');
 		expect(reqs[1].options.localAddress).to.equal('172.31.43.80');
 		expect(reqs[2].options.localAddress).to.equal('2a05:d016:174:7b28:f47b:e6:3307:fab6');
-		expect(nockRequest.isDone()).to.equal(true);
+		expect(emit.callCount).to.equal(1);
+		expect(emit.firstCall.args[0]).to.equal('probe:alt-ips');
+
+		expect(emit.firstCall.args[1]).to.deep.equal([
+			[ '2.2.2.2', 'token-2.2.2.2' ],
+			[ '3.3.3.3', 'token-3.3.3.3' ],
+			[ '44::44:44', 'token-44::44:44' ],
+		]);
+
+		expect(nock.isDone()).to.equal(true);
 	});
 });
