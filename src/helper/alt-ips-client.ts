@@ -95,7 +95,7 @@ export class AltIpsClient {
 			if (ipsChanged) {
 				Object.entries(this.currentFailedIps).forEach(([ ip, error ]) => altIpsLogger.warn(`${error} (via ${ip}).`));
 				Object.entries(this.currentRejectedIps).forEach(([ ip, reason ]) => altIpsLogger.warn(`IP ${ip} rejected: ${reason}`));
-				mainLogger.info(`${pluralize('IP', uniqAcceptedIps.length)} of the probe: ${uniqAcceptedIps.join(', ')}.`);
+				mainLogger.info(`${pluralize('IP address', 'IP addresses', uniqAcceptedIps.length)} of the probe: ${uniqAcceptedIps.join(', ')}.`);
 			}
 		});
 	}
