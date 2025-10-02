@@ -257,7 +257,7 @@ describe('ApiLogsTransport', () => {
 		it('should trim long messages', async () => {
 			const { logger } = createTransportAndLogger({ isActive: true, sendInterval: 100 });
 
-			const sent = Array(ApiLogsTransport.MAX_MESSAGE_LEN + 10).fill('0').join('');
+			const sent = '0'.repeat(ApiLogsTransport.MAX_MESSAGE_LEN + 10);
 			const expected = sent.slice(0, ApiLogsTransport.MAX_MESSAGE_LEN - 3) + '...';
 
 			logger.info(sent);
