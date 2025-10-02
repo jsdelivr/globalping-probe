@@ -24,7 +24,7 @@ const objectFormatter = (object: Record<string, any>) => {
 
 export const getWinstonMessageContent = (info: Partial<winston.Logform.TransformableInfo>) => {
 	const { timestamp, level, scope, message, stack, ...otherFields } = info;
-	let result = String(message);
+	let result = typeof message === 'object' && message !== null ? objectFormatter(message) : String(message);
 
 	if (Object.keys(otherFields).length > 0) {
 		result += `\n${objectFormatter(otherFields)}`;
