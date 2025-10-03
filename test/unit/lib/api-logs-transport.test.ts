@@ -4,7 +4,6 @@ import * as winston from 'winston';
 import ApiLogsTransport, { type ApiTransportOptions } from '../../../src/lib/api-logs-transport.js';
 import { Socket } from 'socket.io-client';
 import { useSandboxWithFakeTimers } from '../../utils.js';
-import { getWinstonMessageContent } from '../../../src/lib/logger.js';
 
 describe('ApiLogsTransport', () => {
 	let sandbox: sinon.SinonSandbox;
@@ -280,8 +279,10 @@ describe('ApiLogsTransport', () => {
 
 			const payload = socket.emitWithAck.firstCall.args[1];
 			expect(payload.logs).to.have.lengthOf(2);
-			expect(payload.logs[0]).to.have.property('message', getWinstonMessageContent({ message: obj }));
-			expect(payload.logs[1]).to.have.property('message', getWinstonMessageContent({ message: 'with message', ...obj }));
+			expect(payload.logs[0]).to.have.keys('message', 'level', 'scope', 'timestamp');
+			expect(payload.logs[0]).to.have.property('message', `{ test: 'test', arr: [ 1, 2, { x: 'abc' } ] }`);
+			expect(payload.logs[1]).to.have.keys('message', 'level', 'scope', 'timestamp');
+			expect(payload.logs[1]).to.have.property('message', `with message\n{ test: 'test', arr: [ 1, 2, { x: 'abc' } ] }`);
 		});
 
 		it('should send logs periodically', async () => {
