@@ -1,5 +1,12 @@
+import { isIPv6 } from 'node:net';
+
 export const getFakeIp = (workerId: number = 0) => {
 	const firstOctets = process.env['FAKE_IP_FIRST_OCTETS']!;
+
+	if (isIPv6(firstOctets)) {
+		return firstOctets;
+	}
+
 	const octests = firstOctets.split('.');
 
 	const octet1 = octests[0] || (workerId % 256);
