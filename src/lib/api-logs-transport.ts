@@ -1,8 +1,7 @@
 import Transport from 'winston-transport';
 import { Socket } from 'socket.io-client';
-import { Logger } from 'winston';
+import { Logger, Logform } from 'winston';
 import { getWinstonMessageContent } from './logger.js';
-import * as winston from 'winston';
 
 export type ApiTransportSettings = {
 	isActive?: boolean;
@@ -39,7 +38,7 @@ class ApiLogsTransport extends Transport {
 		this.scheduleSend();
 	}
 
-	override log (info: winston.Logform.TransformableInfo, callback?: () => void) {
+	override log (info: Logform.TransformableInfo, callback?: () => void) {
 		setImmediate(() => this.emit('logged', info));
 
 		const { timestamp, level, scope } = info;
