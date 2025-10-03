@@ -22,24 +22,31 @@ const objectFormatter = (object: Record<string, any>) => {
 	return inspect(objectWithoutSymbols);
 };
 
+export const getWinstonMessageContent = (info: Partial<winston.Logform.TransformableInfo>) => {
+	const { timestamp, level, scope, message, stack, ...otherFields } = info;
+	let result = typeof message === 'object' && message !== null ? objectFormatter(message) : String(message);
+
+	if (Object.keys(otherFields).length > 0) {
+		result += `\n${objectFormatter(otherFields)}`;
+	}
+
+	if (stack) {
+		result += `\n${info['stack'] as string}`;
+	}
+
+	return result;
+};
+
 const logger = winston.createLogger({
 	level: process.env['LOG_LEVEL'] ?? 'debug',
 	format: winston.format.combine(
 		winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss Z' }),
 		winston.format.prettyPrint(),
 		winston.format.printf((info: winston.Logform.TransformableInfo) => {
-			const { timestamp, level, scope, message, stack, ...otherFields } = info;
-			let result = `[${timestamp as string}] [${level.toUpperCase()}] [${scope as string}] ${message as string}`;
+			const { timestamp, level, scope } = info;
+			const message = getWinstonMessageContent(info);
 
-			if (Object.keys(otherFields).length > 0) {
-				result += `\n${objectFormatter(otherFields)}`;
-			}
-
-			if (stack) {
-				result += `\n${info['stack'] as string}`;
-			}
-
-			return result;
+			return `[${timestamp as string}] [${level.toUpperCase()}] [${scope as string}] ${message}`;
 		}),
 	),
 	transports: [

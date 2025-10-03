@@ -253,6 +253,38 @@ describe('ApiLogsTransport', () => {
 			expect(socket.emitWithAck.calledThrice).to.be.true;
 		});
 
+		it('should trim long messages', async () => {
+			const { logger } = createTransportAndLogger({ isActive: true, sendInterval: 100 });
+
+			const sent = '0'.repeat(ApiLogsTransport.MAX_MESSAGE_LEN + 10);
+			const expected = sent.slice(0, ApiLogsTransport.MAX_MESSAGE_LEN - 3) + '...';
+
+			logger.info(sent);
+
+			await sandbox.clock.tickAsync(1000);
+
+			const payload = socket.emitWithAck.firstCall.args[1];
+			expect(payload.logs).to.have.lengthOf(1);
+			expect(payload.logs[0]).to.have.property('message', expected);
+		});
+
+		it('should handle object logs', async () => {
+			const { logger } = createTransportAndLogger({ isActive: true, sendInterval: 100 });
+			const obj = { test: 'test', arr: [ 1, 2, { x: 'abc' }] };
+
+			logger.info(obj);
+			logger.info('with message', obj);
+
+			await sandbox.clock.tickAsync(1000);
+
+			const payload = socket.emitWithAck.firstCall.args[1];
+			expect(payload.logs).to.have.lengthOf(2);
+			expect(payload.logs[0]).to.have.keys('message', 'level', 'scope', 'timestamp');
+			expect(payload.logs[0]).to.have.property('message', `{ test: 'test', arr: [ 1, 2, { x: 'abc' } ] }`);
+			expect(payload.logs[1]).to.have.keys('message', 'level', 'scope', 'timestamp');
+			expect(payload.logs[1]).to.have.property('message', `with message\n{ test: 'test', arr: [ 1, 2, { x: 'abc' } ] }`);
+		});
+
 		it('should send logs periodically', async () => {
 			const sendInterval = 5000;
 			const { logger } = createTransportAndLogger({ isActive: true, sendInterval });

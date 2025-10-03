@@ -1,6 +1,7 @@
 import Transport from 'winston-transport';
 import { Socket } from 'socket.io-client';
-import { Logger } from 'winston';
+import { Logger, Logform } from 'winston';
+import { getWinstonMessageContent } from './logger.js';
 
 export type ApiTransportSettings = {
 	isActive?: boolean;
@@ -10,7 +11,7 @@ export type ApiTransportSettings = {
 
 export type ApiTransportOptions = Transport.TransportStreamOptions & ApiTransportSettings & { socket?: Socket };
 
-type Info = {
+type TransportInfo = {
 	message: string;
 	timestamp: string;
 	level: string;
@@ -18,12 +19,13 @@ type Info = {
 };
 
 class ApiLogsTransport extends Transport {
+	public static readonly MAX_MESSAGE_LEN = 8192;
 	private logger: Logger | undefined;
 	private socket: Socket | undefined;
 	private isActive: boolean;
 	private sendInterval: number;
 	private maxBufferSize: number;
-	private logBuffer: Info[] = [];
+	private logBuffer: TransportInfo[] = [];
 	private droppedLogs: number = 0;
 	private timer: NodeJS.Timeout | undefined = undefined;
 
@@ -36,10 +38,14 @@ class ApiLogsTransport extends Transport {
 		this.scheduleSend();
 	}
 
-	override log (info: Info, callback?: () => void) {
+	override log (info: Logform.TransformableInfo, callback?: () => void) {
 		setImmediate(() => this.emit('logged', info));
 
-		this.logBuffer.push(info);
+		const { timestamp, level, scope } = info;
+		let message = getWinstonMessageContent(info);
+		message = message.length > ApiLogsTransport.MAX_MESSAGE_LEN ? `${message.slice(0, ApiLogsTransport.MAX_MESSAGE_LEN - 3)}...` : message;
+
+		this.logBuffer.push({ message, level, timestamp: timestamp as string, scope: scope as string });
 		const bufferLength = this.logBuffer.length;
 		const bufferOverflow = bufferLength - this.maxBufferSize;
 
