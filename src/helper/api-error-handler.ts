@@ -21,8 +21,12 @@ class ErrorHandler {
 		data?: { ipAddress?: string };
 	}) => {
 		const message = error?.description?.message ?? error.toString();
-		logger.error(`Connection to API failed: ${message}`);
 
+		if (message.includes('server is terminating')) {
+			logger.debug('The server is terminating. Connecting to another one.');
+		} else {
+			logger.error(`Connection to API failed: ${message}`);
+		}
 
 		if (error.message.startsWith('invalid probe version')) {
 			logger.info('Detected an outdated probe. Restarting.');
