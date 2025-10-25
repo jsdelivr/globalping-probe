@@ -30,7 +30,7 @@ export const TraceDigParser = {
 	parse (rawOutput: string): Error | DnsParseResponse {
 		const lines = rawOutput.split(NEW_LINE_REG_EXP);
 
-		if (lines.length < 3) {
+		if (lines.length < 3 || lines[0]?.startsWith(';; Got bad packet:')) {
 			return new Error(rawOutput);
 		}
 
