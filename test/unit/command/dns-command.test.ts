@@ -454,6 +454,42 @@ describe('dns command', () => {
 			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
+		it('should handle malformed dns server response - dns-client-formerr', async () => {
+			const testCase = 'dns-client-formerr';
+			const options = {
+				type: 'dns' as const,
+				target: '_dns.resolver.arpa',
+				trace: false,
+				query: {
+					type: 'SVCB',
+				},
+				protocol: 'UDP',
+				port: 53,
+				inProgressUpdates: false,
+				ipVersion: 4,
+			};
+
+			const rawOutput = getCmdMock(testCase);
+			const expectedResult = getCmdMockResult(testCase);
+
+			const mockCmd = getExecaMock();
+
+			const dns = new DnsCommand((): any => mockCmd);
+			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+
+			const { emitChunks } = chunkOutput(rawOutput);
+			await emitChunks(mockCmd.stdout);
+
+			mockCmd.resolve({ stdout: rawOutput });
+			await runPromise;
+
+			expect(mockSocket.emit.callCount).to.equal(1);
+
+			expect(mockSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+
+			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+		});
+
 		it('should work in case of private ip - dns-resolved-private-ip-linux', async () => {
 			const testCase = 'dns-resolved-private-ip-linux';
 			const options = {

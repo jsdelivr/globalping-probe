@@ -15,7 +15,7 @@ export type DnsParseLoopResponse = {
 	header?: string[];
 	answers: DnsSection[];
 	timings: { total: number };
-	resolver: string;
+	resolver: string | null;
 };
 
 export type DnsParseLoopResponseJson = {
