@@ -12,7 +12,7 @@ import {
 import { statusNameToStatusCodeMap } from './dig-status-code-map.js';
 
 type DnsParseLoopResponseClassic = DnsParseLoopResponse & {
-	statusCodeName: string;
+	statusCodeName: string | null;
 	statusCode: number | null;
 };
 
@@ -64,7 +64,7 @@ export const ClassicDigParser = {
 	parse (rawOutput: string): Error | DnsParseResponse {
 		const lines = rawOutput.split(NEW_LINE_REG_EXP);
 
-		if (lines.length < 6) {
+		if (lines.length < 6 || lines[0]?.startsWith(';; Got bad packet:')) {
 			throw new InternalError(rawOutput, true);
 		}
 
@@ -91,11 +91,11 @@ export const ClassicDigParser = {
 
 	parseLoop (lines: string[]): DnsParseLoopResponseClassic {
 		const result: DnsParseLoopResponseClassic = {
-			statusCodeName: '',
+			statusCodeName: null,
 			statusCode: null,
 			header: [],
 			answers: [],
-			resolver: '',
+			resolver: null,
 			timings: { total: 0 },
 		};
 
