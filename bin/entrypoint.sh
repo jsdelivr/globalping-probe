@@ -3,14 +3,15 @@
 update-ca-certificates
 
 function run_probe() {
-	node /app/dist/index.js
+	echo "Starting probe..."
+	exec node /app/dist/index.js
 	return
 }
 
 function try_update() {
 	echo "Checking for the latest version"
 
-	response=$(curl -XGET -Lf -sS "https://data.jsdelivr.com/v1/packages/gh/jsdelivr/globalping-probe/resolved")
+	response=$(curl --max-time 40 --retry 3 --retry-max-time 120 --retry-all-errors -XGET -Lf -sS "https://data.jsdelivr.com/v1/packages/gh/jsdelivr/globalping-probe/resolved")
 
 	if [ $? != 0 ]; then
 		echo "Failed to fetch the latest version data"
@@ -25,6 +26,7 @@ function try_update() {
 
 	latestBundleA="https://cdn.jsdelivr.net/globalping-probe/v$latestVersion/globalping-probe.bundle.tar.gz"
 	latestBundleB="https://fastly.jsdelivr.net/globalping-probe/v$latestVersion/globalping-probe.bundle.tar.gz"
+	latestBundleC="https://github.com/jsdelivr/globalping-probe/releases/download/v$latestVersion/globalping-probe.bundle.tar.gz"
 
 	currentVersion=$(jq -r ".version" "/app/package.json")
 
@@ -38,13 +40,19 @@ function try_update() {
 			echo "Start self-update process"
 
 			curl -XGET -Lf -sS "${latestBundleA}" -o "/tmp/${loadedTarball}.tar.gz"
-
+			
 			if [ $? != 0 ]; then
+				echo "Failed to fetch the release tarball using cdn.jsdelivr.net. Trying fastly..."
 				curl -XGET -Lf -sS "${latestBundleB}" -o "/tmp/${loadedTarball}.tar.gz"
 
 				if [ $? != 0 ]; then
-					echo "Failed to fetch the release tarball"
-					return
+					echo "Failed to fetch the release tarball using fastly.jsdelivr.net. Trying Github..."
+					curl -XGET -Lf -sS "${latestBundleC}" -o "/tmp/${loadedTarball}.tar.gz"
+
+					if [ $? != 0 ]; then
+						echo "Failed to fetch the release tarball using github.com. All methods failed. Exiting."
+						return
+					fi
 				fi
 			fi
 
