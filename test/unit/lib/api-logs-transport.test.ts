@@ -8,6 +8,7 @@ import { useSandboxWithFakeTimers } from '../../utils.js';
 describe('ApiLogsTransport', () => {
 	let sandbox: sinon.SinonSandbox;
 	let socket: sinon.SinonStubbedInstance<Socket>;
+	const timestamp = '2025-10-27 20:00:00 +01:00';
 	const ACK_DELAY = 50;
 
 	const setEmitWithAckResponse = (response: string) => {
@@ -20,7 +21,7 @@ describe('ApiLogsTransport', () => {
 
 	const createTransportAndLogger = (options: ApiTransportOptions) => {
 		const transport = new ApiLogsTransport({ ...options, socket });
-		const logger = winston.createLogger({ transports: [ transport ] });
+		const logger = winston.createLogger({ defaultMeta: { timestamp }, transports: [ transport ] });
 
 		return { transport, logger };
 	};
@@ -67,6 +68,7 @@ describe('ApiLogsTransport', () => {
 
 			transport.on('logged', (info) => {
 				expect(info).to.have.property('message', 'test log');
+				expect(info).to.have.property('timestamp', timestamp);
 				done();
 			});
 
@@ -130,6 +132,7 @@ describe('ApiLogsTransport', () => {
 			const payload = socket.emitWithAck.firstCall.args[1];
 			expect(payload.logs).to.have.lengthOf(1);
 			expect(payload.logs[0]).to.have.property('message', 'test');
+			expect(payload.logs[0]).to.have.property('timestamp', new Date(timestamp).toISOString());
 			expect(payload.skipped).to.equal(0);
 
 			await sandbox.clock.tickAsync(1000);
