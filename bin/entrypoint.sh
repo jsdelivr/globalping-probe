@@ -10,7 +10,7 @@ function run_probe() {
 function try_update() {
 	echo "Checking for the latest version"
 
-	response=$(curl -XGET -Lf -sS "https://data.jsdelivr.com/v1/packages/gh/jsdelivr/globalping-probe/resolved")
+	response=$(curl --max-time 40 --retry 3 --retry-max-time 120 --retry-all-errors -XGET -Lf -sS "https://data.jsdelivr.com/v1/packages/gh/jsdelivr/globalping-probe/resolved")
 
 	if [ $? != 0 ]; then
 		echo "Failed to fetch the latest version data"
