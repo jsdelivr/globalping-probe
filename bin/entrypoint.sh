@@ -13,12 +13,29 @@ function try_update() {
 
 	response=$(curl --max-time 40 --retry 3 --retry-max-time 120 --retry-all-errors -XGET -Lf -sS "https://data.jsdelivr.com/v1/packages/gh/jsdelivr/globalping-probe/resolved")
 
-	if [ $? != 0 ]; then
-		echo "Failed to fetch the latest version data"
-		return
+	# Check if curl succeeded AND returned a non-empty response
+	if [ $? == 0 ] && [ -n "$response" ]; then
+		echo "Version successfully fetched from jsDelivr API."
+		latestVersion=$(jq -r ".version" <<<"${response}" | sed 's/v//')
+	else
+		echo "Version check failed. Trying using raw.githubusercontent.com..."
+		response=$(curl --max-time 40 --retry 3 --retry-max-time 120 --retry-all-errors -XGET -Lf -sS "https://raw.githubusercontent.com/jsdelivr/globalping-probe/refs/heads/master/package.json")
+
+		# Check if the fallback curl succeeded AND returned a non-empty response
+		if [ $? == 0 ] && [ -n "$response" ]; then
+			echo "Version successfully fetched from GitHub."
+			latestVersion=$(jq -r ".version" <<<"${response}" | sed 's/v//')
+		else
+			echo "Failed to fetch the latest version from all sources. Skipping update."
+			return
+		fi
 	fi
 
-	latestVersion=$(jq -r ".version" <<<"${response}" | sed 's/v//')
+	# Final check to ensure jq parsing yielded a version
+	if [ -z "$latestVersion" ] || [ "$latestVersion" == "null" ]; then
+		echo "Failed to parse version string from response. Skipping update."
+		return
+	fi
 
 	if [ -f /app-dev/latest-version.txt ]; then
 		latestVersion=$(cat /app-dev/latest-version.txt)
@@ -33,11 +50,12 @@ function try_update() {
 	echo "Current version $currentVersion"
 	echo "Latest version $latestVersion"
 
+	# Check if latestVersion is greater than currentVersion
 	if [ "$(printf '%s\n' "$latestVersion" "$currentVersion" | sort -V | head -n1)" != "$latestVersion" ]; then
 		if [ "$latestVersion" != "$currentVersion" ]; then
 			loadedTarball="globalping-probe-${latestVersion}"
 
-			echo "Start self-update process"
+			echo "Start self-update process to v$latestVersion"
 
 			curl -XGET -Lf -sS "${latestBundleA}" -o "/tmp/${loadedTarball}.tar.gz"
 			
@@ -63,10 +81,12 @@ function try_update() {
 				return
 			fi
 
+			# Perform the update
 			rm -rf "/app"
 			mv "/tmp/${loadedTarball}" "/app"
 			cd "/app" || exit
 
+			# Clean up
 			rm -rf "/tmp/${loadedTarball}.tar.gz"
 
 			if [ -f /app/bin/patch.sh ]; then
