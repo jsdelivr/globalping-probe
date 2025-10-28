@@ -45,7 +45,7 @@ class ApiLogsTransport extends Transport {
 		let message = getWinstonMessageContent(info);
 		message = message.length > ApiLogsTransport.MAX_MESSAGE_LEN ? `${message.slice(0, ApiLogsTransport.MAX_MESSAGE_LEN - 3)}...` : message;
 
-		this.logBuffer.push({ message, level, timestamp: timestamp as string, scope: scope as string });
+		this.logBuffer.push({ message, level, timestamp: new Date(timestamp as string).toISOString(), scope: scope as string });
 		const bufferLength = this.logBuffer.length;
 		const bufferOverflow = bufferLength - this.maxBufferSize;
 
