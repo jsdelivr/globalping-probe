@@ -3,7 +3,8 @@
 update-ca-certificates
 
 function run_probe() {
-	node /app/dist/index.js
+	echo "Starting probe..."
+	exec node /app/dist/index.js
 	return
 }
 
