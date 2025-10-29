@@ -17,14 +17,15 @@ function try_update() {
 		echo "Probe version successfully fetched from jsDelivr API."
 		latestVersion=$(jq -r ".version" <<<"${response}" | sed 's/v//')
 	else
-		echo "Probe version check failed. Trying raw.githubusercontent.com..."
+		echo "Failed to fetch the version info from jsDelivr API. Trying GitHub API..."
 		response=$(curl --max-time 40 --retry 3 --retry-max-time 120 --retry-all-errors -XGET -Lf -sS "https://api.github.com/repos/jsdelivr/globalping-probe/releases/latest")
 
 		# Check if the fallback curl succeeded AND returned a non-empty response
 		if [ $? == 0 ] && [ -n "$response" ]; then
-			echo "Probe version successfully fetched from GitHub."
+			echo "Probe version successfully fetched from GitHub API."
 			latestVersion=$(jq -r ".tag_name" <<<"${response}" | sed 's/v//')
 		else
+			echo "Failed to fetch the version info from GitHub API. All methods failed. Exiting."
 			return
 		fi
 	fi
