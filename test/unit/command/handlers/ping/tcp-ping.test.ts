@@ -156,10 +156,13 @@ describe('tcp-ping', () => {
 
 			if (result.type === 'probe') {
 				expect(result.success).to.be.true;
-				expect(result.address).to.equal(HOST);
-				expect(result.hostname).to.equal(HOST);
-				expect(result.port).to.equal(openPort);
-				expect(result.rtt).to.be.a('number').within(0, 10);
+
+				if (result.success) {
+					expect(result.address).to.equal(HOST);
+					expect(result.hostname).to.equal(HOST);
+					expect(result.port).to.equal(openPort);
+					expect(result.rtt).to.be.a('number').within(0, 10);
+				}
 			}
 		});
 
@@ -171,10 +174,13 @@ describe('tcp-ping', () => {
 
 			if (result.type === 'probe') {
 				expect(result.success).to.be.true;
-				expect(result.address).to.equal(HOST);
-				expect(result.hostname).to.equal(HOST);
-				expect(result.port).to.equal(openPort);
-				expect(result.rtt).to.be.a('number').greaterThan(20);
+
+				if (result.success) {
+					expect(result.address).to.equal(HOST);
+					expect(result.hostname).to.equal(HOST);
+					expect(result.port).to.equal(openPort);
+					expect(result.rtt).to.be.a('number').greaterThan(20);
+				}
 			}
 		});
 
@@ -189,6 +195,7 @@ describe('tcp-ping', () => {
 				expect(result.address).to.equal(HOST);
 				expect(result.hostname).to.equal(HOST);
 				expect(result.port).to.equal(openPort);
+				expect(result).to.not.have.property('rtt');
 			}
 		});
 
@@ -504,7 +511,6 @@ describe('tcp-ping', () => {
 					address: '93.184.216.34',
 					hostname: 'example.com',
 					port: 80,
-					rtt: -1,
 					success: false,
 				},
 			];
