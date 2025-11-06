@@ -242,7 +242,7 @@ export function formatTcpPingResult (lines: Array<TcpPingData>): PingParseOutput
 		};
 	}
 
-	const timings = probeData.filter(t => t.success).map(probe => ({
+	const timings = probeData.filter(t => t.success === true).map(probe => ({
 		rtt: roundNumber(probe.rtt, 2),
 	})).filter(t => !Number.isNaN(t.rtt));
 
