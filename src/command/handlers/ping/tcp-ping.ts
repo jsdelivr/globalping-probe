@@ -21,14 +21,23 @@ type TcpPingStartData = {
 	port: number;
 };
 
-type TcpPingProbeData = {
+type TcpPingBaseProbeData = {
 	type: 'probe';
 	address: string;
 	hostname: string;
 	port: number;
-	rtt: number;
-	success: boolean;
 };
+
+type TcpPingSuccessProbeData = TcpPingBaseProbeData & {
+	rtt: number;
+	success: true;
+};
+
+type TcpPingFailProbeData = TcpPingBaseProbeData & {
+	success: false;
+};
+
+type TcpPingProbeData = TcpPingSuccessProbeData | TcpPingFailProbeData;
 
 type TcpPingStatsData = {
 	type: 'statistics';
@@ -74,12 +83,12 @@ export async function tcpPingSingle (hostname: string, address: string, port: nu
 		});
 
 		socket.on('error', () => {
-			resolve({ type: 'probe', address, hostname, port, rtt: -1, success: false });
+			resolve({ type: 'probe', address, hostname, port, success: false });
 			socket.destroy();
 		});
 
 		socket.on('timeout', () => {
-			resolve({ type: 'probe', address, hostname, port, rtt: -1, success: false });
+			resolve({ type: 'probe', address, hostname, port, success: false });
 			socket.destroy();
 		});
 
@@ -104,7 +113,7 @@ export async function tcpPing (
 	const { target, port, packets, timeout, interval, ipVersion } = options;
 	const startTime = performance.now();
 	const results: Array<TcpPingData> = [];
-	const successTimings: Array<TcpPingProbeData> = [];
+	const successTimings: Array<TcpPingSuccessProbeData> = [];
 	let address;
 
 	if (isIP(target)) {
@@ -233,7 +242,7 @@ export function formatTcpPingResult (lines: Array<TcpPingData>): PingParseOutput
 		};
 	}
 
-	const timings = probeData.map(probe => ({
+	const timings = probeData.filter(t => t.success === true).map(probe => ({
 		rtt: roundNumber(probe.rtt, 2),
 	})).filter(t => !Number.isNaN(t.rtt));
 
