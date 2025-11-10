@@ -114,9 +114,9 @@ describe('index module', () => {
 
 		expect(ioStub.firstCall.args[1]).to.deep.include({
 			transports: [ 'websocket' ],
-			reconnectionDelay: 2000,
+			reconnectionDelay: 4000,
 			reconnectionDelayMax: 8000,
-			randomizationFactor: 0.75,
+			randomizationFactor: 0.5,
 		});
 
 		expect(ioStub.firstCall.args[1].query.version).to.match(/^\d+.\d+.\d+$/);
@@ -198,6 +198,7 @@ describe('index module', () => {
 		mockSocket.emit('disconnect');
 		expect(connectStub.notCalled).to.be.true;
 		mockSocket.emit('disconnect', 'io server disconnect');
+		sandbox.clock.tick(2000 + 50);
 		expect(connectStub.calledOnce).to.be.true;
 	});
 
@@ -225,13 +226,13 @@ describe('index module', () => {
 		expect(connectStub.callCount).to.equal(1);
 	});
 
-	it('should reconnect after 1 second delay on "connect_error" with other messages', async () => {
+	it('should reconnect after 2 seconds delay on "connect_error" with other messages', async () => {
 		await import('../../src/probe.js');
 
 		mockSocket.emit('connect_error', new Error('some message'));
 
 		expect(connectStub.callCount).to.equal(0);
-		sandbox.clock.tick(1000 + 50);
+		sandbox.clock.tick(2000 + 50);
 		expect(connectStub.callCount).to.equal(1);
 	});
 

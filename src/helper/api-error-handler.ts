@@ -49,7 +49,7 @@ class ErrorHandler {
 			logger.error('Retrying in 1 minute. Probe temporarily disconnected.');
 			setTimeout(() => this.socket.connect(), 60 * 1000);
 		} else {
-			setTimeout(() => this.socket.connect(), 1000);
+			setTimeout(() => this.socket.connect(), 2000);
 		}
 	};
 
@@ -57,7 +57,7 @@ class ErrorHandler {
 		logger.debug(`Disconnected from API: (${reason}).`);
 
 		if (reason === 'io server disconnect') {
-			this.socket.connect();
+			setTimeout(() => this.socket.connect(), 2000);
 		}
 	};
 }
