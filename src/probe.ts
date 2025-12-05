@@ -64,7 +64,7 @@ handlersMap.set('ping', process.env['FAKE_COMMANDS'] ? new FakePingCommand() : n
 handlersMap.set('mtr', process.env['FAKE_COMMANDS'] ? new FakeMtrCommand() : new MtrCommand(mtrCmd));
 handlersMap.set('traceroute', new TracerouteCommand(traceCmd));
 handlersMap.set('dns', new DnsCommand(dnsCmd));
-handlersMap.set('http', new HttpCommand(httpCmd));
+handlersMap.set('http', new HttpCommand());
 
 if (process.env['GP_HOST_FIRMWARE']) {
 	logger.info(`Hardware probe running firmware version ${process.env['GP_HOST_FIRMWARE'].substring(1)}.`);
