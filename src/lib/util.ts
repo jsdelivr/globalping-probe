@@ -33,7 +33,7 @@ export const callbackify = (
 
 export const getAvailableDiskSpace = () => {
 	try {
-		return parseInt(execSync('df --block-size=MB --output=avail / | tail -1').toString());
+		return parseInt(execSync('df / | tail -1').toString());
 	} catch (e) {
 		console.error(e);
 		return 0;
@@ -42,7 +42,7 @@ export const getAvailableDiskSpace = () => {
 
 export const getTotalDiskSize = () => {
 	try {
-		return parseInt(execSync('df --block-size=MB --output=size / | tail -1').toString());
+		return parseInt(execSync('df / | tail -1').toString());
 	} catch (e) {
 		console.error(e);
 		return 0;

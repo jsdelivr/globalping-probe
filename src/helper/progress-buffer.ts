@@ -29,7 +29,6 @@ export class ProgressBuffer {
 	private timer?: NodeJS.Timeout;
 
 	constructor (
-		private readonly socket: Socket,
 		private readonly testId: string,
 		private readonly measurementId: string,
 		private readonly mode: 'append' | 'diff' | 'overwrite',
@@ -77,21 +76,32 @@ export class ProgressBuffer {
 			});
 		}
 
-		this.socket.emit('probe:measurement:progress', {
+		console.log('probe:measurement:progress', {
 			testId: this.testId,
 			measurementId: this.measurementId,
 			overwrite: this.mode === 'overwrite',
 			result: this.buffer,
 		});
+		// this.socket.emit('probe:measurement:progress', {
+		// 	testId: this.testId,
+		// 	measurementId: this.measurementId,
+		// 	overwrite: this.mode === 'overwrite',
+		// 	result: this.buffer,
+		// });
 
 		this.buffer = {};
 	}
 
 	private sendResult (result: ResultTypeJson) {
-		this.socket.emit('probe:measurement:result', {
+		console.log('probe:measurement:result', {
 			testId: this.testId,
 			measurementId: this.measurementId,
 			result,
 		});
+		// this.socket.emit('probe:measurement:result', {
+		// 	testId: this.testId,
+		// 	measurementId: this.measurementId,
+		// 	result,
+		// });
 	}
 }
