@@ -20,7 +20,7 @@ type TlsDetails = {
 
 type Output = {
 	status: 'finished' | 'failed';
-	resolvedAddress: string;
+	resolvedAddress: string | null;
 	headers: Record<string, string>;
 	rawHeaders: string;
 	rawBody: string;
@@ -87,6 +87,7 @@ export class HttpTest {
 				...this.options.request.headers,
 				'User-Agent': 'globalping probe (https://github.com/jsdelivr/globalping)',
 				'host': this.options.request.host ?? this.options.target,
+				'Connection': 'close',
 			},
 		}, {
 			onConnect () {},
@@ -100,19 +101,16 @@ export class HttpTest {
 				this.result.statusCode = statusCode;
 				this.result.statusCodeName = statusText;
 
-				const headersObj = {};
 				const rawHeaderPairs = [];
 
 				for (let i = 0; i < headers.length; i += 2) {
-					const key = headers[i].toString();
-					const value = headers[i + 1].toString();
-					headersObj[key] = value;
+					const key = headers[i]!.toString();
+					const value = headers[i + 1]!.toString();
+					this.result.headers[key] = value;
 					rawHeaderPairs.push(`${key}: ${value}`);
 				}
 
-				this.result.headers = headersObj;
 				this.result.rawHeaders = rawHeaderPairs.join('\n');
-				console.log('end');
 				return true;
 			},
 			onData: this.onHttpData,
@@ -120,22 +118,6 @@ export class HttpTest {
 		});
 
 		return promise;
-	}
-
-	private getInitialResult () {
-		return {
-			status: 'finished' as 'finished' | 'failed',
-			resolvedAddress: isIP(this.options.target) ? this.options.target : null,
-			headers: {},
-			rawHeaders: '',
-			rawBody: '',
-			rawOutput: '',
-			truncated: false,
-			statusCode: 0,
-			statusCodeName: '',
-			tls: {},
-			error: '',
-		};
 	}
 
 	private urlBuilder (): URL {
@@ -159,7 +141,6 @@ export class HttpTest {
 				autoSelectFamily: false,
 				family: this.options.ipVersion,
 				lookup: dnsResolver,
-				keepAlive: false,
 			});
 
 			tcpSocket.on('lookup', (_err, address) => {
@@ -202,10 +183,22 @@ export class HttpTest {
 						protocol: tlsSocket.getProtocol(),
 						cipherName: tlsSocket.getCipher()?.name,
 						...(tlsSocket.authorizationError ? { error: tlsSocket.authorizationError } : {}),
-						valid_from: cert.valid_from,
-						valid_to: cert.valid_to,
-						issuer: cert.issuer,
-						subject: cert.subject,
+						createdAt: cert.valid_from ? (new Date(cert.valid_from)).toISOString() : null,
+						expiresAt: cert.valid_to ? (new Date(cert.valid_to)).toISOString() : null,
+						issuer: {
+							...(cert.issuer.C ? { C: cert.issuer.C } : {}),
+							...(cert.issuer.O ? { O: cert.issuer.O } : {}),
+							...(cert.issuer.CN ? { CN: cert.issuer.CN } : {}),
+						},
+						subject: {
+							...(cert.subject.CN ? { CN: cert.subject.CN } : {}),
+							...(cert.subjectaltname ? { alt: cert.subjectaltname } : {}),
+						},
+						keyType: cert.asn1Curve || cert.nistCurve ? 'EC' : cert.modulus || cert.exponent ? 'RSA' : null,
+						keyBits: cert.bits || null,
+						serialNumber: cert.serialNumber.match(/.{2}/g)!.join(':'),
+						fingerprint256: cert.fingerprint256,
+						publicKey: cert.pubkey ? cert.pubkey.toString('hex').toUpperCase().match(/.{2}/g)!.join(':') : null,
 					};
 
 					callback(null, tlsSocket);
@@ -236,6 +229,22 @@ export class HttpTest {
 		void this.undiciClient.close();
 		this.sendResult();
 	};
+
+	private getInitialResult () {
+		return {
+			status: 'finished' as 'finished' | 'failed',
+			resolvedAddress: isIP(this.options.target) ? this.options.target : null,
+			headers: {} as Record<string, string>,
+			rawHeaders: '',
+			rawBody: '',
+			rawOutput: '',
+			truncated: false,
+			statusCode: 0,
+			statusCodeName: '',
+			tls: {},
+			error: '',
+		};
+	}
 
 	private sendResult = () => {
 		let rawOutput;

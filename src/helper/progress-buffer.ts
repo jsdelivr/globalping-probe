@@ -87,11 +87,13 @@ export class ProgressBuffer {
 	}
 
 	private sendResult (result: ResultTypeJson) {
-		console.log('probe:measurement:result', {
+		console.log('\n\n\n!!!!!!!!!!!!!!!!!!RESULT!!!!!!!!!!!!!!!!!!\n\n\n');
+
+		console.log(JSON.stringify({
 			testId: this.testId,
 			measurementId: this.measurementId,
 			result,
-		});
+		}, null, 2));
 		// this.socket.emit('probe:measurement:result', {
 		// 	testId: this.testId,
 		// 	measurementId: this.measurementId,
