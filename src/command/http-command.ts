@@ -1,17 +1,9 @@
-import type { Certificate, TLSSocket } from 'node:tls';
-import { isIP, isIPv6, type Socket as NetSocket } from 'node:net';
-import http from 'node:http';
-import https from 'node:https';
-import http2 from 'http2-wrapper';
+import type { Certificate } from 'node:tls';
 import Joi from 'joi';
-import _ from 'lodash';
-import got, { type Response, type Request, type HTTPAlias, type DnsLookupIpVersion, type RequestError, HTTPError } from 'got';
-import type { Socket } from 'socket.io-client';
 import type { CommandInterface } from '../types.js';
-import { callbackify } from '../lib/util.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
-import { dnsLookup } from './handlers/shared/dns-resolver.js';
+import { HttpTest } from './http-test.js';
 
 export type HttpOptions = {
 	type: 'http';
@@ -88,20 +80,6 @@ export type Timings = {
 	phases: Record<string, number | undefined>;
 };
 
-const getInitialResult = () => ({
-	status: 'finished' as 'finished' | 'failed',
-	resolvedAddress: '',
-	tls: {},
-	error: '',
-	headers: {},
-	rawHeaders: '',
-	rawBody: '',
-	truncated: false,
-	statusCode: 0,
-	statusCodeName: '',
-	httpVersion: '',
-	timings: {},
-});
 
 const allowedHttpProtocols = [ 'HTTP', 'HTTPS', 'HTTP2' ];
 const allowedHttpMethods = [ 'GET', 'HEAD', 'OPTIONS' ];
@@ -132,83 +110,19 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 	}),
 });
 
-export const urlBuilder = (options: HttpOptions): string => {
-	const protocolPrefix = options.protocol === 'HTTP' ? 'http' : 'https';
-	const port = options.port ? options.port : (options.protocol === 'HTTP' ? 80 : 443);
-	const path = `/${options.request.path}`.replace(/^\/\//, '/');
-	const query = options.request.query.length > 0 ? `?${options.request.query}`.replace(/^\?\?/, '?') : '';
-	const url = `${protocolPrefix}://${isIPv6(options.target) ? `[${options.target}]` : options.target}:${port}${path}${query}`;
-
-	return url;
-};
-
-const isTlsSocket = (socket: unknown): socket is TLSSocket => Boolean((socket as { getPeerCertificate?: unknown }).getPeerCertificate);
 
 export class HttpCommand implements CommandInterface<HttpOptions> {
-	async run (measurementId: string, testId: string, options: HttpOptions): Promise<unknown> {
-		const validationResult = httpOptionsSchema.validate(options);
+	async run (measurementId: string, testId: string, cmdOptions: HttpOptions): Promise<unknown> {
+		const validationResult = httpOptionsSchema.validate(cmdOptions);
 
 		if (validationResult.error) {
 			throw new InvalidOptionsException('http', validationResult.error);
 		}
 
-		const { value: cmdOptions } = validationResult;
+		const { value: options } = validationResult;
 		const buffer = new ProgressBuffer(testId, measurementId, 'append');
-		const result = getInitialResult();
-
-		const respond = (resolvePromise: (out: unknown) => void) => {
-			let rawOutput;
-
-			if (result.status === 'failed') {
-				rawOutput = result.error;
-			} else if (result.error) {
-				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.rawHeaders}\n\n${result.error}`;
-			} else if (cmdOptions.request.method === 'HEAD' || !result.rawBody) {
-				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.rawHeaders}`;
-			} else {
-				rawOutput = `HTTP/${result.httpVersion} ${result.statusCode}\n${result.rawHeaders}\n\n${result.rawBody}`;
-			}
-
-			const out = this.toJsonOutput({
-				status: result.status,
-				resolvedAddress: result.resolvedAddress,
-				headers: result.headers,
-				rawHeaders: result.rawHeaders,
-				rawBody: result.rawBody,
-				rawOutput,
-				truncated: result.truncated,
-				statusCode: result.statusCode,
-				statusCodeName: result.statusCodeName,
-				timings: result.timings,
-				tls: result.tls,
-			});
-
-			buffer.pushResult(out);
-			resolvePromise(out);
-		};
-	}
-
-	private toJsonOutput (input: Output): OutputJson {
-		return {
-			status: input.status,
-			resolvedAddress: input.resolvedAddress || null,
-			headers: input.headers,
-			rawHeaders: input.rawHeaders || null,
-			rawBody: input.rawBody || null,
-			rawOutput: input.rawOutput,
-			truncated: input.truncated,
-			statusCode: input.statusCode || null,
-			statusCodeName: input.statusCodeName ?? null,
-			timings: {
-				total: null,
-				download: null,
-				firstByte: null,
-				dns: null,
-				tls: null,
-				tcp: null,
-				...input.timings,
-			},
-			tls: Object.keys(input.tls).length > 0 ? input.tls as TlsDetails : null,
-		};
+		const test = new HttpTest(options, buffer);
+		const out = await test.run();
+		return out;
 	}
 }

@@ -76,12 +76,6 @@ export class ProgressBuffer {
 			});
 		}
 
-		console.log('probe:measurement:progress', {
-			testId: this.testId,
-			measurementId: this.measurementId,
-			overwrite: this.mode === 'overwrite',
-			result: this.buffer,
-		});
 		// this.socket.emit('probe:measurement:progress', {
 		// 	testId: this.testId,
 		// 	measurementId: this.measurementId,

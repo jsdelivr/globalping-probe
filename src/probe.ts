@@ -21,7 +21,8 @@ import { dnsCmd, DnsCommand } from './command/dns-command.js';
 import { pingCmd, PingCommand } from './command/ping-command.js';
 import { traceCmd, TracerouteCommand } from './command/traceroute-command.js';
 import { mtrCmd, MtrCommand } from './command/mtr-command.js';
-import { httpCmd, HttpCommand } from './command/http-command.js';
+import { HttpCommand } from './command/http-command.js';
+import { httpCmd, HttpCommand as HttpCommandOld } from './command/http-command-old.js';
 import { FakePingCommand } from './command/fake/fake-ping-command.js';
 import { FakeMtrCommand } from './command/fake/fake-mtr-command.js';
 import { run as runStatsAgent } from './lib/stats/client.js';
@@ -65,6 +66,7 @@ handlersMap.set('mtr', process.env['FAKE_COMMANDS'] ? new FakeMtrCommand() : new
 handlersMap.set('traceroute', new TracerouteCommand(traceCmd));
 handlersMap.set('dns', new DnsCommand(dnsCmd));
 handlersMap.set('http', new HttpCommand());
+handlersMap.set('http-old', new HttpCommandOld(httpCmd));
 
 if (process.env['GP_HOST_FIRMWARE']) {
 	logger.info(`Hardware probe running firmware version ${process.env['GP_HOST_FIRMWARE'].substring(1)}.`);
@@ -72,15 +74,24 @@ if (process.env['GP_HOST_FIRMWARE']) {
 
 logger.info(`Starting probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode with UUID ${probeUuid.substring(0, 8)}.`);
 
-const httpHandler = handlersMap.get('http')!;
-await httpHandler.run('wktl4ti3665LCugn0001zQL6', '0', {
-	request: { method: 'HEAD', path: '/', query: '', headers: {} },
+const httpOptions = {
+	request: { method: 'GET', path: '/', query: '', headers: {} },
 	protocol: 'HTTPS',
-	ipVersion: 4,
+	ipVersion: 6,
 	type: 'http',
-	target: 'google.com',
+	target: '2606:50c0:8003::153',
 	inProgressUpdates: true,
-});
+};
+
+setTimeout(async () => {
+	if (!process.env['OLD']) {
+		const httpHandler = handlersMap.get('http')!;
+		await httpHandler.run('wktl4ti3665LCugn0001zQL6', '0', httpOptions);
+	} else {
+		const httpHandler = handlersMap.get('http-old')!;
+		await httpHandler.run('wktl4ti3665LCugn0001zQL6', '0', httpOptions);
+	}
+}, 1000);
 
 function connect (workerId?: number) {
 	const worker = {
