@@ -85,12 +85,12 @@ const httpOptions = {
 };
 
 setTimeout(async () => {
-	if (!process.env['OLD']) {
-		const httpHandler = handlersMap.get('http')!;
+	if (process.env['OLD']) {
+		const httpHandler = handlersMap.get('http-old')!;
 		const data = await httpHandler.run('wktl4ti3665LCugn0001zQL6', '0', httpOptions);
 		fs.writeFileSync('old-data.json', JSON.stringify(data, null, 2));
 	} else {
-		const httpHandler = handlersMap.get('http-old')!;
+		const httpHandler = handlersMap.get('http')!;
 		const data = await httpHandler.run('wktl4ti3665LCugn0001zQL6', '0', httpOptions);
 		fs.writeFileSync('new-data.json', JSON.stringify(data, null, 2));
 	}

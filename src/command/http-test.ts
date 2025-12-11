@@ -164,7 +164,7 @@ export class HttpTest {
 
 				const tlsSocket = tls.connect({
 					socket: tcpSocket,
-					servername: connOptions.hostname,
+					servername: isIP(connOptions.hostname) ? undefined : connOptions.hostname,
 					rejectUnauthorized: false,
 					ALPNProtocols: this.options.protocol === 'HTTP2' ? [ 'h2' ] : [ 'http/1.1' ],
 				});
@@ -176,7 +176,7 @@ export class HttpTest {
 					const cert = tlsSocket.getPeerCertificate();
 					const alpn = tlsSocket.alpnProtocol;
 
-					this.httpVersion = alpn === 'h2' ? '2' : alpn === 'h3' ? '3' : '1.1';
+					this.httpVersion = alpn === 'h2' ? '2.0' : alpn === 'h3' ? '3' : '1.1';
 
 					this.result.tls = {
 						authorized: tlsSocket.authorized,
@@ -208,18 +208,43 @@ export class HttpTest {
 	}
 
 	private onHttpData = (chunk: Buffer) => {
+		const isFirstMessage = this.result.rawBody.length === 0;
 		const remaining = this.DOWNLOAD_LIMIT - this.result.rawBody.length;
+		let dataString = chunk.toString();
 
-		if (chunk.length > remaining) {
-			this.result.rawBody += chunk.slice(0, remaining).toString();
+		if (dataString.length > remaining) {
+			dataString = dataString.substring(0, remaining);
+			this.result.rawBody += dataString;
 			this.result.truncated = true;
+			this.pushProgress(isFirstMessage, dataString);
 			this.onHttpComplete();
 			return false;
 		}
 
-		this.result.rawBody += chunk.toString();
+		this.result.rawBody += dataString;
+		this.pushProgress(isFirstMessage, dataString);
 		return true;
 	};
+
+	private pushProgress (isFirstMessage: boolean, dataString: string) {
+		if (!this.options.inProgressUpdates) {
+			return;
+		}
+
+		let rawOutput = '';
+
+		if (isFirstMessage) {
+			rawOutput += `HTTP/${this.httpVersion} ${this.result.statusCode}\n${this.result.rawHeaders}\n\n`;
+		}
+
+		rawOutput += dataString;
+
+		this.buffer.pushProgress({
+			...(isFirstMessage && { rawHeaders: this.result.rawHeaders }),
+			rawBody: dataString,
+			rawOutput,
+		});
+	}
 
 
 	private onHttpComplete = () => {

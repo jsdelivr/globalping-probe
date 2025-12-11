@@ -144,7 +144,6 @@ export const urlBuilder = (options: HttpOptions): string => {
 
 export const httpCmd = (options: HttpOptions): Request => {
 	const url = urlBuilder(options);
-	console.log(`options.resolver`, options.resolver);
 	const dnsResolver = callbackify(dnsLookup(options.resolver), true);
 
 	const options_ = {
