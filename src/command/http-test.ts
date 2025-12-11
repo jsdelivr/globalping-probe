@@ -106,7 +106,7 @@ export class HttpTest {
 				for (let i = 0; i < headers.length; i += 2) {
 					const key = headers[i]!.toString();
 					const value = headers[i + 1]!.toString();
-					this.result.headers[key] = value;
+					this.result.headers[key.toLowerCase()] = value;
 					rawHeaderPairs.push(`${key}: ${value}`);
 				}
 

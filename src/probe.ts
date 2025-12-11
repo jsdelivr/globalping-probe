@@ -4,6 +4,7 @@ import net from 'node:net';
 import dns from 'node:dns';
 import { randomUUID } from 'node:crypto';
 import process from 'node:process';
+import fs from 'node:fs';
 import throng from 'throng';
 import { io } from 'socket.io-client';
 import physicalCpuCount from 'physical-cpu-count';
@@ -79,17 +80,19 @@ const httpOptions = {
 	protocol: 'HTTPS',
 	ipVersion: 6,
 	type: 'http',
-	target: '2606:50c0:8003::153',
+	target: 'yarmosh.by',
 	inProgressUpdates: true,
 };
 
 setTimeout(async () => {
 	if (!process.env['OLD']) {
 		const httpHandler = handlersMap.get('http')!;
-		await httpHandler.run('wktl4ti3665LCugn0001zQL6', '0', httpOptions);
+		const data = await httpHandler.run('wktl4ti3665LCugn0001zQL6', '0', httpOptions);
+		fs.writeFileSync('old-data.json', JSON.stringify(data, null, 2));
 	} else {
 		const httpHandler = handlersMap.get('http-old')!;
-		await httpHandler.run('wktl4ti3665LCugn0001zQL6', '0', httpOptions);
+		const data = await httpHandler.run('wktl4ti3665LCugn0001zQL6', '0', httpOptions);
+		fs.writeFileSync('new-data.json', JSON.stringify(data, null, 2));
 	}
 }, 1000);
 

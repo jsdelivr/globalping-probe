@@ -8,3 +8,5 @@ test/e2e/globalping/
 config/local*
 config/e2e-api-local*
 .eslintcache
+new-data.json
+old-data.json
