@@ -1,6 +1,8 @@
 import { isIP, isIPv6 } from 'node:net';
 import tls, { type PeerCertificate } from 'node:tls';
 import net from 'node:net';
+import zlib from 'node:zlib';
+import type { Dispatcher } from 'undici';
 import { Client, buildConnector } from 'undici';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import type { HttpOptions, OutputJson } from './http-command.js';
@@ -42,6 +44,20 @@ type Timings = {
 	download: number | null;
 };
 
+type Decompressor = zlib.Gunzip | zlib.Inflate | zlib.BrotliDecompress;
+
+const createZstdDecompress = (zlib as { createZstdDecompress?: () => Decompressor }).createZstdDecompress;
+
+const decompressors: Record<string, () => Decompressor> = {
+	'gzip': zlib.createGunzip,
+	'x-gzip': zlib.createGunzip,
+	'br': zlib.createBrotliDecompress,
+	'deflate': zlib.createInflate,
+	'compress': zlib.createInflate,
+	'x-compress': zlib.createInflate,
+	...(createZstdDecompress ? { zstd: createZstdDecompress } : {}),
+};
+
 export class HttpTest {
 	private readonly REQUEST_TIMEOUT: number = 10_000;
 	private readonly DOWNLOAD_LIMIT: number = 10_000;
@@ -54,6 +70,7 @@ export class HttpTest {
 	private httpVersion: string | null = null;
 	private timeoutTimer: NodeJS.Timeout | null = null;
 	private socket: net.Socket | null = null;
+	private decompressor: Decompressor | null = null;
 	private readonly timings: Timings = {
 		start: null,
 		total: null,
@@ -83,37 +100,57 @@ export class HttpTest {
 
 		this.undiciClient.dispatch({
 			path: this.url.pathname + this.url.search,
-			method: this.options.request.method,
+			method: this.options.request.method as Dispatcher.HttpMethod,
 			headers: {
+				'Accept-Encoding': `gzip, deflate, br${createZstdDecompress ? ', zstd' : ''}`,
 				...this.options.request.headers,
 				'User-Agent': 'globalping probe (https://github.com/jsdelivr/globalping)',
-				'host': this.options.request.host ?? this.options.target,
+				'Host': this.options.request.host ?? this.options.target,
 				'Connection': 'close',
 			},
 		}, {
 			onConnect () {},
 			onError: (err: Error) => this.handleError(err.message),
-			onResponseStarted: () => {
-				this.timings.firstByte = Date.now() - this.timings.start! - this.timings.dns! - this.timings.tcp! - this.timings.tls!;
-			},
+			// TODO: Use this method to get the firstByte time when node.js v18 is deprecated. It is not supported by undici < 7.0.0. So it requires node.js v20+.
+			// onResponseStarted: () => {
+			// 	this.timings.firstByte = Date.now() - this.timings.start! - this.timings.dns! - this.timings.tcp! - this.timings.tls!;
+			// },
 			onHeaders: (statusCode, headers, _resume, statusText) => {
+				this.timings.firstByte = Date.now() - this.timings.start! - this.timings.dns! - this.timings.tcp! - this.timings.tls!;
 				this.result.statusCode = statusCode;
 				this.result.statusCodeName = statusText;
 
 				const rawHeaderPairs = [];
 
-				for (let i = 0; i < headers.length; i += 2) {
-					const key = headers[i]!.toString();
-					const value = headers[i + 1]!.toString();
-					this.result.headers[key.toLowerCase()] = value;
-					rawHeaderPairs.push(`${key}: ${value}`);
+				if (headers) {
+					for (let i = 0; i < headers.length; i += 2) {
+						const key = headers[i]!.toString();
+						const value = headers[i + 1]!.toString();
+						this.result.headers[key.toLowerCase()] = value;
+						rawHeaderPairs.push(`${key}: ${value}`);
+					}
 				}
 
 				this.result.rawHeaders = rawHeaderPairs.join('\n');
+				this.setupDecompressor();
 				return true;
 			},
-			onData: this.onHttpData,
-			onComplete: this.onHttpComplete,
+			onData: (chunk: Buffer) => {
+				if (this.decompressor) {
+					this.decompressor.write(chunk);
+					return true;
+				}
+
+				return this.onHttpData(chunk);
+			},
+			onComplete: () => {
+				if (this.decompressor) {
+					this.decompressor.end();
+					return;
+				}
+
+				this.onHttpComplete();
+			},
 		});
 
 		return promise;
@@ -207,6 +244,31 @@ export class HttpTest {
 		};
 	}
 
+	private setupDecompressor () {
+		const encoding = this.result.headers['content-encoding']?.toLowerCase();
+
+		if (!encoding) {
+			return;
+		}
+
+		const decompressor = decompressors[encoding];
+
+		if (!decompressor) {
+			return;
+		}
+
+		this.decompressor = decompressor();
+
+		this.decompressor.on('data', (chunk: Buffer) => {
+			if (!this.onHttpData(chunk)) {
+				this.decompressor?.destroy();
+			}
+		});
+
+		this.decompressor.on('end', () => this.onHttpComplete());
+		this.decompressor.on('error', (err: Error) => this.handleError(err.message));
+	}
+
 	private onHttpData = (chunk: Buffer) => {
 		const isFirstMessage = this.result.rawBody.length === 0;
 		const remaining = this.DOWNLOAD_LIMIT - this.result.rawBody.length;
@@ -282,6 +344,7 @@ export class HttpTest {
 		this.timings.firstByte = null;
 		this.timings.download = null;
 		this.timings.total = null;
+		this.decompressor?.destroy();
 		this.socket?.destroy();
 		void this.undiciClient.close();
 		this.sendResult();
