@@ -43,15 +43,17 @@ type Timings = {
 };
 
 export class HttpTest {
+	private readonly REQUEST_TIMEOUT: number = 10_000;
 	private readonly DOWNLOAD_LIMIT: number = 10_000;
 	private readonly result: ReturnType<typeof this.getInitialResult>;
 	private readonly url: URL;
 	private readonly port: number;
 	private readonly isHttps: boolean;
 	private resolve!: (value: unknown) => void;
-	private reject!: (reason?: undefined) => void;
 	private undiciClient!: Client;
 	private httpVersion: string | null = null;
+	private timeoutTimer: NodeJS.Timeout | null = null;
+	private socket: net.Socket | null = null;
 	private readonly timings: Timings = {
 		start: null,
 		total: null,
@@ -73,12 +75,11 @@ export class HttpTest {
 	}
 
 	public async run () {
-		const promise = new Promise((resolve, reject) => {
-			this.resolve = resolve;
-			this.reject = reject;
-		});
+		const promise = new Promise((resolve) => { this.resolve = resolve; });
 		const connector = this.getConnector();
 		this.undiciClient = new Client(this.url.origin, { connect: connector });
+
+		this.timeoutTimer = setTimeout(() => this.handleError('Request timeout.'), this.REQUEST_TIMEOUT);
 
 		this.undiciClient.dispatch({
 			path: this.url.pathname + this.url.search,
@@ -91,9 +92,7 @@ export class HttpTest {
 			},
 		}, {
 			onConnect () {},
-			onError: (err) => {
-				this.reject(err);
-			},
+			onError: (err: Error) => this.handleError(err.message),
 			onResponseStarted: () => {
 				this.timings.firstByte = Date.now() - this.timings.start! - this.timings.dns! - this.timings.tcp! - this.timings.tls!;
 			},
@@ -135,7 +134,8 @@ export class HttpTest {
 		return (connOptions, callback) => {
 			const dnsResolver = callbackify(dnsLookup(this.options.resolver), true);
 			this.timings.start = Date.now();
-			const tcpSocket = net.connect({
+
+			this.socket = net.connect({
 				host: connOptions.hostname,
 				port: Number(connOptions.port) || this.port,
 				autoSelectFamily: false,
@@ -143,13 +143,13 @@ export class HttpTest {
 				lookup: dnsResolver,
 			});
 
+			const tcpSocket = this.socket;
+
 			tcpSocket.on('lookup', (_err, address) => {
 				this.timings.dns = Date.now() - this.timings.start!;
 				this.result.resolvedAddress = address;
 			});
 
-			tcpSocket.setTimeout(10_000);
-			tcpSocket.on('timeout', () => tcpSocket.destroy(new Error('Connection timeout')));
 			tcpSocket.on('error', err => callback(err, null));
 
 			tcpSocket.on('connect', () => {
@@ -164,7 +164,7 @@ export class HttpTest {
 
 				const tlsSocket = tls.connect({
 					socket: tcpSocket,
-					servername: isIP(connOptions.hostname) ? undefined : connOptions.hostname,
+					servername: !isIP(connOptions.hostname) ? connOptions.hostname : this.options.request.host,
 					rejectUnauthorized: false,
 					ALPNProtocols: this.options.protocol === 'HTTP2' ? [ 'h2' ] : [ 'http/1.1' ],
 				});
@@ -196,7 +196,7 @@ export class HttpTest {
 						},
 						keyType: cert.asn1Curve || cert.nistCurve ? 'EC' : cert.modulus || cert.exponent ? 'RSA' : null,
 						keyBits: cert.bits || null,
-						serialNumber: cert.serialNumber.match(/.{2}/g)!.join(':'),
+						serialNumber: cert.serialNumber?.match(/.{2}/g)?.join(':') ?? null,
 						fingerprint256: cert.fingerprint256,
 						publicKey: cert.pubkey ? cert.pubkey.toString('hex').toUpperCase().match(/.{2}/g)!.join(':') : null,
 					};
@@ -248,6 +248,7 @@ export class HttpTest {
 
 
 	private onHttpComplete = () => {
+		this.timeoutTimer && clearTimeout(this.timeoutTimer);
 		const now = Date.now();
 		this.timings.download = now - this.timings.start! - this.timings.dns! - this.timings.tcp! - this.timings.tls! - this.timings.firstByte!;
 		this.timings.total = now - this.timings.start!;
@@ -270,6 +271,21 @@ export class HttpTest {
 			error: '',
 		};
 	}
+
+	private handleError = (message: string) => {
+		this.timeoutTimer && clearTimeout(this.timeoutTimer);
+		this.result.status = 'failed';
+		this.result.error = message;
+		this.timings.dns = null;
+		this.timings.tcp = null;
+		this.timings.tls = null;
+		this.timings.firstByte = null;
+		this.timings.download = null;
+		this.timings.total = null;
+		this.socket?.destroy();
+		void this.undiciClient.close();
+		this.sendResult();
+	};
 
 	private sendResult = () => {
 		let rawOutput;
