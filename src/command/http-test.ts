@@ -137,6 +137,7 @@ export class HttpTest {
 	private httpVersion: string | null = null;
 	private timeoutTimer: NodeJS.Timeout | null = null;
 	private decompressor: Decompressor | null = null;
+	private done = false;
 	private readonly timings: Timings = {
 		start: null,
 		total: null,
@@ -188,7 +189,7 @@ export class HttpTest {
 				this.timings.dns = connectorStats.timings.dns;
 				this.timings.tcp = connectorStats.timings.tcp;
 				this.timings.tls = connectorStats.timings.tls;
-				this.result.resolvedAddress = connectorStats.resolvedAddress;
+				connectorStats.resolvedAddress && (this.result.resolvedAddress = connectorStats.resolvedAddress);
 				this.httpVersion = connectorStats.httpVersion;
 				this.result.tls = connectorStats.tls ?? {};
 			},
@@ -326,6 +327,11 @@ export class HttpTest {
 	}
 
 	private handleSuccess = () => {
+		if (this.done) {
+			return;
+		}
+
+		this.done = true;
 		const now = Date.now();
 		this.timings.download = now - this.timings.start! - this.timings.dns! - this.timings.tcp! - this.timings.tls! - this.timings.firstByte!;
 		this.timings.total = now - this.timings.start!;
@@ -334,7 +340,13 @@ export class HttpTest {
 	};
 
 	private handleError = (message: string) => {
+		if (this.done) {
+			return;
+		}
+
+		this.done = true;
 		this.result.status = 'failed';
+		this.result.resolvedAddress = null;
 		this.result.error = message;
 		this.timings.dns = null;
 		this.timings.tcp = null;
