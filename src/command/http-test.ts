@@ -1,4 +1,4 @@
-import { isIP, isIPv6 } from 'node:net';
+import { isIP, isIPv6, Socket } from 'node:net';
 import type { TLSSocket } from 'node:tls';
 import type { PeerCertificate } from 'node:tls';
 import zlib from 'node:zlib';
@@ -46,12 +46,10 @@ type Timings = {
 
 type Decompressor = zlib.Gunzip | zlib.Inflate | zlib.BrotliDecompress;
 
-type ConnectorState = {
-	dns: number | null;
-	tcp: number | null;
-	tls: number | null;
+type ConnectorStats = {
+	timings: Pick<Timings, 'start' | 'dns' | 'tcp' | 'tls'>;
 	resolvedAddress: string | null;
-	tlsInfo: Record<string, unknown> | null;
+	tls: Record<string, unknown> | null;
 	httpVersion: string | null;
 };
 
@@ -68,62 +66,63 @@ const decompressors: Record<string, () => Decompressor> = {
 };
 
 function wrapConnector (
-	baseConnector: buildConnector.connector,
-	startTime: number,
-	state: ConnectorState,
+	connect: buildConnector.connector,
 	isHttps: boolean,
-): buildConnector.connector {
-	return (opts, callback) => {
-		const socket = baseConnector(opts, callback);
+): { connector: buildConnector.connector; connectorStats: ConnectorStats } {
+	const stats: ConnectorStats = { timings: { start: null, dns: null, tcp: null, tls: null }, resolvedAddress: null, tls: null, httpVersion: null };
 
-		socket.once('lookup', (_err, address) => {
-			state.dns = Date.now() - startTime;
-			state.resolvedAddress = address;
+	const connector: buildConnector.connector = (opts, callback) => {
+		stats.timings.start = Date.now();
+		const socket = connect(opts, callback) as unknown as Socket;
+
+		socket.on('lookup', (_err, address) => {
+			stats.timings.dns = Date.now() - stats.timings.start!;
+			stats.resolvedAddress = address;
 		});
 
-		socket.once('connect', () => {
-			state.tcp = Date.now() - startTime - (state.dns ?? 0);
+		socket.on('connect', () => {
+			stats.timings.tcp = Date.now() - stats.timings.start! - stats.timings.dns!;
 
 			if (!isHttps) {
-				state.tls = null;
-				state.httpVersion = '1.1';
+				stats.timings.tls = null;
+				stats.httpVersion = '1.1';
 			}
 		});
 
-		if (isHttps) {
-			socket.once('secureConnect', () => {
-				state.tls = Date.now() - startTime - (state.dns ?? 0) - (state.tcp ?? 0);
-				const tlsSocket = socket as TLSSocket;
-				const cert = tlsSocket.getPeerCertificate();
-				state.httpVersion = tlsSocket.alpnProtocol === 'h2' ? '2.0' : tlsSocket.alpnProtocol === 'h3' ? '3' : '1.1';
+		socket.on('secureConnect', () => {
+			stats.timings.tls = Date.now() - stats.timings.start! - stats.timings.dns! - stats.timings.tcp!;
+			const tlsSocket = socket as TLSSocket;
+			const cert = tlsSocket.getPeerCertificate();
+			stats.httpVersion = tlsSocket.alpnProtocol === 'h2' ? '2.0' : tlsSocket.alpnProtocol === 'h3' ? '3' : '1.1';
 
-				state.tlsInfo = {
-					authorized: tlsSocket.authorized,
-					protocol: tlsSocket.getProtocol(),
-					cipherName: tlsSocket.getCipher()?.name,
-					...(tlsSocket.authorizationError ? { error: tlsSocket.authorizationError } : {}),
-					createdAt: cert.valid_from ? (new Date(cert.valid_from)).toISOString() : null,
-					expiresAt: cert.valid_to ? (new Date(cert.valid_to)).toISOString() : null,
-					issuer: {
-						...(cert.issuer?.C ? { C: cert.issuer.C } : {}),
-						...(cert.issuer?.O ? { O: cert.issuer.O } : {}),
-						...(cert.issuer?.CN ? { CN: cert.issuer.CN } : {}),
-					},
-					subject: {
-						...(cert.subject?.CN ? { CN: cert.subject.CN } : {}),
-						...(cert.subjectaltname ? { alt: cert.subjectaltname } : {}),
-					},
-					keyType: cert.asn1Curve || cert.nistCurve ? 'EC' : cert.modulus || cert.exponent ? 'RSA' : null,
-					keyBits: cert.bits || null,
-					serialNumber: cert.serialNumber?.match(/.{2}/g)?.join(':') ?? null,
-					fingerprint256: cert.fingerprint256,
-					publicKey: cert.pubkey ? cert.pubkey.toString('hex').toUpperCase().match(/.{2}/g)!.join(':') : null,
-				};
-			});
-		}
+			stats.tls = {
+				authorized: tlsSocket.authorized,
+				protocol: tlsSocket.getProtocol(),
+				cipherName: tlsSocket.getCipher()?.name,
+				...(tlsSocket.authorizationError ? { error: tlsSocket.authorizationError } : {}),
+				createdAt: cert.valid_from ? (new Date(cert.valid_from)).toISOString() : null,
+				expiresAt: cert.valid_to ? (new Date(cert.valid_to)).toISOString() : null,
+				issuer: {
+					...(cert.issuer?.C ? { C: cert.issuer.C } : {}),
+					...(cert.issuer?.O ? { O: cert.issuer.O } : {}),
+					...(cert.issuer?.CN ? { CN: cert.issuer.CN } : {}),
+				},
+				subject: {
+					...(cert.subject?.CN ? { CN: cert.subject.CN } : {}),
+					...(cert.subjectaltname ? { alt: cert.subjectaltname } : {}),
+				},
+				keyType: cert.asn1Curve || cert.nistCurve ? 'EC' : cert.modulus || cert.exponent ? 'RSA' : null,
+				keyBits: cert.bits || null,
+				serialNumber: cert.serialNumber?.match(/.{2}/g)?.join(':') ?? null,
+				fingerprint256: cert.fingerprint256,
+				publicKey: cert.pubkey ? cert.pubkey.toString('hex').toUpperCase().match(/.{2}/g)!.join(':') : null,
+			};
+		});
 
 		return socket;
 	};
+
+	return { connector, connectorStats: stats };
 }
 
 export class HttpTest {
@@ -138,7 +137,6 @@ export class HttpTest {
 	private httpVersion: string | null = null;
 	private timeoutTimer: NodeJS.Timeout | null = null;
 	private decompressor: Decompressor | null = null;
-	private connectorState: ConnectorState | null = null;
 	private readonly timings: Timings = {
 		start: null,
 		total: null,
@@ -162,18 +160,15 @@ export class HttpTest {
 	public async run () {
 		const promise = new Promise((resolve) => { this.resolve = resolve; });
 
-		this.timings.start = Date.now();
-		this.connectorState = { dns: null, tcp: null, tls: null, resolvedAddress: null, tlsInfo: null, httpVersion: null };
-
 		const dnsResolver = callbackify(dnsLookup(this.options.resolver), true);
-		const baseConnector = buildConnector({
+		const connect = buildConnector({
 			lookup: dnsResolver,
 			rejectUnauthorized: false,
 			family: this.options.ipVersion,
 			autoSelectFamily: false,
 		});
 
-		const connector = wrapConnector(baseConnector, this.timings.start, this.connectorState, this.isHttps);
+		const { connector, connectorStats } = wrapConnector(connect, this.isHttps);
 		this.undiciClient = new Client(this.url.origin, { connect: connector });
 		this.timeoutTimer = setTimeout(() => this.handleError('Request timeout.'), this.REQUEST_TIMEOUT);
 
@@ -189,21 +184,17 @@ export class HttpTest {
 			},
 		}, {
 			onConnect: () => {
-				if (this.connectorState) {
-					this.timings.dns = this.connectorState.dns;
-					this.timings.tcp = this.connectorState.tcp;
-					this.timings.tls = this.connectorState.tls;
-					this.result.resolvedAddress = this.connectorState.resolvedAddress;
-					this.httpVersion = this.connectorState.httpVersion;
-
-					if (this.connectorState.tlsInfo) {
-						this.result.tls = this.connectorState.tlsInfo;
-					}
-				}
+				this.timings.start = connectorStats.timings.start;
+				this.timings.dns = connectorStats.timings.dns;
+				this.timings.tcp = connectorStats.timings.tcp;
+				this.timings.tls = connectorStats.timings.tls;
+				this.result.resolvedAddress = connectorStats.resolvedAddress;
+				this.httpVersion = connectorStats.httpVersion;
+				this.result.tls = connectorStats.tls ?? {};
 			},
 			onError: (err: Error) => this.handleError(err.message),
 			onHeaders: (statusCode, headers, _resume, statusText) => {
-				this.timings.firstByte = Date.now() - this.timings.start! - (this.timings.dns ?? 0) - (this.timings.tcp ?? 0) - (this.timings.tls ?? 0);
+				this.timings.firstByte = Date.now() - this.timings.start! - this.timings.dns! - this.timings.tcp! - this.timings.tls!;
 				this.result.statusCode = statusCode;
 				this.result.statusCodeName = statusText;
 
@@ -236,7 +227,7 @@ export class HttpTest {
 					return;
 				}
 
-				this.onHttpComplete();
+				this.handleSuccess();
 			},
 		});
 
@@ -268,14 +259,8 @@ export class HttpTest {
 		}
 
 		this.decompressor = decompressor();
-
-		this.decompressor.on('data', (chunk: Buffer) => {
-			if (!this.onHttpData(chunk)) {
-				this.decompressor?.destroy();
-			}
-		});
-
-		this.decompressor.on('end', () => this.onHttpComplete());
+		this.decompressor.on('data', (chunk: Buffer) => this.onHttpData(chunk));
+		this.decompressor.on('end', () => this.handleSuccess());
 		this.decompressor.on('error', (err: Error) => this.handleError(err.message));
 	}
 
@@ -289,7 +274,7 @@ export class HttpTest {
 			this.result.rawBody += dataString;
 			this.result.truncated = true;
 			this.pushProgress(isFirstMessage, dataString);
-			this.onHttpComplete();
+			this.handleSuccess();
 			return false;
 		}
 
@@ -318,19 +303,6 @@ export class HttpTest {
 		});
 	}
 
-	private onHttpComplete = () => {
-		if (this.timings.total !== null) {
-			return;
-		}
-
-		this.timeoutTimer && clearTimeout(this.timeoutTimer);
-		const now = Date.now();
-		this.timings.download = now - this.timings.start! - (this.timings.dns ?? 0) - (this.timings.tcp ?? 0) - (this.timings.tls ?? 0) - this.timings.firstByte!;
-		this.timings.total = now - this.timings.start!;
-		this.cleanup();
-		this.sendResult();
-	};
-
 	private getInitialResult () {
 		return {
 			status: 'finished' as 'finished' | 'failed',
@@ -348,19 +320,20 @@ export class HttpTest {
 	}
 
 	private cleanup () {
-		this.connectorState = null;
-		this.decompressor?.removeAllListeners();
+		clearTimeout(this.timeoutTimer!);
 		this.decompressor?.destroy();
-		this.decompressor = null;
-		this.undiciClient.destroy().catch(() => {});
+		this.undiciClient.destroy().catch((error: Error) => console.error(error));
 	}
 
-	private handleError = (message: string) => {
-		if (this.timings.total !== null) {
-			return;
-		}
+	private handleSuccess = () => {
+		const now = Date.now();
+		this.timings.download = now - this.timings.start! - this.timings.dns! - this.timings.tcp! - this.timings.tls! - this.timings.firstByte!;
+		this.timings.total = now - this.timings.start!;
+		this.cleanup();
+		this.sendResult();
+	};
 
-		this.timeoutTimer && clearTimeout(this.timeoutTimer);
+	private handleError = (message: string) => {
 		this.result.status = 'failed';
 		this.result.error = message;
 		this.timings.dns = null;
