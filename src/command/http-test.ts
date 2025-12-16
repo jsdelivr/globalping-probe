@@ -1,6 +1,6 @@
 import { isIP, isIPv6 } from 'node:net';
-import tls, { type PeerCertificate } from 'node:tls';
-import net from 'node:net';
+import type { TLSSocket } from 'node:tls';
+import type { PeerCertificate } from 'node:tls';
 import zlib from 'node:zlib';
 import type { Dispatcher } from 'undici';
 import { Client, buildConnector } from 'undici';
@@ -46,6 +46,15 @@ type Timings = {
 
 type Decompressor = zlib.Gunzip | zlib.Inflate | zlib.BrotliDecompress;
 
+type ConnectorState = {
+	dns: number | null;
+	tcp: number | null;
+	tls: number | null;
+	resolvedAddress: string | null;
+	tlsInfo: Record<string, unknown> | null;
+	httpVersion: string | null;
+};
+
 const createZstdDecompress = (zlib as { createZstdDecompress?: () => Decompressor }).createZstdDecompress;
 
 const decompressors: Record<string, () => Decompressor> = {
@@ -58,6 +67,65 @@ const decompressors: Record<string, () => Decompressor> = {
 	...(createZstdDecompress ? { zstd: createZstdDecompress } : {}),
 };
 
+function wrapConnector (
+	baseConnector: buildConnector.connector,
+	startTime: number,
+	state: ConnectorState,
+	isHttps: boolean,
+): buildConnector.connector {
+	return (opts, callback) => {
+		const socket = baseConnector(opts, callback);
+
+		socket.once('lookup', (_err, address) => {
+			state.dns = Date.now() - startTime;
+			state.resolvedAddress = address;
+		});
+
+		socket.once('connect', () => {
+			state.tcp = Date.now() - startTime - (state.dns ?? 0);
+
+			if (!isHttps) {
+				state.tls = null;
+				state.httpVersion = '1.1';
+			}
+		});
+
+		if (isHttps) {
+			socket.once('secureConnect', () => {
+				state.tls = Date.now() - startTime - (state.dns ?? 0) - (state.tcp ?? 0);
+				const tlsSocket = socket as TLSSocket;
+				const cert = tlsSocket.getPeerCertificate();
+				state.httpVersion = tlsSocket.alpnProtocol === 'h2' ? '2.0' : tlsSocket.alpnProtocol === 'h3' ? '3' : '1.1';
+
+				state.tlsInfo = {
+					authorized: tlsSocket.authorized,
+					protocol: tlsSocket.getProtocol(),
+					cipherName: tlsSocket.getCipher()?.name,
+					...(tlsSocket.authorizationError ? { error: tlsSocket.authorizationError } : {}),
+					createdAt: cert.valid_from ? (new Date(cert.valid_from)).toISOString() : null,
+					expiresAt: cert.valid_to ? (new Date(cert.valid_to)).toISOString() : null,
+					issuer: {
+						...(cert.issuer?.C ? { C: cert.issuer.C } : {}),
+						...(cert.issuer?.O ? { O: cert.issuer.O } : {}),
+						...(cert.issuer?.CN ? { CN: cert.issuer.CN } : {}),
+					},
+					subject: {
+						...(cert.subject?.CN ? { CN: cert.subject.CN } : {}),
+						...(cert.subjectaltname ? { alt: cert.subjectaltname } : {}),
+					},
+					keyType: cert.asn1Curve || cert.nistCurve ? 'EC' : cert.modulus || cert.exponent ? 'RSA' : null,
+					keyBits: cert.bits || null,
+					serialNumber: cert.serialNumber?.match(/.{2}/g)?.join(':') ?? null,
+					fingerprint256: cert.fingerprint256,
+					publicKey: cert.pubkey ? cert.pubkey.toString('hex').toUpperCase().match(/.{2}/g)!.join(':') : null,
+				};
+			});
+		}
+
+		return socket;
+	};
+}
+
 export class HttpTest {
 	private readonly REQUEST_TIMEOUT: number = 10_000;
 	private readonly DOWNLOAD_LIMIT: number = 10_000;
@@ -69,8 +137,8 @@ export class HttpTest {
 	private undiciClient!: Client;
 	private httpVersion: string | null = null;
 	private timeoutTimer: NodeJS.Timeout | null = null;
-	private socket: net.Socket | null = null;
 	private decompressor: Decompressor | null = null;
+	private connectorState: ConnectorState | null = null;
 	private readonly timings: Timings = {
 		start: null,
 		total: null,
@@ -93,9 +161,20 @@ export class HttpTest {
 
 	public async run () {
 		const promise = new Promise((resolve) => { this.resolve = resolve; });
-		const connector = this.getConnector();
-		this.undiciClient = new Client(this.url.origin, { connect: connector });
 
+		this.timings.start = Date.now();
+		this.connectorState = { dns: null, tcp: null, tls: null, resolvedAddress: null, tlsInfo: null, httpVersion: null };
+
+		const dnsResolver = callbackify(dnsLookup(this.options.resolver), true);
+		const baseConnector = buildConnector({
+			lookup: dnsResolver,
+			rejectUnauthorized: false,
+			family: this.options.ipVersion,
+			autoSelectFamily: false,
+		});
+
+		const connector = wrapConnector(baseConnector, this.timings.start, this.connectorState, this.isHttps);
+		this.undiciClient = new Client(this.url.origin, { connect: connector });
 		this.timeoutTimer = setTimeout(() => this.handleError('Request timeout.'), this.REQUEST_TIMEOUT);
 
 		this.undiciClient.dispatch({
@@ -109,14 +188,22 @@ export class HttpTest {
 				'Connection': 'close',
 			},
 		}, {
-			onConnect () {},
+			onConnect: () => {
+				if (this.connectorState) {
+					this.timings.dns = this.connectorState.dns;
+					this.timings.tcp = this.connectorState.tcp;
+					this.timings.tls = this.connectorState.tls;
+					this.result.resolvedAddress = this.connectorState.resolvedAddress;
+					this.httpVersion = this.connectorState.httpVersion;
+
+					if (this.connectorState.tlsInfo) {
+						this.result.tls = this.connectorState.tlsInfo;
+					}
+				}
+			},
 			onError: (err: Error) => this.handleError(err.message),
-			// TODO: Use this method to get the firstByte time when node.js v18 is deprecated. It is not supported by undici < 7.0.0. So it requires node.js v20+.
-			// onResponseStarted: () => {
-			// 	this.timings.firstByte = Date.now() - this.timings.start! - this.timings.dns! - this.timings.tcp! - this.timings.tls!;
-			// },
 			onHeaders: (statusCode, headers, _resume, statusText) => {
-				this.timings.firstByte = Date.now() - this.timings.start! - this.timings.dns! - this.timings.tcp! - this.timings.tls!;
+				this.timings.firstByte = Date.now() - this.timings.start! - (this.timings.dns ?? 0) - (this.timings.tcp ?? 0) - (this.timings.tls ?? 0);
 				this.result.statusCode = statusCode;
 				this.result.statusCodeName = statusText;
 
@@ -165,83 +252,6 @@ export class HttpTest {
 		const url = `${protocolPrefix}://${isIPv6(options.target) ? `[${options.target}]` : options.target}:${port}${path}${query}`;
 
 		return new URL(url);
-	}
-
-	private getConnector (): buildConnector.connector {
-		return (connOptions, callback) => {
-			const dnsResolver = callbackify(dnsLookup(this.options.resolver), true);
-			this.timings.start = Date.now();
-
-			this.socket = net.connect({
-				host: connOptions.hostname,
-				port: Number(connOptions.port) || this.port,
-				autoSelectFamily: false,
-				family: this.options.ipVersion,
-				lookup: dnsResolver,
-			});
-
-			const tcpSocket = this.socket;
-
-			tcpSocket.on('lookup', (_err, address) => {
-				this.timings.dns = Date.now() - this.timings.start!;
-				this.result.resolvedAddress = address;
-			});
-
-			tcpSocket.on('error', err => callback(err, null));
-
-			tcpSocket.on('connect', () => {
-				this.timings.tcp = Date.now() - this.timings.start! - this.timings.dns!;
-
-				if (!this.isHttps) {
-					this.timings.tls = null;
-					this.httpVersion = '1.1';
-					callback(null, tcpSocket);
-					return;
-				}
-
-				const tlsSocket = tls.connect({
-					socket: tcpSocket,
-					servername: !isIP(connOptions.hostname) ? connOptions.hostname : this.options.request.host,
-					rejectUnauthorized: false,
-					ALPNProtocols: this.options.protocol === 'HTTP2' ? [ 'h2' ] : [ 'http/1.1' ],
-				});
-
-				tlsSocket.on('error', (err: Error) => callback(err, null));
-
-				tlsSocket.on('secureConnect', () => {
-					this.timings.tls = Date.now() - this.timings.start! - this.timings.dns! - this.timings.tcp!;
-					const cert = tlsSocket.getPeerCertificate();
-					const alpn = tlsSocket.alpnProtocol;
-
-					this.httpVersion = alpn === 'h2' ? '2.0' : alpn === 'h3' ? '3' : '1.1';
-
-					this.result.tls = {
-						authorized: tlsSocket.authorized,
-						protocol: tlsSocket.getProtocol(),
-						cipherName: tlsSocket.getCipher()?.name,
-						...(tlsSocket.authorizationError ? { error: tlsSocket.authorizationError } : {}),
-						createdAt: cert.valid_from ? (new Date(cert.valid_from)).toISOString() : null,
-						expiresAt: cert.valid_to ? (new Date(cert.valid_to)).toISOString() : null,
-						issuer: {
-							...(cert.issuer.C ? { C: cert.issuer.C } : {}),
-							...(cert.issuer.O ? { O: cert.issuer.O } : {}),
-							...(cert.issuer.CN ? { CN: cert.issuer.CN } : {}),
-						},
-						subject: {
-							...(cert.subject.CN ? { CN: cert.subject.CN } : {}),
-							...(cert.subjectaltname ? { alt: cert.subjectaltname } : {}),
-						},
-						keyType: cert.asn1Curve || cert.nistCurve ? 'EC' : cert.modulus || cert.exponent ? 'RSA' : null,
-						keyBits: cert.bits || null,
-						serialNumber: cert.serialNumber?.match(/.{2}/g)?.join(':') ?? null,
-						fingerprint256: cert.fingerprint256,
-						publicKey: cert.pubkey ? cert.pubkey.toString('hex').toUpperCase().match(/.{2}/g)!.join(':') : null,
-					};
-
-					callback(null, tlsSocket);
-				});
-			});
-		};
 	}
 
 	private setupDecompressor () {
@@ -308,13 +318,16 @@ export class HttpTest {
 		});
 	}
 
-
 	private onHttpComplete = () => {
+		if (this.timings.total !== null) {
+			return;
+		}
+
 		this.timeoutTimer && clearTimeout(this.timeoutTimer);
 		const now = Date.now();
-		this.timings.download = now - this.timings.start! - this.timings.dns! - this.timings.tcp! - this.timings.tls! - this.timings.firstByte!;
+		this.timings.download = now - this.timings.start! - (this.timings.dns ?? 0) - (this.timings.tcp ?? 0) - (this.timings.tls ?? 0) - this.timings.firstByte!;
 		this.timings.total = now - this.timings.start!;
-		void this.undiciClient.close();
+		this.cleanup();
 		this.sendResult();
 	};
 
@@ -334,7 +347,19 @@ export class HttpTest {
 		};
 	}
 
+	private cleanup () {
+		this.connectorState = null;
+		this.decompressor?.removeAllListeners();
+		this.decompressor?.destroy();
+		this.decompressor = null;
+		this.undiciClient.destroy().catch(() => {});
+	}
+
 	private handleError = (message: string) => {
+		if (this.timings.total !== null) {
+			return;
+		}
+
 		this.timeoutTimer && clearTimeout(this.timeoutTimer);
 		this.result.status = 'failed';
 		this.result.error = message;
@@ -344,9 +369,7 @@ export class HttpTest {
 		this.timings.firstByte = null;
 		this.timings.download = null;
 		this.timings.total = null;
-		this.decompressor?.destroy();
-		this.socket?.destroy();
-		void this.undiciClient.close();
+		this.cleanup();
 		this.sendResult();
 	};
 
