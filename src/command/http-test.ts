@@ -1,9 +1,11 @@
-import { isIP, isIPv6, Socket } from 'node:net';
-import type { TLSSocket } from 'node:tls';
+import net, { isIP, isIPv6 } from 'node:net';
+import type { LookupFunction } from 'node:net';
+import tls from 'node:tls';
 import type { PeerCertificate } from 'node:tls';
 import zlib from 'node:zlib';
 import type { Dispatcher } from 'undici';
-import { Client, buildConnector } from 'undici';
+import { Client } from 'undici';
+import type { buildConnector } from 'undici';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import type { HttpOptions, OutputJson } from './http-command.js';
 import { dnsLookup } from './handlers/shared/dns-resolver.js';
@@ -46,10 +48,12 @@ type Timings = {
 
 type Decompressor = zlib.Gunzip | zlib.Inflate | zlib.BrotliDecompress;
 
-type ConnectorStats = {
-	timings: Pick<Timings, 'start' | 'dns' | 'tcp' | 'tls'>;
-	resolvedAddress: string | null;
-	tls: Record<string, unknown> | null;
+type HttpTestState = {
+	timings: Timings;
+	result: {
+		resolvedAddress: string | null;
+		tls: Record<string, unknown>;
+	};
 	httpVersion: string | null;
 };
 
@@ -65,73 +69,92 @@ const decompressors: Record<string, () => Decompressor> = {
 	...(createZstdDecompress ? { zstd: createZstdDecompress } : {}),
 };
 
-function wrapConnector (
-	connect: buildConnector.connector,
-	isHttps: boolean,
-	requiredProtocol: string,
-): { connector: buildConnector.connector; connectorStats: ConnectorStats } {
-	const stats: ConnectorStats = { timings: { start: null, dns: null, tcp: null, tls: null }, resolvedAddress: null, tls: null, httpVersion: null };
+function getConnector (options: HttpOptions, port: number, isHttps: boolean, dnsResolver: LookupFunction, state: HttpTestState): buildConnector.connector {
+	return (connOptions, callback) => {
+		state.timings.start = Date.now();
 
-	const connector: buildConnector.connector = (opts, callback) => {
-		stats.timings.start = Date.now();
-		const socket = connect(opts, callback) as unknown as Socket;
-
-		socket.on('lookup', (_err, address) => {
-			stats.timings.dns = Date.now() - stats.timings.start!;
-			stats.resolvedAddress = address;
+		const tcpSocket = net.connect({
+			host: connOptions.hostname,
+			port: Number(connOptions.port) || port,
+			autoSelectFamily: false,
+			family: options.ipVersion,
+			lookup: dnsResolver,
 		});
 
-		socket.on('connect', () => {
-			stats.timings.tcp = Date.now() - stats.timings.start! - stats.timings.dns!;
+		tcpSocket.on('lookup', (_err, address) => {
+			state.timings.dns = Date.now() - state.timings.start!;
+			state.result.resolvedAddress = address;
+		});
+
+		tcpSocket.on('error', (err) => {
+			callback(err, null);
+		});
+
+		tcpSocket.on('connect', () => {
+			state.timings.tcp = Date.now() - state.timings.start! - state.timings.dns!;
 
 			if (!isHttps) {
-				stats.timings.tls = null;
-				stats.httpVersion = '1.1';
-			}
-		});
-
-		socket.on('secureConnect', () => {
-			stats.timings.tls = Date.now() - stats.timings.start! - stats.timings.dns! - stats.timings.tcp!;
-			const tlsSocket = socket as TLSSocket;
-			const cert = tlsSocket.getPeerCertificate();
-
-			console.log(`tlsSocket.alpnProtocol`, tlsSocket.alpnProtocol);
-
-			if (requiredProtocol === 'HTTP2' && tlsSocket.alpnProtocol !== 'h2') {
-				socket.destroy(new Error('HTTP/2 not supported by the server.'));
+				state.timings.tls = null;
+				state.httpVersion = '1.1';
+				callback(null, tcpSocket);
 				return;
 			}
 
-			stats.httpVersion = tlsSocket.alpnProtocol === 'h2' ? '2.0' : tlsSocket.alpnProtocol === 'h3' ? '3' : '1.1';
+			const tlsSocket = tls.connect({
+				socket: tcpSocket,
+				servername: !isIP(connOptions.hostname) ? connOptions.hostname : options.request.host,
+				rejectUnauthorized: false,
+				ALPNProtocols: options.protocol === 'HTTP2' ? [ 'h2' ] : [ 'http/1.1' ],
+			});
 
-			stats.tls = {
-				authorized: tlsSocket.authorized,
-				protocol: tlsSocket.getProtocol(),
-				cipherName: tlsSocket.getCipher()?.name,
-				...(tlsSocket.authorizationError ? { error: tlsSocket.authorizationError } : {}),
-				createdAt: cert.valid_from ? (new Date(cert.valid_from)).toISOString() : null,
-				expiresAt: cert.valid_to ? (new Date(cert.valid_to)).toISOString() : null,
-				issuer: {
-					...(cert.issuer?.C ? { C: cert.issuer.C } : {}),
-					...(cert.issuer?.O ? { O: cert.issuer.O } : {}),
-					...(cert.issuer?.CN ? { CN: cert.issuer.CN } : {}),
-				},
-				subject: {
-					...(cert.subject?.CN ? { CN: cert.subject.CN } : {}),
-					...(cert.subjectaltname ? { alt: cert.subjectaltname } : {}),
-				},
-				keyType: cert.asn1Curve || cert.nistCurve ? 'EC' : cert.modulus || cert.exponent ? 'RSA' : null,
-				keyBits: cert.bits || null,
-				serialNumber: cert.serialNumber?.match(/.{2}/g)?.join(':') ?? null,
-				fingerprint256: cert.fingerprint256,
-				publicKey: cert.pubkey ? cert.pubkey.toString('hex').toUpperCase().match(/.{2}/g)!.join(':') : null,
-			};
+			tlsSocket.on('error', (err: Error) => {
+				callback(err, null);
+			});
+
+			tlsSocket.on('secureConnect', () => {
+				state.timings.tls = Date.now() - state.timings.start! - state.timings.dns! - state.timings.tcp!;
+				const cert = tlsSocket.getPeerCertificate();
+				const alpn = tlsSocket.alpnProtocol;
+
+				if (options.protocol === 'HTTP2' && alpn !== 'h2') {
+					tlsSocket.destroy();
+					callback(new Error('HTTP/2 not supported by the server.'), null);
+					return;
+				}
+
+				state.httpVersion = alpn === 'h2' ? '2.0' : alpn === 'h3' ? '3' : '1.1';
+
+				if (cert) {
+					state.result.tls = {
+						authorized: tlsSocket.authorized,
+						protocol: tlsSocket.getProtocol(),
+						cipherName: tlsSocket.getCipher()?.name,
+						...(tlsSocket.authorizationError ? { error: tlsSocket.authorizationError } : {}),
+						createdAt: cert.valid_from ? (new Date(cert.valid_from)).toISOString() : null,
+						expiresAt: cert.valid_to ? (new Date(cert.valid_to)).toISOString() : null,
+						issuer: {
+							...(cert.issuer?.C ? { C: cert.issuer.C } : {}),
+							...(cert.issuer?.O ? { O: cert.issuer.O } : {}),
+							...(cert.issuer?.CN ? { CN: cert.issuer.CN } : {}),
+						},
+						subject: {
+							...(cert.subject?.CN ? { CN: cert.subject.CN } : {}),
+							...(cert.subjectaltname ? { alt: cert.subjectaltname } : {}),
+						},
+						keyType: cert.asn1Curve || cert.nistCurve ? 'EC' : cert.modulus || cert.exponent ? 'RSA' : null,
+						keyBits: cert.bits || null,
+						serialNumber: cert.serialNumber?.match(/.{2}/g)?.join(':') ?? null,
+						fingerprint256: cert.fingerprint256,
+						publicKey: cert.pubkey ? cert.pubkey.toString('hex').toUpperCase().match(/.{2}/g)!.join(':') : null,
+					};
+				}
+
+				callback(null, tlsSocket);
+			});
 		});
 
-		return socket;
+		return tcpSocket;
 	};
-
-	return { connector, connectorStats: stats };
 }
 
 export class HttpTest {
@@ -172,16 +195,14 @@ export class HttpTest {
 
 		const dnsResolver = callbackify(dnsLookup(this.options.resolver), true);
 		const allowH2 = this.options.protocol === 'HTTP2';
-		const connect = buildConnector({
-			lookup: dnsResolver,
-			rejectUnauthorized: false,
-			family: this.options.ipVersion,
-			autoSelectFamily: false,
-			// allowH2,
-			ALPNProtocols: this.options.protocol === 'HTTP2' ? [ 'h2' ] : [ 'http/1.1' ],
-		});
 
-		const { connector, connectorStats } = wrapConnector(connect, this.isHttps, this.options.protocol);
+		const state: HttpTestState = {
+			timings: this.timings,
+			result: this.result,
+			httpVersion: null,
+		};
+
+		const connector = getConnector(this.options, this.port, this.isHttps, dnsResolver, state);
 		this.undiciClient = new Client(this.url.origin, { connect: connector, allowH2 });
 		this.timeoutTimer = setTimeout(() => this.handleError('Request timeout.'), this.REQUEST_TIMEOUT);
 
@@ -197,13 +218,7 @@ export class HttpTest {
 			},
 		}, {
 			onConnect: () => {
-				this.timings.start = connectorStats.timings.start;
-				this.timings.dns = connectorStats.timings.dns;
-				this.timings.tcp = connectorStats.timings.tcp;
-				this.timings.tls = connectorStats.timings.tls;
-				connectorStats.resolvedAddress && (this.result.resolvedAddress = connectorStats.resolvedAddress);
-				this.httpVersion = connectorStats.httpVersion;
-				this.result.tls = connectorStats.tls ?? {};
+				this.httpVersion = state.httpVersion;
 			},
 			onError: (err: Error) => this.handleError(err.message),
 			onHeaders: (statusCode, headers, _resume, statusText) => {
