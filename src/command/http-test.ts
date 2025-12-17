@@ -68,6 +68,7 @@ const decompressors: Record<string, () => Decompressor> = {
 function wrapConnector (
 	connect: buildConnector.connector,
 	isHttps: boolean,
+	requiredProtocol: string,
 ): { connector: buildConnector.connector; connectorStats: ConnectorStats } {
 	const stats: ConnectorStats = { timings: { start: null, dns: null, tcp: null, tls: null }, resolvedAddress: null, tls: null, httpVersion: null };
 
@@ -93,6 +94,14 @@ function wrapConnector (
 			stats.timings.tls = Date.now() - stats.timings.start! - stats.timings.dns! - stats.timings.tcp!;
 			const tlsSocket = socket as TLSSocket;
 			const cert = tlsSocket.getPeerCertificate();
+
+			console.log(`tlsSocket.alpnProtocol`, tlsSocket.alpnProtocol);
+
+			if (requiredProtocol === 'HTTP2' && tlsSocket.alpnProtocol !== 'h2') {
+				socket.destroy(new Error('HTTP/2 not supported by the server.'));
+				return;
+			}
+
 			stats.httpVersion = tlsSocket.alpnProtocol === 'h2' ? '2.0' : tlsSocket.alpnProtocol === 'h3' ? '3' : '1.1';
 
 			stats.tls = {
@@ -162,15 +171,18 @@ export class HttpTest {
 		const promise = new Promise((resolve) => { this.resolve = resolve; });
 
 		const dnsResolver = callbackify(dnsLookup(this.options.resolver), true);
+		const allowH2 = this.options.protocol === 'HTTP2';
 		const connect = buildConnector({
 			lookup: dnsResolver,
 			rejectUnauthorized: false,
 			family: this.options.ipVersion,
 			autoSelectFamily: false,
+			// allowH2,
+			ALPNProtocols: this.options.protocol === 'HTTP2' ? [ 'h2' ] : [ 'http/1.1' ],
 		});
 
-		const { connector, connectorStats } = wrapConnector(connect, this.isHttps);
-		this.undiciClient = new Client(this.url.origin, { connect: connector });
+		const { connector, connectorStats } = wrapConnector(connect, this.isHttps, this.options.protocol);
+		this.undiciClient = new Client(this.url.origin, { connect: connector, allowH2 });
 		this.timeoutTimer = setTimeout(() => this.handleError('Request timeout.'), this.REQUEST_TIMEOUT);
 
 		this.undiciClient.dispatch({
@@ -202,11 +214,19 @@ export class HttpTest {
 				const rawHeaderPairs = [];
 
 				if (headers) {
-					for (let i = 0; i < headers.length; i += 2) {
-						const key = headers[i]!.toString();
-						const value = headers[i + 1]!.toString();
-						this.result.headers[key.toLowerCase()] = value;
-						rawHeaderPairs.push(`${key}: ${value}`);
+					if (Array.isArray(headers)) {
+						for (let i = 0; i < headers.length; i += 2) {
+							const key = headers[i]!.toString();
+							const value = headers[i + 1]!.toString();
+							this.result.headers[key.toLowerCase()] = value;
+							rawHeaderPairs.push(`${key}: ${value}`);
+						}
+					} else {
+						for (const [ key, value ] of Object.entries(headers)) {
+							const val = String(value);
+							this.result.headers[key.toLowerCase()] = val;
+							rawHeaderPairs.push(`${key}: ${val}`);
+						}
 					}
 				}
 
@@ -313,7 +333,7 @@ export class HttpTest {
 			rawBody: '',
 			rawOutput: '',
 			truncated: false,
-			statusCode: 0,
+			statusCode: null,
 			statusCodeName: '',
 			tls: {},
 			error: '',
@@ -348,6 +368,13 @@ export class HttpTest {
 		this.result.status = 'failed';
 		this.result.resolvedAddress = null;
 		this.result.error = message;
+		this.result.headers = {};
+		this.result.rawHeaders = null;
+		this.result.rawBody = null;
+		this.result.statusCode = null;
+		this.result.statusCodeName = '';
+		this.result.tls = {};
+
 		this.timings.dns = null;
 		this.timings.tcp = null;
 		this.timings.tls = null;
@@ -363,7 +390,7 @@ export class HttpTest {
 
 		if (this.result.status === 'failed') {
 			rawOutput = this.result.error;
-		} else if (this.result.error) {
+		} else if (this.result.error) { // TODO: this is never called
 			rawOutput = `HTTP/${this.httpVersion} ${this.result.statusCode}\n${this.result.rawHeaders}\n\n${this.result.error}`;
 		} else if (this.options.request.method === 'HEAD' || !this.result.rawBody) {
 			rawOutput = `HTTP/${this.httpVersion} ${this.result.statusCode}\n${this.result.rawHeaders}`;
