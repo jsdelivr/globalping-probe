@@ -27,7 +27,6 @@ export class ProgressBuffer {
 	private offset: Record<string, number> = {};
 	private isFirst = true;
 	private timer?: NodeJS.Timeout;
-	private resultSent = false;
 
 	constructor (
 		private readonly testId: string,
@@ -55,12 +54,6 @@ export class ProgressBuffer {
 	}
 
 	pushResult (result: ResultTypeJson) {
-		if (this.resultSent) {
-			return;
-		}
-
-		this.resultSent = true;
-
 		if (this.timer) {
 			clearTimeout(this.timer);
 		}
