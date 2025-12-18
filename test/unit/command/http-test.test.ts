@@ -1,5 +1,7 @@
 import { Duplex } from 'node:stream';
 import net from 'node:net';
+import tls from 'node:tls';
+import zlib from 'node:zlib';
 import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { Socket } from 'socket.io-client';
@@ -28,9 +30,7 @@ describe('new http command', () => {
 		(fakeSocket as any).remoteAddress = options?.address || '127.0.0.1';
 
 		netConnectStub.callsFake((connectOptions) => {
-			if (options?.checkNetConnectOptions) {
-				options.checkNetConnectOptions(connectOptions);
-			}
+			options?.checkNetConnectOptions?.(connectOptions);
 
 			process.nextTick(() => {
 				fakeSocket.emit('lookup', null, options?.address || '127.0.0.1', options?.family || 4, options?.hostname || 'google.com');
@@ -44,6 +44,71 @@ describe('new http command', () => {
 		});
 
 		return { getRequest: () => request };
+	};
+
+	const mockHttpsResponse = (response: string[], options?: { address?: string }) => {
+		let request = '';
+		const tcpSocket = new Duplex({
+			read () {},
+			write (chunk, _encoding, callback) {
+				request += chunk.toString();
+				callback();
+			},
+		});
+		(tcpSocket as any).remoteAddress = options?.address || '127.0.0.1';
+
+		netConnectStub.callsFake((connectOptions) => {
+			expect(connectOptions).to.deep.include({ host: 'example.com', port: 443 });
+
+			process.nextTick(() => {
+				tcpSocket.emit('lookup', null, options?.address || '127.0.0.1', 4, 'example.com');
+				tcpSocket.emit('connect');
+			});
+
+			return tcpSocket as any;
+		});
+
+		const tlsSocket = new Duplex({
+			read () {},
+			write (chunk, _encoding, callback) {
+				request += chunk.toString();
+				callback();
+			},
+		});
+
+		(tlsSocket as any).authorized = true;
+		(tlsSocket as any).authorizationError = null;
+		(tlsSocket as any).alpnProtocol = 'http/1.1';
+		(tlsSocket as any).getProtocol = () => 'TLSv1.3';
+		(tlsSocket as any).getCipher = () => ({ name: 'TLS_AES_256_GCM_SHA384' });
+
+		(tlsSocket as any).getPeerCertificate = () => ({
+			valid_from: 'Dec 1 00:00:00 2023 GMT',
+			valid_to: 'Dec 1 23:59:59 2024 GMT',
+			issuer: { C: 'US', O: 'DigiCert Inc', CN: 'DigiCert TLS RSA SHA256 2020 CA1' },
+			subject: { CN: 'example.com' },
+			subjectaltname: 'DNS:example.com, DNS:www.example.com',
+			serialNumber: 'ABC123',
+			fingerprint256: 'AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99',
+			bits: 2048,
+			modulus: 'dummy',
+			exponent: '0x10001',
+			pubkey: Buffer.from('3082010a0282010100', 'hex'),
+		});
+
+		const tlsConnectStub = sandbox.stub(tls, 'connect');
+
+		tlsConnectStub.callsFake(() => {
+			process.nextTick(() => {
+				tlsSocket.emit('secureConnect');
+				tlsSocket.push(response.join('\r\n'));
+				tlsSocket.push(null);
+			});
+
+			return tlsSocket as any;
+		});
+
+		return { getRequest: () => request, tlsConnectStub };
 	};
 
 	beforeEach(() => {
@@ -393,6 +458,229 @@ describe('new http command', () => {
 		const result = mockedSocket.emit.firstCall.args[1].result;
 
 		expect(result.resolvedAddress).to.equal('2606:4700:4700::1111');
+	});
+
+	it('should handle HTTPS with TLS certificate', async () => {
+		const mock = mockHttpsResponse([
+			'HTTP/1.1 200 OK',
+			'Content-Type: text/html',
+			'',
+			'',
+		], {
+			address: '93.184.216.34',
+		});
+
+		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http' as const,
+			target: 'example.com',
+			inProgressUpdates: false,
+			protocol: 'HTTPS',
+			request: { method: 'GET', path: '/', query: '' },
+			ipVersion: 4,
+		});
+
+		expect(netConnectStub.calledOnce).to.be.true;
+		expect(mock.tlsConnectStub.calledOnce).to.be.true;
+
+		const result = mockedSocket.emit.firstCall.args[1].result;
+
+		expect(result.statusCode).to.equal(200);
+		expect(result.resolvedAddress).to.equal('93.184.216.34');
+
+		expect(result.tls).to.deep.equal({
+			authorized: true,
+			protocol: 'TLSv1.3',
+			cipherName: 'TLS_AES_256_GCM_SHA384',
+			createdAt: '2023-12-01T00:00:00.000Z',
+			expiresAt: '2024-12-01T23:59:59.000Z',
+			issuer: {
+				C: 'US',
+				O: 'DigiCert Inc',
+				CN: 'DigiCert TLS RSA SHA256 2020 CA1',
+			},
+			subject: { CN: 'example.com', alt: 'DNS:example.com, DNS:www.example.com' },
+			keyType: 'RSA',
+			keyBits: 2048,
+			serialNumber: 'AB:C1:23',
+			fingerprint256: 'AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99',
+			publicKey: '30:82:01:0A:02:82:01:01:00',
+		});
+	});
+
+	it('should fail when HTTP/2 is requested but server does not support it', async () => {
+		const tcpSocket = new Duplex({
+			read () {},
+			write (_chunk, _encoding, callback) {
+				callback();
+			},
+		});
+		(tcpSocket as any).remoteAddress = '93.184.216.34';
+
+		netConnectStub.callsFake(() => {
+			process.nextTick(() => {
+				tcpSocket.emit('lookup', null, '93.184.216.34', 4, 'example.com');
+				tcpSocket.emit('connect');
+			});
+
+			return tcpSocket as any;
+		});
+
+		const tlsConnectStub = sandbox.stub(tls, 'connect').callsFake((() => {
+			const tlsSocket = new Duplex({
+				read () {},
+				write (_chunk, _encoding, callback) {
+					callback();
+				},
+			});
+
+			(tlsSocket as any).alpnProtocol = 'http/1.1';
+
+			(tlsSocket as any).destroy = () => {};
+
+			(tlsSocket as any).getPeerCertificate = () => ({});
+
+			process.nextTick(() => {
+				tlsSocket.emit('secureConnect');
+			});
+
+			return tlsSocket as any;
+		}) as any);
+
+		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http' as const,
+			target: 'example.com',
+			inProgressUpdates: false,
+			protocol: 'HTTP2',
+			request: { method: 'GET', path: '/', query: '' },
+			ipVersion: 4,
+		});
+
+		expect(tlsConnectStub.calledOnce).to.be.true;
+
+		const lastCall = mockedSocket.emit.lastCall;
+		expect(lastCall.args[0]).to.equal('probe:measurement:result');
+		const result = lastCall.args[1].result;
+
+		expect(result.status).to.equal('failed');
+		expect(result.rawOutput).to.equal('HTTP/2 is not supported by the server.');
+	});
+
+	it('should truncate response body when exceeds download limit', async () => {
+		const largeBody = 'x'.repeat(15000);
+
+		mockHttpResponse([
+			'HTTP/1.1 200 OK',
+			'Content-Type: text/plain',
+			`Content-Length: ${largeBody.length}`,
+			'',
+			largeBody,
+		]);
+
+		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http' as const,
+			target: 'google.com',
+			inProgressUpdates: false,
+			protocol: 'HTTP',
+			request: { method: 'GET', path: '/large', query: '' },
+			ipVersion: 4,
+		});
+
+		const result = mockedSocket.emit.firstCall.args[1].result;
+
+		expect(result.status).to.equal('finished');
+		expect(result.statusCode).to.equal(200);
+		expect(result.truncated).to.be.true;
+		expect(result.rawBody).to.have.lengthOf(10000);
+		expect(result.rawBody).to.equal('x'.repeat(10000));
+	});
+
+	it('should timeout after 10 seconds', async () => {
+		const fakeSocket = new Duplex({
+			read () {},
+			write (_chunk, _encoding, callback) {
+				callback();
+			},
+		});
+		(fakeSocket as any).remoteAddress = '127.0.0.1';
+
+		netConnectStub.callsFake(() => {
+			process.nextTick(() => {
+				fakeSocket.emit('lookup', null, '127.0.0.1', 4, 'google.com');
+				fakeSocket.emit('connect');
+			});
+
+			return fakeSocket as any;
+		});
+
+		const promise = new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http' as const,
+			target: 'google.com',
+			inProgressUpdates: false,
+			protocol: 'HTTP',
+			request: { method: 'GET', path: '/timeout', query: '' },
+			ipVersion: 4,
+		});
+
+		sandbox.clock.tick(10_001);
+
+		await promise;
+
+		const result = mockedSocket.emit.firstCall.args[1].result;
+
+		expect(result.status).to.equal('failed');
+		expect(result.rawOutput).to.equal('Request timeout.');
+		expect(result.timings.total).to.be.null;
+	});
+
+	it('should decompress gzip response', async () => {
+		const originalText = 'This is a test gzip compressed response body';
+		const compressedBody = zlib.gzipSync(originalText);
+
+		const fakeSocket = new Duplex({
+			read () {},
+			write (_chunk, _encoding, callback) {
+				callback();
+			},
+		});
+		(fakeSocket as any).remoteAddress = '127.0.0.1';
+
+		netConnectStub.callsFake(() => {
+			process.nextTick(() => {
+				fakeSocket.emit('lookup', null, '127.0.0.1', 4, 'google.com');
+				fakeSocket.emit('connect');
+
+				const headers = [
+					'HTTP/1.1 200 OK',
+					'Content-Type: text/plain',
+					'Content-Encoding: gzip',
+					`Content-Length: ${compressedBody.length}`,
+					'',
+					'',
+				].join('\r\n');
+
+				fakeSocket.push(headers);
+				fakeSocket.push(compressedBody);
+				fakeSocket.push(null);
+			});
+
+			return fakeSocket as any;
+		});
+
+		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http' as const,
+			target: 'google.com',
+			inProgressUpdates: false,
+			protocol: 'HTTP',
+			request: { method: 'GET', path: '/gzip', query: '' },
+			ipVersion: 4,
+		});
+
+		const result = mockedSocket.emit.firstCall.args[1].result;
+
+		expect(result.status).to.equal('finished');
+		expect(result.statusCode).to.equal(200);
+		expect(result.headers['content-encoding']).to.equal('gzip');
+		expect(result.rawBody).to.equal(originalText);
 	});
 });
 
