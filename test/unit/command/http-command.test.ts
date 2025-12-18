@@ -9,7 +9,7 @@ import {
 	httpCmd,
 	urlBuilder,
 	type Timings, HttpOptions,
-} from '../../../src/command/http-command.js';
+} from '../../../src/command/http-command-old.js';
 import { getCmdMock, useSandboxWithFakeTimers } from '../../utils.js';
 
 type StreamCert = {

@@ -207,7 +207,7 @@ export class HttpTest {
 		this.result = this.getInitialResult();
 		this.port = options.port ? options.port : (options.protocol === 'HTTP' ? 80 : 443);
 		this.isHttps = options.protocol !== 'HTTP';
-		this.url = this.urlBuilder();
+		this.url = new URL(this.urlBuilder());
 	}
 
 	public async run () {
@@ -274,7 +274,7 @@ export class HttpTest {
 		return promise;
 	}
 
-	private urlBuilder (): URL {
+	public urlBuilder (): string {
 		const options = this.options;
 		const protocolPrefix = this.isHttps ? 'https' : 'http';
 		const port = this.port;
@@ -282,7 +282,7 @@ export class HttpTest {
 		const query = options.request.query.length > 0 ? `?${options.request.query}`.replace(/^\?\?/, '?') : '';
 		const url = `${protocolPrefix}://${isIPv6(options.target) ? `[${options.target}]` : options.target}:${port}${path}${query}`;
 
-		return new URL(url);
+		return url;
 	}
 
 	private setupDecompressor () {

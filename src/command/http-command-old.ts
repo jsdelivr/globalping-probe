@@ -184,7 +184,7 @@ const isTlsSocket = (socket: unknown): socket is TLSSocket => Boolean((socket as
 export class HttpCommand implements CommandInterface<HttpOptions> {
 	constructor (private readonly cmd: typeof httpCmd) {}
 
-	async run (measurementId: string, testId: string, options: HttpOptions): Promise<unknown> {
+	async run (socket: Socket, measurementId: string, testId: string, options: HttpOptions): Promise<unknown> {
 		const validationResult = httpOptionsSchema.validate(options);
 
 		if (validationResult.error) {
@@ -192,7 +192,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		}
 
 		const { value: cmdOptions } = validationResult;
-		const buffer = new ProgressBuffer(testId, measurementId, 'append');
+		const buffer = new ProgressBuffer(socket, testId, measurementId, 'append');
 		const stream = this.cmd(cmdOptions);
 
 		let result = getInitialResult();

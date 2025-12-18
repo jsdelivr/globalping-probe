@@ -4,7 +4,7 @@ import type { Socket } from 'socket.io-client';
 import type { ResultTypeJson as MtrResultTypeJson } from '../command/handlers/mtr/types.js';
 import type { DnsParseResponseJson as DnsParseResponseClassicJson } from '../command/handlers/dig/classic.js';
 import type { DnsParseResponseJson as DnsParseResponseTraceJson } from '../command/handlers/dig/trace.js';
-import type { OutputJson as HttpOutputJson } from '../command/http-command.js';
+// import type { OutputJson as HttpOutputJson } from '../command/http-command.js';
 import type { PingParseOutputJson } from '../command/ping-command.js';
 
 type DefaultProgress = {
@@ -29,6 +29,7 @@ export class ProgressBuffer {
 	private timer?: NodeJS.Timeout;
 
 	constructor (
+		private readonly socket: Socket,
 		private readonly testId: string,
 		private readonly measurementId: string,
 		private readonly mode: 'append' | 'diff' | 'overwrite',
@@ -76,26 +77,27 @@ export class ProgressBuffer {
 			});
 		}
 
-		// this.socket.emit('probe:measurement:progress', {
-		// 	testId: this.testId,
-		// 	measurementId: this.measurementId,
-		// 	overwrite: this.mode === 'overwrite',
-		// 	result: this.buffer,
-		// });
+		this.socket.emit('probe:measurement:progress', {
+			testId: this.testId,
+			measurementId: this.measurementId,
+			overwrite: this.mode === 'overwrite',
+			result: this.buffer,
+		});
 
 		this.buffer = {};
 	}
 
-	private sendResult (result: ResultTypeJson) {
+	private sendResult (result) {
 		// console.log(JSON.stringify({
 		// 	testId: this.testId,
 		// 	measurementId: this.measurementId,
 		// 	result,
 		// }, null, 2));
-		// this.socket.emit('probe:measurement:result', {
-		// 	testId: this.testId,
-		// 	measurementId: this.measurementId,
-		// 	result,
-		// });
+
+		this.socket.emit('probe:measurement:result', {
+			testId: this.testId,
+			measurementId: this.measurementId,
+			result,
+		});
 	}
 }

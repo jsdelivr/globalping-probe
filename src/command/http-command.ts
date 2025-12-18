@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import type { Socket } from 'socket.io-client';
 import type { CommandInterface } from '../types.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
@@ -51,7 +52,7 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 });
 
 export class HttpCommand implements CommandInterface<HttpOptions> {
-	async run (measurementId: string, testId: string, cmdOptions: HttpOptions): Promise<unknown> {
+	async run (socket: Socket, measurementId: string, testId: string, cmdOptions: HttpOptions): Promise<unknown> {
 		const validationResult = httpOptionsSchema.validate(cmdOptions);
 
 		if (validationResult.error) {
@@ -59,7 +60,7 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 		}
 
 		const { value: options } = validationResult;
-		const buffer = new ProgressBuffer(testId, measurementId, 'append');
+		const buffer = new ProgressBuffer(socket, testId, measurementId, 'append');
 		const test = new HttpTest(options, buffer);
 		const out = await test.run();
 		return out;
