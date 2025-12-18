@@ -75,23 +75,6 @@ if (process.env['GP_HOST_FIRMWARE']) {
 
 logger.info(`Starting probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode with UUID ${probeUuid.substring(0, 8)}.`);
 
-const httpOptions = {
-	type: 'http' as const,
-	target: 'postman-echo.com',
-	inProgressUpdates: false,
-	protocol: 'HTTPS',
-	request: {
-		method: 'GET',
-		path: '/headers',
-		query: '',
-		headers: {
-			'X-Custom-Header': 'test-value',
-			'X-Another': 'another-value',
-		},
-	},
-	ipVersion: 4,
-};
-
 // DNS: несуществующий домен
 const dnsFail = {
 	type: 'http' as const,
@@ -165,16 +148,6 @@ const customHost = {
 	ipVersion: 4,
 };
 
-// HTTP: успешный запрос
-const httpSuccess = {
-	type: 'http' as const,
-	target: 'httpbin.org',
-	inProgressUpdates: false,
-	protocol: 'HTTPS',
-	request: { method: 'GET', path: '/get', query: '' },
-	ipVersion: 4,
-};
-
 // HTTP2: успешный запрос
 const http2Success = {
 	type: 'http' as const,
@@ -210,12 +183,77 @@ const bigResponse = {
 	ipVersion: 4,
 };
 
+const httpOptions = {
+	type: 'http' as const,
+	target: 'postman-echo.com',
+	inProgressUpdates: false,
+	protocol: 'HTTP',
+	request: {
+		method: 'GET',
+		path: '/headers',
+		query: '',
+		headers: {
+			'X-Custom-Header': 'test-value',
+			'X-Another': 'another-value',
+		},
+	},
+	ipVersion: 4,
+};
+
+// HTTP: успешный запрос
+const httpSuccess = {
+	type: 'http' as const,
+	target: '185.199.110.153',
+	inProgressUpdates: false,
+	protocol: 'HTTPS',
+	request: { method: 'GET', path: '/', query: '' },
+	ipVersion: 4,
+};
+
+const http1OnlyLocal = {
+	type: 'http' as const,
+	target: 'localhost',
+	inProgressUpdates: false,
+	protocol: 'HTTP2',
+	port: 8444,
+	request: { method: 'GET', path: '/', query: '' },
+	ipVersion: 4,
+};
+
+const http1OnlyRemote = {
+	type: 'http' as const,
+	// target: 'www.zenlayer.com',
+	target: 'httpforever.com',
+	inProgressUpdates: false,
+	protocol: 'HTTP2',
+	request: { method: 'GET', path: '/', query: '' },
+	ipVersion: 4,
+};
+
 const isOld = Boolean(process.env['OLD']);
 const httpHandler = handlersMap.get(isOld ? 'http-old' : 'http')!;
 
+const http2Test = {
+	type: 'http' as const,
+	target: 'httpforever.com',
+	inProgressUpdates: false,
+	protocol: 'HTTP2',
+	request: { method: 'GET', path: '/', query: '' },
+	ipVersion: 4,
+};
+
+const httpCodes = {
+	type: 'http' as const,
+	target: 'tools-httpstatus.pickup-services.com',
+	inProgressUpdates: false,
+	protocol: 'HTTPS',
+	request: { method: 'GET', path: '/505', query: '' },
+	ipVersion: 4,
+};
+
 // ================  REQUEST TEST =============
 setTimeout(async () => {
-	const data = await httpHandler.run('wktl4ti3665LCugn0001zQL6', '0', httpOptions);
+	const data = await httpHandler.run('wktl4ti3665LCugn0001zQL6', '0', http2Success);
 	fs.writeFileSync(`${isOld ? 'old' : 'new'}-data.json`, JSON.stringify(data, null, 2));
 }, 1000);
 
