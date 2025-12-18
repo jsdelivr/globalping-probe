@@ -1,39 +1,37 @@
 import net, { isIP, isIPv6 } from 'node:net';
 import type { LookupFunction } from 'node:net';
 import tls from 'node:tls';
-import type { PeerCertificate } from 'node:tls';
 import zlib from 'node:zlib';
 import type { Dispatcher } from 'undici';
 import { Client } from 'undici';
 import type { buildConnector } from 'undici';
+import _ from 'lodash';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
-import type { HttpOptions, OutputJson } from './http-command.js';
+import type { HttpOptions } from './http-command.js';
 import { dnsLookup } from './handlers/shared/dns-resolver.js';
 import { callbackify } from '../lib/util.js';
 
 type TlsDetails = {
 	authorized: boolean;
 	protocol: string | null;
-	cipherName: string | undefined;
-	error?: string;
-	valid_from: string;
-	valid_to: string;
-	issuer: PeerCertificate['issuer'];
-	subject: PeerCertificate['subject'];
-};
-
-type Output = {
-	status: 'finished' | 'failed';
-	resolvedAddress: string | null;
-	headers: Record<string, string>;
-	rawHeaders: string;
-	rawBody: string;
-	truncated: boolean;
-	statusCode: number;
-	statusCodeName: string;
-	timings: Omit<Timings, 'start'>;
-	tls: TlsDetails | Record<string, unknown>;
-	rawOutput: string;
+	cipherName: string;
+	createdAt: string | null;
+	expiresAt: string | null;
+	error?: Error;
+	subject: {
+		alt?: string;
+		CN?: string;
+	};
+	issuer: {
+		CN?: string;
+		O?: string;
+		C?: string;
+	};
+	keyType: string | null;
+	keyBits: number | null;
+	serialNumber: string | null;
+	fingerprint256: string;
+	publicKey: string | null;
 };
 
 type Timings = {
@@ -46,16 +44,35 @@ type Timings = {
 	download: number | null;
 };
 
-type Decompressor = zlib.Gunzip | zlib.Inflate | zlib.BrotliDecompress;
-
-type HttpTestState = {
-	timings: Timings;
-	result: {
-		resolvedAddress: string | null;
-		tls: Record<string, unknown>;
-	};
+type Result = {
+	status: 'finished' | 'failed';
+	resolvedAddress: string | null;
 	httpVersion: string | null;
+	headers: Record<string, string>;
+	rawHeaders: string;
+	rawBody: string;
+	truncated: boolean;
+	statusCode: number | null;
+	statusCodeName: string | null;
+	tls: TlsDetails | null;
+	rawOutput: string;
 };
+
+type OutputJson = {
+	status: 'finished' | 'failed';
+	resolvedAddress: string | null;
+	headers: Record<string, string>;
+	rawHeaders: string | null;
+	rawBody: string | null;
+	truncated: boolean;
+	statusCode: number | null;
+	statusCodeName: string | null;
+	timings: Omit<Timings, 'start'>;
+	tls: TlsDetails | null;
+	rawOutput: string | null;
+};
+
+type Decompressor = zlib.Gunzip | zlib.Inflate | zlib.BrotliDecompress;
 
 const createZstdDecompress = (zlib as { createZstdDecompress?: () => Decompressor }).createZstdDecompress;
 
@@ -69,21 +86,28 @@ const decompressors: Record<string, () => Decompressor> = {
 	...(createZstdDecompress ? { zstd: createZstdDecompress } : {}),
 };
 
-function getConnector (options: HttpOptions, port: number, isHttps: boolean, dnsResolver: LookupFunction, state: HttpTestState): buildConnector.connector {
-	return (connOptions, callback) => {
-		state.timings.start = Date.now();
+function getConnector (
+	options: HttpOptions,
+	port: number,
+	isHttps: boolean,
+	dnsResolver: LookupFunction,
+	result: Omit<Result, 'timings'>,
+	timings: Timings,
+): buildConnector.connector {
+	return (connectorOptions, callback) => {
+		timings.start = Date.now();
 
 		const tcpSocket = net.connect({
-			host: connOptions.hostname,
-			port: Number(connOptions.port) || port,
+			host: connectorOptions.hostname,
+			port: Number(connectorOptions.port) || port,
 			autoSelectFamily: false,
 			family: options.ipVersion,
 			lookup: dnsResolver,
 		});
 
 		tcpSocket.on('lookup', (_err, address) => {
-			state.timings.dns = Date.now() - state.timings.start!;
-			state.result.resolvedAddress = address;
+			timings.dns = Date.now() - timings.start!;
+			result.resolvedAddress = address;
 		});
 
 		tcpSocket.on('error', (err) => {
@@ -91,18 +115,17 @@ function getConnector (options: HttpOptions, port: number, isHttps: boolean, dns
 		});
 
 		tcpSocket.on('connect', () => {
-			state.timings.tcp = Date.now() - state.timings.start! - state.timings.dns!;
+			timings.tcp = Date.now() - timings.start! - timings.dns!;
 
 			if (!isHttps) {
-				state.timings.tls = null;
-				state.httpVersion = '1.1';
+				result.httpVersion = '1.1';
 				callback(null, tcpSocket);
 				return;
 			}
 
 			const tlsSocket = tls.connect({
 				socket: tcpSocket,
-				servername: !isIP(connOptions.hostname) ? connOptions.hostname : options.request.host,
+				servername: !isIP(connectorOptions.hostname) ? connectorOptions.hostname : options.request.host,
 				rejectUnauthorized: false,
 				ALPNProtocols: options.protocol === 'HTTP2' ? [ 'h2' ] : [ 'http/1.1' ],
 			});
@@ -112,42 +135,40 @@ function getConnector (options: HttpOptions, port: number, isHttps: boolean, dns
 			});
 
 			tlsSocket.on('secureConnect', () => {
-				state.timings.tls = Date.now() - state.timings.start! - state.timings.dns! - state.timings.tcp!;
+				timings.tls = Date.now() - timings.start! - timings.dns! - timings.tcp!;
 				const cert = tlsSocket.getPeerCertificate();
 				const alpn = tlsSocket.alpnProtocol;
 
 				if (options.protocol === 'HTTP2' && alpn !== 'h2') {
 					tlsSocket.destroy();
-					callback(new Error('HTTP/2 not supported by the server.'), null);
+					callback(new Error('HTTP/2 is not supported by the server.'), null);
 					return;
 				}
 
-				state.httpVersion = alpn === 'h2' ? '2.0' : alpn === 'h3' ? '3' : '1.1';
+				result.httpVersion = alpn === 'h2' ? '2.0' : alpn === 'h3' ? '3' : '1.1';
 
-				if (cert) {
-					state.result.tls = {
-						authorized: tlsSocket.authorized,
-						protocol: tlsSocket.getProtocol(),
-						cipherName: tlsSocket.getCipher()?.name,
-						...(tlsSocket.authorizationError ? { error: tlsSocket.authorizationError } : {}),
-						createdAt: cert.valid_from ? (new Date(cert.valid_from)).toISOString() : null,
-						expiresAt: cert.valid_to ? (new Date(cert.valid_to)).toISOString() : null,
-						issuer: {
-							...(cert.issuer?.C ? { C: cert.issuer.C } : {}),
-							...(cert.issuer?.O ? { O: cert.issuer.O } : {}),
-							...(cert.issuer?.CN ? { CN: cert.issuer.CN } : {}),
-						},
-						subject: {
-							...(cert.subject?.CN ? { CN: cert.subject.CN } : {}),
-							...(cert.subjectaltname ? { alt: cert.subjectaltname } : {}),
-						},
-						keyType: cert.asn1Curve || cert.nistCurve ? 'EC' : cert.modulus || cert.exponent ? 'RSA' : null,
-						keyBits: cert.bits || null,
-						serialNumber: cert.serialNumber?.match(/.{2}/g)?.join(':') ?? null,
-						fingerprint256: cert.fingerprint256,
-						publicKey: cert.pubkey ? cert.pubkey.toString('hex').toUpperCase().match(/.{2}/g)!.join(':') : null,
-					};
-				}
+				result.tls = {
+					authorized: tlsSocket.authorized,
+					protocol: tlsSocket.getProtocol(),
+					cipherName: tlsSocket.getCipher()?.name,
+					...(tlsSocket.authorizationError ? { error: tlsSocket.authorizationError } : {}),
+					createdAt: cert.valid_from ? (new Date(cert.valid_from)).toISOString() : null,
+					expiresAt: cert.valid_to ? (new Date(cert.valid_to)).toISOString() : null,
+					issuer: {
+						...(cert.issuer?.C ? { C: cert.issuer.C } : {}),
+						...(cert.issuer?.O ? { O: cert.issuer.O } : {}),
+						...(cert.issuer?.CN ? { CN: cert.issuer.CN } : {}),
+					},
+					subject: {
+						...(cert.subject?.CN ? { CN: cert.subject.CN } : {}),
+						...(cert.subjectaltname ? { alt: cert.subjectaltname } : {}),
+					},
+					keyType: cert.asn1Curve || cert.nistCurve ? 'EC' : cert.modulus || cert.exponent ? 'RSA' : null,
+					keyBits: cert.bits || null,
+					serialNumber: cert.serialNumber?.match(/.{2}/g)?.join(':') ?? null,
+					fingerprint256: cert.fingerprint256,
+					publicKey: cert.pubkey ? cert.pubkey.toString('hex').toUpperCase().match(/.{2}/g)!.join(':') : null,
+				};
 
 				callback(null, tlsSocket);
 			});
@@ -160,16 +181,15 @@ function getConnector (options: HttpOptions, port: number, isHttps: boolean, dns
 export class HttpTest {
 	private readonly REQUEST_TIMEOUT: number = 10_000;
 	private readonly DOWNLOAD_LIMIT: number = 10_000;
-	private readonly result: ReturnType<typeof this.getInitialResult>;
 	private readonly url: URL;
 	private readonly port: number;
 	private readonly isHttps: boolean;
 	private resolve!: (value: unknown) => void;
 	private undiciClient!: Client;
-	private httpVersion: string | null = null;
 	private timeoutTimer: NodeJS.Timeout | null = null;
 	private decompressor: Decompressor | null = null;
 	private done = false;
+	private readonly result: Omit<Result, 'timings'>;
 	private readonly timings: Timings = {
 		start: null,
 		total: null,
@@ -192,17 +212,9 @@ export class HttpTest {
 
 	public async run () {
 		const promise = new Promise((resolve) => { this.resolve = resolve; });
-
 		const dnsResolver = callbackify(dnsLookup(this.options.resolver), true);
 		const allowH2 = this.options.protocol === 'HTTP2';
-
-		const state: HttpTestState = {
-			timings: this.timings,
-			result: this.result,
-			httpVersion: null,
-		};
-
-		const connector = getConnector(this.options, this.port, this.isHttps, dnsResolver, state);
+		const connector = getConnector(this.options, this.port, this.isHttps, dnsResolver, this.result, this.timings);
 		this.undiciClient = new Client(this.url.origin, { connect: connector, allowH2 });
 		this.timeoutTimer = setTimeout(() => this.handleError('Request timeout.'), this.REQUEST_TIMEOUT);
 
@@ -217,9 +229,7 @@ export class HttpTest {
 				'Connection': 'close',
 			},
 		}, {
-			onConnect: () => {
-				this.httpVersion = state.httpVersion;
-			},
+			onConnect: () => {},
 			onError: (err: Error) => this.handleError(err.message),
 			onHeaders: (statusCode, headers, _resume, statusText) => {
 				this.timings.firstByte = Date.now() - this.timings.start! - this.timings.dns! - this.timings.tcp! - this.timings.tls!;
@@ -229,19 +239,13 @@ export class HttpTest {
 				const rawHeaderPairs = [];
 
 				if (headers) {
-					if (Array.isArray(headers)) {
-						for (let i = 0; i < headers.length; i += 2) {
-							const key = headers[i]!.toString();
-							const value = headers[i + 1]!.toString();
-							this.result.headers[key.toLowerCase()] = value;
-							rawHeaderPairs.push(`${key}: ${value}`);
-						}
-					} else {
-						for (const [ key, value ] of Object.entries(headers)) {
-							const val = String(value);
-							this.result.headers[key.toLowerCase()] = val;
-							rawHeaderPairs.push(`${key}: ${val}`);
-						}
+					const entries: [string, string][] = Array.isArray(headers)
+						? _.chunk(headers as string[], 2).map(([ k, v ]) => [ String(k), String(v) ])
+						: _.toPairs(headers).map(([ k, v ]) => [ k, String(v) ]);
+
+					for (const [ key, value ] of entries) {
+						this.result.headers[key.toLowerCase()] = value;
+						rawHeaderPairs.push(`${key}: ${value}`);
 					}
 				}
 
@@ -327,7 +331,7 @@ export class HttpTest {
 		let rawOutput = '';
 
 		if (isFirstMessage) {
-			rawOutput += `HTTP/${this.httpVersion} ${this.result.statusCode}\n${this.result.rawHeaders}\n\n`;
+			rawOutput += `HTTP/${this.result.httpVersion} ${this.result.statusCode}\n${this.result.rawHeaders}\n\n`;
 		}
 
 		rawOutput += dataString;
@@ -343,15 +347,15 @@ export class HttpTest {
 		return {
 			status: 'finished' as 'finished' | 'failed',
 			resolvedAddress: isIP(this.options.target) ? this.options.target : null,
+			httpVersion: null,
 			headers: {} as Record<string, string>,
 			rawHeaders: '',
 			rawBody: '',
 			rawOutput: '',
 			truncated: false,
 			statusCode: null,
-			statusCodeName: '',
-			tls: {},
-			error: '',
+			statusCodeName: null,
+			tls: null,
 		};
 	}
 
@@ -370,6 +374,13 @@ export class HttpTest {
 		const now = Date.now();
 		this.timings.download = now - this.timings.start! - this.timings.dns! - this.timings.tcp! - this.timings.tls! - this.timings.firstByte!;
 		this.timings.total = now - this.timings.start!;
+
+		if (this.options.request.method === 'HEAD' || !this.result.rawBody) {
+			this.result.rawOutput = `HTTP/${this.result.httpVersion} ${this.result.statusCode}\n${this.result.rawHeaders}`;
+		} else {
+			this.result.rawOutput = `HTTP/${this.result.httpVersion} ${this.result.statusCode}\n${this.result.rawHeaders}\n\n${this.result.rawBody}`;
+		}
+
 		this.cleanup();
 		this.sendResult();
 	};
@@ -382,13 +393,13 @@ export class HttpTest {
 		this.done = true;
 		this.result.status = 'failed';
 		this.result.resolvedAddress = null;
-		this.result.error = message;
 		this.result.headers = {};
-		this.result.rawHeaders = null;
-		this.result.rawBody = null;
+		this.result.rawHeaders = '';
+		this.result.rawBody = '';
+		this.result.rawOutput = message;
 		this.result.statusCode = null;
 		this.result.statusCodeName = '';
-		this.result.tls = {};
+		this.result.tls = null;
 
 		this.timings.dns = null;
 		this.timings.tcp = null;
@@ -401,56 +412,32 @@ export class HttpTest {
 	};
 
 	private sendResult = () => {
-		let rawOutput;
-
-		if (this.result.status === 'failed') {
-			rawOutput = this.result.error;
-		} else if (this.result.error) { // TODO: this is never called
-			rawOutput = `HTTP/${this.httpVersion} ${this.result.statusCode}\n${this.result.rawHeaders}\n\n${this.result.error}`;
-		} else if (this.options.request.method === 'HEAD' || !this.result.rawBody) {
-			rawOutput = `HTTP/${this.httpVersion} ${this.result.statusCode}\n${this.result.rawHeaders}`;
-		} else {
-			rawOutput = `HTTP/${this.httpVersion} ${this.result.statusCode}\n${this.result.rawHeaders}\n\n${this.result.rawBody}`;
-		}
-
-		const jsonOutput = this.toJsonOutput({
-			status: this.result.status,
-			resolvedAddress: this.result.resolvedAddress,
-			headers: this.result.headers,
-			rawHeaders: this.result.rawHeaders,
-			rawBody: this.result.rawBody,
-			rawOutput,
-			truncated: this.result.truncated,
-			statusCode: this.result.statusCode,
-			statusCodeName: this.result.statusCodeName,
-			timings: this.timings,
-			tls: this.result.tls,
-		});
+		const jsonOutput = this.getJsonOutput();
 
 		this.buffer.pushResult(jsonOutput);
 		this.resolve(jsonOutput);
 	};
 
-	private toJsonOutput (input: Output): OutputJson {
+	private getJsonOutput (): OutputJson {
 		return {
-			status: input.status,
-			resolvedAddress: input.resolvedAddress || null,
-			headers: input.headers,
-			rawHeaders: input.rawHeaders || null,
-			rawBody: input.rawBody || null,
-			rawOutput: input.rawOutput,
-			truncated: input.truncated,
-			statusCode: input.statusCode || null,
-			statusCodeName: input.statusCodeName ?? null,
+			status: this.result.status,
+			resolvedAddress: this.result.resolvedAddress || null,
+			headers: this.result.headers,
+			rawHeaders: this.result.rawHeaders || null,
+			rawBody: this.result.rawBody || null,
+			rawOutput: this.result.rawOutput,
+			truncated: this.result.truncated,
+			statusCode: this.result.statusCode || null,
+			statusCodeName: this.result.statusCodeName ?? null,
 			timings: {
-				total: input.timings.total,
-				dns: input.timings.dns,
-				tcp: input.timings.tcp,
-				tls: input.timings.tls,
-				firstByte: input.timings.firstByte,
-				download: input.timings.download,
+				total: this.timings.total,
+				dns: this.timings.dns,
+				tcp: this.timings.tcp,
+				tls: this.timings.tls,
+				firstByte: this.timings.firstByte,
+				download: this.timings.download,
 			},
-			tls: Object.keys(input.tls).length > 0 ? input.tls as OutputJson['tls'] : null,
+			tls: this.result.tls,
 		};
 	}
 }

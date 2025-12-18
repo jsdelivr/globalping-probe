@@ -1,4 +1,3 @@
-import type { Certificate } from 'node:tls';
 import Joi from 'joi';
 import type { CommandInterface } from '../types.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
@@ -21,65 +20,6 @@ export type HttpOptions = {
 	};
 	ipVersion: number;
 };
-
-type Cert = {
-	valid_to: string;
-	valid_from: string;
-	issuer: Certificate;
-	subject: Certificate;
-	subjectaltname?: string;
-	pubkey?: Buffer;
-	fingerprint: string;
-	fingerprint256: string;
-	fingerprint512: string;
-	asn1Curve?: string;
-	nistCurve?: string;
-	modulus?: string;
-	exponent?: string;
-	serialNumber: string;
-	bits?: number;
-};
-
-type TlsDetails = Cert & {
-	protocol: string | null;
-	authorized: boolean;
-	authorizationError?: Error;
-	cipherName: string;
-};
-
-type Output = {
-	status: 'finished' | 'failed';
-	resolvedAddress: string;
-	headers: Record<string, string>;
-	rawHeaders: string;
-	rawBody: string;
-	truncated: boolean;
-	statusCode: number;
-	statusCodeName: string;
-	timings: Record<string, number>;
-	tls: TlsDetails | Record<string, unknown>;
-	rawOutput: string;
-};
-
-export type OutputJson = {
-	status: 'finished' | 'failed';
-	resolvedAddress: string | null;
-	headers: Record<string, string>;
-	rawHeaders: string | null;
-	rawBody: string | null;
-	truncated: boolean;
-	statusCode: number | null;
-	statusCodeName: string | null;
-	timings: Record<string, number | null>;
-	tls: TlsDetails | null;
-	rawOutput: string | null;
-};
-
-export type Timings = {
-	[k: string]: number | Record<string, unknown> | undefined | null;
-	phases: Record<string, number | undefined>;
-};
-
 
 const allowedHttpProtocols = [ 'HTTP', 'HTTPS', 'HTTP2' ];
 const allowedHttpMethods = [ 'GET', 'HEAD', 'OPTIONS' ];
@@ -109,7 +49,6 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 		}),
 	}),
 });
-
 
 export class HttpCommand implements CommandInterface<HttpOptions> {
 	async run (measurementId: string, testId: string, cmdOptions: HttpOptions): Promise<unknown> {
