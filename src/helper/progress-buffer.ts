@@ -4,7 +4,7 @@ import type { Socket } from 'socket.io-client';
 import type { ResultTypeJson as MtrResultTypeJson } from '../command/handlers/mtr/types.js';
 import type { DnsParseResponseJson as DnsParseResponseClassicJson } from '../command/handlers/dig/classic.js';
 import type { DnsParseResponseJson as DnsParseResponseTraceJson } from '../command/handlers/dig/trace.js';
-// import type { OutputJson as HttpOutputJson } from '../command/http-command.js';
+import type { OutputJson as HttpOutputJson } from '../command/http-test.js';
 import type { PingParseOutputJson } from '../command/ping-command.js';
 
 type DefaultProgress = {
@@ -87,13 +87,7 @@ export class ProgressBuffer {
 		this.buffer = {};
 	}
 
-	private sendResult (result) {
-		// console.log(JSON.stringify({
-		// 	testId: this.testId,
-		// 	measurementId: this.measurementId,
-		// 	result,
-		// }, null, 2));
-
+	private sendResult (result: ResultTypeJson) {
 		this.socket.emit('probe:measurement:result', {
 			testId: this.testId,
 			measurementId: this.measurementId,

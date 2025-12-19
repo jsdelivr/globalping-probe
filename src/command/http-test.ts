@@ -58,7 +58,7 @@ type Result = {
 	rawOutput: string;
 };
 
-type OutputJson = {
+export type OutputJson = {
 	status: 'finished' | 'failed';
 	resolvedAddress: string | null;
 	headers: Record<string, string>;
@@ -188,6 +188,7 @@ export class HttpTest {
 	private undiciClient!: Client;
 	private timeoutTimer: NodeJS.Timeout | null = null;
 	private decompressor: Decompressor | null = null;
+	private decompressorHasData = false;
 	private done = false;
 	private readonly result: Omit<Result, 'timings'>;
 	private readonly timings: Timings = {
@@ -255,6 +256,7 @@ export class HttpTest {
 			},
 			onData: (chunk: Buffer) => {
 				if (this.decompressor) {
+					this.decompressorHasData = true;
 					this.decompressor.write(chunk);
 					return true;
 				}
@@ -262,7 +264,7 @@ export class HttpTest {
 				return this.onHttpData(chunk);
 			},
 			onComplete: () => {
-				if (this.decompressor) {
+				if (this.decompressor && this.decompressorHasData) {
 					this.decompressor.end();
 					return;
 				}
