@@ -34,7 +34,9 @@ describe('new http command', () => {
 
 			process.nextTick(() => {
 				fakeSocket.emit('lookup', null, options?.address || '127.0.0.1', options?.family || 4, options?.hostname || 'google.com');
+				sandbox.clock.tick(10);
 				fakeSocket.emit('connect');
+				sandbox.clock.tick(15);
 
 				fakeSocket.push(response.join('\r\n'));
 				fakeSocket.push(null);
@@ -62,6 +64,7 @@ describe('new http command', () => {
 
 			process.nextTick(() => {
 				tcpSocket.emit('lookup', null, options?.address || '127.0.0.1', 4, 'example.com');
+				sandbox.clock.tick(10);
 				tcpSocket.emit('connect');
 			});
 
@@ -100,7 +103,9 @@ describe('new http command', () => {
 
 		tlsConnectStub.callsFake(() => {
 			process.nextTick(() => {
+				sandbox.clock.tick(20);
 				tlsSocket.emit('secureConnect');
+				sandbox.clock.tick(5);
 				tlsSocket.push(response.join('\r\n'));
 				tlsSocket.push(null);
 			});
@@ -181,7 +186,7 @@ describe('new http command', () => {
 				truncated: false,
 				statusCode: 200,
 				statusCodeName: 'OK',
-				timings: { total: 0, download: 0, firstByte: 0, dns: 0, tls: null, tcp: 0 },
+				timings: { total: 25, download: 0, firstByte: 15, dns: 0, tls: null, tcp: 10 },
 				tls: null,
 			},
 		}]);
