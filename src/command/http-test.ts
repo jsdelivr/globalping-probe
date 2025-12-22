@@ -116,9 +116,25 @@ function getConnector (
 
 		tcpSocket.on('connect', () => {
 			timings.tcp = Date.now() - timings.start! - timings.dns!;
+			result.resolvedAddress ??= tcpSocket.remoteAddress ?? null;
 
 			if (!isHttps) {
 				result.httpVersion = '1.1';
+
+				// This is required to detect HTTP/1.0.
+				const onFirstData = (chunk: Buffer) => {
+					const firstLine = chunk.toString('ascii', 0, Math.min(20, chunk.length));
+					const match = /^HTTP\/(\d\.\d)/.exec(firstLine);
+
+					if (match?.[1]) {
+						result.httpVersion = match[1];
+					}
+
+					tcpSocket.removeListener('data', onFirstData);
+					tcpSocket.unshift(chunk);
+				};
+
+				tcpSocket.prependListener('data', onFirstData);
 				callback(null, tcpSocket);
 				return;
 			}
@@ -348,7 +364,7 @@ export class HttpTest {
 	private getInitialResult () {
 		return {
 			status: 'finished' as 'finished' | 'failed',
-			resolvedAddress: isIP(this.options.target) ? this.options.target : null,
+			resolvedAddress: null,
 			httpVersion: null,
 			headers: {} as Record<string, string>,
 			rawHeaders: '',
