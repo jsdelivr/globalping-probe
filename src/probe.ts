@@ -4,7 +4,6 @@ import net from 'node:net';
 import dns from 'node:dns';
 import { randomUUID } from 'node:crypto';
 import process from 'node:process';
-import fs from 'node:fs';
 import throng from 'throng';
 import { io } from 'socket.io-client';
 import physicalCpuCount from 'physical-cpu-count';
@@ -74,207 +73,6 @@ if (process.env['GP_HOST_FIRMWARE']) {
 }
 
 logger.info(`Starting probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode with UUID ${probeUuid.substring(0, 8)}.`);
-
-// DNS: несуществующий домен
-const dnsFail = {
-	type: 'http' as const,
-	target: 'nonexistent.invalid',
-	inProgressUpdates: false,
-	protocol: 'HTTPS',
-	request: { method: 'GET', path: '/', query: '' },
-	ipVersion: 4,
-};
-
-// DNS: private IP
-const dnsPrivate = {
-	type: 'http' as const,
-	target: 'localhost',
-	inProgressUpdates: false,
-	protocol: 'HTTPS',
-	port: 8443,
-	request: { method: 'GET', path: '/', query: '' },
-	ipVersion: 4,
-};
-
-// TCP: connection refused (неверный порт)
-const tcpRefused = {
-	type: 'http' as const,
-	target: 'google.com',
-	inProgressUpdates: false,
-	protocol: 'HTTP',
-	port: 12345,
-	request: { method: 'GET', path: '/', query: '' },
-	ipVersion: 4,
-};
-
-// TCP: timeout (non-routable IP)
-const tcpTimeout = {
-	type: 'http' as const,
-	target: '10.255.255.1',
-	inProgressUpdates: false,
-	protocol: 'HTTP',
-	request: { method: 'GET', path: '/', query: '' },
-	ipVersion: 4,
-};
-
-// TLS: HTTP на HTTPS порт (не TLS)
-const tlsWrongProtocol = {
-	type: 'http' as const,
-	target: 'google.com',
-	inProgressUpdates: false,
-	protocol: 'HTTPS',
-	port: 80,
-	request: { method: 'GET', path: '/', query: '' },
-	ipVersion: 4,
-};
-
-// TLS: expired cert
-const tlsExpired = {
-	type: 'http' as const,
-	target: 'expired.badssl.com',
-	inProgressUpdates: false,
-	protocol: 'HTTPS',
-	request: { method: 'GET', path: '/', query: '' },
-	ipVersion: 4,
-};
-
-// HTTP: custom Host header (IP + Host)
-const customHost = {
-	type: 'http' as const,
-	target: '142.250.185.14',
-	inProgressUpdates: false,
-	protocol: 'HTTPS',
-	request: { method: 'GET', path: '/', query: '', host: 'asdfasfd.com' },
-	ipVersion: 4,
-};
-
-// HTTP2: успешный запрос
-const http2Success = {
-	type: 'http' as const,
-	target: 'httpbin.org',
-	inProgressUpdates: false,
-	protocol: 'HTTP2',
-	request: { method: 'GET', path: '/', query: '' },
-	ipVersion: 4,
-};
-
-const http404 = {
-	type: 'http' as const,
-	target: 'yarmosh.by',
-	inProgressUpdates: false,
-	protocol: 'HTTPS',
-	request: { method: 'GET', path: '/asdfasdfasdf', query: '' },
-	ipVersion: 4,
-};
-
-const bigResponse = {
-	type: 'http' as const,
-	target: 'cdn.jsdelivr.net',
-	inProgressUpdates: false,
-	protocol: 'HTTPS',
-	request: {
-		method: 'GET',
-		path: '/npm/jquery',
-		query: '',
-		headers: {
-			'Accept-Encoding': '',
-		},
-	},
-	ipVersion: 4,
-};
-
-const httpOptions = {
-	type: 'http' as const,
-	target: 'postman-echo.com',
-	inProgressUpdates: false,
-	protocol: 'HTTP',
-	request: {
-		method: 'GET',
-		path: '/headers',
-		query: '',
-		headers: {
-			'X-Custom-Header': 'test-value',
-			'X-Another': 'another-value',
-		},
-	},
-	ipVersion: 4,
-};
-
-// HTTP: успешный запрос
-const httpSuccess = {
-	type: 'http' as const,
-	target: '185.199.110.153',
-	inProgressUpdates: false,
-	protocol: 'HTTPS',
-	request: { method: 'GET', path: '/', query: '' },
-	ipVersion: 4,
-};
-
-const http1OnlyLocal = {
-	type: 'http' as const,
-	target: 'localhost',
-	inProgressUpdates: false,
-	protocol: 'HTTP2',
-	port: 8444,
-	request: { method: 'GET', path: '/', query: '' },
-	ipVersion: 4,
-};
-
-const http1OnlyRemote = {
-	type: 'http' as const,
-	// target: 'www.zenlayer.com',
-	target: 'httpforever.com',
-	inProgressUpdates: false,
-	protocol: 'HTTP2',
-	request: { method: 'GET', path: '/', query: '' },
-	ipVersion: 4,
-};
-
-const isOld = Boolean(process.env['OLD']);
-const httpHandler = handlersMap.get(isOld ? 'http-old' : 'http')!;
-
-const http2Test = {
-	type: 'http' as const,
-	target: 'httpforever.com',
-	inProgressUpdates: false,
-	protocol: 'HTTP2',
-	request: { method: 'GET', path: '/', query: '' },
-	ipVersion: 4,
-};
-
-const httpCodes = {
-	type: 'http' as const,
-	target: 'tools-httpstatus.pickup-services.com',
-	inProgressUpdates: false,
-	protocol: 'HTTPS',
-	request: { method: 'GET', path: '/505', query: '' },
-	ipVersion: 4,
-};
-
-// ================  REQUEST TEST =============
-setTimeout(async () => {
-	const data = await httpHandler.run('wktl4ti3665LCugn0001zQL6', '0', http2Success);
-	fs.writeFileSync(`${isOld ? 'old' : 'new'}-data.json`, JSON.stringify(data, null, 2));
-}, 1000);
-
-// ================  MEMORY LEAK TEST =============
-// const total = 1000;
-// const concurrency = 10;
-// console.log(`\n=== ${isOld ? 'OLD' : 'NEW'} version ===`);
-// global.gc?.();
-
-// for (let i = 0; i < total; i += concurrency) {
-// 	const batch = Array.from({ length: concurrency }, (_, j) => httpHandler.run(`test-${i + j}`, '0', bigResponse));
-// 	await Promise.all(batch);
-
-// 	if ((i + concurrency) % 50 === 0) {
-// 		global.gc?.();
-// 		const mem = process.memoryUsage();
-// 		console.log(`${i + concurrency}: Heap=${(mem.heapUsed / 1024 / 1024).toFixed(1)}MB, Ext=${(mem.external / 1024 / 1024).toFixed(1)}MB`);
-// 	}
-// }
-
-// process.exit(0);
 
 function connect (workerId?: number) {
 	const worker = {
@@ -352,7 +150,7 @@ function connect (workerId?: number) {
 
 				try {
 					console.log(measurementId, testId, measurement);
-					const out = await handler.run(measurementId, testId, measurement);
+					const out = await handler.run(socket, measurementId, testId, measurement);
 					logMeasurementResults && logger.silly(`${measurement.type} request ${measurementId} result: ${JSON.stringify(out)}`);
 				} catch (error: unknown) {
 					handleTestError(error, socket, measurementId, testId);
@@ -391,12 +189,12 @@ function connect (workerId?: number) {
 	});
 }
 
-// if (process.env['NODE_ENV'] === 'development') {
-// 	// Run multiple clients in dev mode for easier debugging
-// 	throng({ worker: workerId => connect(workerId), count: Number(process.env['PROBES_COUNT']) || physicalCpuCount })
-// 		.catch((error) => {
-// 			logger.error(error);
-// 		});
-// } else {
-// 	connect();
-// }
+if (process.env['NODE_ENV'] === 'development') {
+	// Run multiple clients in dev mode for easier debugging
+	throng({ worker: workerId => connect(workerId), count: Number(process.env['PROBES_COUNT']) || physicalCpuCount })
+		.catch((error) => {
+			logger.error(error);
+		});
+} else {
+	connect();
+}

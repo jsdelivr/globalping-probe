@@ -29,7 +29,7 @@ const allowedIpVersions = [ 4, 6 ];
 export const httpOptionsSchema = Joi.object<HttpOptions>({
 	type: Joi.string().valid('http').insensitive().required(),
 	inProgressUpdates: Joi.boolean().required(),
-	target: Joi.string(),
+	target: Joi.string().required(),
 	resolver: Joi.string().ip(),
 	protocol: Joi.string().valid(...allowedHttpProtocols).insensitive().default('HTTPS'),
 	port: Joi.number(),
