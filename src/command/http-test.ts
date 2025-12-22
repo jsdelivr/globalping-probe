@@ -141,7 +141,7 @@ function getConnector (
 
 			const tlsSocket = tls.connect({
 				socket: tcpSocket,
-				servername: !isIP(connectorOptions.hostname) ? connectorOptions.hostname : options.request.host,
+				servername: options.request.host || (!isIP(connectorOptions.hostname) ? connectorOptions.hostname : undefined),
 				rejectUnauthorized: false,
 				ALPNProtocols: options.protocol === 'HTTP2' ? [ 'h2' ] : [ 'http/1.1' ],
 			});
