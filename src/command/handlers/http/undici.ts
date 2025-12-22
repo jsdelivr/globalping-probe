@@ -6,10 +6,10 @@ import type { Dispatcher } from 'undici';
 import { Client } from 'undici';
 import type { buildConnector } from 'undici';
 import _ from 'lodash';
-import { ProgressBuffer } from '../helper/progress-buffer.js';
-import type { HttpOptions } from './http-command.js';
-import { dnsLookup } from './handlers/shared/dns-resolver.js';
-import { callbackify } from '../lib/util.js';
+import { ProgressBuffer } from '../../../helper/progress-buffer.js';
+import type { HttpOptions } from '../../http-command.js';
+import { dnsLookup } from '../shared/dns-resolver.js';
+import { callbackify } from '../../../lib/util.js';
 
 type TlsDetails = {
 	authorized: boolean;
@@ -193,7 +193,7 @@ function getConnector (
 	};
 }
 
-export class HttpTest {
+export class Test {
 	private readonly REQUEST_TIMEOUT: number = 10_000;
 	private readonly DOWNLOAD_LIMIT: number = 10_000;
 	private readonly url: URL;

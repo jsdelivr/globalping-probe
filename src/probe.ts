@@ -9,7 +9,7 @@ import { io } from 'socket.io-client';
 import physicalCpuCount from 'physical-cpu-count';
 import { getFakeIp } from './lib/fake-ip.js';
 import type { CommandInterface, MeasurementRequest } from './types.js';
-// import { loadAll as loadAllDeps } from './lib/dependencies.js';
+import { loadAll as loadAllDeps } from './lib/dependencies.js';
 import { apiLogsTransport, scopedLogger } from './lib/logger.js';
 import { ApiTransportSettings } from './lib/api-logs-transport.js';
 import { initErrorHandler } from './helper/api-error-handler.js';
@@ -22,7 +22,6 @@ import { pingCmd, PingCommand } from './command/ping-command.js';
 import { traceCmd, TracerouteCommand } from './command/traceroute-command.js';
 import { mtrCmd, MtrCommand } from './command/mtr-command.js';
 import { HttpCommand } from './command/http-command.js';
-import { httpCmd, HttpCommand as HttpCommandOld } from './command/http-command-old.js';
 import { FakePingCommand } from './command/fake/fake-ping-command.js';
 import { FakeMtrCommand } from './command/fake/fake-mtr-command.js';
 import { run as runStatsAgent } from './lib/stats/client.js';
@@ -54,7 +53,7 @@ import './lib/updater.js';
 // Run scheduled restart
 import './lib/restart.js';
 
-// await loadAllDeps();
+await loadAllDeps();
 
 const logger = scopedLogger('general');
 const handlersMap = new Map<string, CommandInterface<unknown>>();
@@ -66,7 +65,6 @@ handlersMap.set('mtr', process.env['FAKE_COMMANDS'] ? new FakeMtrCommand() : new
 handlersMap.set('traceroute', new TracerouteCommand(traceCmd));
 handlersMap.set('dns', new DnsCommand(dnsCmd));
 handlersMap.set('http', new HttpCommand());
-handlersMap.set('http-old', new HttpCommandOld(httpCmd));
 
 if (process.env['GP_HOST_FIRMWARE']) {
 	logger.info(`Hardware probe running firmware version ${process.env['GP_HOST_FIRMWARE'].substring(1)}.`);
@@ -149,7 +147,6 @@ function connect (workerId?: number) {
 				worker.jobs.set(measurementId, Date.now());
 
 				try {
-					console.log(measurementId, testId, measurement);
 					const out = await handler.run(socket, measurementId, testId, measurement);
 					logMeasurementResults && logger.silly(`${measurement.type} request ${measurementId} result: ${JSON.stringify(out)}`);
 				} catch (error: unknown) {
