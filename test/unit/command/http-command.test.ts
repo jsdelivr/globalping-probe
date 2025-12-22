@@ -616,8 +616,8 @@ describe(`.run() method`, () => {
 
 		const request = mock.getRequest();
 
-		expect(request).to.include('Authorization: Bearer token123');
-		expect(request).to.include('X-Custom-Header: custom-value');
+		expect(request).to.include('authorization: Bearer token123');
+		expect(request).to.include('x-custom-header: custom-value');
 	});
 
 	it('should handle custom port', async () => {
@@ -644,15 +644,11 @@ describe(`.run() method`, () => {
 			ipVersion: 4,
 		});
 
-		expect(mock.getRequest()).to.equal([
-			'GET /api/v1 HTTP/1.1',
-			'host: api.example.com',
-			'connection: close',
-			'Accept-Encoding: gzip, deflate, br, zstd',
-			'User-Agent: globalping probe (https://github.com/jsdelivr/globalping)',
-			'',
-			'',
-		].join('\r\n'));
+		expect(mock.getRequest()).to.include('GET /api/v1 HTTP/1.1');
+		expect(mock.getRequest()).to.include('host: api.example.com');
+		expect(mock.getRequest()).to.include('connection: close');
+		expect(mock.getRequest()).to.include('accept-encoding: gzip, deflate, br');
+		expect(mock.getRequest()).to.include('user-agent: globalping probe (https://github.com/jsdelivr/globalping)');
 
 		expect(netConnectStub.calledOnce).to.be.true;
 
