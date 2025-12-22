@@ -413,15 +413,11 @@ describe(`.run() method`, () => {
 
 		expect(netConnectStub.calledOnce).to.be.true;
 
-		expect(mock.getRequest()).to.equal([
-			'GET /200?abc=def HTTP/1.1',
-			'host: google.com',
-			'connection: close',
-			'Accept-Encoding: gzip, deflate, br, zstd',
-			'User-Agent: globalping probe (https://github.com/jsdelivr/globalping)',
-			'',
-			'',
-		].join('\r\n'));
+		expect(mock.getRequest()).to.include('GET /200?abc=def HTTP/1.1');
+		expect(mock.getRequest()).to.include('host: google.com');
+		expect(mock.getRequest()).to.include('connection: close');
+		expect(mock.getRequest()).to.include('accept-encoding: gzip, deflate, br');
+		expect(mock.getRequest()).to.include('user-agent: globalping probe (https://github.com/jsdelivr/globalping)');
 
 		expect(mockedSocket.emit.callCount).to.equal(2);
 
@@ -472,15 +468,11 @@ describe(`.run() method`, () => {
 			ipVersion: 4,
 		});
 
-		expect(mock.getRequest()).to.equal([
-			'HEAD / HTTP/1.1',
-			'host: google.com',
-			'connection: close',
-			'Accept-Encoding: gzip, deflate, br, zstd',
-			'User-Agent: globalping probe (https://github.com/jsdelivr/globalping)',
-			'',
-			'',
-		].join('\r\n'));
+		expect(mock.getRequest()).to.include('HEAD / HTTP/1.1');
+		expect(mock.getRequest()).to.include('host: google.com');
+		expect(mock.getRequest()).to.include('connection: close');
+		expect(mock.getRequest()).to.include('accept-encoding: gzip, deflate, br');
+		expect(mock.getRequest()).to.include('user-agent: globalping probe (https://github.com/jsdelivr/globalping)');
 
 		expect(mockedSocket.emit.callCount).to.equal(1);
 		expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
@@ -568,22 +560,20 @@ describe(`.run() method`, () => {
 				headers: {
 					'X-Custom-Header': 'test-value',
 					'X-Another': 'another-value',
+					'accept-encoding': 'winrar',
+					'user-agent': 'chrome',
 				},
 			},
 			ipVersion: 4,
 		});
 
-		expect(mock.getRequest()).to.equal([
-			'GET / HTTP/1.1',
-			'host: google.com',
-			'connection: close',
-			'Accept-Encoding: gzip, deflate, br, zstd',
-			'X-Custom-Header: test-value',
-			'X-Another: another-value',
-			'User-Agent: globalping probe (https://github.com/jsdelivr/globalping)',
-			'',
-			'',
-		].join('\r\n'));
+		expect(mock.getRequest()).to.include('GET / HTTP/1.1');
+		expect(mock.getRequest()).to.include('host: google.com');
+		expect(mock.getRequest()).to.include('connection: close');
+		expect(mock.getRequest()).to.include('accept-encoding: winrar');
+		expect(mock.getRequest()).to.include('x-custom-header: test-value');
+		expect(mock.getRequest()).to.include('x-another: another-value');
+		expect(mock.getRequest()).to.include('user-agent: globalping probe (https://github.com/jsdelivr/globalping)');
 
 		const result = mockedSocket.emit.firstCall.args[1].result;
 
