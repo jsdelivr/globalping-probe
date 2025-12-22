@@ -10,3 +10,4 @@ config/e2e-api-local*
 .eslintcache
 new-data.json
 old-data.json
+*.pem

@@ -1,0 +1,37 @@
+{
+	"ipVersion,request.host,request.method,request.path (different errors)": {
+		"type": "http",
+		"target": "dualstack.t.sni.global.fastly.net",
+		"request": {
+			"host": "www.gawby.com",
+			"path": "/cachetest",
+			"method": "GET"
+		},
+		"inProgressUpdates": false,
+		"ipVersion": 6
+	},
+	"request.host,request.method,request.path,request.query": {
+		"type": "http",
+		"target": "a.gawby.com",
+		"request": {
+			  "host": "a.gawby.com",
+			  "path": "/js/sharer.min.js",
+			  "method": "GET",
+			  "query": "v=2.1001"
+		},
+		"inProgressUpdates": false
+	  },
+	  "port,protocol,request.headers.Host,request.method": {
+		"type": "http",
+		"target": "145a83e9f87f17b4.qzc.qzc.na.ipidea.online",
+		"request": {
+		  "headers": {
+				"Host": "145a83e9f87f17b4.qzc.qzc.na.ipidea.online:2336"
+		  },
+		  "method": "GET"
+		},
+		"inProgressUpdates": false,
+		"protocol": "HTTP",
+		"port": 2336
+	  }
+}

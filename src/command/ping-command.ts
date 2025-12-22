@@ -66,11 +66,11 @@ const logger = scopedLogger('ping-command');
 
 export const argBuilder = (options: PingOptions): string[] => {
 	const args = [
-		`-${options.ipVersion}`,
-		'-O',
+		// `-${options.ipVersion}`,
+		// '-O',
 		[ '-c', options.packets.toString() ],
 		[ '-i', '0.5' ],
-		[ '-w', '10' ],
+		// [ '-w', '10' ],
 		options.target,
 	].flat();
 

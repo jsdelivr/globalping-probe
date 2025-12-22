@@ -1,0 +1,15 @@
+{
+	"alo": {
+		"type": "http",
+		"target": "jsdelivr.com",
+		"request": {
+			"method": "GET",
+			"path": "/",
+			"query": ""
+		},
+		"resolver": "1.1.1.1",
+		"inProgressUpdates": false,
+		"protocol": "HTTPS",
+		"ipVersion": 4
+	}
+}
