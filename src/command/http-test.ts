@@ -131,7 +131,6 @@ function getConnector (
 					}
 
 					tcpSocket.removeListener('data', onFirstData);
-					tcpSocket.unshift(chunk);
 				};
 
 				tcpSocket.prependListener('data', onFirstData);
