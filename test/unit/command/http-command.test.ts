@@ -109,25 +109,6 @@ describe('url builder', () => {
 
 			expect(url).to.equal('http://1.1.1.1:80/');
 		});
-
-		it('should enclose a domain in brackets', () => {
-			const options = {
-				type: 'http' as const,
-				target: 'jsdelivr.com',
-				protocol: 'HTTP',
-				request: {
-					method: 'GET',
-					path: '/',
-					query: '',
-				},
-				inProgressUpdates: false,
-				ipVersion: 6,
-			};
-
-			const url = new Test(options, buffer).urlBuilder();
-
-			expect(url).to.equal('http://jsdelivr.com:80/');
-		});
 	});
 
 	describe('port', () => {

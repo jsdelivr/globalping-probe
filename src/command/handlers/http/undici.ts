@@ -188,7 +188,7 @@ function getConnector (
 					keyBits: cert.bits || null,
 					serialNumber: cert.serialNumber?.match(/.{2}/g)?.join(':') ?? null,
 					fingerprint256: cert.fingerprint256,
-					publicKey: cert.pubkey ? cert.pubkey.toString('hex').toUpperCase().match(/.{2}/g)!.join(':') : null,
+					publicKey: cert.pubkey?.toString('hex').toUpperCase().match(/.{2}/g)?.join(':') ?? null,
 				};
 
 				callback(null, tlsSocket);
