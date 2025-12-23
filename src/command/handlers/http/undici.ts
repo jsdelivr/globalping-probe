@@ -272,7 +272,7 @@ export class Test {
 						if (this.result.headers[lowKey] && Array.isArray(this.result.headers[lowKey])) {
 							this.result.headers[lowKey].push(value);
 						} else if (this.result.headers[lowKey]) {
-							this.result.headers[lowKey] = [ this.result.headers[lowKey], value ];
+							this.result.headers[lowKey] = [ this.result.headers[lowKey] as unknown as string, value ];
 						} else {
 							this.result.headers[lowKey] = value;
 						}
