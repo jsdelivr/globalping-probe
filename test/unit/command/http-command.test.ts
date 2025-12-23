@@ -72,7 +72,7 @@ describe('url builder', () => {
 	});
 
 	describe('target', () => {
-		it('should enclose an IPv6 addresses in brackets', () => {
+		it('should enclose an IPv6 address in brackets', () => {
 			const options = {
 				type: 'http' as const,
 				target: '2606:4700:4700::1111',
@@ -91,7 +91,7 @@ describe('url builder', () => {
 			expect(url).to.equal('http://[2606:4700:4700::1111]:80/');
 		});
 
-		it('should not enclose an IPv4 addresses in brackets', () => {
+		it('should not enclose an IPv4 address in brackets', () => {
 			const options = {
 				type: 'http' as const,
 				target: '1.1.1.1',
@@ -923,6 +923,8 @@ describe(`.run() method`, () => {
 			'HTTP/1.1 200 OK',
 			'Access-Control-Expose-Headers: Location',
 			'Access-Control-Expose-Headers: X-Version',
+			'Set-Cookie: cookie1=value1',
+			'Set-Cookie: cookie2=value2',
 			'Content-Type: text/plain',
 			'',
 			'',
@@ -939,8 +941,11 @@ describe(`.run() method`, () => {
 
 		const result = mockedSocket.emit.firstCall.args[1].result;
 
-		expect(result.headers['access-control-expose-headers']).to.equal('Location, X-Version');
+		expect(result.headers['access-control-expose-headers']).to.deep.equal([ 'Location', 'X-Version' ]);
 		expect(result.rawHeaders).to.include('Access-Control-Expose-Headers: Location');
 		expect(result.rawHeaders).to.include('Access-Control-Expose-Headers: X-Version');
+		expect(result.headers['set-cookie']).to.deep.equal([ 'cookie1=value1', 'cookie2=value2' ]);
+		expect(result.rawHeaders).to.include('Set-Cookie: cookie1=value1');
+		expect(result.rawHeaders).to.include('Set-Cookie: cookie2=value2');
 	});
 });

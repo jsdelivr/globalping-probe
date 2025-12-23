@@ -48,7 +48,7 @@ type Result = {
 	status: 'finished' | 'failed';
 	resolvedAddress: string | null;
 	httpVersion: string | null;
-	headers: Record<string, string>;
+	headers: Record<string, string | string[]>;
 	rawHeaders: string;
 	rawBody: string;
 	truncated: boolean;
@@ -61,7 +61,7 @@ type Result = {
 export type OutputJson = {
 	status: 'finished' | 'failed';
 	resolvedAddress: string | null;
-	headers: Record<string, string>;
+	headers: Record<string, string | string[]>;
 	rawHeaders: string | null;
 	rawBody: string | null;
 	truncated: boolean;
@@ -267,12 +267,14 @@ export class Test {
 						: _.toPairs(headers).map(([ k, v ]) => [ k, String(v) ]);
 
 					for (const [ key, value ] of entries) {
-						const lowerKey = key.toLowerCase();
+						const lowKey = key.toLowerCase();
 
-						if (this.result.headers[lowerKey]) {
-							this.result.headers[lowerKey] += `, ${value}`;
+						if (this.result.headers[lowKey] && Array.isArray(this.result.headers[lowKey])) {
+							this.result.headers[lowKey].push(value);
+						} else if (this.result.headers[lowKey]) {
+							this.result.headers[lowKey] = [ this.result.headers[lowKey], value ];
 						} else {
-							this.result.headers[lowerKey] = value;
+							this.result.headers[lowKey] = value;
 						}
 
 						rawHeaderPairs.push(`${key}: ${value}`);
@@ -317,7 +319,8 @@ export class Test {
 	}
 
 	private setupDecompressor () {
-		const encoding = this.result.headers['content-encoding']?.toLowerCase();
+		const encodingHeader = this.result.headers['content-encoding'];
+		const encoding = typeof encodingHeader === 'string' ? encodingHeader?.toLowerCase() : null;
 
 		if (!encoding) {
 			return;
