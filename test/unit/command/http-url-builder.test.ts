@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { HttpTest } from '../../../src/command/http-test.js';
+import { Test } from '../../../src/command/http-test.js';
 
 describe('http url builder', () => {
 	const buffer = {} as any;
@@ -19,7 +19,7 @@ describe('http url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new HttpTest(options, buffer).urlBuilder();
+			const url = new Test(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://google.com:80/');
 		});
@@ -38,7 +38,7 @@ describe('http url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new HttpTest(options, buffer).urlBuilder();
+			const url = new Test(options, buffer).urlBuilder();
 
 			expect(url).to.equal('https://google.com:443/');
 		});
@@ -57,7 +57,7 @@ describe('http url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new HttpTest(options, buffer).urlBuilder();
+			const url = new Test(options, buffer).urlBuilder();
 
 			expect(url).to.equal('https://google.com:443/');
 		});
@@ -78,7 +78,7 @@ describe('http url builder', () => {
 				ipVersion: 6,
 			};
 
-			const url = new HttpTest(options, buffer).urlBuilder();
+			const url = new Test(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://[2606:4700:4700::1111]:80/');
 		});
@@ -97,7 +97,7 @@ describe('http url builder', () => {
 				ipVersion: 6,
 			};
 
-			const url = new HttpTest(options, buffer).urlBuilder();
+			const url = new Test(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://1.1.1.1:80/');
 		});
@@ -116,7 +116,7 @@ describe('http url builder', () => {
 				ipVersion: 6,
 			};
 
-			const url = new HttpTest(options, buffer).urlBuilder();
+			const url = new Test(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://jsdelivr.com:80/');
 		});
@@ -138,7 +138,7 @@ describe('http url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new HttpTest(options, buffer).urlBuilder();
+			const url = new Test(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://google.com:1212/');
 		});
@@ -157,7 +157,7 @@ describe('http url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new HttpTest(options, buffer).urlBuilder();
+			const url = new Test(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://google.com:80/');
 		});
@@ -176,7 +176,7 @@ describe('http url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new HttpTest(options, buffer).urlBuilder();
+			const url = new Test(options, buffer).urlBuilder();
 
 			expect(url).to.equal('https://google.com:443/');
 		});
@@ -197,7 +197,7 @@ describe('http url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new HttpTest(options, buffer).urlBuilder();
+			const url = new Test(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://google.com:80/abc');
 		});
@@ -216,7 +216,7 @@ describe('http url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new HttpTest(options, buffer).urlBuilder();
+			const url = new Test(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://google.com:80/abc');
 		});
@@ -237,7 +237,7 @@ describe('http url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new HttpTest(options, buffer).urlBuilder();
+			const url = new Test(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://google.com:80/?abc=def');
 		});
@@ -256,7 +256,7 @@ describe('http url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new HttpTest(options, buffer).urlBuilder();
+			const url = new Test(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://google.com:80/?abc=def');
 		});

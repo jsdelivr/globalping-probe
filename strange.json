@@ -33,5 +33,16 @@
 		"inProgressUpdates": false,
 		"protocol": "HTTP",
 		"port": 2336
+	  },
+	  "double-headers": {
+		"type": "http",
+		"target": "mcneel.myjetbrains.com",
+		"request": {
+		  "host": "mcneel.myjetbrains.com",
+		  "path": "/youtrack/dashboard",
+		  "query": "id=583-166",
+		  "method": "GET"
+		},
+		"inProgressUpdates": false
 	  }
 }

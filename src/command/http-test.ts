@@ -74,6 +74,8 @@ export type OutputJson = {
 
 type Decompressor = zlib.Gunzip | zlib.Inflate | zlib.BrotliDecompress;
 
+const lowerCaseKeys = (obj: Record<string, string>) => _.mapKeys(obj, (_value, key) => _.toLower(key)) as Record<string, string>;
+
 const createZstdDecompress = (zlib as { createZstdDecompress?: () => Decompressor }).createZstdDecompress;
 
 const decompressors: Record<string, () => Decompressor> = {
@@ -86,6 +88,7 @@ const decompressors: Record<string, () => Decompressor> = {
 	...(createZstdDecompress ? { zstd: createZstdDecompress } : {}),
 };
 
+// This function shouldn't be part of the class to avoid memory leaks.
 function getConnector (
 	options: HttpOptions,
 	port: number,
@@ -116,14 +119,17 @@ function getConnector (
 
 		tcpSocket.on('connect', () => {
 			timings.tcp = Date.now() - timings.start! - timings.dns!;
-			result.resolvedAddress ??= tcpSocket.remoteAddress ?? null;
+
+			if (!result.resolvedAddress && tcpSocket.remoteAddress) {
+				result.resolvedAddress = tcpSocket.remoteAddress;
+			}
 
 			if (!isHttps) {
 				result.httpVersion = '1.1';
 
 				// This is required to detect HTTP/1.0.
 				const onFirstData = (chunk: Buffer) => {
-					const firstLine = chunk.toString('ascii', 0, Math.min(20, chunk.length));
+					const firstLine = chunk.toString('ascii', 0, 20);
 					const match = /^HTTP\/(\d\.\d)/.exec(firstLine);
 
 					if (match?.[1]) {
@@ -182,7 +188,7 @@ function getConnector (
 					keyBits: cert.bits || null,
 					serialNumber: cert.serialNumber?.match(/.{2}/g)?.join(':') ?? null,
 					fingerprint256: cert.fingerprint256,
-					publicKey: cert.pubkey ? cert.pubkey.toString('hex').toUpperCase().match(/.{2}/g)!.join(':') : null,
+					publicKey: cert.pubkey?.toString('hex').toUpperCase().match(/.{2}/g)?.join(':') ?? null,
 				};
 
 				callback(null, tlsSocket);
@@ -193,18 +199,13 @@ function getConnector (
 	};
 }
 
-export class HttpTest {
+export class Test {
 	private readonly REQUEST_TIMEOUT: number = 10_000;
 	private readonly DOWNLOAD_LIMIT: number = 10_000;
 	private readonly url: URL;
 	private readonly port: number;
 	private readonly isHttps: boolean;
-	private resolve!: (value: unknown) => void;
 	private undiciClient!: Client;
-	private timeoutTimer: NodeJS.Timeout | null = null;
-	private decompressor: Decompressor | null = null;
-	private decompressorHasData = false;
-	private done = false;
 	private readonly result: Omit<Result, 'timings'>;
 	private readonly timings: Timings = {
 		start: null,
@@ -215,6 +216,12 @@ export class HttpTest {
 		firstByte: null,
 		download: null,
 	};
+
+	private resolve!: (value: unknown) => void;
+	private timeoutTimer: NodeJS.Timeout | null = null;
+	private decompressor: Decompressor | null = null;
+	private decompressorHasData = false;
+	private done = false;
 
 	constructor (
 		private readonly options: HttpOptions,
@@ -237,13 +244,13 @@ export class HttpTest {
 		this.undiciClient.dispatch({
 			path: this.url.pathname + this.url.search,
 			method: this.options.request.method as Dispatcher.HttpMethod,
-			headers: {
+			headers: lowerCaseKeys({
 				'Accept-Encoding': `gzip, deflate, br${createZstdDecompress ? ', zstd' : ''}`,
 				...this.options.request.headers,
 				'User-Agent': 'globalping probe (https://github.com/jsdelivr/globalping)',
 				'Host': this.options.request.host ?? this.options.target,
 				'Connection': 'close',
-			},
+			}),
 		}, {
 			onConnect: () => {},
 			onError: (err: Error) => this.handleError(err.message),
@@ -408,22 +415,14 @@ export class HttpTest {
 		}
 
 		this.done = true;
+		Object.assign(this.result, this.getInitialResult());
 		this.result.status = 'failed';
-		this.result.resolvedAddress = null;
-		this.result.headers = {};
-		this.result.rawHeaders = '';
-		this.result.rawBody = '';
 		this.result.rawOutput = message;
-		this.result.statusCode = null;
-		this.result.statusCodeName = '';
-		this.result.tls = null;
 
-		this.timings.dns = null;
-		this.timings.tcp = null;
-		this.timings.tls = null;
-		this.timings.firstByte = null;
-		this.timings.download = null;
-		this.timings.total = null;
+		for (const key of Object.keys(this.timings) as (keyof Timings)[]) {
+			this.timings[key] = null;
+		}
+
 		this.cleanup();
 		this.sendResult();
 	};
