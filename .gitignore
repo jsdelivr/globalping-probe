@@ -11,3 +11,5 @@ config/e2e-api-local*
 new-data.json
 old-data.json
 *.pem
+*-old.json
+*-new.json

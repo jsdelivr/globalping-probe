@@ -267,7 +267,14 @@ export class Test {
 						: _.toPairs(headers).map(([ k, v ]) => [ k, String(v) ]);
 
 					for (const [ key, value ] of entries) {
-						this.result.headers[key.toLowerCase()] = value;
+						const lowerKey = key.toLowerCase();
+
+						if (this.result.headers[lowerKey]) {
+							this.result.headers[lowerKey] += `, ${value}`;
+						} else {
+							this.result.headers[lowerKey] = value;
+						}
+
 						rawHeaderPairs.push(`${key}: ${value}`);
 					}
 				}

@@ -232,8 +232,25 @@ const rl = readline.createInterface({
 	output: process.stdout,
 });
 
-const waitForEnter = () => new Promise<void>((resolve) => {
-	rl.question('\nPress Enter to continue...', () => resolve());
+const waitForEnter = (currentIndex: number) => new Promise<void>((resolve) => {
+	rl.question('\nPress Enter to continue (or "r" to save remaining tests)...', (answer) => {
+		if (answer.trim().toLowerCase() === 'r') {
+			const remainingTests: Record<string, unknown> = {};
+
+			for (let j = currentIndex; j < inputs.length; j++) {
+				const item = inputs[j];
+
+				if (item) {
+					remainingTests[item.key] = item.value;
+				}
+			}
+
+			fs.writeFileSync('r.json', JSON.stringify(remainingTests, null, '\t'));
+			console.log(`\n✓ Saved ${Object.keys(remainingTests).length} remaining tests to r.json`);
+		}
+
+		resolve();
+	});
 });
 
 void (async () => {
@@ -263,7 +280,7 @@ void (async () => {
 		}
 
 		if (i < inputs.length - 1) {
-			await waitForEnter();
+			await waitForEnter(i);
 		}
 	}
 
