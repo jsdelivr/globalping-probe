@@ -917,4 +917,30 @@ describe(`.run() method`, () => {
 		expect(result.headers['content-encoding']).to.equal('gzip');
 		expect(result.rawBody).to.equal(originalText);
 	});
+
+	it('should concatenate duplicate headers with comma', async () => {
+		mockHttpResponse([
+			'HTTP/1.1 200 OK',
+			'Access-Control-Expose-Headers: Location',
+			'Access-Control-Expose-Headers: X-Version',
+			'Content-Type: text/plain',
+			'',
+			'',
+		]);
+
+		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http' as const,
+			target: 'google.com',
+			inProgressUpdates: false,
+			protocol: 'HTTP',
+			request: { method: 'GET', path: '/', query: '' },
+			ipVersion: 4,
+		});
+
+		const result = mockedSocket.emit.firstCall.args[1].result;
+
+		expect(result.headers['access-control-expose-headers']).to.equal('Location, X-Version');
+		expect(result.rawHeaders).to.include('Access-Control-Expose-Headers: Location');
+		expect(result.rawHeaders).to.include('Access-Control-Expose-Headers: X-Version');
+	});
 });
