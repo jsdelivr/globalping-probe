@@ -7,15 +7,27 @@ The [Globalping platform](https://github.com/jsdelivr/globalping) relies on a gl
 Globalping thrives on the contribution of its community – with your support, we can continuously enhance the platform and provide improved, reliable measurement results to all users free of charge.
 We'd be happy to welcome you to our community by hosting a probe!
 
-### Set up a virtual probe
+### Set up a new probe
 To join the Globalping probe network, all you need to do is run our Docker container, which works on both x86 and ARM architectures. 
 
-Use the following command:
 
+### Recommended method
+
+> [!TIP]
+> We recommend using the dashboard wizard to get started. It automatically generates the command you need and includes your unique adoption token.
+> 
+> [Start and adopt a new probe](https://dash.globalping.io/probes?view=start-a-probe)
+
+
+### Docker
+ 
+Use the following command:
 
 ```
 docker run -d --log-driver local --network host --restart=always --name globalping-probe globalping/globalping-probe
 ```
+
+Don't forget to add your adoption token to passively generate credits and increase your rate limits `-e GP_ADOPTION_TOKEN=XXX`
 
 > [!TIP]
 > For automation, consider using our [universal installation script for Linux servers](https://gist.github.com/jimaek/7b8312c2c37f9002a5cc0108ebfd43e1) and adapting it as needed.
