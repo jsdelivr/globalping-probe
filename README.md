@@ -20,7 +20,7 @@ To join the Globalping probe network, all you need to do is run our Docker conta
 
 #### Alternative #1: Docker with optional/manual adoption
  
-```bash
+```
 docker run -d --log-driver local --network host --restart=always --name globalping-probe globalping/globalping-probe
 ```
 
@@ -32,14 +32,14 @@ If you have a Globalping account, remember to add your adoption token to generat
 #### Alternative #2: Podman with optional/manual adoption
 For users opting for Podman, [follow the instructions here](https://linuxhandbook.com/autostart-podman-containers/) to make sure the container automatically starts on boot. Also, check the container logs to see if it started successfully, as Podman may still require additional permissions.
 Run the container with the following command:
-```bash
+```
 sudo podman run --cap-add=NET_RAW -d --network host --restart=always --name globalping-probe globalping/globalping-probe
 ```
 
 ### Alternative registry
 In case the main Docker Hub registry is inaccessible to your server for any reason, you can use our official GitHub Packages mirror.
 
-```bash
+```
 docker run -d --log-driver local --network host --restart=always --name globalping-probe ghcr.io/jsdelivr/globalping-probe
 ```
 Note that ghcr.io does not support IPv6 at the moment.
@@ -76,7 +76,7 @@ As the automatic update doesn’t update the container, we recommend you pull a 
 
 To update the container, run the following:
 
-```bash
+```
 docker pull globalping/globalping-probe
 docker stop globalping-probe
 docker rm globalping-probe
