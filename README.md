@@ -11,15 +11,14 @@ We'd be happy to welcome you to our community by hosting a probe!
 To join the Globalping probe network, all you need to do is run our Docker container, which works on both x86 and ARM architectures. 
 
 
-### Recommended method
+#### Recommended method: Dashboard wizard
 
 > [!TIP]
-> We recommend using the dashboard wizard to get started. It automatically generates the command you need and includes your unique adoption token.
+> We recommend using our dashboard wizard to get started. It generates a command that includes your unique adoption token so that the probe is automatically added to your account.
 > 
 > [Start and adopt a new probe](https://dash.globalping.io/probes?view=start-a-probe)
 
-
-### Docker
+#### Alternative method: Docker
  
 Use the following command:
 
@@ -27,12 +26,12 @@ Use the following command:
 docker run -d --log-driver local --network host --restart=always --name globalping-probe globalping/globalping-probe
 ```
 
-Don't forget to add your adoption token to passively generate credits and increase your rate limits `-e GP_ADOPTION_TOKEN=XXX`
+If you have a Globalping account, remember to add your adoption token to generate credits and increase your rate limits `-e GP_ADOPTION_TOKEN=XXX`
 
 > [!TIP]
 > For automation, consider using our [universal installation script for Linux servers](https://gist.github.com/jimaek/7b8312c2c37f9002a5cc0108ebfd43e1) and adapting it as needed.
 
-### Podman alternative
+#### Alternative method: Podman
 For users opting for Podman, [follow the instructions here](https://linuxhandbook.com/autostart-podman-containers/) to make sure the container automatically starts on boot. Also, check the container logs to see if it started successfully, as Podman may still require additional permissions.
 Run the container with the following command:
 ```
@@ -99,7 +98,7 @@ docker run -d --log-driver local --network host --restart=always --name globalpi
 - We rate-limit all users on the API level to prevent network abuse.
 
 ## Adjusting the number of tests
-The amount of measurement tests your probe can process scales with the available CPU cores and average CPU load over the past few minutes. Our code is very lightweight and doesn't take up too many resources, so in most cases, **we recommend running our probe as is**.
+The number of measurement tests your probe can process scales with the available CPU cores and average CPU load over the past few minutes. Our code is very lightweight and doesn't take up too many resources, so in most cases, **we recommend running our probe as is**.
 
 However, if you still want to control resource usage, add the docker parameter `--cpuset-cpus="0-2"` to your `docker run` command and set the number of CPUs within the quotes.
 
