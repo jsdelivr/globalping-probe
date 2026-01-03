@@ -20,8 +20,6 @@ To join the Globalping probe network, all you need to do is run our Docker conta
 
 #### Alternative method: Docker
  
-Use the following command:
-
 ```
 docker run -d --log-driver local --network host --restart=always --name globalping-probe globalping/globalping-probe
 ```
