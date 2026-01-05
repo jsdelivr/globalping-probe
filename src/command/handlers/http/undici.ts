@@ -76,17 +76,14 @@ type Decompressor = zlib.Gunzip | zlib.Inflate | zlib.BrotliDecompress;
 
 const lowerCaseKeys = (obj: Record<string, string>) => _.mapKeys(obj, (_value, key) => _.toLower(key)) as Record<string, string>;
 
-const createZstdDecompress = (zlib as { createZstdDecompress?: () => Decompressor }).createZstdDecompress;
-
-const decompressors: Record<string, () => Decompressor> = {
+const decompressors = Object.assign(Object.create(null), {
 	'gzip': zlib.createGunzip,
 	'x-gzip': zlib.createGunzip,
 	'br': zlib.createBrotliDecompress,
 	'deflate': zlib.createInflate,
 	'compress': zlib.createInflate,
 	'x-compress': zlib.createInflate,
-	...(createZstdDecompress ? { zstd: createZstdDecompress } : {}),
-};
+}) as Record<string, () => Decompressor>;
 
 // This function shouldn't be part of the class to avoid memory leaks.
 function getConnector (
@@ -245,7 +242,7 @@ export class Test {
 			path: this.url.pathname + this.url.search,
 			method: this.options.request.method as Dispatcher.HttpMethod,
 			headers: lowerCaseKeys({
-				'Accept-Encoding': `gzip, deflate, br${createZstdDecompress ? ', zstd' : ''}`,
+				'Accept-Encoding': `gzip, deflate, br`,
 				...this.options.request.headers,
 				'User-Agent': 'globalping probe (https://github.com/jsdelivr/globalping)',
 				'Host': this.options.request.host ?? this.options.target,
