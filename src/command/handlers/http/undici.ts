@@ -196,7 +196,7 @@ function getConnector (
 	};
 }
 
-export class Test {
+export class HttpHandler {
 	private readonly REQUEST_TIMEOUT: number = 10_000;
 	private readonly DOWNLOAD_LIMIT: number = 10_000;
 	private readonly url: URL;

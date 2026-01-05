@@ -6,7 +6,7 @@ import zlib from 'node:zlib';
 import * as sinon from 'sinon';
 import { Socket } from 'socket.io-client';
 import { HttpCommand } from '../../../src/command/http-command.js';
-import { Test } from '../../../src/command/handlers/http/undici.js';
+import { HttpHandler } from '../../../src/command/handlers/http/undici.js';
 import { useSandboxWithFakeTimers } from '../../utils.js';
 
 describe('url builder', () => {
@@ -27,7 +27,7 @@ describe('url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new Test(options, buffer).urlBuilder();
+			const url = new HttpHandler(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://google.com:80/');
 		});
@@ -46,7 +46,7 @@ describe('url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new Test(options, buffer).urlBuilder();
+			const url = new HttpHandler(options, buffer).urlBuilder();
 
 			expect(url).to.equal('https://google.com:443/');
 		});
@@ -65,7 +65,7 @@ describe('url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new Test(options, buffer).urlBuilder();
+			const url = new HttpHandler(options, buffer).urlBuilder();
 
 			expect(url).to.equal('https://google.com:443/');
 		});
@@ -86,7 +86,7 @@ describe('url builder', () => {
 				ipVersion: 6,
 			};
 
-			const url = new Test(options, buffer).urlBuilder();
+			const url = new HttpHandler(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://[2606:4700:4700::1111]:80/');
 		});
@@ -105,7 +105,7 @@ describe('url builder', () => {
 				ipVersion: 6,
 			};
 
-			const url = new Test(options, buffer).urlBuilder();
+			const url = new HttpHandler(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://1.1.1.1:80/');
 		});
@@ -127,7 +127,7 @@ describe('url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new Test(options, buffer).urlBuilder();
+			const url = new HttpHandler(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://google.com:1212/');
 		});
@@ -146,7 +146,7 @@ describe('url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new Test(options, buffer).urlBuilder();
+			const url = new HttpHandler(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://google.com:80/');
 		});
@@ -165,7 +165,7 @@ describe('url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new Test(options, buffer).urlBuilder();
+			const url = new HttpHandler(options, buffer).urlBuilder();
 
 			expect(url).to.equal('https://google.com:443/');
 		});
@@ -186,7 +186,7 @@ describe('url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new Test(options, buffer).urlBuilder();
+			const url = new HttpHandler(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://google.com:80/abc');
 		});
@@ -205,7 +205,7 @@ describe('url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new Test(options, buffer).urlBuilder();
+			const url = new HttpHandler(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://google.com:80/abc');
 		});
@@ -226,7 +226,7 @@ describe('url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new Test(options, buffer).urlBuilder();
+			const url = new HttpHandler(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://google.com:80/?abc=def');
 		});
@@ -245,7 +245,7 @@ describe('url builder', () => {
 				ipVersion: 4,
 			};
 
-			const url = new Test(options, buffer).urlBuilder();
+			const url = new HttpHandler(options, buffer).urlBuilder();
 
 			expect(url).to.equal('http://google.com:80/?abc=def');
 		});

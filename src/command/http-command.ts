@@ -3,7 +3,7 @@ import type { Socket } from 'socket.io-client';
 import type { CommandInterface } from '../types.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
-import { Test } from './handlers/http/undici.js';
+import { HttpHandler } from './handlers/http/undici.js';
 
 export type HttpOptions = {
 	type: 'http';
@@ -61,8 +61,8 @@ export class HttpCommand implements CommandInterface<HttpOptions> {
 
 		const { value: options } = validationResult;
 		const buffer = new ProgressBuffer(socket, testId, measurementId, 'append');
-		const test = new Test(options, buffer);
-		const out = await test.run();
+		const handler = new HttpHandler(options, buffer);
+		const out = await handler.run();
 		return out;
 	}
 }
