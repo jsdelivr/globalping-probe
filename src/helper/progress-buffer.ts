@@ -4,7 +4,7 @@ import type { Socket } from 'socket.io-client';
 import type { ResultTypeJson as MtrResultTypeJson } from '../command/handlers/mtr/types.js';
 import type { DnsParseResponseJson as DnsParseResponseClassicJson } from '../command/handlers/dig/classic.js';
 import type { DnsParseResponseJson as DnsParseResponseTraceJson } from '../command/handlers/dig/trace.js';
-import type { OutputJson as HttpOutputJson } from '../command/http-command.js';
+import type { OutputJson as HttpOutputJson } from '../command/handlers/http/undici.js';
 import type { PingParseOutputJson } from '../command/ping-command.js';
 
 type DefaultProgress = {

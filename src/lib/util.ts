@@ -9,7 +9,7 @@ export const callbackify = (
 	spreadResult = false,
 ) => (async (...args: unknown[]) => {
 	const cb = args[args.length - 1] as (
-		error: Error | undefined,
+		error: Error | null,
 		result?: unknown,
 		family?: number
 	) => void;
@@ -24,11 +24,11 @@ export const callbackify = (
 
 	if (Array.isArray(result) && spreadResult) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-		cb(undefined, ...result);
+		cb(null, ...result);
 		return;
 	}
 
-	cb(undefined, result);
+	cb(null, result);
 }) as (...args: unknown[]) => never;
 
 export const getAvailableDiskSpace = () => {

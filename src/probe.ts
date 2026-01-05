@@ -21,7 +21,7 @@ import { dnsCmd, DnsCommand } from './command/dns-command.js';
 import { pingCmd, PingCommand } from './command/ping-command.js';
 import { traceCmd, TracerouteCommand } from './command/traceroute-command.js';
 import { mtrCmd, MtrCommand } from './command/mtr-command.js';
-import { httpCmd, HttpCommand } from './command/http-command.js';
+import { HttpCommand } from './command/http-command.js';
 import { FakePingCommand } from './command/fake/fake-ping-command.js';
 import { FakeMtrCommand } from './command/fake/fake-mtr-command.js';
 import { run as runStatsAgent } from './lib/stats/client.js';
@@ -64,7 +64,7 @@ handlersMap.set('ping', process.env['FAKE_COMMANDS'] ? new FakePingCommand() : n
 handlersMap.set('mtr', process.env['FAKE_COMMANDS'] ? new FakeMtrCommand() : new MtrCommand(mtrCmd));
 handlersMap.set('traceroute', new TracerouteCommand(traceCmd));
 handlersMap.set('dns', new DnsCommand(dnsCmd));
-handlersMap.set('http', new HttpCommand(httpCmd));
+handlersMap.set('http', new HttpCommand());
 
 if (process.env['GP_HOST_FIRMWARE']) {
 	logger.info(`Hardware probe running firmware version ${process.env['GP_HOST_FIRMWARE'].substring(1)}.`);
