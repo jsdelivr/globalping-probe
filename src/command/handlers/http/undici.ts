@@ -115,7 +115,7 @@ function getConnector (
 		});
 
 		tcpSocket.on('connect', () => {
-			timings.tcp = Date.now() - timings.start! - timings.dns!;
+			timings.tcp = Date.now() - timings.start! - (timings.dns ?? 0);
 
 			if (!result.resolvedAddress && tcpSocket.remoteAddress) {
 				result.resolvedAddress = tcpSocket.remoteAddress;
@@ -153,7 +153,7 @@ function getConnector (
 			});
 
 			tlsSocket.on('secureConnect', () => {
-				timings.tls = Date.now() - timings.start! - timings.dns! - timings.tcp!;
+				timings.tls = Date.now() - timings.start! - (timings.dns ?? 0) - (timings.tcp ?? 0);
 				const cert = tlsSocket.getPeerCertificate();
 				const alpn = tlsSocket.alpnProtocol;
 
@@ -252,7 +252,7 @@ export class Test {
 			onConnect: () => {},
 			onError: (err: Error) => this.handleError(err.message),
 			onHeaders: (statusCode, headers, _resume, statusText) => {
-				this.timings.firstByte = Date.now() - this.timings.start! - this.timings.dns! - this.timings.tcp! - this.timings.tls!;
+				this.timings.firstByte = Date.now() - this.timings.start! - (this.timings.dns ?? 0) - (this.timings.tcp ?? 0) - (this.timings.tls ?? 0);
 				this.result.statusCode = statusCode;
 				this.result.statusCodeName = statusText;
 
@@ -403,7 +403,7 @@ export class Test {
 
 		this.done = true;
 		const now = Date.now();
-		this.timings.download = now - this.timings.start! - this.timings.dns! - this.timings.tcp! - this.timings.tls! - this.timings.firstByte!;
+		this.timings.download = now - this.timings.start! - (this.timings.dns ?? 0) - (this.timings.tcp ?? 0) - (this.timings.tls ?? 0) - (this.timings.firstByte ?? 0);
 		this.timings.total = now - this.timings.start!;
 
 		if (this.options.request.method === 'HEAD' || !this.result.rawBody) {
