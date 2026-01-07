@@ -76,7 +76,7 @@ export const argBuilder = (options: TraceOptions): string[] => {
 		`-${options.ipVersion}`,
 		// Max ttl
 		[ '-m', '20' ],
-		// Max timeout
+		// MAX timeout; note that this also disables the HERE and NEAR limits
 		[ '-w', '2' ],
 		// Probe packets per hop
 		[ '-q', '2' ],
