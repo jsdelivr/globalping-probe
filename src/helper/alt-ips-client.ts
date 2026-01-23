@@ -105,6 +105,9 @@ export class AltIpsClient {
 		const response = await got.post<{ ip: string; token: string }>(`${httpHost}/alternative-ip`, {
 			localAddress: ip,
 			dnsLookupIpVersion,
+			json: {
+				localAddress: ip,
+			},
 			retry: {
 				limit: 1,
 				methods: [ 'POST' ],
