@@ -123,7 +123,7 @@ function connect (workerId?: number) {
 		.on('disconnect', errorHandler.handleDisconnect)
 		.on('connect_error', errorHandler.connectError)
 		.on('api:connect:location', apiConnectLocationHandler(socket))
-		.on('api:connect:adoption', adoptionStatusHandler)
+		.on('api:connect:adoption', adoptionStatusHandler(socket))
 		.on('api:connect:ip', ipHandler(socket))
 		.on('probe:measurement:request', (data: MeasurementRequest) => {
 			const status = statusManager.getStatus();
