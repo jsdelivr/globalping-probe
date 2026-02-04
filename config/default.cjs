@@ -26,4 +26,8 @@ module.exports = {
 			interval: 0.5,
 		},
 	},
+	adoptionServer: {
+		port: 7201,
+		lifetime: 1000 * 60 * 60,
+	},
 };

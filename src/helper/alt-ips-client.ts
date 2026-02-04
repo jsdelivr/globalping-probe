@@ -1,11 +1,10 @@
-import os from 'node:os';
 import config from 'config';
-import is from '@sindresorhus/is';
 import _ from 'lodash';
 import { scopedLogger } from '../lib/logger.js';
 import got, { RequestError } from 'got';
 import type { Socket } from 'socket.io-client';
 import { pluralize } from '../lib/util.js';
+import { getLocalIps } from '../lib/private-ip.js';
 
 const mainLogger = scopedLogger('general');
 const altIpsLogger = scopedLogger('api:connect:alt-ips-handler');
@@ -43,17 +42,8 @@ export class AltIpsClient {
 		});
 	}
 
-
 	async refreshAltIps (): Promise<void> {
-		const addresses = _(os.networkInterfaces())
-			.values()
-			.filter(is.truthy)
-			.flatten()
-			.uniqBy('address')
-			.filter(address => !address.internal)
-			.filter(address => !address.address.startsWith('fe80:')) // filter out link-local addresses
-			.filter(address => !address.address.startsWith('169.254.')) // filter out link-local addresses
-			.value();
+		const addresses = getLocalIps();
 
 		const results = await Promise.allSettled(addresses.map(({ address, family }) => {
 			return this.getAltIpToken(address, family === 'IPv6' ? 6 : 4);

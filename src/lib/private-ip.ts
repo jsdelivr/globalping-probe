@@ -1,4 +1,7 @@
 import { isIP, BlockList } from 'node:net';
+import os from 'node:os';
+import _ from 'lodash';
+import is from '@sindresorhus/is';
 
 const privateBlockList = new BlockList();
 
@@ -49,3 +52,13 @@ export const isIpPrivate = (ip: string) => {
 	// Not a valid IP
 	return false;
 };
+
+export const getLocalIps = () => _(os.networkInterfaces())
+	.values()
+	.filter(is.truthy)
+	.flatten()
+	.uniqBy('address')
+	.filter(address => !address.internal)
+	.filter(address => !address.address.startsWith('fe80:')) // filter out link-local addresses
+	.filter(address => !address.address.startsWith('169.254.')) // filter out link-local addresses
+	.value();
