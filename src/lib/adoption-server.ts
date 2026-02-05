@@ -2,7 +2,6 @@ import crypto from 'node:crypto';
 import http from 'node:http';
 import config from 'config';
 import { scopedLogger } from './logger.js';
-import { HTTPError } from 'got';
 
 const serverLifetime = config.get<number>('adoptionServer.lifetime');
 const serverPort = config.get<number>('adoptionServer.port');
@@ -57,7 +56,7 @@ export const startLocalAdoptionServer = () => {
 		res.end(JSON.stringify({ token }));
 	});
 
-	server.on('error', (error: HTTPError) => {
+	server.on('error', (error: NodeJS.ErrnoException) => {
 		if (error.code && IGNORED_HTTP_ERRORS.includes(error.code)) {
 			return;
 		}
