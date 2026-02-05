@@ -29,6 +29,8 @@ export const stopLocalAdoptionServer = () => {
 };
 
 export const startLocalAdoptionServer = () => {
+	stopLocalAdoptionServer();
+
 	// create a new token and start the server
 	token = crypto.randomBytes(32).toString('hex');
 
