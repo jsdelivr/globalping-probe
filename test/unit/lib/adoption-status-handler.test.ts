@@ -11,8 +11,11 @@ describe('adoptionStatusHandler', () => {
 
 	let adoptionStatusHandler: any;
 	let socket: sinon.SinonStubbedInstance<Socket>;
+	let prevHwEnv: string | undefined;
 
 	before(async () => {
+		prevHwEnv = process.env['GP_HOST_HW'];
+
 		const adoptionServerPath = path.resolve('src/lib/adoption-server.ts');
 		const privateIpPath = path.resolve('src/lib/private-ip.ts');
 
@@ -35,9 +38,12 @@ describe('adoptionStatusHandler', () => {
 		socket = sinon.createStubInstance(Socket) as sinon.SinonStubbedInstance<Socket>;
 	});
 
+	afterEach(() => {
+		process.env['GP_HOST_HW'] = prevHwEnv;
+	});
+
 	after(() => {
 		td.reset();
-		delete process.env['GP_HOST_HW'];
 	});
 
 	describe('unadopted probe', () => {
