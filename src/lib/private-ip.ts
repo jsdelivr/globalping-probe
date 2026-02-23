@@ -2,6 +2,7 @@ import { isIP, BlockList } from 'node:net';
 import os from 'node:os';
 import _ from 'lodash';
 import is from '@sindresorhus/is';
+import Joi from 'joi';
 
 const privateBlockList = new BlockList();
 
@@ -39,6 +40,10 @@ privateBlockList.addSubnet('fe80::', 10, 'ipv6');
 privateBlockList.addSubnet('ff00::', 8, 'ipv6');
 
 export const isIpPrivate = (ip: string) => {
+	if (getLocalIps().has(ip)) {
+		return true;
+	}
+
 	const ipVersion = isIP(ip);
 
 	if (ipVersion === 4) {
@@ -53,12 +58,31 @@ export const isIpPrivate = (ip: string) => {
 	return false;
 };
 
-export const getLocalIps = () => _(os.networkInterfaces())
-	.values()
-	.filter(is.truthy)
-	.flatten()
-	.uniqBy('address')
-	.filter(address => !address.internal)
-	.filter(address => !address.address.startsWith('fe80:')) // filter out link-local addresses
-	.filter(address => !address.address.startsWith('169.254.')) // filter out link-local addresses
-	.value();
+let localIps: Set<string> | null = null;
+
+export const getLocalIps = (refresh = false) => {
+	if (localIps && !refresh) {
+		return localIps;
+	}
+
+	localIps = new Set(_(os.networkInterfaces())
+		.values()
+		.filter(is.truthy)
+		.flatten()
+		.uniqBy('address')
+		.filter(address => !address.internal)
+		.filter(address => !address.address.startsWith('fe80:')) // filter out link-local addresses
+		.filter(address => !address.address.startsWith('169.254.')) // filter out link-local addresses
+		.map(address => address.address)
+		.value());
+
+	return localIps;
+};
+
+export const joiValidateIp = (value: string, helpers: Joi.CustomHelpers): string | Joi.ErrorReport => {
+	if (isIpPrivate(value)) {
+		return helpers.error('ip.private');
+	}
+
+	return value;
+};

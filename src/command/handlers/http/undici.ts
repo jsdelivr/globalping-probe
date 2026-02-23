@@ -115,6 +115,12 @@ function getConnector (
 		});
 
 		tcpSocket.on('connect', () => {
+			if (tcpSocket.remoteAddress === tcpSocket.localAddress) {
+				tcpSocket.destroy();
+				callback(new Error('Private IP ranges are not allowed.'), null);
+				return;
+			}
+
 			timings.tcp = Date.now() - timings.start! - (timings.dns ?? 0);
 
 			if (!result.resolvedAddress && tcpSocket.remoteAddress) {

@@ -2,6 +2,7 @@ import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
 import type { CommandInterface } from '../types.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
+import { joiValidateIp } from '../lib/private-ip.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import { HttpHandler } from './handlers/http/undici.js';
 
@@ -29,7 +30,7 @@ const allowedIpVersions = [ 4, 6 ];
 export const httpOptionsSchema = Joi.object<HttpOptions>({
 	type: Joi.string().valid('http').insensitive().required(),
 	inProgressUpdates: Joi.boolean().required(),
-	target: Joi.string().required(),
+	target: Joi.string().custom(joiValidateIp).required(),
 	resolver: Joi.string().ip(),
 	protocol: Joi.string().valid(...allowedHttpProtocols).insensitive().default('HTTPS'),
 	port: Joi.number(),

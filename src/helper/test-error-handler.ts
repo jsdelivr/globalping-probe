@@ -6,7 +6,7 @@ const logger = scopedLogger('test-error-handler');
 export const handleTestError = (error: unknown, socket: Socket, measurementId: string, testId: string) => {
 	logger.error('Failed to run the measurement:', error);
 
-	const rawOutput = error instanceof Error ? error.toString() : String(error);
+	const rawOutput = error instanceof Error ? error.message : String(error);
 
 	socket.emit('probe:measurement:result', {
 		testId,

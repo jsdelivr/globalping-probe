@@ -6,7 +6,7 @@ import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface } from '../types.js';
 import { byLine } from '../lib/by-line.js';
-import { isIpPrivate } from '../lib/private-ip.js';
+import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { scopedLogger } from '../lib/logger.js';
@@ -37,7 +37,7 @@ const allowedIpVersions = [ 4, 6 ];
 const mtrOptionsSchema = Joi.object<MtrOptions>({
 	type: Joi.string().valid('mtr'),
 	inProgressUpdates: Joi.boolean(),
-	target: Joi.string(),
+	target: Joi.string().custom(joiValidateIp).required(),
 	protocol: Joi.string().lowercase().insensitive(),
 	packets: Joi.number().min(1).max(16).default(3),
 	port: Joi.number(),
