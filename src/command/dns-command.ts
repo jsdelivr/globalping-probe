@@ -6,7 +6,7 @@ import tldts from 'tldts';
 import type { CommandInterface } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { byLine } from '../lib/by-line.js';
-import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
+import { isIpPrivate } from '../lib/private-ip.js';
 import { InternalError } from '../lib/internal-error.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { scopedLogger } from '../lib/logger.js';
@@ -52,7 +52,7 @@ const allowedIpVersions = [ 4, 6 ];
 const dnsOptionsSchema = Joi.object<DnsOptions>({
 	type: Joi.string().valid('dns'),
 	inProgressUpdates: Joi.boolean(),
-	target: Joi.string().custom(joiValidateIp).required(),
+	target: Joi.string().required(),
 	resolver: Joi.string().optional(),
 	protocol: Joi.string().valid(...allowedProtocols).optional().default('udp'),
 	port: Joi.number().optional().default('53'),

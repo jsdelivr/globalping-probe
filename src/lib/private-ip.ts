@@ -40,11 +40,15 @@ privateBlockList.addSubnet('fe80::', 10, 'ipv6');
 privateBlockList.addSubnet('ff00::', 8, 'ipv6');
 
 export const isIpPrivate = (ip: string) => {
+	const ipVersion = isIP(ip);
+
+	if (ipVersion === 0) {
+		return false;
+	}
+
 	if (getLocalIps().has(ip)) {
 		return true;
 	}
-
-	const ipVersion = isIP(ip);
 
 	if (ipVersion === 4) {
 		return privateBlockList.check(ip, 'ipv4');

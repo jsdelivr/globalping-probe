@@ -31,7 +31,7 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 	type: Joi.string().valid('http').insensitive().required(),
 	inProgressUpdates: Joi.boolean().required(),
 	target: Joi.string().custom(joiValidateIp).required(),
-	resolver: Joi.string().ip(),
+	resolver: Joi.string().ip().custom(joiValidateIp),
 	protocol: Joi.string().valid(...allowedHttpProtocols).insensitive().default('HTTPS'),
 	port: Joi.number(),
 	request: Joi.object({
