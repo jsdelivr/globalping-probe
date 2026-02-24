@@ -187,7 +187,7 @@ describe('index module', () => {
 			{
 				testId: 'testid',
 				measurementId: 'measurementid',
-				result: { status: 'failed', rawOutput: 'Error: Some error message' },
+				result: { status: 'failed', rawOutput: 'Some error message' },
 			},
 		]);
 	});
