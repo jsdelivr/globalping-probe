@@ -72,6 +72,7 @@ export const getLocalIps = (refresh = false) => {
 		.uniqBy('address')
 		.filter(address => !address.internal)
 		.filter(address => !address.address.startsWith('fe80:')) // filter out link-local addresses
+		.filter(address => !address.address.startsWith('FE80:')) // filter out link-local addresses
 		.filter(address => !address.address.startsWith('169.254.')) // filter out link-local addresses
 		.map(address => address.address)
 		.value());
