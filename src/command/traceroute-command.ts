@@ -124,7 +124,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 				const isValid = this.validatePartialResult(parsed, cmd);
 
 				if (!isValid) {
-					isResultPrivate = !isValid;
+					isResultPrivate = true;
 					return;
 				}
 

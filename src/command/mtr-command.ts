@@ -95,6 +95,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		const buffer = new ProgressBuffer(socket, testId, measurementId, 'overwrite');
 		const cmd = this.cmd(cmdOptions);
 		let result: ResultType = getResultInitState();
+		let isResultPrivate = false;
 
 		if (cmd.stdout) {
 			// TODO: remove:
@@ -129,6 +130,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			await this.checkForPrivateDest(cmdOptions.target);
 			await cmd;
 			result = await this.parseResult(result.data, true);
+			isResultPrivate = isResultPrivate || isIpPrivate(result.resolvedAddress ?? '');
 		} catch (error: unknown) {
 			result.status = 'failed';
 
@@ -144,13 +146,21 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 				}
 
 				if (error instanceof Error && error.message === 'private destination') {
-					result.rawOutput = 'Private IP ranges are not allowed.';
+					isResultPrivate = true;
 				} else {
 					logger.error(error);
 				}
 			}
 
 			!result.rawOutput && (result.rawOutput = 'Test failed. Please try again.');
+		}
+
+		if (isResultPrivate) {
+			result = {
+				...getResultInitState(),
+				status: 'failed',
+				rawOutput: 'Private IP ranges are not allowed.',
+			};
 		}
 
 		const out = this.toJsonOutput(result);
