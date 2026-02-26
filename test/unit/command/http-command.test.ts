@@ -948,4 +948,41 @@ describe(`.run() method`, () => {
 		expect(result.rawHeaders).to.include('Set-Cookie: cookie1=value1');
 		expect(result.rawHeaders).to.include('Set-Cookie: cookie2=value2');
 	});
+
+	it('should reject private target on validation', async () => {
+		try {
+			await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+				type: 'http' as const,
+				target: '127.0.0.1',
+				inProgressUpdates: false,
+				protocol: 'HTTP',
+				request: { method: 'GET', path: '/', query: '' },
+				ipVersion: 4,
+			});
+
+			expect.fail('Expected validation error');
+		} catch (error: unknown) {
+			expect(error).to.be.instanceOf(Error);
+			expect((error as Error).message).to.equal('Private IP ranges are not allowed.');
+		}
+	});
+
+	it('should reject private resolver on validation', async () => {
+		try {
+			await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+				type: 'http' as const,
+				target: 'example.com',
+				resolver: '127.0.0.1',
+				inProgressUpdates: false,
+				protocol: 'HTTP',
+				request: { method: 'GET', path: '/', query: '' },
+				ipVersion: 4,
+			});
+
+			expect.fail('Expected validation error');
+		} catch (error: unknown) {
+			expect(error).to.be.instanceOf(Error);
+			expect((error as Error).message).to.equal('Private IP ranges are not allowed.');
+		}
+	});
 });

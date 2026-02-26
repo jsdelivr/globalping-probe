@@ -459,5 +459,26 @@ describe('mtr command executor', () => {
 				},
 			]);
 		});
+
+		it('should reject private target on validation', async () => {
+			try {
+				await new MtrCommand((() => {
+					throw new Error('should not be called');
+				}) as any, dnsResolver(false)).run(mockedSocket as any, 'measurement', 'test', {
+					type: 'mtr',
+					target: '127.0.0.1',
+					protocol: 'icmp',
+					port: 80,
+					packets: 1,
+					inProgressUpdates: false,
+					ipVersion: 4,
+				});
+
+				expect.fail('Expected validation error');
+			} catch (error: unknown) {
+				expect(error).to.be.instanceOf(Error);
+				expect((error as Error).message).to.equal('Private IP ranges are not allowed.');
+			}
+		});
 	});
 });
