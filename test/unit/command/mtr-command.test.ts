@@ -405,6 +405,29 @@ describe('mtr command executor', () => {
 			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
 		});
 
+		it('should detect private destination when second resolved ip is private', async () => {
+			const testCase = 'mtr-fail-private-ip';
+			const options = {
+				type: 'mtr' as const,
+				target: 'jsdelivr.net',
+				inProgressUpdates: false,
+				ipVersion: 4,
+			};
+			const expectedResult = getCmdMockResult(testCase);
+			const mockCmd = getExecaMock();
+			const mixedResolver = async () => {
+				return [ '1.1.1.1', '192.168.0.1' ];
+			};
+
+			const mtr = new MtrCommand((): any => mockCmd, mixedResolver);
+			await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+
+			expect(mockCmd.kill.called).to.be.true;
+			expect(mockedSocket.emit.calledOnce).to.be.true;
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
+		});
+
 		it('should fail in case of execa timeout', async () => {
 			const options = {
 				type: 'mtr' as const,

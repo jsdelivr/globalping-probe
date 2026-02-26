@@ -246,9 +246,9 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			return;
 		}
 
-		const [ ipAddress ] = await this.dnsResolver(target).catch(() => []);
+		const ipAddresses = await this.dnsResolver(target).catch(() => []);
 
-		if (isIpPrivate(String(ipAddress))) {
+		if (ipAddresses.some(ip => isIpPrivate(String(ip)))) {
 			throw new Error('private destination');
 		}
 	}
