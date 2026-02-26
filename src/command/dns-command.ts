@@ -52,7 +52,7 @@ const allowedIpVersions = [ 4, 6 ];
 const dnsOptionsSchema = Joi.object<DnsOptions>({
 	type: Joi.string().valid('dns'),
 	inProgressUpdates: Joi.boolean(),
-	target: Joi.string(),
+	target: Joi.string().required(),
 	resolver: Joi.string().optional(),
 	protocol: Joi.string().valid(...allowedProtocols).optional().default('udp'),
 	port: Joi.number().optional().default('53'),

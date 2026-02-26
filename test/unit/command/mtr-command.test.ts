@@ -405,6 +405,70 @@ describe('mtr command executor', () => {
 			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
 		});
 
+		it('should detect private destination when second resolved ip is private', async () => {
+			const testCase = 'mtr-fail-private-ip';
+			const options = {
+				type: 'mtr' as const,
+				target: 'jsdelivr.net',
+				inProgressUpdates: false,
+				ipVersion: 4,
+			};
+			const expectedResult = getCmdMockResult(testCase);
+			const mockCmd = getExecaMock();
+			const mixedResolver = async () => {
+				return [ '1.1.1.1', '192.168.0.1' ];
+			};
+
+			const mtr = new MtrCommand((): any => mockCmd, mixedResolver);
+			await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+
+			expect(mockCmd.kill.called).to.be.true;
+			expect(mockedSocket.emit.calledOnce).to.be.true;
+			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
+			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
+		});
+
+		it('should fail on post-check when parsed resolvedAddress is private', async () => {
+			const options = {
+				type: 'mtr' as const,
+				target: 'jsdelivr.net',
+				inProgressUpdates: false,
+				ipVersion: 4,
+			};
+			const mockCmd = getExecaMock();
+
+			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(false));
+			sandbox.stub(mtr, 'parseResult').resolves({
+				status: 'finished',
+				rawOutput: 'raw output',
+				hops: [],
+				data: [],
+				resolvedAddress: '192.168.0.1',
+				resolvedHostname: null,
+			} as any);
+
+			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+			mockCmd.resolve({ stdout: '' });
+			await runPromise;
+
+			expect(mockedSocket.emit.calledOnce).to.be.true;
+
+			expect(mockedSocket.emit.firstCall.args).to.deep.equal([
+				'probe:measurement:result',
+				{
+					testId: 'test',
+					measurementId: 'measurement',
+					result: {
+						status: 'failed',
+						rawOutput: 'Private IP ranges are not allowed.',
+						resolvedAddress: null,
+						resolvedHostname: null,
+						hops: [],
+					},
+				},
+			]);
+		});
+
 		it('should fail in case of execa timeout', async () => {
 			const options = {
 				type: 'mtr' as const,
@@ -458,6 +522,27 @@ describe('mtr command executor', () => {
 					},
 				},
 			]);
+		});
+
+		it('should reject private target on validation', async () => {
+			try {
+				await new MtrCommand((() => {
+					throw new Error('should not be called');
+				}) as any, dnsResolver(false)).run(mockedSocket as any, 'measurement', 'test', {
+					type: 'mtr',
+					target: '127.0.0.1',
+					protocol: 'icmp',
+					port: 80,
+					packets: 1,
+					inProgressUpdates: false,
+					ipVersion: 4,
+				});
+
+				expect.fail('Expected validation error');
+			} catch (error: unknown) {
+				expect(error).to.be.instanceOf(Error);
+				expect((error as Error).message).to.equal('Private IP ranges are not allowed.');
+			}
 		});
 	});
 });

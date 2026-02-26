@@ -271,13 +271,13 @@ describe(`.run() method`, () => {
 				callback();
 			},
 		});
-		(fakeSocket as any).remoteAddress = options?.address || '127.0.0.1';
+		(fakeSocket as any).remoteAddress = options?.address || '93.184.216.34';
 
 		netConnectStub.callsFake((connectOptions) => {
 			options?.checkNetConnectOptions?.(connectOptions);
 
 			process.nextTick(() => {
-				fakeSocket.emit('lookup', null, options?.address || '127.0.0.1', options?.family || 4, options?.hostname || 'google.com');
+				fakeSocket.emit('lookup', null, options?.address || '93.184.216.34', options?.family || 4, options?.hostname || 'google.com');
 				sandbox.clock.tick(10);
 				fakeSocket.emit('connect');
 				sandbox.clock.tick(15);
@@ -301,13 +301,13 @@ describe(`.run() method`, () => {
 				callback();
 			},
 		});
-		(tcpSocket as any).remoteAddress = options?.address || '127.0.0.1';
+		(tcpSocket as any).remoteAddress = options?.address || '93.184.216.34';
 
 		netConnectStub.callsFake((connectOptions) => {
 			expect(connectOptions).to.deep.include({ host: 'example.com', port: 443 });
 
 			process.nextTick(() => {
-				tcpSocket.emit('lookup', null, options?.address || '127.0.0.1', 4, 'example.com');
+				tcpSocket.emit('lookup', null, options?.address || '93.184.216.34', 4, 'example.com');
 				sandbox.clock.tick(10);
 				tcpSocket.emit('connect');
 			});
@@ -418,7 +418,7 @@ describe(`.run() method`, () => {
 			measurementId: 'measurement',
 			result: {
 				status: 'finished',
-				resolvedAddress: '127.0.0.1',
+				resolvedAddress: '93.184.216.34',
 				headers: { 'test': 'abc', 'content-length': '6' },
 				rawHeaders: 'test: abc\nContent-Length: 6',
 				rawBody: '200 Ok',
@@ -607,7 +607,7 @@ describe(`.run() method`, () => {
 			'',
 			'',
 		], {
-			address: '203.0.113.50',
+			address: '93.184.216.34',
 			hostname: 'api.example.com',
 			checkNetConnectOptions: (options) => {
 				expect(options.host).to.equal('api.example.com');
@@ -635,7 +635,7 @@ describe(`.run() method`, () => {
 
 		const result = mockedSocket.emit.firstCall.args[1].result;
 
-		expect(result.resolvedAddress).to.equal('203.0.113.50');
+		expect(result.resolvedAddress).to.equal('93.184.216.34');
 		expect(result.statusCode).to.equal(200);
 	});
 
@@ -836,11 +836,11 @@ describe(`.run() method`, () => {
 				callback();
 			},
 		});
-		(fakeSocket as any).remoteAddress = '127.0.0.1';
+		(fakeSocket as any).remoteAddress = '93.184.216.34';
 
 		netConnectStub.callsFake(() => {
 			process.nextTick(() => {
-				fakeSocket.emit('lookup', null, '127.0.0.1', 4, 'google.com');
+				fakeSocket.emit('lookup', null, '93.184.216.34', 4, 'google.com');
 				fakeSocket.emit('connect');
 			});
 
@@ -877,11 +877,11 @@ describe(`.run() method`, () => {
 				callback();
 			},
 		});
-		(fakeSocket as any).remoteAddress = '127.0.0.1';
+		(fakeSocket as any).remoteAddress = '93.184.216.34';
 
 		netConnectStub.callsFake(() => {
 			process.nextTick(() => {
-				fakeSocket.emit('lookup', null, '127.0.0.1', 4, 'google.com');
+				fakeSocket.emit('lookup', null, '93.184.216.34', 4, 'google.com');
 				fakeSocket.emit('connect');
 
 				const headers = [
@@ -947,5 +947,42 @@ describe(`.run() method`, () => {
 		expect(result.headers['set-cookie']).to.deep.equal([ 'cookie1=value1', 'cookie2=value2' ]);
 		expect(result.rawHeaders).to.include('Set-Cookie: cookie1=value1');
 		expect(result.rawHeaders).to.include('Set-Cookie: cookie2=value2');
+	});
+
+	it('should reject private target on validation', async () => {
+		try {
+			await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+				type: 'http' as const,
+				target: '127.0.0.1',
+				inProgressUpdates: false,
+				protocol: 'HTTP',
+				request: { method: 'GET', path: '/', query: '' },
+				ipVersion: 4,
+			});
+
+			expect.fail('Expected validation error');
+		} catch (error: unknown) {
+			expect(error).to.be.instanceOf(Error);
+			expect((error as Error).message).to.equal('Private IP ranges are not allowed.');
+		}
+	});
+
+	it('should reject private resolver on validation', async () => {
+		try {
+			await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+				type: 'http' as const,
+				target: 'example.com',
+				resolver: '127.0.0.1',
+				inProgressUpdates: false,
+				protocol: 'HTTP',
+				request: { method: 'GET', path: '/', query: '' },
+				ipVersion: 4,
+			});
+
+			expect.fail('Expected validation error');
+		} catch (error: unknown) {
+			expect(error).to.be.instanceOf(Error);
+			expect((error as Error).message).to.equal('Private IP ranges are not allowed.');
+		}
 	});
 });

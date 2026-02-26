@@ -5,7 +5,7 @@ import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
-import { isIpPrivate } from '../lib/private-ip.js';
+import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
 import { scopedLogger } from '../lib/logger.js';
 import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
@@ -54,7 +54,7 @@ const allowedIpVersions = [ 4, 6 ];
 const traceOptionsSchema = Joi.object<TraceOptions>({
 	type: Joi.string().valid('traceroute'),
 	inProgressUpdates: Joi.boolean(),
-	target: Joi.string(),
+	target: Joi.string().custom(joiValidateIp).required(),
 	protocol: Joi.string(),
 	port: Joi.number(),
 	ipVersion: Joi.when(Joi.ref('target'), {
@@ -124,7 +124,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 				const isValid = this.validatePartialResult(parsed, cmd);
 
 				if (!isValid) {
-					isResultPrivate = !isValid;
+					isResultPrivate = true;
 					return;
 				}
 

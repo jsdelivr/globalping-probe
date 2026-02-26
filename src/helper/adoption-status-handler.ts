@@ -10,7 +10,7 @@ export const adoptionStatusHandler = (socket: Socket) => async ({ message, adopt
 
 	if (!adopted && process.env['GP_HOST_HW']) {
 		const { expiresAt, token } = startLocalAdoptionServer();
-		const localProbeIps = getLocalIps().map(ip => ip.address).slice(0, 32);
+		const localProbeIps = Array.from(getLocalIps()).slice(0, 32);
 
 		socket.emit('probe:adoption:ready', {
 			token,

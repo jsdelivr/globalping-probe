@@ -617,5 +617,24 @@ describe('ping command executor', () => {
 				},
 			]);
 		});
+
+		it('should reject private target on validation', async () => {
+			try {
+				await new PingCommand().run(mockedSocket as any, 'measurement', 'test', {
+					type: 'ping',
+					target: '127.0.0.1',
+					packets: 1,
+					protocol: 'ICMP',
+					port: 80,
+					inProgressUpdates: false,
+					ipVersion: 4,
+				});
+
+				expect.fail('Expected validation error');
+			} catch (error: unknown) {
+				expect(error).to.be.instanceOf(Error);
+				expect((error as Error).message).to.equal('Private IP ranges are not allowed.');
+			}
+		});
 	});
 });

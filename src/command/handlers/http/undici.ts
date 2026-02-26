@@ -10,6 +10,7 @@ import { ProgressBuffer } from '../../../helper/progress-buffer.js';
 import type { HttpOptions } from '../../http-command.js';
 import { dnsLookup } from '../shared/dns-resolver.js';
 import { callbackify } from '../../../lib/util.js';
+import { isIpPrivate } from '../../../lib/private-ip.js';
 
 type TlsDetails = {
 	authorized: boolean;
@@ -106,6 +107,12 @@ function getConnector (
 		});
 
 		tcpSocket.on('lookup', (_err, address) => {
+			if (isIpPrivate(address)) {
+				tcpSocket.destroy();
+				callback(new Error('Private IP ranges are not allowed.'), null);
+				return;
+			}
+
 			timings.dns = Date.now() - timings.start!;
 			result.resolvedAddress = address;
 		});
@@ -115,6 +122,16 @@ function getConnector (
 		});
 
 		tcpSocket.on('connect', () => {
+			if (
+				!tcpSocket.remoteAddress
+				|| tcpSocket.remoteAddress === tcpSocket.localAddress
+				|| isIpPrivate(tcpSocket.remoteAddress)
+			) {
+				tcpSocket.destroy();
+				callback(new Error('Private IP ranges are not allowed.'), null);
+				return;
+			}
+
 			timings.tcp = Date.now() - timings.start! - (timings.dns ?? 0);
 
 			if (!result.resolvedAddress && tcpSocket.remoteAddress) {

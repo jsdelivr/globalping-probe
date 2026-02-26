@@ -5,7 +5,7 @@ import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
-import { isIpPrivate } from '../lib/private-ip.js';
+import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
 import { scopedLogger } from '../lib/logger.js';
 import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
@@ -27,7 +27,7 @@ const allowedIpVersions = [ 4, 6 ];
 const pingOptionsSchema = Joi.object<PingOptions>({
 	type: Joi.string().valid('ping'),
 	inProgressUpdates: Joi.boolean(),
-	target: Joi.string(),
+	target: Joi.string().custom(joiValidateIp).required(),
 	packets: Joi.number().min(1).max(16).default(3),
 	protocol: Joi.string().default('ICMP'),
 	port: Joi.number().default(80),
@@ -113,7 +113,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 				const isValid = this.validatePartialResult(parsed, cmd);
 
 				if (!isValid) {
-					isResultPrivate = !isValid;
+					isResultPrivate = true;
 					return;
 				}
 

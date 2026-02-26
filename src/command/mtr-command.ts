@@ -6,7 +6,7 @@ import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface } from '../types.js';
 import { byLine } from '../lib/by-line.js';
-import { isIpPrivate } from '../lib/private-ip.js';
+import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { scopedLogger } from '../lib/logger.js';
@@ -37,7 +37,7 @@ const allowedIpVersions = [ 4, 6 ];
 const mtrOptionsSchema = Joi.object<MtrOptions>({
 	type: Joi.string().valid('mtr'),
 	inProgressUpdates: Joi.boolean(),
-	target: Joi.string(),
+	target: Joi.string().custom(joiValidateIp).required(),
 	protocol: Joi.string().lowercase().insensitive(),
 	packets: Joi.number().min(1).max(16).default(3),
 	port: Joi.number(),
@@ -95,6 +95,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		const buffer = new ProgressBuffer(socket, testId, measurementId, 'overwrite');
 		const cmd = this.cmd(cmdOptions);
 		let result: ResultType = getResultInitState();
+		let isResultPrivate = false;
 
 		if (cmd.stdout) {
 			// TODO: remove:
@@ -129,6 +130,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			await this.checkForPrivateDest(cmdOptions.target);
 			await cmd;
 			result = await this.parseResult(result.data, true);
+			isResultPrivate = isResultPrivate || isIpPrivate(result.resolvedAddress ?? '');
 		} catch (error: unknown) {
 			result.status = 'failed';
 
@@ -144,13 +146,21 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 				}
 
 				if (error instanceof Error && error.message === 'private destination') {
-					result.rawOutput = 'Private IP ranges are not allowed.';
+					isResultPrivate = true;
 				} else {
 					logger.error(error);
 				}
 			}
 
 			!result.rawOutput && (result.rawOutput = 'Test failed. Please try again.');
+		}
+
+		if (isResultPrivate) {
+			result = {
+				...getResultInitState(),
+				status: 'failed',
+				rawOutput: 'Private IP ranges are not allowed.',
+			};
 		}
 
 		const out = this.toJsonOutput(result);
@@ -246,9 +256,9 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			return;
 		}
 
-		const [ ipAddress ] = await this.dnsResolver(target).catch(() => []);
+		const ipAddresses = await this.dnsResolver(target).catch(() => []);
 
-		if (isIpPrivate(String(ipAddress))) {
+		if (ipAddresses.some(ip => isIpPrivate(String(ip)))) {
 			throw new Error('private destination');
 		}
 	}

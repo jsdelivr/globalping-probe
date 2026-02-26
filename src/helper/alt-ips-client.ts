@@ -1,5 +1,6 @@
 import config from 'config';
 import _ from 'lodash';
+import { isIP } from 'node:net';
 import { scopedLogger } from '../lib/logger.js';
 import got, { RequestError } from 'got';
 import type { Socket } from 'socket.io-client';
@@ -43,10 +44,10 @@ export class AltIpsClient {
 	}
 
 	async refreshAltIps (): Promise<void> {
-		const addresses = getLocalIps();
+		const addresses = Array.from(getLocalIps(true));
 
-		const results = await Promise.allSettled(addresses.map(({ address, family }) => {
-			return this.getAltIpToken(address, family === 'IPv6' ? 6 : 4);
+		const results = await Promise.allSettled(addresses.map((address) => {
+			return this.getAltIpToken(address);
 		}));
 
 		const ipsToTokens: [string, string][] = [];
@@ -62,7 +63,7 @@ export class AltIpsClient {
 				} else if (result.reason.response?.statusCode !== 400) {
 					failedIps[result.reason.options.localAddress!] = result.reason.message;
 				} else {
-					rejectedIps[addresses[index]!.address] = result.reason.message;
+					rejectedIps[addresses[index]!] = result.reason.message;
 				}
 			}
 		});
@@ -90,11 +91,11 @@ export class AltIpsClient {
 		});
 	}
 
-	private async getAltIpToken (ip: string, dnsLookupIpVersion: 4 | 6) {
+	private async getAltIpToken (ip: string) {
 		const httpHost = config.get<string>('api.httpHost');
 		const response = await got.post<{ ip: string; token: string }>(`${httpHost}/alternative-ip`, {
 			localAddress: ip,
-			dnsLookupIpVersion,
+			dnsLookupIpVersion: isIP(ip) === 6 ? 6 : 4,
 			json: {
 				localAddress: ip,
 			},

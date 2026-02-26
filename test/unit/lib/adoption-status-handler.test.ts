@@ -55,8 +55,8 @@ describe('adoptionStatusHandler', () => {
 			startServerStub.returns({ token: mockToken, expiresAt: mockExpiresAt });
 
 			getLocalIpsStub.returns([
-				{ address: '192.168.1.50', family: 'IPv4' },
-				{ address: '10.0.0.5', family: 'IPv4' },
+				'192.168.1.50',
+				'10.0.0.5',
 			]);
 
 			const handler = adoptionStatusHandler(socket);
@@ -75,7 +75,7 @@ describe('adoptionStatusHandler', () => {
 		it('should limit the number of reported IPs to 32', async () => {
 			process.env['GP_HOST_HW'] = 'true';
 			startServerStub.returns({ token: 'abc', expiresAt: 'date' });
-			getLocalIpsStub.returns(Array.from({ length: 40 }, (_, i) => ({ address: `1.1.1.${i}` })));
+			getLocalIpsStub.returns(Array.from({ length: 40 }, (_, i) => `1.1.1.${i}`));
 
 			const handler = adoptionStatusHandler(socket);
 			await handler({ message: 'Not adopted', adopted: false });

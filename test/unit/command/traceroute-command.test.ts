@@ -381,6 +381,26 @@ describe('trace command', () => {
 					},
 				]);
 			});
+
+			it('should reject private target on validation', async () => {
+				try {
+					await new TracerouteCommand((() => {
+						throw new Error('should not be called');
+					}) as any).run(mockSocket as any, 'measurement', 'test', {
+						type: 'traceroute',
+						target: '127.0.0.1',
+						port: 53,
+						protocol: 'UDP',
+						inProgressUpdates: false,
+						ipVersion: 4,
+					});
+
+					expect.fail('Expected validation error');
+				} catch (error: unknown) {
+					expect(error).to.be.instanceOf(Error);
+					expect((error as Error).message).to.equal('Private IP ranges are not allowed.');
+				}
+			});
 		});
 	});
 });
