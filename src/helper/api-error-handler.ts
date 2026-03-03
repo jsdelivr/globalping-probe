@@ -62,12 +62,10 @@ class ErrorHandler {
 			return;
 		}
 
-		if (reason === 'io client disconnect') {
-			return;
+		if ([ 'ping timeout', 'transport error' ].includes(reason)) {
+			const statusManager = getStatusManager();
+			statusManager.reportDisconnect();
 		}
-
-		const statusManager = getStatusManager();
-		statusManager.reportDisconnect();
 	};
 }
 

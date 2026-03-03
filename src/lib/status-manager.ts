@@ -13,7 +13,8 @@ import { scopedLogger } from './logger.js';
 const logger = scopedLogger('status-manager');
 
 const PING_INTERVAL_TIME = 10 * 60 * 1000; // 10 mins
-const DISCONNECT_REPORT_TTL = 5 * 60 * 1000; // 5 mins
+const DISCONNECTS_TTL = 5 * 60 * 1000; // 5 mins
+const MAX_DISCONNECTS_COUNT = 3;
 
 export class StatusManager {
 	private statuses: {
@@ -31,7 +32,7 @@ export class StatusManager {
 	private isIPv4Supported: boolean = false;
 	private isIPv6Supported: boolean = false;
 	private readonly disconnects = new TTLCache<string, number>({
-		ttl: DISCONNECT_REPORT_TTL,
+		ttl: DISCONNECTS_TTL,
 		dispose: () => {
 			if (this.disconnects.size === 0) {
 				this.updateStatus('too-many-disconnects', false);
@@ -129,7 +130,7 @@ export class StatusManager {
 	public reportDisconnect () {
 		this.disconnects.set(randomUUID(), Date.now());
 
-		if (this.disconnects.size >= 3) {
+		if (this.disconnects.size >= MAX_DISCONNECTS_COUNT) {
 			this.updateStatus('too-many-disconnects', true);
 		}
 	}
