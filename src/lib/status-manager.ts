@@ -105,7 +105,9 @@ export class StatusManager {
 
 	private async pingTest (ipVersion: IpFamily) {
 		const packets = config.get<number>('status.numberOfPackets');
-		const targets = [ 'a.gtld-servers.net', 'k.root-servers.net', 'time.apple.com' ];
+		const packetLossThreshold = config.get<number>('status.packetLossThreshold');
+		const apiTarget = new URL(config.get<string>('api.httpHost')).hostname;
+		const targets = [ apiTarget ];
 		const results = await Promise.allSettled(targets.map(target => this.pingCmd({ type: 'ping', ipVersion, target, packets, protocol: 'ICMP', port: 80, inProgressUpdates: false })));
 
 		const rejectedResults: Array<{ target: string; reason: ExecaError }> = [];
@@ -121,7 +123,7 @@ export class StatusManager {
 					: (isExecaError(result.reason) && result.reason?.stdout?.toString()) || '';
 
 				const parsed = parse(stdout);
-				const isSuccessful = parsed.stats?.loss === 0;
+				const isSuccessful = typeof parsed.stats?.loss === 'number' && parsed.stats.loss <= packetLossThreshold;
 
 				if (isSuccessful) {
 					successfulResults.push({ target: targets[index]!, result: parsed });
@@ -131,7 +133,7 @@ export class StatusManager {
 			}
 		}
 
-		const isPassingTest = successfulResults.length >= 2;
+		const isPassingTest = successfulResults.length === targets.length;
 		const testPassText = isPassingTest ? `. IPv${ipVersion} tests pass` : '';
 
 		rejectedResults.forEach(({ reason }) => {
@@ -144,8 +146,8 @@ export class StatusManager {
 		});
 
 		unSuccessfulResults.forEach(({ target, result }) => {
-			if (result.stats?.loss) {
-				logger.warn(`IPv${ipVersion} ping test unsuccessful for ${target}: ${result.stats.loss.toString()}% packet loss${testPassText}.`);
+			if (typeof result.stats?.loss === 'number') {
+				logger.warn(`IPv${ipVersion} ping test unsuccessful for ${target}: ${result.stats.loss.toString()}% packet loss (threshold: ${packetLossThreshold}%)${testPassText}.`);
 			} else {
 				logger.warn(`IPv${ipVersion} ping test unsuccessful for ${target}: ${result.rawOutput}${testPassText}.`);
 			}
