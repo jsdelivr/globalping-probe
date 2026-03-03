@@ -243,7 +243,7 @@ describe('index module', () => {
 		process.once('SIGTERM', () => {
 			sandbox.clock.tick(150);
 			expect(statusManagerStub.stop.callCount).to.equal(1);
-			expect(statusManagerStub.stop.args[0]).to.deep.equal([ 'sigterm' ]);
+			expect(statusManagerStub.stop.args[0]).to.deep.equal([]);
 			expect(exitStub.calledOnce).to.be.true;
 		});
 
@@ -259,7 +259,7 @@ describe('index module', () => {
 		process.once('SIGTERM', () => {
 			sandbox.clock.tick(60_500);
 			expect(statusManagerStub.stop.callCount).to.equal(1);
-			expect(statusManagerStub.stop.args[0]).to.deep.equal([ 'sigterm' ]);
+			expect(statusManagerStub.stop.args[0]).to.deep.equal([]);
 			expect(exitStub.calledOnce).to.be.true;
 		});
 

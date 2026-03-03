@@ -51,6 +51,8 @@ export class StatusManager {
 		if (!hasRequiredDeps) {
 			this.updateStatus('unbuffer-missing', true);
 			return;
+		} else if (this.statuses['unbuffer-missing']) {
+			this.updateStatus('unbuffer-missing', false);
 		}
 
 		await this.runTest();

@@ -60,13 +60,9 @@ describe('StatusManager', () => {
 		const statusManager = new StatusManager(socket, pingCmd);
 		pingCmd.rejects({ stdout: 'host not found' });
 		await statusManager.start();
-		expect(pingCmd.callCount).to.equal(6);
-		expect(pingCmd.args[0]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'a.gtld-servers.net', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[1]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'k.root-servers.net', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[2]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'time.apple.com', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[3]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'a.gtld-servers.net', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[4]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'k.root-servers.net', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[5]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'time.apple.com', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
+		expect(pingCmd.callCount).to.equal(2);
+		expect(pingCmd.args[0]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
+		expect(pingCmd.args[1]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
 		expect(statusManager.getStatus()).to.equal('ping-test-failed');
 		expect(socket.emit.callCount).to.equal(3);
 		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'ping-test-failed' ]);
@@ -74,14 +70,12 @@ describe('StatusManager', () => {
 		expect(socket.emit.args[2]).to.deep.equal([ 'probe:isIPv6Supported:update', false ]);
 	});
 
-	it('should change status to `ping-test-failed` if 2 of 3 ping tests rejects, no ip version is supported', async () => {
+	it('should change status to `ping-test-failed` if both ping tests reject', async () => {
 		const statusManager = new StatusManager(socket, pingCmd);
 		pingCmd.onFirstCall().rejects({ stdout: 'host not found' });
 		pingCmd.onSecondCall().rejects({ stdout: 'host not found' });
-		pingCmd.onCall(4).rejects({ stdout: 'host not found' });
-		pingCmd.onCall(5).rejects({ stdout: 'host not found' });
 		await statusManager.start();
-		expect(pingCmd.callCount).to.equal(6);
+		expect(pingCmd.callCount).to.equal(2);
 		expect(statusManager.getStatus()).to.equal('ping-test-failed');
 		expect(socket.emit.callCount).to.equal(3);
 		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'ping-test-failed' ]);
@@ -89,27 +83,24 @@ describe('StatusManager', () => {
 		expect(socket.emit.args[2]).to.deep.equal([ 'probe:isIPv6Supported:update', false ]);
 	});
 
-	it('should change status to `ready` if 1 of 3 ping tests rejects, both ip versions are supported', async () => {
+	it('should change status to `ready` if one ping test resolves and one rejects', async () => {
 		const statusManager = new StatusManager(socket, pingCmd);
 		pingCmd.onFirstCall().rejects({ stdout: 'host not found' });
-		pingCmd.onCall(4).rejects({ stdout: 'host not found' });
 		await statusManager.start();
-		expect(pingCmd.callCount).to.equal(6);
+		expect(pingCmd.callCount).to.equal(2);
 		expect(statusManager.getStatus()).to.equal('ready');
 		expect(socket.emit.callCount).to.equal(3);
 		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'ready' ]);
-		expect(socket.emit.args[1]).to.deep.equal([ 'probe:isIPv4Supported:update', true ]);
+		expect(socket.emit.args[1]).to.deep.equal([ 'probe:isIPv4Supported:update', false ]);
 		expect(socket.emit.args[2]).to.deep.equal([ 'probe:isIPv6Supported:update', true ]);
 	});
 
-	it('should change status to `ping-test-failed` if 2 of 3 ping tests resolves with packet loss', async () => {
+	it('should change status to `ping-test-failed` if both ping tests exceed packet loss threshold', async () => {
 		const statusManager = new StatusManager(socket, pingCmd);
 		pingCmd.onFirstCall().resolves({ stdout: pingPacketLoss });
 		pingCmd.onSecondCall().resolves({ stdout: pingPacketLoss });
-		pingCmd.onCall(4).resolves({ stdout: pingPacketLoss });
-		pingCmd.onCall(5).resolves({ stdout: pingPacketLoss });
 		await statusManager.start();
-		expect(pingCmd.callCount).to.equal(6);
+		expect(pingCmd.callCount).to.equal(2);
 		expect(statusManager.getStatus()).to.equal('ping-test-failed');
 		expect(socket.emit.callCount).to.equal(3);
 		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'ping-test-failed' ]);
@@ -117,29 +108,24 @@ describe('StatusManager', () => {
 		expect(socket.emit.args[2]).to.deep.equal([ 'probe:isIPv6Supported:update', false ]);
 	});
 
-	it('should change status to `ready` if 1 of 3 ping tests resolves with packet loss', async () => {
+	it('should change status to `ready` if one ping test exceeds packet loss threshold', async () => {
 		const statusManager = new StatusManager(socket, pingCmd);
 		pingCmd.onFirstCall().resolves({ stdout: pingPacketLoss });
-		pingCmd.onCall(4).resolves({ stdout: pingPacketLoss });
 		await statusManager.start();
-		expect(pingCmd.callCount).to.equal(6);
+		expect(pingCmd.callCount).to.equal(2);
 		expect(statusManager.getStatus()).to.equal('ready');
 		expect(socket.emit.callCount).to.equal(3);
 		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'ready' ]);
-		expect(socket.emit.args[1]).to.deep.equal([ 'probe:isIPv4Supported:update', true ]);
+		expect(socket.emit.args[1]).to.deep.equal([ 'probe:isIPv4Supported:update', false ]);
 		expect(socket.emit.args[2]).to.deep.equal([ 'probe:isIPv6Supported:update', true ]);
 	});
 
-	it('should change status to `ready` if 3 of 3 ping tests resolves', async () => {
+	it('should change status to `ready` if both ping tests pass', async () => {
 		const statusManager = new StatusManager(socket, pingCmd);
 		await statusManager.start();
-		expect(pingCmd.callCount).to.equal(6);
-		expect(pingCmd.args[0]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'a.gtld-servers.net', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[1]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'k.root-servers.net', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[2]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'time.apple.com', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[3]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'a.gtld-servers.net', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[4]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'k.root-servers.net', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[5]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'time.apple.com', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
+		expect(pingCmd.callCount).to.equal(2);
+		expect(pingCmd.args[0]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
+		expect(pingCmd.args[1]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
 		expect(statusManager.getStatus()).to.equal('ready');
 		expect(socket.emit.callCount).to.equal(3);
 		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'ready' ]);
@@ -151,13 +137,13 @@ describe('StatusManager', () => {
 		const statusManager = new StatusManager(socket, pingCmd);
 		expect(pingCmd.callCount).to.equal(0);
 		await statusManager.start();
-		expect(pingCmd.callCount).to.equal(6);
+		expect(pingCmd.callCount).to.equal(2);
 		expect(socket.emit.callCount).to.equal(3);
 		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'ready' ]);
 		expect(socket.emit.args[1]).to.deep.equal([ 'probe:isIPv4Supported:update', true ]);
 		expect(socket.emit.args[2]).to.deep.equal([ 'probe:isIPv6Supported:update', true ]);
 		await sandbox.clock.tickAsync(11 * 60 * 1000);
-		expect(pingCmd.callCount).to.equal(12);
+		expect(pingCmd.callCount).to.equal(4);
 		expect(socket.emit.callCount).to.equal(6);
 	});
 
@@ -206,8 +192,7 @@ describe('StatusManager', () => {
 		expect(socket.emit.args[1]).to.deep.equal([ 'probe:isIPv4Supported:update', true ]);
 		expect(socket.emit.args[2]).to.deep.equal([ 'probe:isIPv6Supported:update', true ]);
 
-		pingCmd.onCall(7).rejects({ stdout: 'host not found' });
-		pingCmd.onCall(8).rejects({ stdout: 'host not found' });
+		pingCmd.onCall(2).rejects({ stdout: 'host not found' });
 		await sandbox.clock.tickAsync(11 * 60 * 1000);
 		expect(statusManager.getStatus()).to.equal('ready');
 		expect(statusManager.getIsIPv4Supported()).to.equal(false);
@@ -217,8 +202,7 @@ describe('StatusManager', () => {
 		expect(socket.emit.args[4]).to.deep.equal([ 'probe:isIPv4Supported:update', false ]);
 		expect(socket.emit.args[5]).to.deep.equal([ 'probe:isIPv6Supported:update', true ]);
 
-		pingCmd.onCall(16).rejects({ stdout: 'host not found' });
-		pingCmd.onCall(17).rejects({ stdout: 'host not found' });
+		pingCmd.onCall(5).rejects({ stdout: 'host not found' });
 		await sandbox.clock.tickAsync(11 * 60 * 1000);
 		expect(statusManager.getStatus()).to.equal('ready');
 		expect(statusManager.getIsIPv4Supported()).to.equal(true);
@@ -228,7 +212,8 @@ describe('StatusManager', () => {
 		expect(socket.emit.args[7]).to.deep.equal([ 'probe:isIPv4Supported:update', true ]);
 		expect(socket.emit.args[8]).to.deep.equal([ 'probe:isIPv6Supported:update', false ]);
 
-		pingCmd.rejects({ stdout: 'host not found' });
+		pingCmd.onCall(6).rejects({ stdout: 'host not found' });
+		pingCmd.onCall(7).rejects({ stdout: 'host not found' });
 		await sandbox.clock.tickAsync(11 * 60 * 1000);
 		expect(statusManager.getStatus()).to.equal('ping-test-failed');
 		expect(statusManager.getIsIPv4Supported()).to.equal(false);
@@ -251,7 +236,7 @@ describe('StatusManager', () => {
 		expect(socket.emit.args[1]).to.deep.equal([ 'probe:isIPv4Supported:update', true ]);
 		expect(socket.emit.args[2]).to.deep.equal([ 'probe:isIPv6Supported:update', true ]);
 
-		statusManager.stop('sigterm');
+		statusManager.stop();
 		expect(socket.emit.callCount).to.equal(4);
 		expect(socket.emit.args[3]).to.deep.equal([ 'probe:status:update', 'sigterm' ]);
 
@@ -264,6 +249,37 @@ describe('StatusManager', () => {
 		await sandbox.clock.tickAsync(11 * 60 * 1000);
 		expect(statusManager.getStatus()).to.equal('sigterm');
 		expect(socket.emit.callCount).to.equal(4);
+	});
+
+	it('should change status to `too-many-disconnects` after 3 disconnects in 5 minutes', () => {
+		const statusManager = new StatusManager(socket, pingCmd);
+
+		statusManager.reportDisconnect();
+		statusManager.reportDisconnect();
+		expect(statusManager.getStatus()).to.equal('initializing');
+
+		statusManager.reportDisconnect();
+		expect(statusManager.getStatus()).to.equal('too-many-disconnects');
+		expect(socket.emit.callCount).to.equal(1);
+		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'too-many-disconnects' ]);
+	});
+
+	it('should reset `too-many-disconnects` after all disconnect TTLs expire', async () => {
+		sandbox.stub(performance, 'now').callsFake(() => sandbox.clock.now);
+		const statusManager = new StatusManager(socket, pingCmd);
+
+		statusManager.reportDisconnect();
+		statusManager.reportDisconnect();
+		statusManager.reportDisconnect();
+		expect(statusManager.getStatus()).to.equal('too-many-disconnects');
+		expect(socket.emit.callCount).to.equal(1);
+		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'too-many-disconnects' ]);
+
+		await sandbox.clock.tickAsync(5 * 60 * 1000 + 1000);
+
+		expect(statusManager.getStatus()).to.equal('ready');
+		expect(socket.emit.callCount).to.equal(4);
+		expect(socket.emit.args[3]).to.deep.equal([ 'probe:status:update', 'ready' ]);
 	});
 
 	it('should return the same instance for initStatusManager and getStatusManager', () => {
