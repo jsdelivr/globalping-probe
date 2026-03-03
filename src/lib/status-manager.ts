@@ -1,5 +1,7 @@
 import config from 'config';
+import { randomUUID } from 'node:crypto';
 import type { ExecaChildProcess, ExecaError } from 'execa';
+import { TTLCache } from '@isaacs/ttlcache';
 import type { Socket } from 'socket.io-client';
 import parse, { PingParseOutput } from '../command/handlers/ping/parse.js';
 import type { IpFamily } from '../command/handlers/shared/dns-resolver.js';
@@ -10,12 +12,29 @@ import { scopedLogger } from './logger.js';
 
 const logger = scopedLogger('status-manager');
 
-const INTERVAL_TIME = 10 * 60 * 1000; // 10 mins
+const PING_INTERVAL_TIME = 10 * 60 * 1000; // 10 mins
+const DISCONNECT_REPORT_TTL = 5 * 60 * 1000; // 5 mins
 
 export class StatusManager {
-	private status: 'initializing' | 'ready' | 'unbuffer-missing' | 'ping-test-failed' | 'sigterm' = 'initializing';
+	private statuses = {
+		'initializing': true,
+		'unbuffer-missing': false,
+		'ping-test-failed': false,
+		'too-many-disconnects': false,
+		'sigterm': false,
+	};
+
 	private isIPv4Supported: boolean = false;
 	private isIPv6Supported: boolean = false;
+	private readonly disconnects = new TTLCache<string, number>({
+		ttl: DISCONNECT_REPORT_TTL,
+		dispose: () => {
+			if (this.disconnects.size === 0) {
+				this.updateStatus('too-many-disconnects', false);
+			}
+		},
+	});
+
 	private timer?: NodeJS.Timeout;
 
 	constructor (
@@ -30,20 +49,16 @@ export class StatusManager {
 		const hasRequiredDeps = await hasRequired();
 
 		if (!hasRequiredDeps) {
-			this.updateStatus('unbuffer-missing');
+			this.updateStatus('unbuffer-missing', true);
 			return;
 		}
 
 		await this.runTest();
 	}
 
-	public stop (status: StatusManager['status']) {
-		this.updateStatus(status);
+	public stop () {
+		this.updateStatus('sigterm', true);
 		clearTimeout(this.timer);
-	}
-
-	public getStatus () {
-		return this.status;
 	}
 
 	public getIsIPv4Supported () {
@@ -52,11 +67,6 @@ export class StatusManager {
 
 	public getIsIPv6Supported () {
 		return this.isIPv6Supported;
-	}
-
-	public updateStatus (status: StatusManager['status']) {
-		this.status = status;
-		this.sendStatus();
 	}
 
 	public updateIsIPv4Supported (isIPv4Supported: boolean) {
@@ -69,8 +79,41 @@ export class StatusManager {
 		this.sendIsIPv6Supported();
 	}
 
+	public getStatus () {
+		if (this.statuses.initializing) {
+			return 'initializing';
+		}
+
+		if (this.statuses['unbuffer-missing']) {
+			return 'unbuffer-missing';
+		}
+
+		if (this.statuses.sigterm) {
+			return 'sigterm';
+		}
+
+		if (this.statuses['ping-test-failed']) {
+			return 'ping-test-failed';
+		}
+
+		if (this.statuses['too-many-disconnects']) {
+			return 'too-many-disconnects';
+		}
+
+		return 'ready';
+	}
+
+	public updateStatus (status: keyof StatusManager['statuses'], value: boolean) {
+		if (this.statuses.initializing) {
+			this.statuses.initializing = false;
+		}
+
+		this.statuses[status] = value;
+		this.sendStatus();
+	}
+
 	public sendStatus () {
-		this.socket.emit('probe:status:update', this.status);
+		this.socket.emit('probe:status:update', this.getStatus());
 	}
 
 	public sendIsIPv4Supported () {
@@ -81,6 +124,14 @@ export class StatusManager {
 		this.socket.emit('probe:isIPv6Supported:update', this.isIPv6Supported);
 	}
 
+	public reportDisconnect () {
+		this.disconnects.set(randomUUID(), Date.now());
+
+		if (this.disconnects.size >= 3) {
+			this.updateStatus('too-many-disconnects', true);
+		}
+	}
+
 	private async runTest () {
 		const [ resultIPv4, resultIPv6 ] = await Promise.all([
 			this.pingTest(4),
@@ -88,9 +139,9 @@ export class StatusManager {
 		]);
 
 		if (resultIPv4 || resultIPv6) {
-			this.updateStatus('ready');
+			this.updateStatus('ping-test-failed', false);
 		} else {
-			this.updateStatus('ping-test-failed');
+			this.updateStatus('ping-test-failed', true);
 			logger.warn(`Both ping tests failed due to bad internet connection. Retrying in 10 minutes. Probe temporarily disconnected.`);
 		}
 
@@ -100,7 +151,7 @@ export class StatusManager {
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		this.timer = setTimeout(async () => {
 			await this.runTest();
-		}, INTERVAL_TIME);
+		}, PING_INTERVAL_TIME);
 	}
 
 	private async pingTest (ipVersion: IpFamily) {

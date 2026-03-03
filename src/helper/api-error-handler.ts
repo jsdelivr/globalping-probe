@@ -1,5 +1,6 @@
 import type { Socket } from 'socket.io-client';
 import { scopedLogger } from '../lib/logger.js';
+import { getStatusManager } from '../lib/status-manager.js';
 
 const logger = scopedLogger('api:error');
 
@@ -58,7 +59,15 @@ class ErrorHandler {
 
 		if (reason === 'io server disconnect') {
 			setTimeout(() => this.socket.connect(), 2000);
+			return;
 		}
+
+		if (reason === 'io client disconnect') {
+			return;
+		}
+
+		const statusManager = getStatusManager();
+		statusManager.reportDisconnect();
 	};
 }
 
