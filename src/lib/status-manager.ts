@@ -16,13 +16,17 @@ const PING_INTERVAL_TIME = 10 * 60 * 1000; // 10 mins
 const DISCONNECT_REPORT_TTL = 5 * 60 * 1000; // 5 mins
 
 export class StatusManager {
-	private statuses = {
-		'initializing': true,
-		'unbuffer-missing': false,
-		'ping-test-failed': false,
-		'too-many-disconnects': false,
-		'sigterm': false,
-	};
+	private statuses: {
+		'unbuffer-missing': boolean;
+		'ping-test-failed': boolean | null;
+		'too-many-disconnects': boolean;
+		'sigterm': boolean;
+	} = {
+			'unbuffer-missing': false,
+			'ping-test-failed': null,
+			'too-many-disconnects': false,
+			'sigterm': false,
+		};
 
 	private isIPv4Supported: boolean = false;
 	private isIPv6Supported: boolean = false;
@@ -82,16 +86,16 @@ export class StatusManager {
 	}
 
 	public getStatus () {
-		if (this.statuses.initializing) {
-			return 'initializing';
+		if (this.statuses.sigterm) {
+			return 'sigterm';
 		}
 
 		if (this.statuses['unbuffer-missing']) {
 			return 'unbuffer-missing';
 		}
 
-		if (this.statuses.sigterm) {
-			return 'sigterm';
+		if (this.statuses['ping-test-failed'] === null) {
+			return 'initializing';
 		}
 
 		if (this.statuses['ping-test-failed']) {
@@ -106,10 +110,6 @@ export class StatusManager {
 	}
 
 	public updateStatus (status: keyof StatusManager['statuses'], value: boolean) {
-		if (this.statuses.initializing) {
-			this.statuses.initializing = false;
-		}
-
 		this.statuses[status] = value;
 		this.sendStatus();
 	}

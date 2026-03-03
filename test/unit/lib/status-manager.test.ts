@@ -251,35 +251,37 @@ describe('StatusManager', () => {
 		expect(socket.emit.callCount).to.equal(4);
 	});
 
-	it('should change status to `too-many-disconnects` after 3 disconnects in 5 minutes', () => {
+	it('should change status to `too-many-disconnects` after 3 disconnects in 5 minutes', async () => {
 		const statusManager = new StatusManager(socket, pingCmd);
+		await statusManager.start();
 
 		statusManager.reportDisconnect();
 		statusManager.reportDisconnect();
-		expect(statusManager.getStatus()).to.equal('initializing');
+		expect(statusManager.getStatus()).to.equal('ready');
 
 		statusManager.reportDisconnect();
 		expect(statusManager.getStatus()).to.equal('too-many-disconnects');
-		expect(socket.emit.callCount).to.equal(1);
-		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'too-many-disconnects' ]);
+		expect(socket.emit.callCount).to.equal(4);
+		expect(socket.emit.args[3]).to.deep.equal([ 'probe:status:update', 'too-many-disconnects' ]);
 	});
 
 	it('should reset `too-many-disconnects` after all disconnect TTLs expire', async () => {
 		sandbox.stub(performance, 'now').callsFake(() => sandbox.clock.now);
 		const statusManager = new StatusManager(socket, pingCmd);
+		await statusManager.start();
 
 		statusManager.reportDisconnect();
 		statusManager.reportDisconnect();
 		statusManager.reportDisconnect();
 		expect(statusManager.getStatus()).to.equal('too-many-disconnects');
-		expect(socket.emit.callCount).to.equal(1);
-		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'too-many-disconnects' ]);
+		expect(socket.emit.callCount).to.equal(4);
+		expect(socket.emit.args[3]).to.deep.equal([ 'probe:status:update', 'too-many-disconnects' ]);
 
 		await sandbox.clock.tickAsync(5 * 60 * 1000 + 1000);
 
 		expect(statusManager.getStatus()).to.equal('ready');
-		expect(socket.emit.callCount).to.equal(4);
-		expect(socket.emit.args[3]).to.deep.equal([ 'probe:status:update', 'ready' ]);
+		expect(socket.emit.callCount).to.equal(7);
+		expect(socket.emit.args[6]).to.deep.equal([ 'probe:status:update', 'ready' ]);
 	});
 
 	it('should return the same instance for initStatusManager and getStatusManager', () => {
