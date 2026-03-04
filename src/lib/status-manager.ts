@@ -183,7 +183,13 @@ export class StatusManager {
 			} catch (reason) {
 				if (isExecaError(reason) && reason?.stdout?.toString()?.length) {
 					const parsed = parse(reason.stdout.toString());
-					unSuccessfulResults.push({ target, result: parsed });
+					const isSuccessful = parsed.stats?.loss === 0;
+
+					if (isSuccessful) {
+						successfulResults.push({ target, result: parsed });
+					} else {
+						unSuccessfulResults.push({ target, result: parsed });
+					}
 				} else {
 					rejectedResults.push({ target, reason: reason as ExecaError });
 				}
