@@ -162,7 +162,7 @@ function connect (workerId?: number) {
 	process.on('SIGTERM', () => {
 		logger.info('SIGTERM received.');
 
-		statusManager.stop('sigterm');
+		statusManager.stop();
 
 		const closeTimeout = setTimeout(() => {
 			logger.warn('SIGTERM timeout. Force closing.');

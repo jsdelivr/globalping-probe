@@ -1,5 +1,7 @@
 import config from 'config';
+import { randomUUID } from 'node:crypto';
 import type { ExecaChildProcess, ExecaError } from 'execa';
+import { TTLCache } from '@isaacs/ttlcache';
 import type { Socket } from 'socket.io-client';
 import parse, { PingParseOutput } from '../command/handlers/ping/parse.js';
 import type { IpFamily } from '../command/handlers/shared/dns-resolver.js';
@@ -10,12 +12,34 @@ import { scopedLogger } from './logger.js';
 
 const logger = scopedLogger('status-manager');
 
-const INTERVAL_TIME = 10 * 60 * 1000; // 10 mins
+const PING_INTERVAL_TIME = 10 * 60 * 1000; // 10 mins
+const DISCONNECTS_TTL = 5 * 60 * 1000; // 5 mins
+const MAX_DISCONNECTS_COUNT = 3;
 
 export class StatusManager {
-	private status: 'initializing' | 'ready' | 'unbuffer-missing' | 'ping-test-failed' | 'sigterm' = 'initializing';
+	private statuses: {
+		'unbuffer-missing': boolean;
+		'ping-test-failed': boolean | null;
+		'too-many-disconnects': boolean;
+		'sigterm': boolean;
+	} = {
+			'unbuffer-missing': false,
+			'ping-test-failed': null,
+			'too-many-disconnects': false,
+			'sigterm': false,
+		};
+
 	private isIPv4Supported: boolean = false;
 	private isIPv6Supported: boolean = false;
+	private readonly disconnects = new TTLCache<string, number>({
+		ttl: DISCONNECTS_TTL,
+		dispose: () => {
+			if (this.disconnects.size === 0) {
+				this.updateStatus('too-many-disconnects', false);
+			}
+		},
+	});
+
 	private timer?: NodeJS.Timeout;
 
 	constructor (
@@ -30,20 +54,18 @@ export class StatusManager {
 		const hasRequiredDeps = await hasRequired();
 
 		if (!hasRequiredDeps) {
-			this.updateStatus('unbuffer-missing');
+			this.updateStatus('unbuffer-missing', true);
 			return;
+		} else if (this.statuses['unbuffer-missing']) {
+			this.updateStatus('unbuffer-missing', false);
 		}
 
 		await this.runTest();
 	}
 
-	public stop (status: StatusManager['status']) {
-		this.updateStatus(status);
+	public stop () {
+		this.updateStatus('sigterm', true);
 		clearTimeout(this.timer);
-	}
-
-	public getStatus () {
-		return this.status;
 	}
 
 	public getIsIPv4Supported () {
@@ -52,11 +74,6 @@ export class StatusManager {
 
 	public getIsIPv6Supported () {
 		return this.isIPv6Supported;
-	}
-
-	public updateStatus (status: StatusManager['status']) {
-		this.status = status;
-		this.sendStatus();
 	}
 
 	public updateIsIPv4Supported (isIPv4Supported: boolean) {
@@ -69,8 +86,41 @@ export class StatusManager {
 		this.sendIsIPv6Supported();
 	}
 
+	public getStatus () {
+		if (this.statuses.sigterm) {
+			return 'sigterm';
+		}
+
+		if (this.statuses['unbuffer-missing']) {
+			return 'unbuffer-missing';
+		}
+
+		if (this.statuses['ping-test-failed'] === null) {
+			return 'initializing';
+		}
+
+		if (this.statuses['ping-test-failed']) {
+			return 'ping-test-failed';
+		}
+
+		if (this.statuses['too-many-disconnects']) {
+			return 'too-many-disconnects';
+		}
+
+		return 'ready';
+	}
+
+	public updateStatus (status: keyof StatusManager['statuses'], value: boolean) {
+		if (this.statuses[status] === value) {
+			return;
+		}
+
+		this.statuses[status] = value;
+		this.sendStatus();
+	}
+
 	public sendStatus () {
-		this.socket.emit('probe:status:update', this.status);
+		this.socket.emit('probe:status:update', this.getStatus());
 	}
 
 	public sendIsIPv4Supported () {
@@ -81,6 +131,14 @@ export class StatusManager {
 		this.socket.emit('probe:isIPv6Supported:update', this.isIPv6Supported);
 	}
 
+	public reportDisconnect () {
+		this.disconnects.set(randomUUID(), Date.now());
+
+		if (this.disconnects.size >= MAX_DISCONNECTS_COUNT) {
+			this.updateStatus('too-many-disconnects', true);
+		}
+	}
+
 	private async runTest () {
 		const [ resultIPv4, resultIPv6 ] = await Promise.all([
 			this.pingTest(4),
@@ -88,9 +146,9 @@ export class StatusManager {
 		]);
 
 		if (resultIPv4 || resultIPv6) {
-			this.updateStatus('ready');
+			this.updateStatus('ping-test-failed', false);
 		} else {
-			this.updateStatus('ping-test-failed');
+			this.updateStatus('ping-test-failed', true);
 			logger.warn(`Both ping tests failed due to bad internet connection. Retrying in 10 minutes. Probe temporarily disconnected.`);
 		}
 
@@ -100,33 +158,34 @@ export class StatusManager {
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		this.timer = setTimeout(async () => {
 			await this.runTest();
-		}, INTERVAL_TIME);
+		}, PING_INTERVAL_TIME);
 	}
 
 	private async pingTest (ipVersion: IpFamily) {
 		const packets = config.get<number>('status.numberOfPackets');
-		const targets = [ 'a.gtld-servers.net', 'k.root-servers.net', 'time.apple.com' ];
-		const results = await Promise.allSettled(targets.map(target => this.pingCmd({ type: 'ping', ipVersion, target, packets, protocol: 'ICMP', port: 80, inProgressUpdates: false })));
-
+		const apiTarget = new URL(config.get<string>('api.httpHost')).hostname;
+		const targets = [ apiTarget, apiTarget, apiTarget ];
 		const rejectedResults: Array<{ target: string; reason: ExecaError }> = [];
 		const successfulResults: Array<{ target: string; result: PingParseOutput }> = [];
 		const unSuccessfulResults: Array<{ target: string; result: PingParseOutput }> = [];
 
-		for (const [ index, result ] of results.entries()) {
-			if (result.status === 'rejected' && (!isExecaError(result.reason) || !result.reason?.stdout?.toString()?.length)) {
-				rejectedResults.push({ target: targets[index]!, reason: result.reason as ExecaError });
-			} else {
-				const stdout = result.status === 'fulfilled'
-					? result.value.stdout
-					: (isExecaError(result.reason) && result.reason?.stdout?.toString()) || '';
-
-				const parsed = parse(stdout);
+		for (const target of targets) {
+			try {
+				const result = await this.pingCmd({ type: 'ping', ipVersion, target, packets, protocol: 'ICMP', port: 80, inProgressUpdates: false });
+				const parsed = parse(result.stdout);
 				const isSuccessful = parsed.stats?.loss === 0;
 
 				if (isSuccessful) {
-					successfulResults.push({ target: targets[index]!, result: parsed });
+					successfulResults.push({ target, result: parsed });
 				} else {
-					unSuccessfulResults.push({ target: targets[index]!, result: parsed });
+					unSuccessfulResults.push({ target, result: parsed });
+				}
+			} catch (reason) {
+				if (isExecaError(reason) && reason?.stdout?.toString()?.length) {
+					const parsed = parse(reason.stdout.toString());
+					unSuccessfulResults.push({ target, result: parsed });
+				} else {
+					rejectedResults.push({ target, reason: reason as ExecaError });
 				}
 			}
 		}
