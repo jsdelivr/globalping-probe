@@ -137,6 +137,30 @@ describe('StatusManager', () => {
 		expect(socket.emit.args[2]).to.deep.equal([ 'probe:isIPv6Supported:update', true ]);
 	});
 
+	it('should treat rejected execa error with 0% packet loss as successful (happens if command times out)', async () => {
+		const statusManager = new StatusManager(socket, pingCmd);
+		pingCmd.rejects({ stdout: pingSuccess, stderr: 'Command timed out', exitCode: 143 });
+		await statusManager.start();
+		expect(pingCmd.callCount).to.equal(6);
+		expect(statusManager.getStatus()).to.equal('ready');
+		expect(socket.emit.callCount).to.equal(3);
+		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'ready' ]);
+		expect(socket.emit.args[1]).to.deep.equal([ 'probe:isIPv4Supported:update', true ]);
+		expect(socket.emit.args[2]).to.deep.equal([ 'probe:isIPv6Supported:update', true ]);
+	});
+
+	it('should treat rejected execa error with packet loss as failed', async () => {
+		const statusManager = new StatusManager(socket, pingCmd);
+		pingCmd.rejects({ stdout: pingPacketLoss, stderr: 'Command timed out', exitCode: 143 });
+		await statusManager.start();
+		expect(pingCmd.callCount).to.equal(6);
+		expect(statusManager.getStatus()).to.equal('ping-test-failed');
+		expect(socket.emit.callCount).to.equal(3);
+		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'ping-test-failed' ]);
+		expect(socket.emit.args[1]).to.deep.equal([ 'probe:isIPv4Supported:update', false ]);
+		expect(socket.emit.args[2]).to.deep.equal([ 'probe:isIPv6Supported:update', false ]);
+	});
+
 	it('should run check in a fixed intervals and do emit with a status every time', async () => {
 		const statusManager = new StatusManager(socket, pingCmd);
 		expect(pingCmd.callCount).to.equal(0);
