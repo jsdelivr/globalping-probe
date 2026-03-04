@@ -144,7 +144,7 @@ describe('StatusManager', () => {
 		expect(socket.emit.args[2]).to.deep.equal([ 'probe:isIPv6Supported:update', true ]);
 		await sandbox.clock.tickAsync(11 * 60 * 1000);
 		expect(pingCmd.callCount).to.equal(4);
-		expect(socket.emit.callCount).to.equal(6);
+		expect(socket.emit.callCount).to.equal(5);
 	});
 
 	it('should update the status during regular checks', async () => {
@@ -197,20 +197,18 @@ describe('StatusManager', () => {
 		expect(statusManager.getStatus()).to.equal('ready');
 		expect(statusManager.getIsIPv4Supported()).to.equal(false);
 		expect(statusManager.getIsIPv6Supported()).to.equal(true);
-		expect(socket.emit.callCount).to.equal(6);
-		expect(socket.emit.args[3]).to.deep.equal([ 'probe:status:update', 'ready' ]);
-		expect(socket.emit.args[4]).to.deep.equal([ 'probe:isIPv4Supported:update', false ]);
-		expect(socket.emit.args[5]).to.deep.equal([ 'probe:isIPv6Supported:update', true ]);
+		expect(socket.emit.callCount).to.equal(5);
+		expect(socket.emit.args[3]).to.deep.equal([ 'probe:isIPv4Supported:update', false ]);
+		expect(socket.emit.args[4]).to.deep.equal([ 'probe:isIPv6Supported:update', true ]);
 
 		pingCmd.onCall(5).rejects({ stdout: 'host not found' });
 		await sandbox.clock.tickAsync(11 * 60 * 1000);
 		expect(statusManager.getStatus()).to.equal('ready');
 		expect(statusManager.getIsIPv4Supported()).to.equal(true);
 		expect(statusManager.getIsIPv6Supported()).to.equal(false);
-		expect(socket.emit.callCount).to.equal(9);
-		expect(socket.emit.args[6]).to.deep.equal([ 'probe:status:update', 'ready' ]);
-		expect(socket.emit.args[7]).to.deep.equal([ 'probe:isIPv4Supported:update', true ]);
-		expect(socket.emit.args[8]).to.deep.equal([ 'probe:isIPv6Supported:update', false ]);
+		expect(socket.emit.callCount).to.equal(7);
+		expect(socket.emit.args[5]).to.deep.equal([ 'probe:isIPv4Supported:update', true ]);
+		expect(socket.emit.args[6]).to.deep.equal([ 'probe:isIPv6Supported:update', false ]);
 
 		pingCmd.onCall(6).rejects({ stdout: 'host not found' });
 		pingCmd.onCall(7).rejects({ stdout: 'host not found' });
@@ -218,10 +216,10 @@ describe('StatusManager', () => {
 		expect(statusManager.getStatus()).to.equal('ping-test-failed');
 		expect(statusManager.getIsIPv4Supported()).to.equal(false);
 		expect(statusManager.getIsIPv6Supported()).to.equal(false);
-		expect(socket.emit.callCount).to.equal(12);
-		expect(socket.emit.args[9]).to.deep.equal([ 'probe:status:update', 'ping-test-failed' ]);
-		expect(socket.emit.args[10]).to.deep.equal([ 'probe:isIPv4Supported:update', false ]);
-		expect(socket.emit.args[11]).to.deep.equal([ 'probe:isIPv6Supported:update', false ]);
+		expect(socket.emit.callCount).to.equal(10);
+		expect(socket.emit.args[7]).to.deep.equal([ 'probe:status:update', 'ping-test-failed' ]);
+		expect(socket.emit.args[8]).to.deep.equal([ 'probe:isIPv4Supported:update', false ]);
+		expect(socket.emit.args[9]).to.deep.equal([ 'probe:isIPv6Supported:update', false ]);
 	});
 
 	it('should stop updating the status during regular checks after .stop() call', async () => {
@@ -280,8 +278,8 @@ describe('StatusManager', () => {
 		await sandbox.clock.tickAsync(5 * 60 * 1000 + 1000);
 
 		expect(statusManager.getStatus()).to.equal('ready');
-		expect(socket.emit.callCount).to.equal(7);
-		expect(socket.emit.args[6]).to.deep.equal([ 'probe:status:update', 'ready' ]);
+		expect(socket.emit.callCount).to.equal(5);
+		expect(socket.emit.args[4]).to.deep.equal([ 'probe:status:update', 'ready' ]);
 	});
 
 	it('should return the same instance for initStatusManager and getStatusManager', () => {

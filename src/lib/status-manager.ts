@@ -111,6 +111,10 @@ export class StatusManager {
 	}
 
 	public updateStatus (status: keyof StatusManager['statuses'], value: boolean) {
+		if (this.statuses[status] === value) {
+			return;
+		}
+
 		this.statuses[status] = value;
 		this.sendStatus();
 	}
