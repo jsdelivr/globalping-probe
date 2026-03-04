@@ -10,7 +10,6 @@ module.exports = {
 	},
 	status: {
 		numberOfPackets: 6,
-		packetLossThreshold: 25,
 	},
 	stats: {
 		interval: 10,

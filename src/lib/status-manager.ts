@@ -163,35 +163,34 @@ export class StatusManager {
 
 	private async pingTest (ipVersion: IpFamily) {
 		const packets = config.get<number>('status.numberOfPackets');
-		const packetLossThreshold = config.get<number>('status.packetLossThreshold');
 		const apiTarget = new URL(config.get<string>('api.httpHost')).hostname;
-		const targets = [ apiTarget ];
-		const results = await Promise.allSettled(targets.map(target => this.pingCmd({ type: 'ping', ipVersion, target, packets, protocol: 'ICMP', port: 80, inProgressUpdates: false })));
-
+		const targets = [ apiTarget, apiTarget, apiTarget ];
 		const rejectedResults: Array<{ target: string; reason: ExecaError }> = [];
 		const successfulResults: Array<{ target: string; result: PingParseOutput }> = [];
 		const unSuccessfulResults: Array<{ target: string; result: PingParseOutput }> = [];
 
-		for (const [ index, result ] of results.entries()) {
-			if (result.status === 'rejected' && (!isExecaError(result.reason) || !result.reason?.stdout?.toString()?.length)) {
-				rejectedResults.push({ target: targets[index]!, reason: result.reason as ExecaError });
-			} else {
-				const stdout = result.status === 'fulfilled'
-					? result.value.stdout
-					: (isExecaError(result.reason) && result.reason?.stdout?.toString()) || '';
-
-				const parsed = parse(stdout);
-				const isSuccessful = typeof parsed.stats?.loss === 'number' && parsed.stats.loss <= packetLossThreshold;
+		for (const target of targets) {
+			try {
+				const result = await this.pingCmd({ type: 'ping', ipVersion, target, packets, protocol: 'ICMP', port: 80, inProgressUpdates: false });
+				const parsed = parse(result.stdout);
+				const isSuccessful = parsed.stats?.loss === 0;
 
 				if (isSuccessful) {
-					successfulResults.push({ target: targets[index]!, result: parsed });
+					successfulResults.push({ target, result: parsed });
 				} else {
-					unSuccessfulResults.push({ target: targets[index]!, result: parsed });
+					unSuccessfulResults.push({ target, result: parsed });
+				}
+			} catch (reason) {
+				if (isExecaError(reason) && reason?.stdout?.toString()?.length) {
+					const parsed = parse(reason.stdout.toString());
+					unSuccessfulResults.push({ target, result: parsed });
+				} else {
+					rejectedResults.push({ target, reason: reason as ExecaError });
 				}
 			}
 		}
 
-		const isPassingTest = successfulResults.length === targets.length;
+		const isPassingTest = successfulResults.length >= 2;
 		const testPassText = isPassingTest ? `. IPv${ipVersion} tests pass` : '';
 
 		rejectedResults.forEach(({ reason }) => {
@@ -204,8 +203,8 @@ export class StatusManager {
 		});
 
 		unSuccessfulResults.forEach(({ target, result }) => {
-			if (typeof result.stats?.loss === 'number') {
-				logger.warn(`IPv${ipVersion} ping test unsuccessful for ${target}: ${result.stats.loss.toString()}% packet loss (threshold: ${packetLossThreshold}%)${testPassText}.`);
+			if (result.stats?.loss) {
+				logger.warn(`IPv${ipVersion} ping test unsuccessful for ${target}: ${result.stats.loss.toString()}% packet loss${testPassText}.`);
 			} else {
 				logger.warn(`IPv${ipVersion} ping test unsuccessful for ${target}: ${result.rawOutput}${testPassText}.`);
 			}
