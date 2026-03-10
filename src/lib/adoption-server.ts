@@ -55,13 +55,15 @@ export const startLocalAdoptionServer = () => {
 			return;
 		}
 
-		if (!ALLOWED_PATHS.includes(req.url)) {
+		const path = new URL(req.url, 'http://localhost').pathname;
+
+		if (!ALLOWED_PATHS.includes(path)) {
 			res.writeHead(404, CORS_HEADERS);
 			res.end();
 			return;
 		}
 
-		if (req.url === '/adopt') {
+		if (path === '/adopt') {
 			res.writeHead(307, {
 				...CORS_HEADERS,
 				Location: `${dashboardUrl}?adopt=${token}`,
