@@ -4,7 +4,7 @@ module.exports = {
 		httpHost: 'https://api.globalping.io/v1',
 	},
 	dashboard: {
-		url: 'https://dashboard.globalping.io',
+		url: 'https://dash.globalping.io',
 	},
 	update: {
 		releaseUrl: 'https://data.jsdelivr.com/v1/packages/gh/jsdelivr/globalping-probe/resolved',
