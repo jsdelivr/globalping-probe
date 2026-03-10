@@ -61,6 +61,23 @@ describe('adoption-server', () => {
 			expect(response.body).to.be.empty;
 		});
 
+		it('should redirect with token on /adopt', async () => {
+			const { token } = startLocalAdoptionServer();
+			const dashboardUrl = config.get<string>('dashboard.url');
+
+			const response = await got(`${baseUrl}/adopt`, { followRedirect: false });
+
+			expect(response.statusCode).to.equal(307);
+
+			expect(response.headers).to.include({
+				'location': `${dashboardUrl}?adopt=${token}`,
+				'cache-control': 'no-cache, no-store, must-revalidate',
+				'access-control-allow-origin': '*',
+			});
+
+			expect(response.body).to.be.empty;
+		});
+
 		it('should return 405 for non-GET/OPTIONS requests', async () => {
 			startLocalAdoptionServer();
 
