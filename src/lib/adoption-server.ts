@@ -6,6 +6,7 @@ import { scopedLogger } from './logger.js';
 const serverLifetime = config.get<number>('adoptionServer.lifetime');
 const serverPort = config.get<number>('adoptionServer.port');
 const logger = scopedLogger('adoption-server');
+const dashboardUrl = config.get<string>('dashboard.url');
 
 let server: http.Server | undefined;
 let closeTimeout: NodeJS.Timeout;
@@ -21,6 +22,8 @@ const CORS_HEADERS = {
 };
 
 const IGNORED_HTTP_ERRORS = [ 'ECONNABORTED', 'ECONNRESET', 'EPIPE', 'HPE_INVALID_EOF_STATE' ];
+
+const ALLOWED_PATHS = [ '/', '/adopt' ];
 
 export const stopLocalAdoptionServer = () => {
 	server?.close();
@@ -46,8 +49,24 @@ export const startLocalAdoptionServer = () => {
 			return;
 		}
 
-		if (req.url !== '/') {
+		if (!req.url) {
+			res.writeHead(400, CORS_HEADERS);
+			res.end();
+			return;
+		}
+
+		if (!ALLOWED_PATHS.includes(req.url)) {
 			res.writeHead(404, CORS_HEADERS);
+			res.end();
+			return;
+		}
+
+		if (req.url === '/adopt') {
+			res.writeHead(307, {
+				...CORS_HEADERS,
+				Location: `${dashboardUrl}?adopt=${token}`,
+			});
+
 			res.end();
 			return;
 		}
