@@ -102,7 +102,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			byLine(cmd.stdout, async (data) => {
 				if (data.startsWith('mtr:')) {
-					cmd.stderr?.emit('error', data);
+					cmd.kill('SIGKILL');
 					return;
 				}
 
