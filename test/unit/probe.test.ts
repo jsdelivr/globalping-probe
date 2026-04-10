@@ -4,7 +4,7 @@ import { expect } from 'chai';
 import * as td from 'testdouble';
 import * as sinon from 'sinon';
 import { getCmdMock, MockSocket, useSandboxWithFakeTimers } from '../utils.js';
-import { StatusManager } from '../../src/lib/status-manager.js';
+import { StatusManager } from '../../src/status-manager/status-manager.js';
 
 const pingStdout = getCmdMock('ping-success-linux');
 const fakeLocation = {
@@ -55,7 +55,7 @@ describe('index module', () => {
 		await td.replaceEsm('execa', { execa: execaStub });
 		await td.replaceEsm('socket.io-client', { io: ioStub });
 		await td.replaceEsm('../../src/command/ping-command.ts', { PingCommand: PingCommandStub, pingCmd: pingCmdStub });
-		await td.replaceEsm('../../src/lib/status-manager.ts', { initStatusManager: initStatusManagerStub, getStatusManager: getStatusManagerStub });
+		await td.replaceEsm('../../src/status-manager/status-manager.ts', { initStatusManager: initStatusManagerStub, getStatusManager: getStatusManagerStub });
 		process.env['GP_HOST_HW'] = 'true';
 		process.env['GP_HOST_DEVICE'] = 'v1';
 	});

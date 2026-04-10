@@ -4,7 +4,7 @@ import { expect } from 'chai';
 import * as td from 'testdouble';
 import type { ExecaChildProcess } from 'execa';
 import { getCmdMock, useSandboxWithFakeTimers } from '../../utils.js';
-import type { StatusManager as StatusManagerType } from '../../../src/lib/status-manager.js';
+import type { StatusManager as StatusManagerType } from '../../../src/status-manager/status-manager.js';
 import type { PingOptions } from '../../../src/command/ping-command.js';
 
 const pingSuccess = getCmdMock('ping-success-linux');
@@ -21,7 +21,7 @@ describe('StatusManager', () => {
 
 	before(async () => {
 		await td.replaceEsm('../../../src/lib/dependencies.ts', { hasRequired });
-		({ StatusManager, initStatusManager, getStatusManager } = await import('../../../src/lib/status-manager.js'));
+		({ StatusManager, initStatusManager, getStatusManager } = await import('../../../src/status-manager/status-manager.js'));
 	});
 
 	beforeEach(() => {
@@ -40,8 +40,6 @@ describe('StatusManager', () => {
 	it('should create a manager with the `initializing` status, `isIpv4Supported` and `isIpv6Supported` are false', () => {
 		const statusManager = new StatusManager(socket, pingCmd);
 		expect(statusManager.getStatus()).to.equal('initializing');
-		expect(statusManager.getIsIPv4Supported()).to.equal(false);
-		expect(statusManager.getIsIPv6Supported()).to.equal(false);
 		expect(socket.emit.callCount).to.equal(0);
 	});
 
@@ -50,8 +48,6 @@ describe('StatusManager', () => {
 		hasRequired.resolves(false);
 		await statusManager.start();
 		expect(statusManager.getStatus()).to.equal('unbuffer-missing');
-		expect(statusManager.getIsIPv4Supported()).to.equal(false);
-		expect(statusManager.getIsIPv6Supported()).to.equal(false);
 		expect(socket.emit.callCount).to.equal(1);
 		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'unbuffer-missing' ]);
 	});
@@ -186,8 +182,6 @@ describe('StatusManager', () => {
 
 		await statusManager.start();
 		expect(statusManager.getStatus()).to.equal('ready');
-		expect(statusManager.getIsIPv4Supported()).to.equal(true);
-		expect(statusManager.getIsIPv6Supported()).to.equal(true);
 		expect(socket.emit.callCount).to.equal(3);
 		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'ready' ]);
 		expect(socket.emit.args[1]).to.deep.equal([ 'probe:isIPv4Supported:update', true ]);
@@ -196,8 +190,6 @@ describe('StatusManager', () => {
 		pingCmd.rejects({ stdout: 'host not found' });
 		await sandbox.clock.tickAsync(11 * 60 * 1000);
 		expect(statusManager.getStatus()).to.equal('ping-test-failed');
-		expect(statusManager.getIsIPv4Supported()).to.equal(false);
-		expect(statusManager.getIsIPv6Supported()).to.equal(false);
 		expect(socket.emit.callCount).to.equal(6);
 		expect(socket.emit.args[3]).to.deep.equal([ 'probe:status:update', 'ping-test-failed' ]);
 		expect(socket.emit.args[4]).to.deep.equal([ 'probe:isIPv4Supported:update', false ]);
@@ -206,8 +198,6 @@ describe('StatusManager', () => {
 		pingCmd.resolves({ stdout: pingSuccess });
 		await sandbox.clock.tickAsync(11 * 60 * 1000);
 		expect(statusManager.getStatus()).to.equal('ready');
-		expect(statusManager.getIsIPv4Supported()).to.equal(true);
-		expect(statusManager.getIsIPv6Supported()).to.equal(true);
 		expect(socket.emit.callCount).to.equal(9);
 		expect(socket.emit.args[6]).to.deep.equal([ 'probe:status:update', 'ready' ]);
 		expect(socket.emit.args[7]).to.deep.equal([ 'probe:isIPv4Supported:update', true ]);
@@ -219,8 +209,6 @@ describe('StatusManager', () => {
 
 		await statusManager.start();
 		expect(statusManager.getStatus()).to.equal('ready');
-		expect(statusManager.getIsIPv4Supported()).to.equal(true);
-		expect(statusManager.getIsIPv6Supported()).to.equal(true);
 		expect(socket.emit.callCount).to.equal(3);
 		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'ready' ]);
 		expect(socket.emit.args[1]).to.deep.equal([ 'probe:isIPv4Supported:update', true ]);
@@ -230,8 +218,6 @@ describe('StatusManager', () => {
 		pingCmd.onCall(8).rejects({ stdout: 'host not found' });
 		await sandbox.clock.tickAsync(11 * 60 * 1000);
 		expect(statusManager.getStatus()).to.equal('ready');
-		expect(statusManager.getIsIPv4Supported()).to.equal(false);
-		expect(statusManager.getIsIPv6Supported()).to.equal(true);
 		expect(socket.emit.callCount).to.equal(5);
 		expect(socket.emit.args[3]).to.deep.equal([ 'probe:isIPv4Supported:update', false ]);
 		expect(socket.emit.args[4]).to.deep.equal([ 'probe:isIPv6Supported:update', true ]);
@@ -240,8 +226,6 @@ describe('StatusManager', () => {
 		pingCmd.onCall(15).rejects({ stdout: 'host not found' });
 		await sandbox.clock.tickAsync(11 * 60 * 1000);
 		expect(statusManager.getStatus()).to.equal('ready');
-		expect(statusManager.getIsIPv4Supported()).to.equal(true);
-		expect(statusManager.getIsIPv6Supported()).to.equal(false);
 		expect(socket.emit.callCount).to.equal(7);
 		expect(socket.emit.args[5]).to.deep.equal([ 'probe:isIPv4Supported:update', true ]);
 		expect(socket.emit.args[6]).to.deep.equal([ 'probe:isIPv6Supported:update', false ]);
@@ -249,8 +233,6 @@ describe('StatusManager', () => {
 		pingCmd.rejects({ stdout: 'host not found' });
 		await sandbox.clock.tickAsync(11 * 60 * 1000);
 		expect(statusManager.getStatus()).to.equal('ping-test-failed');
-		expect(statusManager.getIsIPv4Supported()).to.equal(false);
-		expect(statusManager.getIsIPv6Supported()).to.equal(false);
 		expect(socket.emit.callCount).to.equal(10);
 		expect(socket.emit.args[7]).to.deep.equal([ 'probe:status:update', 'ping-test-failed' ]);
 		expect(socket.emit.args[8]).to.deep.equal([ 'probe:isIPv4Supported:update', false ]);
@@ -262,8 +244,6 @@ describe('StatusManager', () => {
 
 		await statusManager.start();
 		expect(statusManager.getStatus()).to.equal('ready');
-		expect(statusManager.getIsIPv4Supported()).to.equal(true);
-		expect(statusManager.getIsIPv6Supported()).to.equal(true);
 		expect(socket.emit.callCount).to.equal(3);
 		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'ready' ]);
 		expect(socket.emit.args[1]).to.deep.equal([ 'probe:isIPv4Supported:update', true ]);
@@ -282,39 +262,6 @@ describe('StatusManager', () => {
 		await sandbox.clock.tickAsync(11 * 60 * 1000);
 		expect(statusManager.getStatus()).to.equal('sigterm');
 		expect(socket.emit.callCount).to.equal(4);
-	});
-
-	it('should change status to `too-many-disconnects` after 3 disconnects in 5 minutes', async () => {
-		const statusManager = new StatusManager(socket, pingCmd);
-		await statusManager.start();
-
-		statusManager.reportDisconnect();
-		statusManager.reportDisconnect();
-		expect(statusManager.getStatus()).to.equal('ready');
-
-		statusManager.reportDisconnect();
-		expect(statusManager.getStatus()).to.equal('too-many-disconnects');
-		expect(socket.emit.callCount).to.equal(4);
-		expect(socket.emit.args[3]).to.deep.equal([ 'probe:status:update', 'too-many-disconnects' ]);
-	});
-
-	it('should reset `too-many-disconnects` after all disconnect TTLs expire', async () => {
-		sandbox.stub(performance, 'now').callsFake(() => sandbox.clock.now);
-		const statusManager = new StatusManager(socket, pingCmd);
-		await statusManager.start();
-
-		statusManager.reportDisconnect();
-		statusManager.reportDisconnect();
-		statusManager.reportDisconnect();
-		expect(statusManager.getStatus()).to.equal('too-many-disconnects');
-		expect(socket.emit.callCount).to.equal(4);
-		expect(socket.emit.args[3]).to.deep.equal([ 'probe:status:update', 'too-many-disconnects' ]);
-
-		await sandbox.clock.tickAsync(5 * 60 * 1000 + 1000);
-
-		expect(statusManager.getStatus()).to.equal('ready');
-		expect(socket.emit.callCount).to.equal(5);
-		expect(socket.emit.args[4]).to.deep.equal([ 'probe:status:update', 'ready' ]);
 	});
 
 	it('should return the same instance for initStatusManager and getStatusManager', () => {

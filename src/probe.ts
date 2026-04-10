@@ -25,7 +25,7 @@ import { HttpCommand } from './command/http-command.js';
 import { FakePingCommand } from './command/fake/fake-ping-command.js';
 import { FakeMtrCommand } from './command/fake/fake-mtr-command.js';
 import { run as runStatsAgent } from './lib/stats/client.js';
-import { initStatusManager } from './lib/status-manager.js';
+import { initStatusManager } from './status-manager/status-manager.js';
 import { logAdoptionCode } from './lib/log-adoption-code.js';
 import { getAvailableDiskSpace, getTotalDiskSize, looksLikeV1HardwareDevice } from './lib/util.js';
 import { VERSION } from './constants.js';
