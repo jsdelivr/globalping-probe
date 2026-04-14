@@ -13,6 +13,11 @@ module.exports = {
 	},
 	status: {
 		numberOfPackets: 6,
+		icmpTcpTargets: [
+			's3.eu-central-1.amazonaws.com',
+			's3.us-east-1.amazonaws.com',
+			's3.ap-southeast-1.amazonaws.com',
+		],
 	},
 	stats: {
 		interval: 10,

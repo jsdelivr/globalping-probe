@@ -2,31 +2,37 @@ import { Socket } from 'socket.io-client';
 import * as sinon from 'sinon';
 import { expect } from 'chai';
 import * as td from 'testdouble';
-import type { ExecaChildProcess } from 'execa';
-import { getCmdMock, useSandboxWithFakeTimers } from '../../utils.js';
+import { useSandboxWithFakeTimers } from '../../utils.js';
 import type { StatusManager as StatusManagerType } from '../../../src/status-manager/status-manager.js';
 import type { PingOptions } from '../../../src/command/ping-command.js';
 
-const pingSuccess = getCmdMock('ping-success-linux');
-
 describe('StatusManager', () => {
 	let StatusManager: typeof StatusManagerType;
-	let initStatusManager: (socket: Socket, pingCmd: (options: PingOptions) => ExecaChildProcess) => StatusManagerType;
+	let initStatusManager: (socket: Socket, pingCmd: (options: PingOptions) => Promise<{ stdout: string }>) => StatusManagerType;
 	let getStatusManager: () => StatusManagerType;
 	let sandbox: sinon.SinonSandbox;
 	let socket: sinon.SinonStubbedInstance<Socket>;
-	const pingCmd = sinon.stub().resolves({ stdout: pingSuccess });
+	const pingCmd = sinon.stub();
 	const hasRequired = sinon.stub().resolves(true);
+	const initPingTest = sinon.stub().callsFake((updateStatus: (status: 'ping-test-failed', value: boolean) => void) => ({
+		start: async () => updateStatus('ping-test-failed', false),
+		stop: () => {},
+	}));
+	const initIcmpTcpTest = sinon.stub().callsFake((updateStatus: (status: 'icmp-tcp-test-failed', value: boolean) => void) => ({
+		start: async () => updateStatus('icmp-tcp-test-failed', false),
+		stop: () => {},
+	}));
 
 	before(async () => {
 		await td.replaceEsm('../../../src/lib/dependencies.ts', { hasRequired });
+		await td.replaceEsm('../../../src/status-manager/ping-test.ts', { initPingTest });
+		await td.replaceEsm('../../../src/status-manager/icmp-tcp-test.ts', { initIcmpTcpTest });
 		({ StatusManager, initStatusManager, getStatusManager } = await import('../../../src/status-manager/status-manager.js'));
 	});
 
 	beforeEach(() => {
 		sandbox = useSandboxWithFakeTimers({ useFakeTimers: { shouldAdvanceTime: false } });
 		socket = sandbox.createStubInstance(Socket) as sinon.SinonStubbedInstance<Socket>;
-		pingCmd.resolves({ stdout: pingSuccess });
 		hasRequired.resolves(true);
 	});
 
@@ -34,6 +40,8 @@ describe('StatusManager', () => {
 		sandbox.restore();
 		pingCmd.reset();
 		hasRequired.reset();
+		initPingTest.resetHistory();
+		initIcmpTcpTest.resetHistory();
 	});
 
 	it('should create a manager with the `initializing` status', () => {
@@ -56,51 +64,49 @@ describe('StatusManager', () => {
 
 		await statusManager.start();
 		expect(statusManager.getStatus()).to.equal('ready');
-		expect(socket.emit.callCount).to.equal(3);
-		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'ready' ]);
-		expect(socket.emit.args[1]).to.deep.equal([ 'probe:isIPv4Supported:update', true ]);
-		expect(socket.emit.args[2]).to.deep.equal([ 'probe:isIPv6Supported:update', true ]);
+		expect(socket.emit.callCount).to.equal(2);
+		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'initializing' ]);
+		expect(socket.emit.args[1]).to.deep.equal([ 'probe:status:update', 'ready' ]);
 
-		pingCmd.rejects({ stdout: 'host not found' });
-		await sandbox.clock.tickAsync(11 * 60 * 1000);
+		statusManager.updateStatus('ping-test-failed', true);
 		expect(statusManager.getStatus()).to.equal('ping-test-failed');
-		expect(socket.emit.callCount).to.equal(6);
-		expect(socket.emit.args[3]).to.deep.equal([ 'probe:status:update', 'ping-test-failed' ]);
-		expect(socket.emit.args[4]).to.deep.equal([ 'probe:isIPv4Supported:update', false ]);
-		expect(socket.emit.args[5]).to.deep.equal([ 'probe:isIPv6Supported:update', false ]);
+		expect(socket.emit.callCount).to.equal(3);
+		expect(socket.emit.args[2]).to.deep.equal([ 'probe:status:update', 'ping-test-failed' ]);
 
-		pingCmd.resolves({ stdout: pingSuccess });
-		await sandbox.clock.tickAsync(11 * 60 * 1000);
+		statusManager.updateStatus('ping-test-failed', false);
 		expect(statusManager.getStatus()).to.equal('ready');
-		expect(socket.emit.callCount).to.equal(9);
-		expect(socket.emit.args[6]).to.deep.equal([ 'probe:status:update', 'ready' ]);
-		expect(socket.emit.args[7]).to.deep.equal([ 'probe:isIPv4Supported:update', true ]);
-		expect(socket.emit.args[8]).to.deep.equal([ 'probe:isIPv6Supported:update', true ]);
+		expect(socket.emit.callCount).to.equal(4);
+		expect(socket.emit.args[3]).to.deep.equal([ 'probe:status:update', 'ready' ]);
 	});
 
-	it('should stop updating the status during regular checks after .stop() call', async () => {
+	it('should report `icmp-tcp-test-failed` then `ready` when that flag toggles', async () => {
 		const statusManager = new StatusManager(socket, pingCmd);
 
 		await statusManager.start();
 		expect(statusManager.getStatus()).to.equal('ready');
-		expect(socket.emit.callCount).to.equal(3);
-		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'ready' ]);
-		expect(socket.emit.args[1]).to.deep.equal([ 'probe:isIPv4Supported:update', true ]);
-		expect(socket.emit.args[2]).to.deep.equal([ 'probe:isIPv6Supported:update', true ]);
+
+		statusManager.updateStatus('icmp-tcp-test-failed', true);
+		expect(statusManager.getStatus()).to.equal('icmp-tcp-test-failed');
+		expect(socket.emit.lastCall.args).to.deep.equal([ 'probe:status:update', 'icmp-tcp-test-failed' ]);
+
+		statusManager.updateStatus('icmp-tcp-test-failed', false);
+		expect(statusManager.getStatus()).to.equal('ready');
+		expect(socket.emit.lastCall.args).to.deep.equal([ 'probe:status:update', 'ready' ]);
+	});
+
+	it('should stop updating the status after .stop() call', async () => {
+		const statusManager = new StatusManager(socket, pingCmd);
+
+		await statusManager.start();
+		expect(statusManager.getStatus()).to.equal('ready');
+		expect(socket.emit.callCount).to.equal(2);
+		expect(socket.emit.args[0]).to.deep.equal([ 'probe:status:update', 'initializing' ]);
+		expect(socket.emit.args[1]).to.deep.equal([ 'probe:status:update', 'ready' ]);
 
 		statusManager.stop();
-		expect(socket.emit.callCount).to.equal(4);
-		expect(socket.emit.args[3]).to.deep.equal([ 'probe:status:update', 'sigterm' ]);
-
-		pingCmd.rejects({ stdout: 'host not found' });
-		await sandbox.clock.tickAsync(11 * 60 * 1000);
 		expect(statusManager.getStatus()).to.equal('sigterm');
-		expect(socket.emit.callCount).to.equal(4);
-
-		pingCmd.resolves({ stdout: pingSuccess });
-		await sandbox.clock.tickAsync(11 * 60 * 1000);
-		expect(statusManager.getStatus()).to.equal('sigterm');
-		expect(socket.emit.callCount).to.equal(4);
+		expect(socket.emit.callCount).to.equal(3);
+		expect(socket.emit.args[2]).to.deep.equal([ 'probe:status:update', 'sigterm' ]);
 	});
 
 	it('should return the same instance for initStatusManager and getStatusManager', () => {

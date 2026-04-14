@@ -3,28 +3,33 @@ import type { Socket } from 'socket.io-client';
 import type { PingOptions } from '../command/ping-command.js';
 import { hasRequired } from '../lib/dependencies.js';
 import { initDisconnectTest } from './disconnect-test.js';
+import { initIcmpTcpTest } from './icmp-tcp-test.js';
 import { initPingTest } from './ping-test.js';
 
 export class StatusManager {
 	private statuses: {
 		'unbuffer-missing': boolean;
 		'ping-test-failed': boolean | null;
+		'icmp-tcp-test-failed': boolean | null;
 		'too-many-disconnects': boolean;
 		'sigterm': boolean;
 	} = {
 			'unbuffer-missing': false,
 			'ping-test-failed': null,
+			'icmp-tcp-test-failed': null,
 			'too-many-disconnects': false,
 			'sigterm': false,
 		};
 
 	private readonly pingTest;
+	private readonly icmpTcpTest;
 
 	constructor (
 		private readonly socket: Socket,
 		pingCmd: (options: PingOptions) => ExecaChildProcess,
 	) {
 		this.pingTest = initPingTest(this.updateStatus.bind(this), socket, pingCmd);
+		this.icmpTcpTest = initIcmpTcpTest(this.updateStatus.bind(this), socket, pingCmd);
 		initDisconnectTest(this.updateStatus.bind(this));
 	}
 
@@ -39,11 +44,13 @@ export class StatusManager {
 		}
 
 		await this.pingTest.start();
+		await this.icmpTcpTest.start();
 	}
 
 	public stop () {
 		this.updateStatus('sigterm', true);
 		this.pingTest.stop();
+		this.icmpTcpTest.stop();
 	}
 
 	public getStatus () {
@@ -61,6 +68,14 @@ export class StatusManager {
 
 		if (this.statuses['ping-test-failed']) {
 			return 'ping-test-failed';
+		}
+
+		if (this.statuses['icmp-tcp-test-failed'] === null) {
+			return 'initializing';
+		}
+
+		if (this.statuses['icmp-tcp-test-failed']) {
+			return 'icmp-tcp-test-failed';
 		}
 
 		if (this.statuses['too-many-disconnects']) {
