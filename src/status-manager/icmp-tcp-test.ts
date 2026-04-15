@@ -3,12 +3,12 @@ import type { Socket } from 'socket.io-client';
 import parse from '../command/handlers/ping/parse.js';
 import { tcpPing, TcpPingData } from '../command/handlers/ping/tcp-ping.js';
 import type { PingOptions } from '../command/ping-command.js';
-// import { scopedLogger } from '../lib/logger.js';
+import { scopedLogger } from '../lib/logger.js';
 
-// const logger = scopedLogger('status-manager');
+const logger = scopedLogger('status-manager');
 
 export class IcmpTcpTest {
-	private diffs: number[] | null = null;
+	private diffs: (number | null)[] | null = null;
 	private isProxy: boolean | null = null;
 
 	constructor (
@@ -42,13 +42,24 @@ export class IcmpTcpTest {
 
 		// ICMP/TCP diff exceeds VPN threshold. Re-running to confirm.
 		await this.measureAllLocations();
-		this.updateStatus('icmp-tcp-test-failed', this.isVpnDetected());
+		const failed = this.isVpnDetected();
+		this.updateStatus('icmp-tcp-test-failed', failed);
+
+		if (failed) {
+			const targets = config.get<string[]>('status.icmpTcpTargets');
+			logger.warn(
+				'ICMP/TCP ping RTT diff exceeds threshold. Retrying in 1 hour. Probe temporarily disconnected.',
+				{
+					targets: targets.map((t, i) => ({ targets: t, diff: this.diffs?.[i] })),
+					isProxy: this.isProxy,
+				},
+			);
+		}
 	}
 
 	private async measureAllLocations (): Promise<void> {
 		const targets = config.get<string[]>('status.icmpTcpTargets');
-		const results = await Promise.all(targets.map(target => this.measureDiff(target)));
-		this.diffs = results.filter((d): d is number => d !== null);
+		this.diffs = await Promise.all(targets.map(target => this.measureDiff(target)));
 	}
 
 	// Returns icmpAvg - tcpAvg for a single target, or null on any error (treated as pass).
@@ -74,8 +85,9 @@ export class IcmpTcpTest {
 	}
 
 	private isVpnDetected (): boolean {
-		const over100 = this.diffs?.filter(d => d >= 100).length ?? 0;
-		const over60 = this.diffs?.filter(d => d >= 60).length ?? 0;
+		const numeric = this.diffs?.filter((d): d is number => d !== null) ?? [];
+		const over100 = numeric.filter(d => d >= 100).length;
+		const over60 = numeric.filter(d => d >= 60).length;
 
 		if (over100 >= 1) { return true; }
 
