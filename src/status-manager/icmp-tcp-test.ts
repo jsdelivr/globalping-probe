@@ -1,5 +1,6 @@
 import config from 'config';
 import type { Socket } from 'socket.io-client';
+import type { ExecaChildProcess } from 'execa';
 import parse from '../command/handlers/ping/parse.js';
 import { tcpPing, TcpPingData } from '../command/handlers/ping/tcp-ping.js';
 import type { PingOptions } from '../command/ping-command.js';
@@ -19,7 +20,7 @@ export class IcmpTcpTest {
 	constructor (
 		private readonly updateStatus: (status: 'icmp-tcp-test-failed', value: boolean) => void,
 		socket: Socket,
-		private readonly pingCmd: (options: PingOptions) => Promise<{ stdout: string }>,
+		private readonly pingCmd: (options: PingOptions) => ExecaChildProcess,
 		private readonly runTcpPing: typeof tcpPing,
 	) {
 		socket.on('api:connect:isProxy', async ({ isProxy }: { isProxy: boolean }) => {
@@ -133,7 +134,7 @@ let icmpTcpTest: IcmpTcpTest;
 export const initIcmpTcpTest = (
 	updateStatus: (status: 'icmp-tcp-test-failed', value: boolean) => void,
 	socket: Socket,
-	pingCmd: (options: PingOptions) => Promise<{ stdout: string }>,
+	pingCmd: (options: PingOptions) => ExecaChildProcess,
 	runTcpPing: typeof tcpPing = tcpPing,
 ) => {
 	icmpTcpTest = new IcmpTcpTest(updateStatus, socket, pingCmd, runTcpPing);

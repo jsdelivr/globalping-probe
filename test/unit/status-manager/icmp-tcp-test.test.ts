@@ -3,7 +3,7 @@ import config from 'config';
 import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { useSandboxWithFakeTimers } from '../../utils.js';
-import type { IcmpTcpTest as IcmpTcpTestType } from '../../../src/status-manager/icmp-tcp-test.js';
+import { IcmpTcpTest, initIcmpTcpTest, getIcmpTcpTest } from '../../../src/status-manager/icmp-tcp-test.js';
 import type { PingOptions } from '../../../src/command/ping-command.js';
 
 // Builds a minimal ICMP ping output that parse() can extract stats.avg from.
@@ -20,9 +20,6 @@ const makeTcpResult = (avg: number) => [
 ];
 
 describe('IcmpTcpTest', () => {
-	let IcmpTcpTest: typeof IcmpTcpTestType;
-	let initIcmpTcpTest: (updateStatus: (status: 'icmp-tcp-test-failed', value: boolean) => void, socket: never, pingCmd: (options: PingOptions) => Promise<{ stdout: string }>, runTcpPing?: sinon.SinonStub) => IcmpTcpTestType;
-	let getIcmpTcpTest: () => IcmpTcpTestType;
 	let sandbox: sinon.SinonSandbox;
 	let socketEvents: EventEmitter;
 	let socket: { on: EventEmitter['on']; emit: sinon.SinonStub };
@@ -33,10 +30,6 @@ describe('IcmpTcpTest', () => {
 	const emitIsProxy = async (isProxy: boolean | null) => {
 		await Promise.all(socketEvents.listeners('api:connect:isProxy').map(listener => Promise.resolve(listener({ isProxy }))));
 	};
-
-	before(async () => {
-		({ IcmpTcpTest, initIcmpTcpTest, getIcmpTcpTest } = await import('../../../src/status-manager/icmp-tcp-test.js'));
-	});
 
 	beforeEach(() => {
 		sandbox = useSandboxWithFakeTimers();
