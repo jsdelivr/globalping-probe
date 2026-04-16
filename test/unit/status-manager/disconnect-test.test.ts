@@ -38,16 +38,20 @@ describe('DisconnectTest', () => {
 		sandbox.stub(performance, 'now').callsFake(() => sandbox.clock.now);
 		const disconnectTest = new DisconnectTest(updateStatus);
 		disconnectTest.reportDisconnect();
+		await sandbox.clock.tickAsync(1 * 60 * 1000 + 1000);
 		disconnectTest.reportDisconnect();
+		await sandbox.clock.tickAsync(1 * 60 * 1000 + 1000);
 		disconnectTest.reportDisconnect();
 
 		expect(updateStatus.callCount).to.equal(1);
 		expect(updateStatus.args[0]).to.deep.equal([ 'too-many-disconnects', true ]);
 
-		await sandbox.clock.tickAsync(5 * 60 * 1000 + 1000);
+		await sandbox.clock.tickAsync(4 * 60 * 1000 + 1000);
+		expect(updateStatus.callCount).to.equal(1);
 
-		expect(updateStatus.callCount).to.equal(4);
-		expect(updateStatus.args[3]).to.deep.equal([ 'too-many-disconnects', false ]);
+		await sandbox.clock.tickAsync(1 * 60 * 1000 + 1000);
+		expect(updateStatus.callCount).to.equal(2);
+		expect(updateStatus.args[1]).to.deep.equal([ 'too-many-disconnects', false ]);
 	});
 
 	it('should return same instance for initDisconnectTest and getDisconnectTest', () => {
