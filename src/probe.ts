@@ -70,9 +70,10 @@ if (process.env['GP_HOST_FIRMWARE']) {
 	logger.info(`Hardware probe running firmware version ${process.env['GP_HOST_FIRMWARE'].substring(1)}.`);
 }
 
-logger.info(`Starting probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode with UUID ${probeUuid.substring(0, 8)}.`);
 
 function connect (workerId?: number) {
+	logger.info(`Starting probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode with UUID ${probeUuid.substring(0, 8)}.`);
+
 	const worker = {
 		jobs: new Map<string, number>(),
 		jobsInterval: setInterval(() => {

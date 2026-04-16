@@ -13,6 +13,7 @@ const PING_INTERVAL_TIME = 10 * 60 * 1000; // 10 mins
 
 export class PingTest {
 	private timer?: NodeJS.Timeout;
+	private stopped = true;
 
 	constructor (
 		private readonly updateStatus: (status: 'ping-test-failed', value: boolean) => void,
@@ -22,10 +23,12 @@ export class PingTest {
 
 	public async start () {
 		clearTimeout(this.timer);
+		this.stopped = false;
 		await this.runTests();
 	}
 
 	public stop () {
+		this.stopped = true;
 		clearTimeout(this.timer);
 	}
 
@@ -44,6 +47,10 @@ export class PingTest {
 
 		this.socket.emit('probe:isIPv4Supported:update', resultIPv4);
 		this.socket.emit('probe:isIPv6Supported:update', resultIPv6);
+
+		if (this.stopped) { return; }
+
+		clearTimeout(this.timer);
 
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		this.timer = setTimeout(async () => {

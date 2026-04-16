@@ -7,8 +7,13 @@ import { scopedLogger } from '../lib/logger.js';
 
 const logger = scopedLogger('status-manager');
 
+const ICMP_TCP_INTERVAL_TIME = 60 * 60 * 1000; // 1 hour
+
 export class IcmpTcpTest {
-	private diffs: (number | null)[] | null = null;
+	private timer?: NodeJS.Timeout;
+	private stopped = true;
+	private diffsIPv4: (number | null)[] | null = null;
+	private diffsIPv6: (number | null)[] | null = null;
 	private isProxy: boolean | null = null;
 
 	constructor (
@@ -17,21 +22,39 @@ export class IcmpTcpTest {
 		private readonly pingCmd: (options: PingOptions) => Promise<{ stdout: string }>,
 		private readonly runTcpPing: typeof tcpPing,
 	) {
-		socket.on('api:connect:isProxy', ({ isProxy }: { isProxy: boolean | null }) => {
+		socket.on('api:connect:isProxy', async ({ isProxy }: { isProxy: boolean }) => {
 			this.isProxy = isProxy;
-			void this.evaluateAndUpdate();
+			await this.evaluateAndUpdate();
 		});
 	}
 
 	public async start () {
-		await this.measureAllLocations();
-		await this.evaluateAndUpdate();
+		clearTimeout(this.timer);
+		this.stopped = false;
+		await this.runScheduledCycle();
 	}
 
-	public stop () {}
+	public stop () {
+		this.stopped = true;
+		clearTimeout(this.timer);
+	}
+
+	private async runScheduledCycle () {
+		await this.measureAllLocations();
+		await this.evaluateAndUpdate();
+
+		if (this.stopped) { return; }
+
+		clearTimeout(this.timer);
+
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		this.timer = setTimeout(async () => {
+			await this.runScheduledCycle();
+		}, ICMP_TCP_INTERVAL_TIME);
+	}
 
 	private async evaluateAndUpdate () {
-		if (this.diffs === null || this.isProxy === null) {
+		if (this.diffsIPv4 === null || this.diffsIPv6 === null || this.isProxy === null) {
 			return;
 		}
 
@@ -50,7 +73,8 @@ export class IcmpTcpTest {
 			logger.warn(
 				'ICMP/TCP ping RTT diff exceeds threshold. Retrying in 1 hour. Probe temporarily disconnected.',
 				{
-					targets: targets.map((t, i) => ({ targets: t, diff: this.diffs?.[i] })),
+					ipv4: targets.map((t, i) => ({ targets: t, diff: this.diffsIPv4?.[i] })),
+					ipv6: targets.map((t, i) => ({ targets: t, diff: this.diffsIPv6?.[i] })),
 					isProxy: this.isProxy,
 				},
 			);
@@ -59,15 +83,16 @@ export class IcmpTcpTest {
 
 	private async measureAllLocations (): Promise<void> {
 		const targets = config.get<string[]>('status.icmpTcpTargets');
-		this.diffs = await Promise.all(targets.map(target => this.measureDiff(target)));
+		this.diffsIPv4 = await Promise.all(targets.map(target => this.measureDiff(target, 4)));
+		this.diffsIPv6 = await Promise.all(targets.map(target => this.measureDiff(target, 6)));
 	}
 
 	// Returns icmpAvg - tcpAvg for a single target, or null on any error (treated as pass).
-	private async measureDiff (target: string): Promise<number | null> {
+	private async measureDiff (target: string, ipVersion: 4 | 6): Promise<number | null> {
 		try {
 			const [ icmpResult, tcpResults ] = await Promise.all([
-				this.pingCmd({ type: 'ping', ipVersion: 4, target, packets: 3, protocol: 'ICMP', port: 80, inProgressUpdates: false }),
-				this.runTcpPing({ target, port: 443, packets: 3, timeout: 10_000, interval: 500, ipVersion: 4 }),
+				this.pingCmd({ type: 'ping', ipVersion, target, packets: 3, protocol: 'ICMP', port: 80, inProgressUpdates: false }),
+				this.runTcpPing({ target, port: 443, packets: 3, timeout: 10_000, interval: 500, ipVersion }),
 			]);
 
 			const icmpAvg = parse(icmpResult.stdout).stats?.avg ?? null;
@@ -85,7 +110,11 @@ export class IcmpTcpTest {
 	}
 
 	private isVpnDetected (): boolean {
-		const numeric = this.diffs?.filter((d): d is number => d !== null) ?? [];
+		return this.isVpn(this.diffsIPv4) || this.isVpn(this.diffsIPv6);
+	}
+
+	private isVpn (diffs: (number | null)[] | null): boolean {
+		const numeric = diffs?.filter((d): d is number => d !== null) ?? [];
 		const over100 = numeric.filter(d => d >= 100).length;
 		const over60 = numeric.filter(d => d >= 60).length;
 
