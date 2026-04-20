@@ -1,9 +1,10 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import config from 'config';
+import nock from 'nock';
 import got from 'got';
 import { startLocalAdoptionServer, stopLocalAdoptionServer } from '../../../src/lib/adoption-server.js';
-import nock from 'nock';
+import { useSandboxWithFakeTimers } from '../../utils.js';
 
 describe('adoption-server', () => {
 	let sandbox: sinon.SinonSandbox;
@@ -11,7 +12,7 @@ describe('adoption-server', () => {
 	const baseUrl = `http://127.0.0.1:${port}`;
 
 	beforeEach(() => {
-		sandbox = sinon.createSandbox();
+		sandbox = useSandboxWithFakeTimers({ });
 		nock.enableNetConnect(host => host.includes('127.0.0.1'));
 	});
 
@@ -105,13 +106,10 @@ describe('adoption-server', () => {
 		});
 
 		it('should close the server automatically after lifetime', async () => {
-			const clock = sandbox.useFakeTimers();
 			startLocalAdoptionServer();
 
 			const lifetime = config.get<number>('adoptionServer.lifetime');
-			clock.tick(lifetime + 100);
-
-			clock.restore();
+			await sandbox.clock.tickAsync(lifetime + 100);
 
 			try {
 				await got(baseUrl, { timeout: { connect: 300 }, retry: { limit: 0 } });
