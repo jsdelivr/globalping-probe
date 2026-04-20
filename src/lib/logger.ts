@@ -19,7 +19,7 @@ const objectFormatter = (object: Record<string, any>) => {
 	});
 
 	const objectWithoutSymbols = Object.fromEntries(entries);
-	return inspect(objectWithoutSymbols);
+	return inspect(objectWithoutSymbols, { breakLength: 120, depth: 4 });
 };
 
 export const getWinstonMessageContent = (info: Partial<winston.Logform.TransformableInfo>) => {

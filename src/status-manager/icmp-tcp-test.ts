@@ -63,19 +63,20 @@ export class IcmpTcpTest {
 			return;
 		}
 
+		const firstResults = this.getDiffSnapshot();
+
 		// ICMP/TCP diff exceeds the VPN threshold. Re-running to confirm.
 		await this.measureAllLocations();
+		const secondResults = this.getDiffSnapshot();
 		const failed = this.isVpnDetected();
 		this.updateStatus('icmp-tcp-test-failed', failed);
 
 		if (failed) {
-			const targets = config.get<string[]>('status.icmpTcpTargets');
 			logger.warn(
 				'ICMP/TCP ping RTT diff exceeds the threshold. Retrying in 1 hour. Probe temporarily disconnected.',
 				{
-					ipv4: targets.map((t, i) => ({ target: t, diff: this.diffsIPv4?.[i] })),
-					ipv6: targets.map((t, i) => ({ target: t, diff: this.diffsIPv6?.[i] })),
 					isProxy: this.isProxy,
+					results: [ firstResults, secondResults ],
 				},
 			);
 		}
@@ -125,6 +126,15 @@ export class IcmpTcpTest {
 		if (over60 >= 1 && this.isProxy === true) { return true; }
 
 		return false;
+	}
+
+	private getDiffSnapshot () {
+		const targets = config.get<string[]>('status.icmpTcpTargets');
+
+		return {
+			ipv4: targets.map((t, i) => ({ target: t, diff: this.diffsIPv4?.[i] })),
+			ipv6: targets.map((t, i) => ({ target: t, diff: this.diffsIPv6?.[i] })),
+		};
 	}
 }
 
