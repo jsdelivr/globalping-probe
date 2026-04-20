@@ -2,7 +2,7 @@ import config from 'config';
 import type { Socket } from 'socket.io-client';
 import type { ExecaChildProcess } from 'execa';
 import parse from '../command/handlers/ping/parse.js';
-import { tcpPing, TcpPingData } from '../command/handlers/ping/tcp-ping.js';
+import { tcpPing } from '../command/handlers/ping/tcp-ping.js';
 import type { PingOptions } from '../command/ping-command.js';
 import { scopedLogger } from '../lib/logger.js';
 
@@ -97,7 +97,7 @@ export class IcmpTcpTest {
 			]);
 
 			const icmpAvg = parse(icmpResult.stdout).stats?.avg ?? null;
-			const statsEntry = tcpResults.find((r): r is Extract<TcpPingData, { type: 'statistics' }> => r.type === 'statistics');
+			const statsEntry = tcpResults.find(r => r.type === 'statistics');
 			const tcpAvg = statsEntry?.avg ?? null;
 
 			if (icmpAvg === null || tcpAvg === null) { return null; }
