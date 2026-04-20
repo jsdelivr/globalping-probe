@@ -12,7 +12,7 @@ describe('adoption-server', () => {
 	const baseUrl = `http://127.0.0.1:${port}`;
 
 	beforeEach(() => {
-		sandbox = useSandboxWithFakeTimers({ useFakeTimers: { shouldAdvanceTime: false } });
+		sandbox = useSandboxWithFakeTimers();
 		nock.enableNetConnect(host => host.includes('127.0.0.1'));
 	});
 

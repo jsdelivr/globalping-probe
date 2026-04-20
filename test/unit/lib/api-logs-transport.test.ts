@@ -27,7 +27,7 @@ describe('ApiLogsTransport', () => {
 	};
 
 	beforeEach(() => {
-		sandbox = useSandboxWithFakeTimers();
+		sandbox = useSandboxWithFakeTimers({ useFakeTimers: { shouldAdvanceTime: false } });
 		socket = sandbox.createStubInstance(Socket) as sinon.SinonStubbedInstance<Socket>;
 		setEmitWithAckResponse('success');
 		socket.connected = true;
