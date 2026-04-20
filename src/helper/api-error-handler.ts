@@ -1,6 +1,6 @@
 import type { Socket } from 'socket.io-client';
 import { scopedLogger } from '../lib/logger.js';
-import { getStatusManager } from '../lib/status-manager.js';
+import { getDisconnectTest } from '../status-manager/disconnect-test.js';
 
 const logger = scopedLogger('api:error');
 
@@ -63,8 +63,7 @@ class ErrorHandler {
 		}
 
 		if ([ 'ping timeout', 'transport error' ].includes(reason)) {
-			const statusManager = getStatusManager();
-			statusManager.reportDisconnect();
+			getDisconnectTest().reportDisconnect();
 		}
 	};
 }

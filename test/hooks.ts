@@ -13,7 +13,7 @@ chai.use(global.chaiSnapshotInstance);
 export const mochaHooks = {
 	async beforeAll () {
 		if (global.v8debug === undefined && !/--debug|--inspect/.test(process.execArgv.join(' ')) && !process.env['JB_IDE_PORT']) {
-			import('blocked').then(({ default: blocked }) => {
+			await import('blocked').then(({ default: blocked }) => {
 				blocked((ms) => {
 					throw new Error(`Blocked for ${ms} ms.`);
 				}, { threshold: 100 });
