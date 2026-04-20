@@ -9,7 +9,7 @@ export const adoptionStatusHandler = (socket: Socket) => async ({ message, adopt
 	logger[level || 'info'](message);
 
 	if (!adopted && process.env['GP_HOST_HW']) {
-		const { expiresAt, token } = startLocalAdoptionServer();
+		const { expiresAt, token } = await startLocalAdoptionServer();
 		const localProbeIps = Array.from(getLocalIps()).slice(0, 32);
 
 		socket.emit('probe:adoption:ready', {
@@ -18,6 +18,6 @@ export const adoptionStatusHandler = (socket: Socket) => async ({ message, adopt
 			ips: localProbeIps,
 		});
 	} else {
-		stopLocalAdoptionServer();
+		await stopLocalAdoptionServer();
 	}
 };
