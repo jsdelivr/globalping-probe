@@ -13,6 +13,7 @@ module.exports = {
 	},
 	status: {
 		numberOfPackets: 6,
+		icmpTcpInterval: 60 * 60 * 1000, // 1 hour
 		icmpTcpTargets: [
 			's3.dualstack.eu-central-1.amazonaws.com',
 			's3.dualstack.us-east-1.amazonaws.com',

@@ -8,8 +8,6 @@ import { scopedLogger } from '../lib/logger.js';
 
 const logger = scopedLogger('status-manager');
 
-const ICMP_TCP_INTERVAL_TIME = 60 * 60 * 1000; // 1 hour
-
 export class IcmpTcpTest {
 	private timer?: NodeJS.Timeout;
 	private stopped = true;
@@ -43,6 +41,7 @@ export class IcmpTcpTest {
 	private async runScheduledCycle () {
 		await this.measureAllLocations();
 		await this.evaluateAndUpdate();
+		const interval = config.get<number>('status.icmpTcpInterval');
 
 		if (this.stopped) { return; }
 
@@ -51,7 +50,7 @@ export class IcmpTcpTest {
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		this.timer = setTimeout(async () => {
 			await this.runScheduledCycle();
-		}, ICMP_TCP_INTERVAL_TIME);
+		}, interval);
 	}
 
 	private async evaluateAndUpdate () {
@@ -74,8 +73,8 @@ export class IcmpTcpTest {
 			logger.warn(
 				'ICMP/TCP ping RTT diff exceeds the threshold. Retrying in 1 hour. Probe temporarily disconnected.',
 				{
-					ipv4: targets.map((t, i) => ({ targets: t, diff: this.diffsIPv4?.[i] })),
-					ipv6: targets.map((t, i) => ({ targets: t, diff: this.diffsIPv6?.[i] })),
+					ipv4: targets.map((t, i) => ({ target: t, diff: this.diffsIPv4?.[i] })),
+					ipv6: targets.map((t, i) => ({ target: t, diff: this.diffsIPv6?.[i] })),
 					isProxy: this.isProxy,
 				},
 			);
