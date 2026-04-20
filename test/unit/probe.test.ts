@@ -61,7 +61,7 @@ describe('index module', () => {
 	});
 
 	beforeEach(() => {
-		sandbox = useSandboxWithFakeTimers();
+		sandbox = useSandboxWithFakeTimers({ useFakeTimers: { shouldAdvanceTime: false } });
 	});
 
 	afterEach(() => {

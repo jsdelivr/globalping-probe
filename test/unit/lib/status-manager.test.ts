@@ -25,7 +25,7 @@ describe('StatusManager', () => {
 	});
 
 	beforeEach(() => {
-		sandbox = useSandboxWithFakeTimers();
+		sandbox = useSandboxWithFakeTimers({ useFakeTimers: { shouldAdvanceTime: false } });
 		socket = sandbox.createStubInstance(Socket) as sinon.SinonStubbedInstance<Socket>;
 		pingCmd.resolves({ stdout: pingSuccess });
 		hasRequired.resolves(true);

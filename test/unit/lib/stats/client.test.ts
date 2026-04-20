@@ -9,7 +9,7 @@ describe('stats client', () => {
 	let mockSocket: sinon.SinonStubbedInstance<Socket>;
 
 	beforeEach(() => {
-		sandbox = useSandboxWithFakeTimers();
+		sandbox = useSandboxWithFakeTimers({ useFakeTimers: { shouldAdvanceTime: false } });
 		mockSocket = sandbox.createStubInstance(Socket) as sinon.SinonStubbedInstance<Socket>;
 	});
 

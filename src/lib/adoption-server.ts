@@ -1,5 +1,7 @@
-import crypto from 'node:crypto';
 import http from 'node:http';
+import crypto from 'node:crypto';
+import { once } from 'node:events';
+import { promisify } from 'node:util';
 import config from 'config';
 import { scopedLogger } from './logger.js';
 
@@ -25,18 +27,26 @@ const IGNORED_HTTP_ERRORS = [ 'ECONNABORTED', 'ECONNRESET', 'EPIPE', 'HPE_INVALI
 
 const ALLOWED_PATHS = [ '/', '/adopt' ];
 
-export const stopLocalAdoptionServer = () => {
-	server?.close();
+export const stopLocalAdoptionServer = async () => {
 	clearTimeout(closeTimeout);
+
+	const activeServer = server;
+	server = undefined;
+
+	if (!activeServer) {
+		return;
+	}
+
+	await promisify(activeServer.close.bind(activeServer))();
 };
 
-export const startLocalAdoptionServer = () => {
-	stopLocalAdoptionServer();
+export const startLocalAdoptionServer = async () => {
+	await stopLocalAdoptionServer();
 
 	// create a new token and start the server
 	token = crypto.randomBytes(32).toString('hex');
 
-	server = http.createServer((req, res) => {
+	const localServer = http.createServer((req, res) => {
 		if (req.method === 'OPTIONS') {
 			res.writeHead(204, CORS_HEADERS);
 			res.end();
@@ -77,7 +87,7 @@ export const startLocalAdoptionServer = () => {
 		res.end(JSON.stringify({ token }));
 	});
 
-	server.on('error', (error: NodeJS.ErrnoException) => {
+	localServer.on('error', (error: NodeJS.ErrnoException) => {
 		if (error.code && IGNORED_HTTP_ERRORS.includes(error.code)) {
 			return;
 		}
@@ -85,10 +95,16 @@ export const startLocalAdoptionServer = () => {
 		logger.error('Adoption server error:', error);
 	});
 
-	server.listen(serverPort);
+	const listeningPromise = once(localServer, 'listening');
+	localServer.listen(serverPort);
+	await listeningPromise;
+
+	server = localServer;
 
 	closeTimeout = setTimeout(() => {
-		server?.close();
+		void stopLocalAdoptionServer().catch((error: unknown) => {
+			logger.error('Failed to stop adoption server:', error);
+		});
 	}, serverLifetime);
 
 	return {
