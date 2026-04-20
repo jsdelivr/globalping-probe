@@ -9,7 +9,7 @@ describe('progress buffer', () => {
 	let mockedSocket: sinon.SinonStubbedInstance<Socket>;
 
 	beforeEach(() => {
-		sandbox = useSandboxWithFakeTimers();
+		sandbox = useSandboxWithFakeTimers({ useFakeTimers: { shouldAdvanceTime: false } });
 		mockedSocket = sandbox.createStubInstance(Socket) as sinon.SinonStubbedInstance<Socket>;
 	});
 

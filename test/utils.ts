@@ -221,6 +221,7 @@ export const useSandboxWithFakeTimers = (config: Partial<SinonSandboxConfig> = {
 	return sinon.createSandbox({
 		...config,
 		useFakeTimers: {
+			shouldAdvanceTime: true,
 			..._.isObject(config.useFakeTimers) ? config.useFakeTimers : {},
 			// Avoid overriding hrtime, performance, and other advanced APIs as it causes problems with other modules.
 			toFake: [ 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date' ],

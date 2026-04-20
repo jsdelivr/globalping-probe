@@ -361,7 +361,7 @@ describe(`.run() method`, () => {
 	};
 
 	beforeEach(() => {
-		sandbox = useSandboxWithFakeTimers({ useFakeTimers: { now: 0 } });
+		sandbox = useSandboxWithFakeTimers({ useFakeTimers: { now: 0, shouldAdvanceTime: false } });
 		mockedSocket = sandbox.createStubInstance(Socket) as sinon.SinonStubbedInstance<Socket>;
 		netConnectStub = sandbox.stub(net, 'connect');
 	});

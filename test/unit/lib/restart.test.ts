@@ -7,7 +7,7 @@ describe('restart module', () => {
 	let sandbox: sinon.SinonSandbox;
 
 	beforeEach(() => {
-		sandbox = useSandboxWithFakeTimers();
+		sandbox = useSandboxWithFakeTimers({ useFakeTimers: { shouldAdvanceTime: false } });
 	});
 
 	afterEach(() => {
