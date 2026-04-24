@@ -22,6 +22,10 @@ export type PingOptions = {
 	ipVersion: 4 | 6;
 };
 
+export type PingCommandOptions = {
+	interval?: number;
+};
+
 const allowedIpVersions = [ 4, 6 ];
 
 const pingOptionsSchema = Joi.object<PingOptions>({
@@ -64,12 +68,13 @@ export type PingParseOutputJson = {
 
 const logger = scopedLogger('ping-command');
 
-export const argBuilder = (options: PingOptions): string[] => {
+export const argBuilder = (options: PingOptions, commandOptions: PingCommandOptions = {}): string[] => {
+	const interval = commandOptions.interval ?? config.get<number>('commands.ping.interval');
 	const args = [
 		`-${options.ipVersion}`,
 		'-O',
 		[ '-c', options.packets.toString() ],
-		[ '-i', '0.5' ],
+		[ '-i', String(interval) ],
 		[ '-w', '10' ],
 		options.target,
 	].flat();
@@ -77,8 +82,8 @@ export const argBuilder = (options: PingOptions): string[] => {
 	return args;
 };
 
-export const pingCmd = (options: PingOptions): ExecaChildProcess => {
-	const args = argBuilder(options);
+export const pingCmd = (options: PingOptions, commandOptions: PingCommandOptions = {}): ExecaChildProcess => {
+	const args = argBuilder(options, commandOptions);
 	return execa('unbuffer', [ 'ping', ...args ], { timeout: config.get<number>('commands.timeout') * 1000 });
 };
 

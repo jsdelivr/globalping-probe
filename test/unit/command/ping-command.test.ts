@@ -34,6 +34,22 @@ describe('ping command executor', () => {
 			expect(joinedArgs).to.contain('-w 10');
 		});
 
+		it('should allow overriding ping interval', () => {
+			const options = {
+				type: 'ping' as PingOptions['type'],
+				target: 'google.com',
+				packets: 1,
+				protocol: 'ICMP',
+				port: 80,
+				inProgressUpdates: false,
+				ipVersion: 4 as const,
+			};
+
+			const args = argBuilder(options, { interval: 1 });
+
+			expect(args.join(' ')).to.contain('-i 1');
+		});
+
 		describe('ipVersion', () => {
 			it('should set -4 flag', () => {
 				const options = {
