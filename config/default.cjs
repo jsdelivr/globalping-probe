@@ -31,6 +31,9 @@ module.exports = {
 	commands: {
 		timeout: 25,
 		progressInterval: 500,
+		ping: {
+			interval: 0.5,
+		},
 		mtr: {
 			interval: 0.5,
 		},
