@@ -4,11 +4,11 @@ import { expect } from 'chai';
 import * as td from 'testdouble';
 import { useSandboxWithFakeTimers } from '../../utils.js';
 import type { StatusManager as StatusManagerType } from '../../../src/status-manager/status-manager.js';
-import type { PingOptions } from '../../../src/command/ping-command.js';
+import type { PingCommandOptions, PingOptions } from '../../../src/command/ping-command.js';
 
 describe('StatusManager', () => {
 	let StatusManager: typeof StatusManagerType;
-	let initStatusManager: (socket: Socket, pingCmd: (options: PingOptions) => Promise<{ stdout: string }>) => StatusManagerType;
+	let initStatusManager: (socket: Socket, pingCmd: (options: PingOptions, commandOptions?: PingCommandOptions) => Promise<{ stdout: string }>) => StatusManagerType;
 	let getStatusManager: () => StatusManagerType;
 	let sandbox: sinon.SinonSandbox;
 	let socket: sinon.SinonStubbedInstance<Socket>;
@@ -113,5 +113,19 @@ describe('StatusManager', () => {
 		const statusManager = initStatusManager(socket, pingCmd);
 		const statusManager2 = getStatusManager();
 		expect(statusManager).to.equal(statusManager2);
+	});
+
+	it('should use a 1 second ping interval for status checks', () => {
+		new StatusManager(socket, pingCmd);
+
+		const pingTestPingCmd = initPingTest.firstCall.args[2] as (options: PingOptions) => Promise<{ stdout: string }>;
+		pingTestPingCmd({ type: 'ping', ipVersion: 4, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false });
+
+		expect(pingCmd.calledOnce).to.be.true;
+
+		expect(pingCmd.firstCall.args).to.deep.equal([
+			{ type: 'ping', ipVersion: 4, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false },
+			{ interval: 1 },
+		]);
 	});
 });

@@ -1,6 +1,6 @@
 import type { ExecaChildProcess } from 'execa';
 import type { Socket } from 'socket.io-client';
-import type { PingOptions } from '../command/ping-command.js';
+import type { PingCommandOptions, PingOptions } from '../command/ping-command.js';
 import { hasRequired } from '../lib/dependencies.js';
 import { initDisconnectTest } from './disconnect-test.js';
 import { initIcmpTcpTest } from './icmp-tcp-test.js';
@@ -26,10 +26,11 @@ export class StatusManager {
 
 	constructor (
 		private readonly socket: Socket,
-		pingCmd: (options: PingOptions) => ExecaChildProcess,
+		pingCmd: (options: PingOptions, commandOptions?: PingCommandOptions) => ExecaChildProcess,
 	) {
-		this.pingTest = initPingTest(this.updateStatus.bind(this), socket, pingCmd);
-		this.icmpTcpTest = initIcmpTcpTest(this.updateStatus.bind(this), socket, pingCmd);
+		const statusPingCmd = (options: PingOptions) => pingCmd(options, { interval: 1 });
+		this.pingTest = initPingTest(this.updateStatus.bind(this), socket, statusPingCmd);
+		this.icmpTcpTest = initIcmpTcpTest(this.updateStatus.bind(this), socket, statusPingCmd);
 		initDisconnectTest(this.updateStatus.bind(this));
 	}
 
@@ -101,7 +102,7 @@ export class StatusManager {
 
 let statusManager: StatusManager;
 
-export const initStatusManager = (socket: Socket, pingCmd: (options: PingOptions) => ExecaChildProcess) => {
+export const initStatusManager = (socket: Socket, pingCmd: (options: PingOptions, commandOptions?: PingCommandOptions) => ExecaChildProcess) => {
 	statusManager = new StatusManager(socket, pingCmd);
 	return statusManager;
 };
