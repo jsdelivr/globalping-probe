@@ -829,6 +829,31 @@ describe(`.run() method`, () => {
 		expect(result.rawBody).to.equal('x'.repeat(10000));
 	});
 
+	it('should set truncated=true when response headers exceed the size limit', async () => {
+		mockHttpResponse([
+			'HTTP/1.1 200 OK',
+			`X-Huge: ${'a'.repeat(11_000)}`,
+			'',
+			'body',
+		]);
+
+		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http' as const,
+			target: 'google.com',
+			inProgressUpdates: false,
+			protocol: 'HTTP',
+			request: { method: 'GET', path: '/', query: '' },
+			ipVersion: 4,
+		});
+
+		const result = mockedSocket.emit.firstCall.args[1].result;
+		expect(result.truncated).to.equal(true);
+		expect(result.headers['x-huge']).to.match(/\.\.\.\[truncated\]$/);
+		expect(result.headers['x-huge'].length).to.equal(9994); // 10_000 - 'x-huge'.length (6)
+		expect(result.rawHeaders.length).to.equal(10_002); // 'X-Huge: ' (8) + 9994
+		expect(result.rawOutput.length).to.equal(10_021); // 'HTTP/1.1 200' (12) + '\n' + rawHeaders + '\n\n' + 'body'
+	});
+
 	it('should timeout after 10 seconds', async () => {
 		const fakeSocket = new Duplex({
 			read () {},

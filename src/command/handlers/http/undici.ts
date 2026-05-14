@@ -11,6 +11,7 @@ import type { HttpOptions } from '../../http-command.js';
 import { dnsLookup } from '../shared/dns-resolver.js';
 import { callbackify } from '../../../lib/util.js';
 import { isIpPrivate } from '../../../lib/private-ip.js';
+import { truncateHeaderPairs } from './truncate-headers.js';
 
 type TlsDetails = {
 	authorized: boolean;
@@ -277,10 +278,18 @@ export class HttpHandler {
 
 				if (headers) {
 					const entries: [string, string][] = Array.isArray(headers)
+						// HTTP/1.x: headers is a flat [name, value, name, value, ...] array.
 						? _.chunk(headers as string[], 2).map(([ k, v ]) => [ String(k), String(v) ])
+						// HTTP/2: headers is a { name: value } object.
 						: _.toPairs(headers).map(([ k, v ]) => [ k, String(v) ]);
 
-					for (const [ key, value ] of entries) {
+					const truncatedPairs = truncateHeaderPairs(entries);
+
+					if (truncatedPairs.truncated) {
+						this.result.truncated = true;
+					}
+
+					for (const [ key, value ] of truncatedPairs.headers) {
 						const lowKey = key.toLowerCase();
 
 						if (this.result.headers[lowKey] && Array.isArray(this.result.headers[lowKey])) {
