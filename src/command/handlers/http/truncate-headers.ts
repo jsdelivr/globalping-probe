@@ -1,8 +1,9 @@
 const HEADERS_SIZE_LIMIT = 10_000;
-const HEADER_KEYS_SIZE_LIMIT = HEADERS_SIZE_LIMIT / 2;
+const HEADER_KEYS_SIZE_LIMIT = HEADERS_SIZE_LIMIT / 2; // Reserve half of the budget for values.
 const HEADER_TRUNCATION_MARK = '...[truncated]';
+const RAW_HEADERS_EXTRA_SYMBOLS_SIZE = 3;
 
-export type TruncateHeaderPairsResult = {
+type TruncateHeaderPairsResult = {
 	truncated: boolean;
 	headers: [string, string][];
 };
@@ -12,9 +13,11 @@ export function truncateHeaderPairs (pairs: [string, string][]): TruncateHeaderP
 	let valuesSize = 0;
 
 	for (const [ k, v ] of pairs) {
-		keysSize += k.length;
+		keysSize += k.length + RAW_HEADERS_EXTRA_SYMBOLS_SIZE;
 		valuesSize += v.length;
 	}
+
+	keysSize -= 1; // Remove the last "\n" line separator.
 
 	// Fast path: total fits, no truncation needed.
 	if (keysSize + valuesSize <= HEADERS_SIZE_LIMIT) {
@@ -24,7 +27,6 @@ export function truncateHeaderPairs (pairs: [string, string][]): TruncateHeaderP
 	let kept = pairs;
 
 	// Keys phase: drop pairs with the largest keys until the keys budget fits.
-	// Drop pairs with the largest keys until the keys budget fits.
 	if (keysSize > HEADER_KEYS_SIZE_LIMIT) {
 		const sortedIndexesDesc = pairs.map((_, i) => i).sort((a, b) => pairs[b]![0].length - pairs[a]![0].length);
 		const droppedIndexes = new Set<number>();
@@ -35,7 +37,7 @@ export function truncateHeaderPairs (pairs: [string, string][]): TruncateHeaderP
 			}
 
 			droppedIndexes.add(i);
-			keysSize -= pairs[i]![0].length;
+			keysSize -= pairs[i]![0].length + RAW_HEADERS_EXTRA_SYMBOLS_SIZE;
 			valuesSize -= pairs[i]![1].length;
 		}
 

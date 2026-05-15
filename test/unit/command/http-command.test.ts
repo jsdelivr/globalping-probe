@@ -833,6 +833,8 @@ describe(`.run() method`, () => {
 		mockHttpResponse([
 			'HTTP/1.1 200 OK',
 			`X-Huge: ${'a'.repeat(11_000)}`,
+			`X-Normal: ${'b'.repeat(100)}`,
+			`X-Normal-2: ${'c'.repeat(100)}`,
 			'',
 			'body',
 		]);
@@ -849,9 +851,9 @@ describe(`.run() method`, () => {
 		const result = mockedSocket.emit.firstCall.args[1].result;
 		expect(result.truncated).to.equal(true);
 		expect(result.headers['x-huge']).to.match(/\.\.\.\[truncated\]$/);
-		expect(result.headers['x-huge'].length).to.equal(9994); // 10_000 - 'x-huge'.length (6)
-		expect(result.rawHeaders.length).to.equal(10_002); // 'X-Huge: ' (8) + 9994
-		expect(result.rawOutput.length).to.equal(10_021); // 'HTTP/1.1 200' (12) + '\n' + rawHeaders + '\n\n' + 'body'
+		expect(result.headers['x-huge'].length).to.equal(9768);
+		expect(result.rawHeaders.length).to.equal(10000);
+		expect(result.rawOutput.length).to.equal(10_019); // 'HTTP/1.1 200' (12) + '\n' (1) + rawHeaders (10000) + '\n\n' (2) + 'body' (4)
 	});
 
 	it('should timeout after 10 seconds', async () => {

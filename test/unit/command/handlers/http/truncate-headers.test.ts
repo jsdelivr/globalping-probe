@@ -32,7 +32,8 @@ describe('truncateHeaderPairs', () => {
 			expect(result.truncated).to.equal(true);
 			expect(sumChars(result.headers)).to.be.at.most(10_000);
 			expect(result.headers[0]![1].endsWith('...[truncated]')).to.equal(true);
-			expect(result.headers[0]![1].length).to.equal(10_000 - 'x-huge'.length);
+			// 10_000 budget minus key length (6) and per-pair framing (": " = 2).
+			expect(result.headers[0]![1].length).to.equal(10_000 - 'x-huge'.length - 2);
 		});
 
 		it('keeps small values untouched while truncating one giant', () => {
@@ -49,7 +50,6 @@ describe('truncateHeaderPairs', () => {
 			expect(result.headers[0]![1].endsWith('...[truncated]')).to.equal(true);
 			expect(result.headers[1]).to.deep.equal([ 'server', 'nginx' ]);
 			expect(result.headers[2]).to.deep.equal([ 'content-type', 'text/html' ]);
-			expect(result.headers[0]![1].endsWith('...[truncated]')).to.equal(true);
 		});
 
 		it('truncates equal-sized giants to the same length', () => {
@@ -98,6 +98,7 @@ describe('truncateHeaderPairs', () => {
 			const result = truncateHeaderPairs(pairs);
 
 			expect(result.truncated).to.equal(true);
+			expect(sumChars(result.headers)).to.equal(5006);
 			expect(result.headers).to.have.lengthOf(1);
 			expect(result.headers[0]![0]).to.equal('server');
 		});
@@ -114,6 +115,7 @@ describe('truncateHeaderPairs', () => {
 			const result = truncateHeaderPairs(pairs);
 
 			expect(result.truncated).to.equal(true);
+			expect(sumChars(result.headers)).to.equal(7006);
 			expect(result.headers).to.have.lengthOf(2);
 			expect(result.headers.find(([ k ]) => k.startsWith('B'))).to.equal(undefined);
 			expect(result.headers.find(([ k ]) => k.startsWith('A'))).to.not.equal(undefined);
