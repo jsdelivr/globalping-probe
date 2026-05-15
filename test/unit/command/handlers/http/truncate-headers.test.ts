@@ -3,7 +3,7 @@ import { truncateHeaderPairs } from '../../../../../src/command/handlers/http/tr
 
 const repeat = (char: string, n: number) => char.repeat(n);
 
-const sumChars = (pairs: [string, string][]) => pairs.reduce((sum, [ k, v ]) => sum + k.length + v.length, 0);
+const sumChars = (pairs: [string, string][]) => pairs.reduce((sum, [ k, v ]) => sum + k.length + v.length + 3, 0) - 1;
 
 describe('truncateHeaderPairs', () => {
 	describe('fast path', () => {
@@ -30,9 +30,8 @@ describe('truncateHeaderPairs', () => {
 			const result = truncateHeaderPairs(pairs);
 
 			expect(result.truncated).to.equal(true);
-			expect(sumChars(result.headers)).to.be.at.most(10_000);
+			expect(sumChars(result.headers)).to.equal(10_000);
 			expect(result.headers[0]![1].endsWith('...[truncated]')).to.equal(true);
-			// 10_000 budget minus key length (6) and per-pair framing (": " = 2).
 			expect(result.headers[0]![1].length).to.equal(10_000 - 'x-huge'.length - 2);
 		});
 
@@ -46,7 +45,7 @@ describe('truncateHeaderPairs', () => {
 			const result = truncateHeaderPairs(pairs);
 
 			expect(result.truncated).to.equal(true);
-			expect(sumChars(result.headers)).to.be.at.most(10_000);
+			expect(sumChars(result.headers)).to.equal(10_000);
 			expect(result.headers[0]![1].endsWith('...[truncated]')).to.equal(true);
 			expect(result.headers[1]).to.deep.equal([ 'server', 'nginx' ]);
 			expect(result.headers[2]).to.deep.equal([ 'content-type', 'text/html' ]);
@@ -62,63 +61,84 @@ describe('truncateHeaderPairs', () => {
 
 			expect(result.truncated).to.equal(true);
 			expect(result.headers[0]![1].length).to.equal(result.headers[1]![1].length);
-			expect(sumChars(result.headers)).to.be.at.most(10_000);
+			expect(sumChars(result.headers)).to.equal(9999);
 			expect(result.headers[0]![1].endsWith('...[truncated]')).to.equal(true);
 			expect(result.headers[1]![1].endsWith('...[truncated]')).to.equal(true);
 		});
 
 		it('matches the documented [80, 60, 20] example scaled up to real bytes', () => {
-			// values 8000, 6000, 2000 (sum 16000) with no keys -> value budget = 10000 minus key bytes.
 			const pairs: [string, string][] = [
 				[ 'a', repeat('x', 8000) ],
 				[ 'b', repeat('y', 6000) ],
 				[ 'c', repeat('z', 2000) ],
 			];
 
-			// keys total = 3, value budget = 9997. Expected: top 2 capped to (9997 - 2000) / 2 = 3998 (or 3998 floored).
 			const result = truncateHeaderPairs(pairs);
 
 			expect(result.truncated).to.equal(true);
-			expect(sumChars(result.headers)).to.be.at.most(10_000);
+			expect(sumChars(result.headers)).to.equal(9999);
 			// First two are the giants, both should be truncated to the same length.
 			expect(result.headers[0]![1].length).to.equal(result.headers[1]![1].length);
 			expect(result.headers[2]).to.deep.equal([ 'c', repeat('z', 2000) ]);
 		});
 	});
 
-	describe('keys phase (total over the limit AND keys over half-budget)', () => {
-		it('drops the pair with the biggest key when keys exceed half-budget', () => {
+	describe('values phase keeps headers instead of dropping them', () => {
+		it('keeps a big-key header (truncating values) instead of dropping it', () => {
 			const pairs: [string, string][] = [
-				[ repeat('K', 6000), 'small' ], // 6005 — keys phase target
-				[ 'server', repeat('v', 5000) ], // 5006
+				[ repeat('K', 6000), 'small' ],
+				[ 'server', repeat('v', 5000) ],
 			];
-			// keysSize = 6006, valuesSize = 5005, total = 11_011 > 10_000.
-			// keys > 5000 -> drop biggest key. After drop: keys=6, values=5000.
+			// minSize fits (key + marker + framing), so nothing is dropped — the
+			// 5000-char value is truncated instead.
 
 			const result = truncateHeaderPairs(pairs);
 
 			expect(result.truncated).to.equal(true);
-			expect(sumChars(result.headers)).to.equal(5006);
-			expect(result.headers).to.have.lengthOf(1);
-			expect(result.headers[0]![0]).to.equal('server');
+			expect(result.headers).to.have.lengthOf(2);
+			expect(result.headers[0]![0].startsWith('K')).to.equal(true);
+			expect(result.headers[1]![1].endsWith('...[truncated]')).to.equal(true);
+			expect(sumChars(result.headers)).to.equal(10_000);
+		});
+	});
+
+	describe('drop phase (names too large to fit even when values are truncated)', () => {
+		it('drops the largest header when minimal footprints cannot all fit', () => {
+			const pairs: [string, string][] = [
+				[ repeat('X', 9990), 'tiny' ], // name alone ~ the whole budget
+				[ 'content-type', 'text/html' ],
+				[ 'server', 'nginx' ],
+			];
+			// minSize (9990 + marker + ... + 24 + 14) > 10_000 -> the giant-name
+			// header is dropped; the two small headers stay intact.
+
+			const result = truncateHeaderPairs(pairs);
+
+			expect(result.truncated).to.equal(true);
+			expect(result.headers).to.have.lengthOf(2);
+			expect(result.headers.find(([ k ]) => k.startsWith('X'))).to.equal(undefined);
+
+			expect(result.headers).to.deep.equal([
+				[ 'content-type', 'text/html' ],
+				[ 'server', 'nginx' ],
+			]);
 		});
 
-		it('keeps as many pairs as possible by dropping the biggest key first', () => {
-			const pairs: [string, string][] = [
-				[ repeat('B', 4000), 'v' ], // 4001
-				[ repeat('A', 2000), 'v' ], // 2001
-				[ 'small', repeat('v', 5000) ], // 5005
-			];
-			// keysSize = 6005, valuesSize = 5002, total = 11_007 > 10_000.
-			// Drop biggest key (4000) -> keys=2005, values=5001 -> total=7006 fits.
+		it('drops the biggest headers first, keeping as many as possible', () => {
+			const pairs: [string, string][] = Array.from({ length: 5 }, (_, i): [string, string] => [ repeat('N', 3000), `v${i}` ]);
 
 			const result = truncateHeaderPairs(pairs);
 
 			expect(result.truncated).to.equal(true);
-			expect(sumChars(result.headers)).to.equal(7006);
-			expect(result.headers).to.have.lengthOf(2);
-			expect(result.headers.find(([ k ]) => k.startsWith('B'))).to.equal(undefined);
-			expect(result.headers.find(([ k ]) => k.startsWith('A'))).to.not.equal(undefined);
+			expect(result.headers).to.have.lengthOf(3);
+
+			expect(result.headers).to.deep.equal([
+				[ repeat('N', 3000), 'v2' ],
+				[ repeat('N', 3000), 'v3' ],
+				[ repeat('N', 3000), 'v4' ],
+			]);
+
+			expect(sumChars(result.headers)).to.equal(9014); // 3 * (3000 + 2 + 3) - 1
 		});
 	});
 
