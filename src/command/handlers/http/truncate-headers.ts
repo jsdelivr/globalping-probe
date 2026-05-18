@@ -30,7 +30,7 @@ export function truncateHeaderPairs (pairs: [string, string][]): TruncateHeaderP
 
 	let kept = pairs;
 
-	// Keys phase: drop pairs with the largest min size until values are able to fit by shrinking.
+	// Remove headers phase: drop pairs with the largest min size until values are able to fit by shrinking.
 	if (minSize > HEADERS_SIZE_LIMIT) {
 		const orderedByMin = pairs
 			.map((p, i) => ({ i, min: pairMinSize(...p) }))
@@ -54,7 +54,7 @@ export function truncateHeaderPairs (pairs: [string, string][]): TruncateHeaderP
 		return { truncated: true, headers: kept };
 	}
 
-	// Values phase: imagine lowering a uniform length cap L from infinity down.
+	// Shrink values phase: imagine lowering a uniform length cap L from infinity down.
 	// At each step L drops from sortedLengths[N-1] to sortedLengths[N], which
 	// uniformly clips the top N values; total falls by N * (drop in L). Walk
 	// down step by step until total dips under the budget, then back off to the
