@@ -56,15 +56,15 @@ export function truncateHeaderPairs (pairs: [string, string][]): TruncateHeaderP
 
 	// Shrink values phase: imagine lowering a uniform length cap L from infinity down.
 	// At each step L drops from sortedLengths[N-1] to sortedLengths[N], which
-	// uniformly clips the top N values; total falls by N * (drop in L). Walk
-	// down step by step until total dips under the budget, then back off to the
+	// uniformly clips the top N values; the total falls by N * (drop in L). Walk
+	// down step by step until the total dips under the budget, then back off to the
 	// exact L that hits the budget.
 	//
 	// Example: values [80, 60, 20], budget 100. valuesSize = 160.
 	//   N=1: lower L 80 -> 60.  reduction = 1*(80-60) = 20.  total: 160 -> 140  (still > 100).
 	//   N=2: lower L 60 -> 20.  reduction = 2*(60-20) = 80.  total: 140 -> 60   (under, overshot).
 	//        Exact L: 60 - (140 - 100) / 2 = 40.
-	// Result: top two values truncated to 40, the 20-value stays (40+40+20 = 100).
+	// Result: the top two values truncated to 40, the 20-value stays (40+40+20 = 100).
 	const sortedLengths = kept.map(([ , v ]) => v.length).sort((a, b) => b - a);
 	const valuesSize = sortedLengths.reduce((sum, n) => sum + n, 0);
 	const valueBudget = HEADERS_SIZE_LIMIT - size + valuesSize;
