@@ -16,7 +16,8 @@ type HttpProgress = DefaultProgress & {
 	rawBody: string;
 };
 
-type ProgressType = DefaultProgress | HttpProgress;
+type ProgressData = DefaultProgress | HttpProgress;
+type ProgressProducer = () => ProgressData | Promise<ProgressData>;
 
 type ResultTypeJson = DnsParseResponseClassicJson | DnsParseResponseTraceJson | PingParseOutputJson | HttpOutputJson | MtrResultTypeJson | Record<string, unknown>;
 
@@ -27,6 +28,8 @@ export class ProgressBuffer {
 	private offset: Record<string, number> = {};
 	private isFirst = true;
 	private timer?: NodeJS.Timeout;
+	private progressProducer?: ProgressProducer;
+	private resultSent = false;
 
 	constructor (
 		private readonly socket: Socket,
@@ -35,22 +38,26 @@ export class ProgressBuffer {
 		private readonly mode: 'append' | 'diff' | 'overwrite',
 	) {}
 
-	pushProgress (progress: ProgressType) {
-		Object.entries(progress).forEach(([ field, value ]) => {
-			if (this.buffer[field] === undefined || this.mode !== 'append') {
-				this.buffer[field] = value;
-			} else {
-				this.buffer[field] += value;
-			}
-		});
+	pushProgress (progress: ProgressData) {
+		this.mergeProgress(progress);
+		this.scheduleSend();
+	}
 
+	pushLazyProgress (producer: ProgressProducer) {
+		if (this.mode !== 'overwrite') {
+			throw new Error('Delayed progress data parsing is only supported in overwrite mode.');
+		}
+
+		this.progressProducer = producer;
+		this.scheduleSend();
+	}
+
+	private scheduleSend () {
 		if (this.isFirst) {
-			this.sendProgress();
 			this.isFirst = false;
+			void this.sendProgress();
 		} else if (!this.timer) {
-			this.timer = setTimeout(() => {
-				this.sendProgress();
-			}, progressIntervalTime);
+			this.timer = setTimeout(() => void this.sendProgress(), progressIntervalTime);
 		}
 	}
 
@@ -59,13 +66,31 @@ export class ProgressBuffer {
 			clearTimeout(this.timer);
 		}
 
+		this.resultSent = true;
+		delete this.progressProducer;
 		this.sendResult(result);
 	}
 
-	private sendProgress () {
+	private mergeProgress (progress: ProgressData) {
+		Object.entries(progress).forEach(([ field, value ]) => {
+			if (this.buffer[field] === undefined || this.mode !== 'append') {
+				this.buffer[field] = value;
+			} else {
+				this.buffer[field] += value;
+			}
+		});
+	}
+
+	private async sendProgress () {
 		delete this.timer;
 
-		if (_.isEmpty(this.buffer)) {
+		if (this.progressProducer) {
+			const producer = this.progressProducer;
+			delete this.progressProducer;
+			this.mergeProgress(await producer());
+		}
+
+		if (this.resultSent || _.isEmpty(this.buffer)) {
 			return;
 		}
 
