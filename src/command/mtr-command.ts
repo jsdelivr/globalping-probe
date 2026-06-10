@@ -98,9 +98,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		let isResultPrivate = false;
 
 		if (cmd.stdout) {
-			// TODO: remove:
-			// eslint-disable-next-line @typescript-eslint/no-misused-promises
-			byLine(cmd.stdout, async (data) => {
+			byLine(cmd.stdout, (data) => {
 				if (data.startsWith('mtr:')) {
 					cmd.kill('SIGKILL');
 					return;
@@ -114,14 +112,10 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 					result.data.push(line);
 				}
 
-				const output = await this.parseResult(result.data, false);
-				result.hops = output.hops;
-				result.rawOutput = output.rawOutput;
-
 				if (cmdOptions.inProgressUpdates) {
-					buffer.pushProgress({
-						rawOutput: result.rawOutput,
-					});
+					buffer.pushLazyProgress(async () => ({
+						rawOutput: (await this.parseResult(result.data, false)).rawOutput,
+					}));
 				}
 			});
 		}
