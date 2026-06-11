@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import { Socket } from 'socket.io-client';
 import { type ExecaError } from 'execa';
 import { chunkOutput, getCmdMock, getCmdMockResult, getExecaMock } from '../../utils.js';
+import { clearDnsCache } from '../../../src/lib/dns.js';
 import {
 	MtrCommand,
 	argBuilder,
@@ -192,6 +193,7 @@ describe('mtr command executor', () => {
 
 		beforeEach(() => {
 			sandbox.reset();
+			clearDnsCache();
 		});
 
 		it('should run and parse mtr with progress messages', async () => {

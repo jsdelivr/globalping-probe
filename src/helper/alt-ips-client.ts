@@ -6,7 +6,7 @@ import got, { RequestError } from 'got';
 import type { Socket } from 'socket.io-client';
 import { pluralize } from '../lib/util.js';
 import { getLocalIps } from '../lib/private-ip.js';
-import { cachedLookup } from '../lib/dns-cache.js';
+import { cachedLookup } from '../lib/dns.js';
 
 const mainLogger = scopedLogger('general');
 const altIpsLogger = scopedLogger('api:connect:alt-ips-handler');
