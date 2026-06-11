@@ -7,6 +7,7 @@ import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface } from '../types.js';
 import { byLine } from '../lib/by-line.js';
 import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
+import { createCachedResolve } from '../lib/dns-cache.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { scopedLogger } from '../lib/logger.js';
@@ -82,7 +83,11 @@ export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
 };
 
 export class MtrCommand implements CommandInterface<MtrOptions> {
-	constructor (private readonly cmd: typeof mtrCmd, readonly dnsResolver: DnsResolver = dns.promises.resolve) {}
+	private readonly cachedResolve: DnsResolver;
+
+	constructor (private readonly cmd: typeof mtrCmd, readonly dnsResolver: DnsResolver = dns.promises.resolve) {
+		this.cachedResolve = createCachedResolve(dnsResolver);
+	}
 
 	async run (socket: Socket, measurementId: string, testId: string, options: MtrOptions): Promise<unknown> {
 		const validationResult = mtrOptionsSchema.validate(options);
@@ -222,7 +227,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 	async lookupAsn (addr: string): Promise<string | undefined> {
 		const reversedAddr = addr.split('.').reverse().join('.');
-		const result = await this.dnsResolver(`${reversedAddr}.origin.asn.cymru.com`, 'TXT');
+		const result = await this.cachedResolve(`${reversedAddr}.origin.asn.cymru.com`, 'TXT');
 
 		return result.flat()[0];
 	}

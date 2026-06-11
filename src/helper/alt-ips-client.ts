@@ -6,6 +6,7 @@ import got, { RequestError } from 'got';
 import type { Socket } from 'socket.io-client';
 import { pluralize } from '../lib/util.js';
 import { getLocalIps } from '../lib/private-ip.js';
+import { cachedLookup } from '../lib/dns-cache.js';
 
 const mainLogger = scopedLogger('general');
 const altIpsLogger = scopedLogger('api:connect:alt-ips-handler');
@@ -95,6 +96,7 @@ export class AltIpsClient {
 		const httpHost = config.get<string>('api.httpHost');
 		const response = await got.post<{ ip: string; token: string }>(`${httpHost}/alternative-ip`, {
 			localAddress: ip,
+			dnsCache: cachedLookup,
 			dnsLookupIpVersion: isIP(ip) === 6 ? 6 : 4,
 			json: {
 				localAddress: ip,
