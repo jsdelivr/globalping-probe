@@ -66,10 +66,9 @@ handlersMap.set('traceroute', new TracerouteCommand(traceCmd));
 handlersMap.set('dns', new DnsCommand(dnsCmd));
 handlersMap.set('http', new HttpCommand());
 
-if (process.env['GP_HOST_FIRMWARE']) {
-	logger.info(`Hardware probe running firmware version ${process.env['GP_HOST_FIRMWARE'].substring(1)}.`);
+if (process.env['GP_HOST_HW']) {
+	logger.info(`Hardware probe version ${process.env['GP_HOST_DEVICE']?.substring(1) ?? 'unknown'} running firmware version ${process.env['GP_HOST_FIRMWARE']?.substring(1) ?? 'unknown'}.`);
 }
-
 
 function connect (workerId?: number) {
 	logger.info(`Starting probe version ${VERSION} in a ${process.env['NODE_ENV'] ?? 'production'} mode with UUID ${probeUuid.substring(0, 8)}.`);
