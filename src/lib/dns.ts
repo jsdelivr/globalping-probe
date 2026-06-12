@@ -6,6 +6,8 @@ import { isIpPrivate } from './private-ip.js';
 
 type Resolve = (hostname: string, rrtype?: string) => Promise<string[]>;
 
+const DNS_CACHE_MAX_TTL = 5 * 60 * 1000;
+
 export const getDnsServers = (getServers: () => string[] = dns.getServers): string[] => {
 	const servers = getServers();
 
@@ -18,11 +20,11 @@ export const getDnsServers = (getServers: () => string[] = dns.getServers): stri
 		});
 };
 
-export const cachedLookup = new CacheableLookup({ maxTtl: 5 * 60 });
+export const cachedLookup = new CacheableLookup({ maxTtl: DNS_CACHE_MAX_TTL / 1000 });
 
 const resolveCache = new TTLCache<string, Promise<string[]>>({
-	max: 5000,
-	ttl: 5 * 60 * 1000,
+	max: 1000,
+	ttl: DNS_CACHE_MAX_TTL,
 });
 
 export const cachedResolve = (resolve: Resolve, hostname: string, rrtype?: string): Promise<string[]> => {
