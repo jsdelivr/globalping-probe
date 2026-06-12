@@ -66,8 +66,8 @@ handlersMap.set('traceroute', new TracerouteCommand(traceCmd));
 handlersMap.set('dns', new DnsCommand(dnsCmd));
 handlersMap.set('http', new HttpCommand());
 
-if (process.env['GP_HOST_FIRMWARE']) {
-	logger.info(`Hardware probe running firmware version ${process.env['GP_HOST_FIRMWARE'].substring(1)}.`);
+if (process.env['GP_HOST_HW']) {
+	logger.info(`Hardware probe device version: ${process.env['GP_HOST_DEVICE'] ?? 'unknown'}, firmware version: ${process.env['GP_HOST_FIRMWARE'] ?? 'unknown'}.`);
 }
 
 
