@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { truncateHeaderPairs } from '../../../../../src/command/handlers/http/truncate-headers.js';
+import { hasLoneSurrogate } from '../../../../utils.js';
 
 const repeat = (char: string, n: number) => char.repeat(n);
 
@@ -33,6 +34,23 @@ describe('truncateHeaderPairs', () => {
 			expect(sumChars(result.headers)).to.equal(10_000);
 			expect(result.headers[0]![1].endsWith('...[truncated]')).to.equal(true);
 			expect(result.headers[0]![1].length).to.equal(10_000 - 'x-huge'.length - 2);
+		});
+
+		it('does not split a surrogate pair when truncating an oversized value', () => {
+			const pairs: [string, string][] = [
+				[ 'x-huge', repeat('a', 9966) + '😀' + repeat('c', 20) ],
+				[ 'x-small', 'b' ],
+			];
+
+			const result = truncateHeaderPairs(pairs);
+			const value = result.headers[0]![1];
+
+			expect(result.truncated).to.equal(true);
+			expect(sumChars(result.headers)).to.equal(9999);
+			expect(value.endsWith('...[truncated]')).to.equal(true);
+			expect(hasLoneSurrogate(value)).to.equal(false);
+			expect(JSON.stringify(result.headers)).not.to.include('\\ud83d');
+			expect(JSON.stringify(result.headers)).not.to.include('\\ude00');
 		});
 
 		it('keeps small values untouched while truncating one giant', () => {
