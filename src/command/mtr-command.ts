@@ -10,6 +10,7 @@ import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { scopedLogger } from '../lib/logger.js';
+import { getBackstopTimeout, MAX_MEASUREMENT_TIMEOUT, MIN_MEASUREMENT_TIMEOUT } from '../lib/measurement-timeout.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 
 import type {
@@ -27,6 +28,7 @@ export type MtrOptions = {
 	port: number;
 	packets: number;
 	ipVersion: number;
+	timeout?: number;
 };
 
 type DnsResolver = (addr: string, rrtype?: string) => Promise<string[]>;
@@ -41,6 +43,7 @@ const mtrOptionsSchema = Joi.object<MtrOptions>({
 	protocol: Joi.string().lowercase().insensitive(),
 	packets: Joi.number().min(1).max(16).default(3),
 	port: Joi.number(),
+	timeout: Joi.number().min(MIN_MEASUREMENT_TIMEOUT).max(MAX_MEASUREMENT_TIMEOUT),
 	ipVersion: Joi.when(Joi.ref('target'), {
 		is: Joi.string().ip({ version: [ 'ipv4' ], cidr: 'forbidden' }).required(),
 		then: Joi.valid(4).default(4),
@@ -78,7 +81,9 @@ export const argBuilder = (options: MtrOptions): string[] => {
 
 export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', [ 'mtr', ...args ], { timeout: config.get<number>('commands.timeout') * 1000 });
+	// mtr has no single total-deadline flag, so the execa timeout enforces the
+	// per-measurement deadline by force-killing at it.
+	return execa('unbuffer', [ 'mtr', ...args ], { timeout: getBackstopTimeout(options.timeout) });
 };
 
 export class MtrCommand implements CommandInterface<MtrOptions> {

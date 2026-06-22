@@ -8,6 +8,7 @@ import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
 import { scopedLogger } from '../lib/logger.js';
 import { byLine } from '../lib/by-line.js';
+import { getBackstopTimeout, MAX_MEASUREMENT_TIMEOUT, MIN_MEASUREMENT_TIMEOUT } from '../lib/measurement-timeout.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import parse, { type PingParseOutput } from './handlers/ping/parse.js';
 import { tcpPing, formatTcpPingResult, TcpPingData } from './handlers/ping/tcp-ping.js';
@@ -20,6 +21,7 @@ export type PingOptions = {
 	protocol: string;
 	port: number;
 	ipVersion: 4 | 6;
+	timeout?: number;
 };
 
 export type PingCommandOptions = {
@@ -28,6 +30,9 @@ export type PingCommandOptions = {
 
 const allowedIpVersions = [ 4, 6 ];
 
+// Native `ping -w` deadline (seconds) used when no per-measurement timeout is set.
+const defaultPingDeadline = 10;
+
 const pingOptionsSchema = Joi.object<PingOptions>({
 	type: Joi.string().valid('ping'),
 	inProgressUpdates: Joi.boolean(),
@@ -35,6 +40,7 @@ const pingOptionsSchema = Joi.object<PingOptions>({
 	packets: Joi.number().min(1).max(16).default(3),
 	protocol: Joi.string().default('ICMP'),
 	port: Joi.number().default(80),
+	timeout: Joi.number().min(MIN_MEASUREMENT_TIMEOUT).max(MAX_MEASUREMENT_TIMEOUT),
 	ipVersion: Joi.when(Joi.ref('target'), {
 		is: Joi.string().ip({ version: [ 'ipv4' ], cidr: 'forbidden' }).required(),
 		then: Joi.valid(4).default(4),
@@ -70,12 +76,13 @@ const logger = scopedLogger('ping-command');
 
 export const argBuilder = (options: PingOptions, commandOptions: PingCommandOptions = {}): string[] => {
 	const interval = commandOptions.interval ?? config.get<number>('commands.ping.interval');
+	const deadline = options.timeout ?? defaultPingDeadline;
 	const args = [
 		`-${options.ipVersion}`,
 		'-O',
 		[ '-c', options.packets.toString() ],
 		[ '-i', String(interval) ],
-		[ '-w', '10' ],
+		[ '-w', String(deadline) ],
 		options.target,
 	].flat();
 
@@ -84,7 +91,10 @@ export const argBuilder = (options: PingOptions, commandOptions: PingCommandOpti
 
 export const pingCmd = (options: PingOptions, commandOptions: PingCommandOptions = {}): ExecaChildProcess => {
 	const args = argBuilder(options, commandOptions);
-	return execa('unbuffer', [ 'ping', ...args ], { timeout: config.get<number>('commands.timeout') * 1000 });
+	// `ping -w` is the primary deadline; the execa timeout is a backstop that
+	// force-kills if `ping` overruns, with grace so `-w` can exit cleanly first.
+	const timeout = getBackstopTimeout(options.timeout, config.get<number>('commands.backstopGrace'));
+	return execa('unbuffer', [ 'ping', ...args ], { timeout });
 };
 
 export class PingCommand implements CommandInterface<PingOptions> {
@@ -180,7 +190,8 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			});
 		} : undefined;
 
-		const tcpPingResult = await cmdFn({ ...cmdOptions, timeout: 10_000, interval: 500 }, progressHandler);
+		const tcpTimeout = cmdOptions.timeout != null ? cmdOptions.timeout * 1000 : 10_000;
+		const tcpPingResult = await cmdFn({ ...cmdOptions, timeout: tcpTimeout, interval: 500 }, progressHandler);
 		const result = formatTcpPingResult(tcpPingResult);
 
 		const out = this.toJsonOutput(result);

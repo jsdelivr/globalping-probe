@@ -1,4 +1,3 @@
-import config from 'config';
 import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
@@ -10,6 +9,7 @@ import { isIpPrivate } from '../lib/private-ip.js';
 import { InternalError } from '../lib/internal-error.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { scopedLogger } from '../lib/logger.js';
+import { getBackstopTimeout, MAX_MEASUREMENT_TIMEOUT, MIN_MEASUREMENT_TIMEOUT } from '../lib/measurement-timeout.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 
 import ClassicDigParser from './handlers/dig/classic.js';
@@ -37,6 +37,7 @@ export type DnsOptions = {
 		type: string;
 	};
 	ipVersion: number;
+	timeout?: number;
 };
 
 export type DnsParseResponseJson = DnsParseResponseClassicJson | DnsParseResponseTraceJson;
@@ -60,6 +61,7 @@ const dnsOptionsSchema = Joi.object<DnsOptions>({
 	query: Joi.object({
 		type: Joi.string().valid(...allowedTypes).optional().default('A'),
 	}),
+	timeout: Joi.number().min(MIN_MEASUREMENT_TIMEOUT).max(MAX_MEASUREMENT_TIMEOUT),
 	ipVersion: Joi.when(Joi.ref('resolver'), {
 		is: Joi.string().ip({ version: [ 'ipv4' ], cidr: 'forbidden' }).required(),
 		then: Joi.valid(4).default(4),
@@ -97,7 +99,9 @@ export const argBuilder = (options: DnsOptions): string[] => {
 
 export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', [ 'dig', ...args ], { timeout: config.get<number>('commands.timeout') * 1000 });
+	// dig's `+timeout`/`+tries` are per-query; the execa timeout enforces the
+	// overall per-measurement deadline by force-killing at it.
+	return execa('unbuffer', [ 'dig', ...args ], { timeout: getBackstopTimeout(options.timeout) });
 };
 
 export class DnsCommand implements CommandInterface<DnsOptions> {

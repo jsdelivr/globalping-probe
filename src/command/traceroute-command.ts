@@ -1,4 +1,3 @@
-import config from 'config';
 import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
@@ -8,6 +7,7 @@ import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
 import { scopedLogger } from '../lib/logger.js';
 import { byLine } from '../lib/by-line.js';
+import { getBackstopTimeout, MAX_MEASUREMENT_TIMEOUT, MIN_MEASUREMENT_TIMEOUT } from '../lib/measurement-timeout.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 
 const reHost = /(\S+?)(%\w+)?(\s+)\(((?:\d+\.){3}\d+|[\da-fA-F:]+)(%\w+)?\)/;
@@ -20,6 +20,7 @@ export type TraceOptions = {
 	protocol: string;
 	port: number;
 	ipVersion: number;
+	timeout?: number;
 };
 
 type ParsedLine = {
@@ -57,6 +58,7 @@ const traceOptionsSchema = Joi.object<TraceOptions>({
 	target: Joi.string().custom(joiValidateIp).required(),
 	protocol: Joi.string(),
 	port: Joi.number(),
+	timeout: Joi.number().min(MIN_MEASUREMENT_TIMEOUT).max(MAX_MEASUREMENT_TIMEOUT),
 	ipVersion: Joi.when(Joi.ref('target'), {
 		is: Joi.string().ip({ version: [ 'ipv4' ], cidr: 'forbidden' }).required(),
 		then: Joi.valid(4).default(4),
@@ -95,7 +97,9 @@ export const argBuilder = (options: TraceOptions): string[] => {
 
 export const traceCmd = (options: TraceOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', [ 'traceroute', ...args ], { timeout: config.get<number>('commands.timeout') * 1000 });
+	// traceroute has no single total-deadline flag, so the execa timeout is the
+	// enforcement: it force-kills (and reports partial output) at the deadline.
+	return execa('unbuffer', [ 'traceroute', ...args ], { timeout: getBackstopTimeout(options.timeout) });
 };
 
 export class TracerouteCommand implements CommandInterface<TraceOptions> {

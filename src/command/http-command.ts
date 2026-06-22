@@ -3,6 +3,7 @@ import type { Socket } from 'socket.io-client';
 import type { CommandInterface } from '../types.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { joiValidateIp } from '../lib/private-ip.js';
+import { MAX_MEASUREMENT_TIMEOUT, MIN_MEASUREMENT_TIMEOUT } from '../lib/measurement-timeout.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import { HttpHandler } from './handlers/http/undici.js';
 
@@ -21,6 +22,7 @@ export type HttpOptions = {
 		headers?: Record<string, string>;
 	};
 	ipVersion: number;
+	timeout?: number;
 };
 
 const allowedHttpProtocols = [ 'HTTP', 'HTTPS', 'HTTP2' ];
@@ -41,6 +43,7 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 		query: Joi.string().allow('').optional().default(''),
 		headers: Joi.object().default({}),
 	}).required(),
+	timeout: Joi.number().min(MIN_MEASUREMENT_TIMEOUT).max(MAX_MEASUREMENT_TIMEOUT),
 	ipVersion: Joi.when(Joi.ref('target'), {
 		is: Joi.string().ip({ version: [ 'ipv4' ], cidr: 'forbidden' }).required(),
 		then: Joi.valid(4).default(4),
