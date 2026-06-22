@@ -25,6 +25,7 @@
 		"nvm": "github:nvm-sh/nvm",
 		"patch-package": "^8.0.0",
 		"physical-cpu-count": "^2.0.0",
+		"quick-lru": "^5.1.1",
 		"socket.io-client": "^4.8.1",
 		"throng": "^5.0.0",
 		"tldts": "^7.0.8",
