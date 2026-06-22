@@ -1,26 +1,26 @@
 import { expect } from 'chai';
+import * as sinon from 'sinon';
 import * as td from 'testdouble';
 import { callbackify } from '../../../../../src/lib/util.js';
 import type { ResolverType, Options, ErrnoException, IpFamily } from '../../../../../src/command/handlers/shared/dns-resolver.js';
 
 export const buildResolver = (ipList: string[]): ResolverType => (): Promise<string[]> => Promise.resolve(ipList);
 
-class NativeResolverMock {
-	public resolve4: ResolverType;
-	public resolve6: ResolverType;
+const resolve4 = sinon.stub().resolves([ '1.1.1.1' ]);
+const resolve6 = sinon.stub().resolves([ '2606:4700:4700::1111' ]);
 
-	constructor () {
-		this.resolve4 = buildResolver([ '1.1.1.1' ]);
-		this.resolve6 = buildResolver([ '2606:4700:4700::1111' ]);
-	}
+class NativeResolverMock {
+	public resolve4: ResolverType = resolve4;
+	public resolve6: ResolverType = resolve6;
 }
 
 describe('http helper', () => {
 	let dnsLookup: (resolverAddr: string | undefined, resolverFn?: ResolverType) => (hostname: string, options: Options) => Promise<Error | ErrnoException | [string, number]>;
+	let buildCachedResolver: (family: IpFamily) => ResolverType;
 
 	before(async () => {
 		await td.replaceEsm('node:dns', null, { promises: { Resolver: NativeResolverMock } });
-		({ dnsLookup } = await import('../../../../../src/command/handlers/shared/dns-resolver.js'));
+		({ dnsLookup, buildCachedResolver } = await import('../../../../../src/command/handlers/shared/dns-resolver.js'));
 	});
 
 	after(() => {
@@ -151,6 +151,32 @@ describe('http helper', () => {
 			) as [string, number];
 
 			expect(response).to.deep.equal([ '2606:4700:4700::1111', 6 ]);
+		});
+	});
+
+	describe('buildCachedResolver', () => {
+		it('should cache resolutions per family and resolve each only once', async () => {
+			resolve4.resetHistory();
+			resolve6.resetHistory();
+
+			const resolver4 = buildCachedResolver(4);
+			const resolver6 = buildCachedResolver(6);
+
+			const v4 = await Promise.all([
+				resolver4('cached.com', { ttl: false }),
+				resolver4('cached.com', { ttl: false }),
+			]);
+
+			const v6 = await Promise.all([
+				resolver6('cached.com', { ttl: false }),
+				resolver6('cached.com', { ttl: false }),
+				resolver6('cached.com', { ttl: false }),
+			]);
+
+			expect(v4).to.deep.equal([ [ '1.1.1.1' ], [ '1.1.1.1' ] ]);
+			expect(v6).to.deep.equal([ [ '2606:4700:4700::1111' ], [ '2606:4700:4700::1111' ], [ '2606:4700:4700::1111' ] ]);
+			expect(resolve4.callCount).to.equal(1);
+			expect(resolve6.callCount).to.equal(1);
 		});
 	});
 });

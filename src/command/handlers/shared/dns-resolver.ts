@@ -1,5 +1,6 @@
 import dns, { type RecordWithTtl } from 'node:dns';
 import { isIpPrivate } from '../../../lib/private-ip.js';
+import { cachedResolve } from '../../../lib/dns.js';
 
 export type IpFamily = 4 | 6;
 export type Options = {
@@ -21,6 +22,14 @@ export const buildResolver = (resolverAddr: string | undefined, family: IpFamily
 	const resolve = family === 6 ? resolver.resolve6.bind(resolver) : resolver.resolve4.bind(resolver);
 
 	return resolve;
+};
+
+export const buildCachedResolver = (family: IpFamily): ResolverType => {
+	const rrtype = family === 6 ? 'AAAA' : 'A';
+	return hostname => cachedResolve((host) => {
+		const resolver = buildResolver(undefined, family);
+		return resolver(host, { ttl: false });
+	}, hostname, rrtype);
 };
 
 export const dnsLookup = (resolverAddr: string | undefined, resolverFn?: ResolverType) => async (

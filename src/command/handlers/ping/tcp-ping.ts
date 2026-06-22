@@ -2,7 +2,7 @@ import { isIP } from 'node:net';
 import { Socket } from 'node:net';
 import { performance } from 'node:perf_hooks';
 import { setTimeout as setTimeoutAsync } from 'node:timers/promises';
-import { dnsLookup, ResolverType } from '../shared/dns-resolver.js';
+import { buildCachedResolver, dnsLookup, type ResolverType } from '../shared/dns-resolver.js';
 import type { PingParseOutput } from './parse.js';
 
 export type InternalTcpPingOptions = {
@@ -108,7 +108,7 @@ export async function tcpPingSingle (hostname: string, address: string, port: nu
 export async function tcpPing (
 	options: InternalTcpPingOptions,
 	onProgress?: (result: TcpPingData) => void,
-	resolverFn?: ResolverType,
+	resolverFn?: ResolverType, // Only passed in tests.
 ): Promise<Array<TcpPingData>> {
 	const { target, port, packets, timeout, interval, ipVersion } = options;
 	const startTime = performance.now();
@@ -120,7 +120,7 @@ export async function tcpPing (
 		address = target;
 	} else {
 		try {
-			const dnsResolver = dnsLookup(undefined, resolverFn);
+			const dnsResolver = dnsLookup(undefined, resolverFn ?? buildCachedResolver(ipVersion));
 			[ address ] = await dnsResolver(target, { family: ipVersion });
 		} catch (e) {
 			return [{ type: 'error', message: (e as Error).message || '' }];
