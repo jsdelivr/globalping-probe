@@ -74,6 +74,7 @@ const dnsOptionsSchema = Joi.object<DnsOptions>({
 });
 
 export const argBuilder = (options: DnsOptions): string[] => {
+	const queryTimeout = options.timeout ?? 3;
 	const protocolArg = options.protocol.toLowerCase() === 'tcp' ? '+tcp' : [];
 	const resolverArg = options.resolver ? `@${options.resolver}` : [];
 	const traceArg = options.trace ? '+trace' : [];
@@ -85,7 +86,7 @@ export const argBuilder = (options: DnsOptions): string[] => {
 		resolverArg,
 		[ '-p', String(options.port) ],
 		`-${options.ipVersion}`,
-		'+timeout=3',
+		`+timeout=${queryTimeout}`,
 		'+tries=2',
 		'+nocookie',
 		'+nosplit',

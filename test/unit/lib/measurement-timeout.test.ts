@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import config from 'config';
 import {
 	getBackstopTimeout,
 	MIN_MEASUREMENT_TIMEOUT,
@@ -6,9 +7,11 @@ import {
 } from '../../../src/lib/measurement-timeout.js';
 
 describe('measurement timeout', () => {
+	const defaultTimeoutMs = config.get<number>('commands.timeout') * 1000;
+
 	describe('getBackstopTimeout', () => {
-		it('falls back to the global commands.timeout (25s) when no timeout is provided', () => {
-			expect(getBackstopTimeout(undefined)).to.equal(25_000);
+		it('falls back to the global commands.timeout when no timeout is provided', () => {
+			expect(getBackstopTimeout(undefined)).to.equal(defaultTimeoutMs);
 		});
 
 		it('uses the provided timeout, converting seconds to milliseconds', () => {
@@ -20,7 +23,7 @@ describe('measurement timeout', () => {
 		});
 
 		it('ignores the grace when no timeout is provided', () => {
-			expect(getBackstopTimeout(undefined, 3)).to.equal(25_000);
+			expect(getBackstopTimeout(undefined, 3)).to.equal(defaultTimeoutMs);
 		});
 	});
 
