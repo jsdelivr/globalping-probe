@@ -1,8 +1,6 @@
 import dns from 'node:dns';
 import { isIPv6 } from 'node:net';
-import CacheableLookup from 'cacheable-lookup';
 import { TTLCache } from '@isaacs/ttlcache';
-import QuickLRU from 'quick-lru';
 import { isIpPrivate } from './private-ip.js';
 
 type Resolve = (hostname: string, rrtype?: string) => Promise<string[]>;
@@ -20,11 +18,6 @@ export const getDnsServers = (getServers: () => string[] = dns.getServers): stri
 			return isIpPrivate(ip) ? 'private' : ip;
 		});
 };
-
-export const cachedLookup = new CacheableLookup({
-	cache: new QuickLRU({ maxSize: 1000 }),
-	maxTtl: DNS_CACHE_MAX_TTL / 1000,
-});
 
 const resolveCache = new TTLCache<string, Promise<string[]>>({
 	max: 1000,

@@ -4,9 +4,9 @@ import { isIP } from 'node:net';
 import { scopedLogger } from '../lib/logger.js';
 import got, { RequestError } from 'got';
 import type { Socket } from 'socket.io-client';
-import { pluralize } from '../lib/util.js';
+import { callbackify, pluralize } from '../lib/util.js';
 import { getLocalIps } from '../lib/private-ip.js';
-import { cachedLookup } from '../lib/dns.js';
+import { buildCachedResolver, dnsLookup } from '../command/handlers/shared/dns-resolver.js';
 
 const mainLogger = scopedLogger('general');
 const altIpsLogger = scopedLogger('api:connect:alt-ips-handler');
@@ -94,10 +94,11 @@ export class AltIpsClient {
 
 	private async getAltIpToken (ip: string) {
 		const httpHost = config.get<string>('api.httpHost');
+		const family = isIP(ip) === 6 ? 6 : 4;
 		const response = await got.post<{ ip: string; token: string }>(`${httpHost}/alternative-ip`, {
 			localAddress: ip,
-			dnsCache: cachedLookup,
-			dnsLookupIpVersion: isIP(ip) === 6 ? 6 : 4,
+			dnsLookup: callbackify(dnsLookup(undefined, buildCachedResolver(family)), true),
+			dnsLookupIpVersion: family,
 			json: {
 				localAddress: ip,
 			},
