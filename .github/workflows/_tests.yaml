@@ -14,8 +14,8 @@ jobs:
       NODE_ENV: test
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
       - name: install and build
@@ -37,7 +37,7 @@ jobs:
     runs-on: ubicloud-standard-4
     strategy:
       matrix:
-        node-version: [ 20.x ]
+        node-version: [ 22.x ]
 
     env:
       NODE_ENV: test
@@ -85,7 +85,7 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ubicloud/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
