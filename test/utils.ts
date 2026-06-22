@@ -19,6 +19,7 @@ const progressIntervalTime = config.get<number>('commands.progressInterval');
 
 export const getCmdMock = (name: string): string => readFileSync(path.resolve(`./test/mocks/${name}.txt`)).toString().replace(/\r?\n$/, '');
 export const getCmdMockResult = (name: string) => JSON.parse(readFileSync(path.resolve(`./test/mocks/${name}.json`)).toString()) as Record<string, unknown>;
+export const hasLoneSurrogate = (value: string): boolean => /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/.test(value);
 
 export class MockSocket extends EventEmitter {
 	override emit (event: string, data?: any, callback?: () => void) {

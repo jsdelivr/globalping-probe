@@ -1,3 +1,5 @@
+import { truncateToWellFormedString } from './truncate-string.js';
+
 const HEADERS_SIZE_LIMIT = 10_000;
 const HEADER_TRUNCATION_MARK = '...[truncated]';
 const RAW_HEADERS_EXTRA_SYMBOLS_SIZE = 3; // ": " between key and value + "\n" line separator.
@@ -87,7 +89,7 @@ export function truncateHeaderPairs (pairs: [string, string][]): TruncateHeaderP
 	cap = Math.max(cap, HEADER_TRUNCATION_MARK.length);
 
 	const headers = kept.map(([ k, v ]): [string, string] => v.length > cap
-		? [ k, v.substring(0, cap - HEADER_TRUNCATION_MARK.length) + HEADER_TRUNCATION_MARK ]
+		? [ k, truncateToWellFormedString(v, cap - HEADER_TRUNCATION_MARK.length) + HEADER_TRUNCATION_MARK ]
 		: [ k, v ]);
 
 	return { truncated: true, headers };

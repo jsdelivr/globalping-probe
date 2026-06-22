@@ -7,7 +7,7 @@ import * as sinon from 'sinon';
 import { Socket } from 'socket.io-client';
 import { HttpCommand } from '../../../src/command/http-command.js';
 import { HttpHandler } from '../../../src/command/handlers/http/undici.js';
-import { useSandboxWithFakeTimers } from '../../utils.js';
+import { hasLoneSurrogate, useSandboxWithFakeTimers } from '../../utils.js';
 
 describe('url builder', () => {
 	const buffer = {} as any;
@@ -827,6 +827,65 @@ describe(`.run() method`, () => {
 		expect(result.truncated).to.be.true;
 		expect(result.rawBody).to.have.lengthOf(10000);
 		expect(result.rawBody).to.equal('x'.repeat(10000));
+	});
+
+	it('should not split a surrogate pair when truncating the final response body', async () => {
+		mockHttpResponse([
+			'HTTP/1.1 200 OK',
+			'test: abc',
+			'',
+			'a'.repeat(9999) + '😀',
+		]);
+
+		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http' as const,
+			target: 'cdn.jsdelivr.net',
+			inProgressUpdates: false,
+			protocol: 'HTTP',
+			request: { method: 'GET', path: '/npm/jquery', query: '' },
+			ipVersion: 4,
+		});
+
+		const result = mockedSocket.emit.lastCall.args[1].result;
+
+		expect(result.rawBody.length).to.equal(9999);
+		expect(result.rawOutput.length).to.equal(10023);
+		expect(result.truncated).to.equal(true);
+		expect(hasLoneSurrogate(result.rawBody)).to.equal(false);
+		expect(hasLoneSurrogate(result.rawOutput)).to.equal(false);
+		expect(JSON.stringify(result)).not.to.include('\\ud83d');
+		expect(JSON.stringify(result)).not.to.include('\\ude00');
+	});
+
+	it('should not split a surrogate pair when truncating in-progress response body updates', async () => {
+		mockHttpResponse([
+			'HTTP/1.1 200 OK',
+			'test: abc',
+			'',
+			'a'.repeat(9999) + '😀',
+		]);
+
+		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http' as const,
+			target: 'cdn.jsdelivr.net',
+			inProgressUpdates: true,
+			protocol: 'HTTP',
+			request: { method: 'GET', path: '/npm/jquery', query: '' },
+			ipVersion: 4,
+		});
+
+		const progress = mockedSocket.emit.firstCall.args[1].result;
+		const result = mockedSocket.emit.lastCall.args[1].result;
+
+		expect(progress.rawBody.length).to.equal(9999);
+		expect(progress.rawOutput.length).to.equal(10023);
+		expect(result.rawBody.length).to.equal(9999);
+		expect(result.rawOutput.length).to.equal(10023);
+		expect(result.truncated).to.equal(true);
+		expect(hasLoneSurrogate(progress.rawBody)).to.equal(false);
+		expect(hasLoneSurrogate(progress.rawOutput)).to.equal(false);
+		expect(hasLoneSurrogate(result.rawBody)).to.equal(false);
+		expect(hasLoneSurrogate(result.rawOutput)).to.equal(false);
 	});
 
 	it('should set truncated=true when response headers exceed the size limit', async () => {

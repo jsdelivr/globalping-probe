@@ -12,6 +12,7 @@ import { dnsLookup } from '../shared/dns-resolver.js';
 import { callbackify } from '../../../lib/util.js';
 import { isIpPrivate } from '../../../lib/private-ip.js';
 import { truncateHeaderPairs } from './truncate-headers.js';
+import { truncateToWellFormedString } from './truncate-string.js';
 
 type TlsDetails = {
 	authorized: boolean;
@@ -367,7 +368,7 @@ export class HttpHandler {
 		let dataString = chunk.toString();
 
 		if (dataString.length > remaining) {
-			dataString = dataString.substring(0, remaining);
+			dataString = truncateToWellFormedString(dataString, remaining);
 			this.result.rawBody += dataString;
 			this.result.truncated = true;
 			this.pushProgress(isFirstMessage, dataString);
