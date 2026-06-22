@@ -29,7 +29,7 @@ jobs:
       - name: Install git :)
         run: apt update && apt install -y git
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Change directory ownership to the node user
         run: chown -R node:node .
@@ -45,7 +45,7 @@ jobs:
 
       - name: Release
         id: semantic
-        uses: cycjimmy/semantic-release-action@v4
+        uses: cycjimmy/semantic-release-action@v6
         with:
           extra_plugins: |
             @semantic-release/git
