@@ -10,7 +10,6 @@ import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
 import { cachedResolve } from '../lib/dns.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
-import { scopedLogger } from '../lib/logger.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 
 import type {
@@ -19,6 +18,7 @@ import type {
 	ResultTypeJson,
 } from './handlers/mtr/types.js';
 import MtrParser, { NEW_LINE_REG_EXP } from './handlers/mtr/parser.js';
+import { dnsLookup, type ResolverType } from './handlers/shared/dns-resolver.js';
 
 export type MtrOptions = {
 	type: 'mtr';
@@ -32,7 +32,6 @@ export type MtrOptions = {
 
 type DnsResolver = (addr: string, rrtype?: string) => Promise<string[]>;
 
-const logger = scopedLogger('mtr-command');
 const allowedIpVersions = [ 4, 6 ];
 
 const mtrOptionsSchema = Joi.object<MtrOptions>({
@@ -95,7 +94,6 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		const { value: cmdOptions } = validationResult;
 		const buffer = new ProgressBuffer(socket, testId, measurementId, 'overwrite');
 		let result: ResultType = getResultInitState();
-		let isResultPrivate = false;
 		let cmd: ExecaChildProcess | undefined;
 
 		try {
@@ -127,7 +125,6 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 			await cmd;
 			result = await this.parseResult(result.data, true);
-			isResultPrivate = isResultPrivate || isIpPrivate(result.resolvedAddress ?? '');
 		} catch (error: unknown) {
 			result.status = 'failed';
 
@@ -140,19 +137,14 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 				if (error instanceof Error) {
 					result.hops = [];
 					result.data = [];
-				}
-
-				if (error instanceof Error && error.message === 'private destination') {
-					isResultPrivate = true;
-				} else {
-					logger.error(error);
+					result.rawOutput = error.message;
 				}
 			}
 
 			!result.rawOutput && (result.rawOutput = 'Test failed. Please try again.');
 		}
 
-		if (isResultPrivate) {
+		if (isIpPrivate(result.resolvedAddress ?? '')) {
 			result = {
 				...getResultInitState(),
 				status: 'failed',
@@ -245,20 +237,19 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 	}
 
 	private async resolveTarget (options: MtrOptions): Promise<string> {
-		let target: string;
-
 		if (isIP(options.target) !== 0) {
-			target = options.target;
-		} else {
-			const rrtype = options.ipVersion === 6 ? 'AAAA' : 'A';
-			const ipAddresses = await cachedResolve(this.dnsResolver, options.target, rrtype).catch(() => []);
-			target = ipAddresses[0] ?? options.target;
+			if (isIpPrivate(options.target)) {
+				throw new Error('Private IP ranges are not allowed.');
+			}
+
+			return options.target;
 		}
 
-		if (isIpPrivate(target)) {
-			throw new Error('private destination');
-		}
+		const ipVersion = options.ipVersion as 4 | 6;
+		const rrtype = ipVersion === 6 ? 'AAAA' : 'A';
+		const resolver: ResolverType = host => cachedResolve(this.dnsResolver, host, rrtype);
+		const [ address ] = await dnsLookup(undefined, resolver)(options.target, { family: ipVersion });
 
-		return target;
+		return address;
 	}
 }
