@@ -27,8 +27,8 @@ export class ProgressBuffer {
 	private buffer: Record<string, string> = {};
 	private offset: Record<string, number> = {};
 	private isFirst = true;
-	private timer?: NodeJS.Timeout;
-	private progressProducer?: ProgressProducer;
+	private timer: NodeJS.Timeout | undefined;
+	private progressProducer: ProgressProducer | undefined;
 	private resultSent = false;
 
 	constructor (
@@ -67,7 +67,7 @@ export class ProgressBuffer {
 		}
 
 		this.resultSent = true;
-		delete this.progressProducer;
+		this.progressProducer = undefined;
 		this.sendResult(result);
 	}
 
@@ -82,11 +82,11 @@ export class ProgressBuffer {
 	}
 
 	private async sendProgress () {
-		delete this.timer;
+		this.timer = undefined;
 
 		if (this.progressProducer) {
 			const producer = this.progressProducer;
-			delete this.progressProducer;
+			this.progressProducer = undefined;
 			this.mergeProgress(await producer());
 		}
 
