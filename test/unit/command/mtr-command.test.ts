@@ -323,7 +323,7 @@ describe('mtr command executor', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
-		it('should detect Private IPv4 and stop with progress messages', async () => {
+		it('should detect Private IP and stop with progress messages', async () => {
 			const testCase = 'mtr-fail-private-ip';
 			const options = {
 				type: 'mtr' as const,
@@ -333,54 +333,12 @@ describe('mtr command executor', () => {
 			};
 
 			const expectedResult = getCmdMockResult(testCase);
-			const mockCmd = getExecaMock();
+			const cmdFn = sandbox.spy((): any => getExecaMock());
 
-			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(true));
+			const mtr = new MtrCommand(cmdFn, dnsResolver(true));
 			await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
 
-			expect(mockCmd.kill.called).to.be.true;
-			expect(mockedSocket.emit.calledOnce).to.be.true;
-			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
-			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
-		});
-
-		it('should detect Private IPv6 and stop with progress messages', async () => {
-			const testCase = 'mtr-fail-private-ip';
-			const options = {
-				type: 'mtr' as const,
-				target: 'jsdelivr.net',
-				inProgressUpdates: true,
-				ipVersion: 6,
-			};
-
-			const expectedResult = getCmdMockResult(testCase);
-			const mockCmd = getExecaMock();
-
-			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(true, true));
-			await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
-
-			expect(mockCmd.kill.called).to.be.true;
-			expect(mockedSocket.emit.calledOnce).to.be.true;
-			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
-			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
-		});
-
-		it('should detect Private IPv4 and stop', async () => {
-			const testCase = 'mtr-fail-private-ip';
-			const options = {
-				type: 'mtr' as const,
-				target: 'jsdelivr.net',
-				inProgressUpdates: false,
-				ipVersion: 4,
-			};
-
-			const expectedResult = getCmdMockResult(testCase);
-			const mockCmd = getExecaMock();
-
-			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(true));
-			await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
-
-			expect(mockCmd.kill.called).to.be.true;
+			expect(cmdFn.notCalled).to.be.true;
 			expect(mockedSocket.emit.calledOnce).to.be.true;
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
@@ -392,16 +350,16 @@ describe('mtr command executor', () => {
 				type: 'mtr' as const,
 				target: 'jsdelivr.net',
 				inProgressUpdates: false,
-				ipVersion: 4,
+				ipVersion: 6,
 			};
 
 			const expectedResult = getCmdMockResult(testCase);
-			const mockCmd = getExecaMock();
+			const cmdFn = sandbox.spy((): any => getExecaMock());
 
-			const mtr = new MtrCommand((): any => mockCmd, dnsResolver(true, true));
+			const mtr = new MtrCommand(cmdFn, dnsResolver(true, true));
 			await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
 
-			expect(mockCmd.kill.called).to.be.true;
+			expect(cmdFn.notCalled).to.be.true;
 			expect(mockedSocket.emit.calledOnce).to.be.true;
 			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
 			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
@@ -428,7 +386,7 @@ describe('mtr command executor', () => {
 			await runPromise;
 
 			expect(passedTarget).to.equal('1.1.1.1');
-			expect(mockCmd.kill.called).to.be.false;
+			expect(mockCmd.kill.notCalled).to.be.true;
 		});
 
 		it('should fail on post-check when parsed resolvedAddress is private', async () => {

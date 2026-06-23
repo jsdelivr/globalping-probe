@@ -94,36 +94,37 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 		const { value: cmdOptions } = validationResult;
 		const buffer = new ProgressBuffer(socket, testId, measurementId, 'overwrite');
-		const target = await this.resolveTarget(cmdOptions);
-		const cmd = this.cmd({ ...cmdOptions, target });
 		let result: ResultType = getResultInitState();
 		let isResultPrivate = false;
-
-		if (cmd.stdout) {
-			byLine(cmd.stdout, (data) => {
-				if (data.startsWith('mtr:')) {
-					cmd.kill('SIGKILL');
-					return;
-				}
-
-				for (const line of data.split(NEW_LINE_REG_EXP)) {
-					if (!line) {
-						continue;
-					}
-
-					result.data.push(line);
-				}
-
-				if (cmdOptions.inProgressUpdates) {
-					buffer.pushLazyProgress(async () => ({
-						rawOutput: (await this.parseResult(result.data, false)).rawOutput,
-					}));
-				}
-			});
-		}
+		let cmd: ExecaChildProcess | undefined;
 
 		try {
-			this.checkForPrivateDest(target);
+			const target = await this.resolveTarget(cmdOptions);
+			cmd = this.cmd({ ...cmdOptions, target });
+
+			if (cmd.stdout) {
+				byLine(cmd.stdout, (data) => {
+					if (data.startsWith('mtr:')) {
+						cmd!.kill('SIGKILL');
+						return;
+					}
+
+					for (const line of data.split(NEW_LINE_REG_EXP)) {
+						if (!line) {
+							continue;
+						}
+
+						result.data.push(line);
+					}
+
+					if (cmdOptions.inProgressUpdates) {
+						buffer.pushLazyProgress(async () => ({
+							rawOutput: (await this.parseResult(result.data, false)).rawOutput,
+						}));
+					}
+				});
+			}
+
 			await cmd;
 			result = await this.parseResult(result.data, true);
 			isResultPrivate = isResultPrivate || isIpPrivate(result.resolvedAddress ?? '');
@@ -134,7 +135,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 				result.rawOutput = error.stdout.toString();
 				error.timedOut && (result.rawOutput += '\n\nThe measurement command timed out.');
 			} else {
-				cmd.kill('SIGKILL');
+				cmd?.kill('SIGKILL');
 
 				if (error instanceof Error) {
 					result.hops = [];
@@ -244,18 +245,20 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 	}
 
 	private async resolveTarget (options: MtrOptions): Promise<string> {
+		let target: string;
+
 		if (isIP(options.target) !== 0) {
-			return options.target;
+			target = options.target;
+		} else {
+			const rrtype = options.ipVersion === 6 ? 'AAAA' : 'A';
+			const ipAddresses = await cachedResolve(this.dnsResolver, options.target, rrtype).catch(() => []);
+			target = ipAddresses[0] ?? options.target;
 		}
 
-		const rrtype = options.ipVersion === 6 ? 'AAAA' : 'A';
-		const ipAddresses = await cachedResolve(this.dnsResolver, options.target, rrtype).catch(() => []);
-		return ipAddresses[0] ?? options.target;
-	}
-
-	private checkForPrivateDest (target: string): void {
 		if (isIpPrivate(target)) {
 			throw new Error('private destination');
 		}
+
+		return target;
 	}
 }
