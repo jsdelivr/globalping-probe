@@ -39,7 +39,7 @@ const resolveRecords = async (hostname: string, options: Options): Promise<strin
 	try {
 		if ('rrtype' in options) {
 			// Only TXT records are supported as other types have different return types.
-			return (await resolver.resolveTxt(hostname)).flat();
+			return (await resolver.resolveTxt(hostname)).map(record => record.join(''));
 		}
 
 		return options.family === 6 ? await resolver.resolve6(hostname) : await resolver.resolve4(hostname);

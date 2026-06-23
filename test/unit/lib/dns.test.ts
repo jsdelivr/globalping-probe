@@ -186,10 +186,10 @@ describe('dnsLookup / cachedDnsLookup', () => {
 		expect(resolve6.callCount).to.equal(1);
 	});
 
-	it('returns flattened TXT records without filtering', async () => {
+	it('returns joined TXT records without filtering', async () => {
 		const resolveTxt = sandbox.stub(dns.promises.Resolver.prototype, 'resolveTxt').resolves([ [ 'AS123', ' | abc' ], [ 'AS456' ] ]);
 
-		expect(await cachedDnsLookup('example.com', { rrtype: 'TXT' })).to.deep.equal([ 'AS123', ' | abc', 'AS456' ]);
+		expect(await cachedDnsLookup('example.com', { rrtype: 'TXT' })).to.deep.equal([ 'AS123 | abc', 'AS456' ]);
 		expect(resolveTxt.callCount).to.equal(1);
 	});
 });
