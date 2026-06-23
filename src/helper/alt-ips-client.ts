@@ -6,7 +6,7 @@ import got, { RequestError } from 'got';
 import type { Socket } from 'socket.io-client';
 import { callbackify, pluralize } from '../lib/util.js';
 import { getLocalIps } from '../lib/private-ip.js';
-import { buildCachedResolver, dnsLookup } from '../command/handlers/shared/dns-resolver.js';
+import { cachedDnsLookup } from '../lib/dns.js';
 
 const mainLogger = scopedLogger('general');
 const altIpsLogger = scopedLogger('api:connect:alt-ips-handler');
@@ -97,7 +97,7 @@ export class AltIpsClient {
 		const family = isIP(ip) === 6 ? 6 : 4;
 		const response = await got.post<{ ip: string; token: string }>(`${httpHost}/alternative-ip`, {
 			localAddress: ip,
-			dnsLookup: callbackify(dnsLookup(undefined, buildCachedResolver(family)), true),
+			dnsLookup: callbackify((hostname: string) => cachedDnsLookup(hostname, { family }), true),
 			dnsLookupIpVersion: family,
 			json: {
 				localAddress: ip,

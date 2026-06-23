@@ -1,7 +1,8 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { getDnsServers, cachedResolve, clearDnsCache } from '../../../src/lib/dns.js';
-import { useSandboxWithFakeTimers } from '../../utils.js';
+import dns from 'node:dns';
+import { getDnsServers, dnsLookup, cachedDnsLookup, clearDnsCache } from '../../../src/lib/dns.js';
+import { callbackify } from '../../../src/lib/util.js';
 
 const client = (list: string[]) => () => list;
 
@@ -107,76 +108,118 @@ describe('dns lib', () => {
 	});
 });
 
-describe('cachedResolve', () => {
+describe('dnsLookup / cachedDnsLookup', () => {
+	const sandbox = sinon.createSandbox();
+	let resolve4: sinon.SinonStub;
+
 	beforeEach(() => {
 		clearDnsCache();
+		resolve4 = sandbox.stub(dns.promises.Resolver.prototype, 'resolve4').resolves([ '1.1.1.1' ]);
 	});
 
-	it('resolves once per key within the TTL', async () => {
-		const resolve = sinon.stub().resolves([ '1.1.1.1' ]);
+	afterEach(() => sandbox.restore());
 
-		const first = await cachedResolve(resolve, 'example.com', 'A');
-		const second = await cachedResolve(resolve, 'example.com', 'A');
-
-		expect(first).to.deep.equal([ '1.1.1.1' ]);
-		expect(second).to.deep.equal([ '1.1.1.1' ]);
-		expect(resolve.callCount).to.equal(1);
+	it('returns the first public address with its family', async () => {
+		expect(await dnsLookup('example.com', { family: 4 })).to.deep.equal([ '1.1.1.1', 4 ]);
 	});
 
-	it('keys by record type', async () => {
-		const resolve = sinon.stub();
-		resolve.withArgs('example.com', 'A').resolves([ '1.1.1.1' ]);
-		resolve.withArgs('example.com', 'TXT').resolves([ 'v=spf1' ]);
+	it('skips private addresses', async () => {
+		resolve4.resolves([ '192.168.0.1', '1.1.1.1' ]);
 
-		await cachedResolve(resolve, 'example.com', 'A');
-		await cachedResolve(resolve, 'example.com', 'TXT');
-		await cachedResolve(resolve, 'example.com', 'A');
-
-		expect(resolve.callCount).to.equal(2);
+		expect(await dnsLookup('example.com', { family: 4 })).to.deep.equal([ '1.1.1.1', 4 ]);
 	});
 
-	it('dedupes concurrent in-flight lookups', async () => {
-		const resolve = sinon.stub().resolves([ '1.1.1.1' ]);
+	it('throws when all addresses are private', async () => {
+		resolve4.resolves([ '192.168.0.1' ]);
 
-		await Promise.all([ cachedResolve(resolve, 'example.com', 'A'), cachedResolve(resolve, 'example.com', 'A') ]);
-
-		expect(resolve.callCount).to.equal(1);
-	});
-
-	it('re-resolves after the entry expires', async () => {
-		const sandbox = useSandboxWithFakeTimers();
+		let threw;
 
 		try {
-			sandbox.stub(performance, 'now').callsFake(() => sandbox.clock.now);
-			const resolve = sandbox.stub().resolves([ '1.1.1.1' ]);
-
-			await cachedResolve(resolve, 'example.com', 'A');
-			await sandbox.clock.tickAsync(5 * 60 * 1000 + 1000);
-			await cachedResolve(resolve, 'example.com', 'A');
-
-			expect(resolve.callCount).to.equal(2);
-		} finally {
-			sandbox.restore();
+			await dnsLookup('example.com', { family: 4 });
+		} catch (error) {
+			threw = error as Error;
 		}
+
+		expect(threw?.message).to.equal('Private IP ranges are not allowed.');
+	});
+
+	it('cachedDnsLookup resolves once per key, dnsLookup every time', async () => {
+		await cachedDnsLookup('example.com', { family: 4 });
+		await cachedDnsLookup('example.com', { family: 4 });
+		expect(resolve4.callCount).to.equal(1);
+
+		await dnsLookup('example.com', { family: 4 });
+		await dnsLookup('example.com', { family: 4 });
+		expect(resolve4.callCount).to.equal(3);
 	});
 
 	it('does not cache failures', async () => {
-		const resolve = sinon.stub();
-		resolve.onFirstCall().rejects(new Error('ENOTFOUND'));
-		resolve.onSecondCall().resolves([ '1.1.1.1' ]);
+		resolve4.onFirstCall().rejects(new Error('ENOTFOUND'));
+		resolve4.onSecondCall().resolves([ '1.1.1.1' ]);
 
 		let threw = false;
 
 		try {
-			await cachedResolve(resolve, 'example.com', 'A');
+			await cachedDnsLookup('example.com', { family: 4 });
 		} catch {
 			threw = true;
 		}
 
-		const second = await cachedResolve(resolve, 'example.com', 'A');
-
 		expect(threw).to.be.true;
-		expect(second).to.deep.equal([ '1.1.1.1' ]);
-		expect(resolve.callCount).to.equal(2);
+		expect(await cachedDnsLookup('example.com', { family: 4 })).to.deep.equal([ '1.1.1.1', 4 ]);
+		expect(resolve4.callCount).to.equal(2);
+	});
+
+	it('dedupes concurrent in-flight lookups', async () => {
+		await Promise.all([
+			cachedDnsLookup('example.com', { family: 4 }),
+			cachedDnsLookup('example.com', { family: 4 }),
+		]);
+
+		expect(resolve4.callCount).to.equal(1);
+	});
+
+	it('resolves IPv6 via resolve6', async () => {
+		const resolve6 = sandbox.stub(dns.promises.Resolver.prototype, 'resolve6').resolves([ '2606:4700:4700::1111' ]);
+
+		expect(await dnsLookup('example.com', { family: 6 })).to.deep.equal([ '2606:4700:4700::1111', 6 ]);
+		expect(resolve6.callCount).to.equal(1);
+	});
+
+	it('returns flattened TXT records without filtering', async () => {
+		const resolveTxt = sandbox.stub(dns.promises.Resolver.prototype, 'resolveTxt').resolves([ [ 'AS123', ' | abc' ], [ 'AS456' ] ]);
+
+		expect(await cachedDnsLookup('example.com', { rrtype: 'TXT' })).to.deep.equal([ 'AS123', ' | abc', 'AS456' ]);
+		expect(resolveTxt.callCount).to.equal(1);
+	});
+});
+
+describe('callbackify', () => {
+	it('calls back with the resolved value', (done) => {
+		callbackify(async () => '1.1.1.1')('example.com', (error: Error | null, result: unknown) => {
+			expect(error).to.equal(null);
+			expect(result).to.equal('1.1.1.1');
+			done();
+		});
+	});
+
+	it('spreads an array result when spreadResult is true', (done) => {
+		callbackify(async () => [ '1.1.1.1', 4 ], true)('example.com', (error: Error | null, address: unknown, family: unknown) => {
+			expect(error).to.equal(null);
+			expect(address).to.equal('1.1.1.1');
+			expect(family).to.equal(4);
+			done();
+		});
+	});
+
+	it('calls back with the error on rejection', (done) => {
+		const err = new Error('boom');
+
+		callbackify(async () => {
+			throw err;
+		})('example.com', (error: Error | null) => {
+			expect(error).to.equal(err);
+			done();
+		});
 	});
 });

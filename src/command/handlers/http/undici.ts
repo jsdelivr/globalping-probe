@@ -8,7 +8,7 @@ import type { buildConnector } from 'undici';
 import _ from 'lodash';
 import { ProgressBuffer } from '../../../helper/progress-buffer.js';
 import type { HttpOptions } from '../../http-command.js';
-import { dnsLookup } from '../shared/dns-resolver.js';
+import { dnsLookup, type IpFamily } from '../../../lib/dns.js';
 import { callbackify } from '../../../lib/util.js';
 import { isIpPrivate } from '../../../lib/private-ip.js';
 import { truncateHeaderPairs } from './truncate-headers.js';
@@ -250,7 +250,11 @@ export class HttpHandler {
 
 	public async run () {
 		const promise = new Promise((resolve) => { this.resolve = resolve; });
-		const dnsResolver = callbackify(dnsLookup(this.options.resolver), true);
+		const server = this.options.resolver;
+		const dnsResolver = callbackify((hostname: string, options: { family: IpFamily }) => dnsLookup(hostname, {
+			family: options.family,
+			...(server ? { server } : {}),
+		}), true);
 		const allowH2 = this.options.protocol === 'HTTP2';
 		const connector = getConnector(this.options, this.port, this.isHttps, dnsResolver, this.result, this.timings);
 		this.undiciClient = new Client(this.url.origin, { connect: connector, allowH2 });

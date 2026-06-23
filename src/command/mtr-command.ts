@@ -1,5 +1,4 @@
 import config from 'config';
-import dns from 'node:dns';
 import { isIP } from 'node:net';
 import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
@@ -7,7 +6,7 @@ import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface } from '../types.js';
 import { byLine } from '../lib/by-line.js';
 import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
-import { cachedResolve } from '../lib/dns.js';
+import { cachedDnsLookup, type IpFamily } from '../lib/dns.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
@@ -18,7 +17,6 @@ import type {
 	ResultTypeJson,
 } from './handlers/mtr/types.js';
 import MtrParser, { NEW_LINE_REG_EXP } from './handlers/mtr/parser.js';
-import { dnsLookup, type ResolverType } from './handlers/shared/dns-resolver.js';
 
 export type MtrOptions = {
 	type: 'mtr';
@@ -29,8 +27,6 @@ export type MtrOptions = {
 	packets: number;
 	ipVersion: number;
 };
-
-type DnsResolver = (addr: string, rrtype?: string) => Promise<string[]>;
 
 const allowedIpVersions = [ 4, 6 ];
 
@@ -82,7 +78,7 @@ export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
 };
 
 export class MtrCommand implements CommandInterface<MtrOptions> {
-	constructor (private readonly cmd: typeof mtrCmd, readonly dnsResolver: DnsResolver = dns.promises.resolve) {}
+	constructor (private readonly cmd: typeof mtrCmd, private readonly lookup = cachedDnsLookup) {}
 
 	async run (socket: Socket, measurementId: string, testId: string, options: MtrOptions): Promise<unknown> {
 		const validationResult = mtrOptionsSchema.validate(options);
@@ -217,9 +213,9 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 	async lookupAsn (addr: string): Promise<string | undefined> {
 		const reversedAddr = addr.split('.').reverse().join('.');
-		const result = await cachedResolve(this.dnsResolver, `${reversedAddr}.origin.asn.cymru.com`, 'TXT');
+		const result = await this.lookup(`${reversedAddr}.origin.asn.cymru.com`, { rrtype: 'TXT' });
 
-		return result.flat()[0];
+		return result[0];
 	}
 
 	private toJsonOutput (input: ResultType): ResultTypeJson {
@@ -245,10 +241,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			return options.target;
 		}
 
-		const ipVersion = options.ipVersion as 4 | 6;
-		const rrtype = ipVersion === 6 ? 'AAAA' : 'A';
-		const resolver: ResolverType = host => cachedResolve(this.dnsResolver, host, rrtype);
-		const [ address ] = await dnsLookup(undefined, resolver)(options.target, { family: ipVersion });
+		const [ address ] = await this.lookup(options.target, { family: options.ipVersion as IpFamily });
 
 		return address;
 	}
