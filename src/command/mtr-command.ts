@@ -94,7 +94,8 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 		const { value: cmdOptions } = validationResult;
 		const buffer = new ProgressBuffer(socket, testId, measurementId, 'overwrite');
-		const cmd = this.cmd(cmdOptions);
+		const target = await this.resolveTarget(cmdOptions);
+		const cmd = this.cmd({ ...cmdOptions, target });
 		let result: ResultType = getResultInitState();
 		let isResultPrivate = false;
 
@@ -122,7 +123,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		}
 
 		try {
-			await this.checkForPrivateDest(cmdOptions.target);
+			this.checkForPrivateDest(target);
 			await cmd;
 			result = await this.parseResult(result.data, true);
 			isResultPrivate = isResultPrivate || isIpPrivate(result.resolvedAddress ?? '');
@@ -242,18 +243,18 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		};
 	}
 
-	private async checkForPrivateDest (target: string): Promise<void> {
-		if (isIP(target) !== 0) {
-			if (isIpPrivate(target)) {
-				throw new Error('private destination');
-			}
-
-			return;
+	private async resolveTarget (options: MtrOptions): Promise<string> {
+		if (isIP(options.target) !== 0) {
+			return options.target;
 		}
 
-		const ipAddresses = await this.dnsResolver(target).catch(() => []);
+		const rrtype = options.ipVersion === 6 ? 'AAAA' : 'A';
+		const ipAddresses = await cachedResolve(this.dnsResolver, options.target, rrtype).catch(() => []);
+		return ipAddresses[0] ?? options.target;
+	}
 
-		if (ipAddresses.some(ip => isIpPrivate(String(ip)))) {
+	private checkForPrivateDest (target: string): void {
+		if (isIpPrivate(target)) {
 			throw new Error('private destination');
 		}
 	}

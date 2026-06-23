@@ -407,27 +407,28 @@ describe('mtr command executor', () => {
 			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
 		});
 
-		it('should detect private destination when second resolved ip is private', async () => {
-			const testCase = 'mtr-fail-private-ip';
+		it('should pass the first resolved ip to mtr as the target', async () => {
 			const options = {
 				type: 'mtr' as const,
 				target: 'jsdelivr.net',
 				inProgressUpdates: false,
 				ipVersion: 4,
 			};
-			const expectedResult = getCmdMockResult(testCase);
 			const mockCmd = getExecaMock();
-			const mixedResolver = async () => {
-				return [ '1.1.1.1', '192.168.0.1' ];
+			let passedTarget = '';
+			const cmdFn = (cmdOptions: MtrOptions): any => {
+				passedTarget = cmdOptions.target;
+				return mockCmd;
 			};
+			const resolver = async () => [ '1.1.1.1', '192.168.0.1' ];
 
-			const mtr = new MtrCommand((): any => mockCmd, mixedResolver);
-			await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+			const mtr = new MtrCommand(cmdFn, resolver);
+			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+			mockCmd.resolve({ stdout: '' });
+			await runPromise;
 
-			expect(mockCmd.kill.called).to.be.true;
-			expect(mockedSocket.emit.calledOnce).to.be.true;
-			expect(mockedSocket.emit.firstCall.args[0]).to.equal('probe:measurement:result');
-			expect(mockedSocket.emit.firstCall.args[1]).to.deep.equal(expectedResult);
+			expect(passedTarget).to.equal('1.1.1.1');
+			expect(mockCmd.kill.called).to.be.false;
 		});
 
 		it('should fail on post-check when parsed resolvedAddress is private', async () => {

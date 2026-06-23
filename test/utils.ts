@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events';
+import { PassThrough } from 'node:stream';
 import * as path from 'node:path';
 import { readFileSync } from 'node:fs';
 import * as sinon from 'sinon';
@@ -44,7 +45,7 @@ type ExecaMock = Promise<any> & {
 	resolve: (data: any) => void;
 	reject: (error: any) => void;
 	kill: sinon.SinonStub;
-	stdout: EventEmitter;
+	stdout: PassThrough;
 };
 
 export const getExecaMock = () => {
@@ -61,8 +62,7 @@ export const getExecaMock = () => {
 
 	execaMock.kill = sinon.stub();
 
-	// @ts-expect-error TS error expected.
-	execaMock.stdout = new EventEmitter();
+	execaMock.stdout = new PassThrough();
 	return execaMock;
 };
 
@@ -162,16 +162,16 @@ export const chunkOutput = (rawOutput: string) => {
 
 	return {
 		lines,
-		async emitChunks (stream: EventEmitter) {
+		async emitChunks (stream: PassThrough) {
 			for (const lineChunks of linesChunks) {
 				for (const chunk of lineChunks) {
-					stream.emit('data', Buffer.from(chunk, 'utf8'));
+					stream.write(Buffer.from(chunk, 'utf8'));
 				}
 
 				await new Promise(resolve => setTimeout(resolve, progressIntervalTime * 2));
 			}
 
-			stream.emit('end');
+			stream.end();
 			await new Promise(resolve => setTimeout(resolve, progressIntervalTime * 2));
 		},
 		verifyChunks (socket: SinonStubbedInstance<Socket<any, any>>, expectedChunks: string[] = lines) {

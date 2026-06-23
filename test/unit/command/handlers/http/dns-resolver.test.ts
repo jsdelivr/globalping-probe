@@ -155,10 +155,12 @@ describe('http helper', () => {
 	});
 
 	describe('buildCachedResolver', () => {
-		it('should cache resolutions per family and resolve each only once', async () => {
+		beforeEach(() => {
 			resolve4.resetHistory();
 			resolve6.resetHistory();
+		});
 
+		it('should cache resolutions per family and resolve each only once', async () => {
 			const resolver4 = buildCachedResolver(4);
 			const resolver6 = buildCachedResolver(6);
 
