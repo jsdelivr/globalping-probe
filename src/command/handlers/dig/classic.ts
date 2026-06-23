@@ -65,7 +65,7 @@ export const ClassicDigParser = {
 		const lines = rawOutput.split(NEW_LINE_REG_EXP);
 
 		if (lines.length < 6 || lines[0]?.startsWith(';; Got bad packet:')) {
-			throw new InternalError(rawOutput, true);
+			throw new InternalError(rawOutput);
 		}
 
 		return {

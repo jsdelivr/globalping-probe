@@ -4,6 +4,7 @@ import { Socket } from 'socket.io-client';
 import { type ExecaError } from 'execa';
 import { chunkOutput, getCmdMock, getCmdMockResult, getExecaMock } from '../../utils.js';
 import { clearDnsCache, cachedDnsLookup } from '../../../src/lib/dns.js';
+import { InternalError } from '../../../src/lib/internal-error.js';
 import {
 	MtrCommand,
 	argBuilder,
@@ -331,7 +332,7 @@ describe('mtr command executor', () => {
 			const expectedResult = getCmdMockResult(testCase);
 			const cmdFn = sandbox.spy((): any => getExecaMock());
 
-			const mtr = new MtrCommand(cmdFn, dnsResolver(new Error('Private IP ranges are not allowed.')));
+			const mtr = new MtrCommand(cmdFn, dnsResolver(new InternalError('Private IP ranges are not allowed.')));
 			await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
 
 			expect(cmdFn.notCalled).to.be.true;
@@ -352,7 +353,7 @@ describe('mtr command executor', () => {
 			const expectedResult = getCmdMockResult(testCase);
 			const cmdFn = sandbox.spy((): any => getExecaMock());
 
-			const mtr = new MtrCommand(cmdFn, dnsResolver(new Error('Private IP ranges are not allowed.')));
+			const mtr = new MtrCommand(cmdFn, dnsResolver(new InternalError('Private IP ranges are not allowed.')));
 			await mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
 
 			expect(cmdFn.notCalled).to.be.true;

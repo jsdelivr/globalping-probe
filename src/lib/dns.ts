@@ -2,6 +2,7 @@ import dns from 'node:dns';
 import { isIPv6 } from 'node:net';
 import { TTLCache } from '@isaacs/ttlcache';
 import { isIpPrivate } from './private-ip.js';
+import { InternalError } from './internal-error.js';
 
 export type IpFamily = 4 | 6;
 
@@ -28,19 +29,23 @@ export const getDnsServers = (getServers: () => string[] = dns.getServers): stri
 		});
 };
 
-const resolveRecords = (hostname: string, options: Options): Promise<string[]> => {
+const resolveRecords = async (hostname: string, options: Options): Promise<string[]> => {
 	const resolver = new dns.promises.Resolver();
 
 	if (options.server) {
 		resolver.setServers([ options.server ]);
 	}
 
-	if ('rrtype' in options) {
-		// Only TXT records are supported as other types have different return types.
-		return resolver.resolveTxt(hostname).then(records => records.flat());
-	}
+	try {
+		if ('rrtype' in options) {
+			// Only TXT records are supported as other types have different return types.
+			return (await resolver.resolveTxt(hostname)).flat();
+		}
 
-	return options.family === 6 ? resolver.resolve6(hostname) : resolver.resolve4(hostname);
+		return options.family === 6 ? await resolver.resolve6(hostname) : await resolver.resolve4(hostname);
+	} catch (error) {
+		throw new InternalError((error as Error).message);
+	}
 };
 
 const cachedResolveRecords = (hostname: string, options: Options): Promise<string[]> => {
@@ -67,13 +72,13 @@ const toResult = (records: string[], hostname: string, options: Options): [strin
 	}
 
 	if (!records.length) {
-		throw new Error(`ENODATA ${hostname}`);
+		throw new InternalError(`ENODATA ${hostname}`);
 	}
 
 	const address = records.find(ip => !isIpPrivate(ip));
 
 	if (!address) {
-		throw new Error('Private IP ranges are not allowed.');
+		throw new InternalError('Private IP ranges are not allowed.');
 	}
 
 	return [ address, options.family ];

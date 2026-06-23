@@ -9,6 +9,8 @@ import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
 import { cachedDnsLookup, type IpFamily } from '../lib/dns.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
+import { InternalError, isExposed } from '../lib/internal-error.js';
+import { scopedLogger } from '../lib/logger.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 
 import type {
@@ -28,6 +30,7 @@ export type MtrOptions = {
 	ipVersion: number;
 };
 
+const logger = scopedLogger('mtr-command');
 const allowedIpVersions = [ 4, 6 ];
 
 const mtrOptionsSchema = Joi.object<MtrOptions>({
@@ -133,7 +136,12 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 				if (error instanceof Error) {
 					result.hops = [];
 					result.data = [];
-					result.rawOutput = error.message;
+
+					if (isExposed(error)) {
+						result.rawOutput = error.message;
+					} else {
+						logger.error(error);
+					}
 				}
 			}
 
@@ -235,7 +243,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 	private async resolveTarget (options: MtrOptions): Promise<string> {
 		if (isIP(options.target) !== 0) {
 			if (isIpPrivate(options.target)) {
-				throw new Error('Private IP ranges are not allowed.');
+				throw new InternalError('Private IP ranges are not allowed.');
 			}
 
 			return options.target;
