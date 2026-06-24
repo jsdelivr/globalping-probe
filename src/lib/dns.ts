@@ -10,6 +10,8 @@ export type LookupOptions = { family: IpFamily; server?: string };
 export type RecordOptions = { rrtype: 'TXT'; server?: string };
 type Options = LookupOptions | RecordOptions;
 
+type ResolvedRecords = { records: string[]; ttl: number };
+
 const DNS_CACHE_MAX_TTL = 5 * 60 * 1000;
 
 const cache = new TTLCache<string, Promise<string[]>>({
@@ -29,7 +31,7 @@ export const getDnsServers = (getServers: () => string[] = dns.getServers): stri
 		});
 };
 
-const resolveRecords = async (hostname: string, options: Options): Promise<string[]> => {
+const resolveRecords = async (hostname: string, options: Options): Promise<ResolvedRecords> => {
 	const resolver = new dns.promises.Resolver();
 
 	if (options.server) {
@@ -38,11 +40,25 @@ const resolveRecords = async (hostname: string, options: Options): Promise<strin
 
 	try {
 		if ('rrtype' in options) {
-			// Only TXT records are supported as other types have different return types.
-			return (await resolver.resolveTxt(hostname)).map(record => record.join(''));
+			// Only TXT records are supported as other RRtypes have different TS return types.
+			const records = (await resolver.resolveTxt(hostname)).map(record => record.join(''));
+			// TXT records carry no TTL here, so they fall back to the max cache TTL.
+			return { records, ttl: DNS_CACHE_MAX_TTL };
 		}
 
-		return options.family === 6 ? await resolver.resolve6(hostname) : await resolver.resolve4(hostname);
+		const records = options.family === 6
+			? await resolver.resolve6(hostname, { ttl: true })
+			: await resolver.resolve4(hostname, { ttl: true });
+
+		let ttl = DNS_CACHE_MAX_TTL;
+
+		if (records.length) {
+			const minResolvedTtl = Math.min(DNS_CACHE_MAX_TTL, Math.min(...records.map(record => record.ttl)) * 1000);
+			// TTL: 0 is invalid, so we set it to 1.
+			ttl = Math.max(1, minResolvedTtl);
+		}
+
+		return { records: records.map(record => record.address), ttl };
 	} catch (error) {
 		throw new InternalError((error as Error).message);
 	}
@@ -56,7 +72,13 @@ const cachedResolveRecords = (hostname: string, options: Options): Promise<strin
 		return cached;
 	}
 
-	const pending = resolveRecords(hostname, options).catch((error: unknown) => {
+	const pending = resolveRecords(hostname, options).then(({ records, ttl }) => {
+		if (cache.has(key)) {
+			cache.setTTL(key, ttl);
+		}
+
+		return records;
+	}).catch((error: unknown) => {
 		cache.delete(key);
 		throw error;
 	});
@@ -88,7 +110,8 @@ export function dnsLookup (hostname: string, options: LookupOptions): Promise<[s
 export function dnsLookup (hostname: string, options: RecordOptions): Promise<string[]>;
 
 export async function dnsLookup (hostname: string, options: Options): Promise<[string, IpFamily] | string[]> {
-	return toResult(await resolveRecords(hostname, options), hostname, options);
+	const { records } = await resolveRecords(hostname, options);
+	return toResult(records, hostname, options);
 }
 
 export function cachedDnsLookup (hostname: string, options: LookupOptions): Promise<[string, IpFamily]>;

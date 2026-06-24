@@ -114,7 +114,7 @@ describe('dnsLookup / cachedDnsLookup', () => {
 
 	beforeEach(() => {
 		clearDnsCache();
-		resolve4 = sandbox.stub(dns.promises.Resolver.prototype, 'resolve4').resolves([ '1.1.1.1' ]);
+		resolve4 = sandbox.stub(dns.promises.Resolver.prototype, 'resolve4').resolves([{ address: '1.1.1.1', ttl: 300 }]);
 	});
 
 	afterEach(() => sandbox.restore());
@@ -124,13 +124,13 @@ describe('dnsLookup / cachedDnsLookup', () => {
 	});
 
 	it('skips private addresses', async () => {
-		resolve4.resolves([ '192.168.0.1', '1.1.1.1' ]);
+		resolve4.resolves([{ address: '192.168.0.1', ttl: 300 }, { address: '1.1.1.1', ttl: 300 }]);
 
 		expect(await dnsLookup('example.com', { family: 4 })).to.deep.equal([ '1.1.1.1', 4 ]);
 	});
 
 	it('throws when all addresses are private', async () => {
-		resolve4.resolves([ '192.168.0.1' ]);
+		resolve4.resolves([{ address: '192.168.0.1', ttl: 300 }]);
 
 		let threw;
 
@@ -153,9 +153,19 @@ describe('dnsLookup / cachedDnsLookup', () => {
 		expect(resolve4.callCount).to.equal(3);
 	});
 
+	it('expires the cache entry once the record ttl elapses', async () => {
+		resolve4.resolves([{ address: '1.1.1.1', ttl: 0 }]);
+
+		await cachedDnsLookup('example.com', { family: 4 });
+		await new Promise(resolve => setTimeout(resolve, 10));
+		await cachedDnsLookup('example.com', { family: 4 });
+
+		expect(resolve4.callCount).to.equal(2);
+	});
+
 	it('does not cache failures', async () => {
 		resolve4.onFirstCall().rejects(new Error('ENOTFOUND'));
-		resolve4.onSecondCall().resolves([ '1.1.1.1' ]);
+		resolve4.onSecondCall().resolves([{ address: '1.1.1.1', ttl: 300 }]);
 
 		let threw = false;
 
@@ -180,7 +190,7 @@ describe('dnsLookup / cachedDnsLookup', () => {
 	});
 
 	it('resolves IPv6 via resolve6', async () => {
-		const resolve6 = sandbox.stub(dns.promises.Resolver.prototype, 'resolve6').resolves([ '2606:4700:4700::1111' ]);
+		const resolve6 = sandbox.stub(dns.promises.Resolver.prototype, 'resolve6').resolves([{ address: '2606:4700:4700::1111', ttl: 300 }]);
 
 		expect(await dnsLookup('example.com', { family: 6 })).to.deep.equal([ '2606:4700:4700::1111', 6 ]);
 		expect(resolve6.callCount).to.equal(1);
