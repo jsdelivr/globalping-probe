@@ -148,14 +148,6 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			!result.rawOutput && (result.rawOutput = 'Test failed. Please try again.');
 		}
 
-		if (isIpPrivate(result.resolvedAddress ?? '')) {
-			result = {
-				...getResultInitState(),
-				status: 'failed',
-				rawOutput: 'Private IP ranges are not allowed.',
-			};
-		}
-
 		const out = this.toJsonOutput(result);
 		buffer.pushResult(out);
 		return out;
