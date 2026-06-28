@@ -2,7 +2,7 @@ import config from 'config';
 import type { ExecaChildProcess, ExecaError } from 'execa';
 import type { Socket } from 'socket.io-client';
 import parse from '../command/handlers/ping/parse.js';
-import type { IpFamily } from '../command/handlers/shared/dns-resolver.js';
+import type { IpFamily } from '../lib/dns.js';
 import type { PingOptions } from '../command/ping-command.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { scopedLogger } from '../lib/logger.js';
