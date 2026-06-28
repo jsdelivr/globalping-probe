@@ -2,7 +2,7 @@ import { isIP } from 'node:net';
 import { Socket } from 'node:net';
 import { performance } from 'node:perf_hooks';
 import { setTimeout as setTimeoutAsync } from 'node:timers/promises';
-import { dnsLookup, ResolverType } from '../shared/dns-resolver.js';
+import { cachedDnsLookup } from '../../../lib/dns.js';
 import type { PingParseOutput } from './parse.js';
 
 export type InternalTcpPingOptions = {
@@ -101,14 +101,14 @@ export async function tcpPingSingle (hostname: string, address: string, port: nu
 /**
  * Performs multiple TCP pings to the specified target and port
  * @param options The TCP ping options
- * @param resolverFn Optional custom DNS resolver
  * @param onProgress Optional callback for progress updates
+ * @param lookup DNS lookup function (overridden in tests)
  * @returns A promise that resolves with the TCP ping results
  */
 export async function tcpPing (
 	options: InternalTcpPingOptions,
 	onProgress?: (result: TcpPingData) => void,
-	resolverFn?: ResolverType,
+	lookup = cachedDnsLookup,
 ): Promise<Array<TcpPingData>> {
 	const { target, port, packets, timeout, interval, ipVersion } = options;
 	const startTime = performance.now();
@@ -120,8 +120,7 @@ export async function tcpPing (
 		address = target;
 	} else {
 		try {
-			const dnsResolver = dnsLookup(undefined, resolverFn);
-			[ address ] = await dnsResolver(target, { family: ipVersion });
+			[ address ] = await lookup(target, { family: ipVersion });
 		} catch (e) {
 			return [{ type: 'error', message: (e as Error).message || '' }];
 		}
