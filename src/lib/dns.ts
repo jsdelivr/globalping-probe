@@ -6,7 +6,7 @@ import { InternalError } from './internal-error.js';
 
 export type IpFamily = 4 | 6;
 
-export type LookupOptions = { family: IpFamily; server?: string };
+export type LookupOptions = { family: IpFamily; server?: string; allowPrivate?: boolean };
 export type RecordOptions = { rrtype: 'TXT'; server?: string };
 type Options = LookupOptions | RecordOptions;
 
@@ -97,7 +97,7 @@ const toResult = (records: string[], hostname: string, options: Options): [strin
 		throw new InternalError(`ENODATA ${hostname}`);
 	}
 
-	const address = records.find(ip => !isIpPrivate(ip));
+	const address = options.allowPrivate ? records[0] : records.find(ip => !isIpPrivate(ip));
 
 	if (!address) {
 		throw new InternalError('Private IP ranges are not allowed.');

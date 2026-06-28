@@ -97,7 +97,7 @@ export class AltIpsClient {
 		const family = isIP(ip) === 6 ? 6 : 4;
 		const response = await got.post<{ ip: string; token: string }>(`${httpHost}/alternative-ip`, {
 			localAddress: ip,
-			dnsLookup: callbackify((hostname: string) => cachedDnsLookup(hostname, { family }), true),
+			dnsLookup: callbackify((hostname: string) => cachedDnsLookup(hostname, { family, allowPrivate: true }), true),
 			dnsLookupIpVersion: family,
 			json: {
 				localAddress: ip,

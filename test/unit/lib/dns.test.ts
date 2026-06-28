@@ -143,6 +143,12 @@ describe('dnsLookup / cachedDnsLookup', () => {
 		expect(threw?.message).to.equal('Private IP ranges are not allowed.');
 	});
 
+	it('returns a private address when allowPrivate is set', async () => {
+		resolve4.resolves([{ address: '192.168.0.1', ttl: 300 }]);
+
+		expect(await dnsLookup('example.com', { family: 4, allowPrivate: true })).to.deep.equal([ '192.168.0.1', 4 ]);
+	});
+
 	it('cachedDnsLookup resolves once per key, dnsLookup every time', async () => {
 		await cachedDnsLookup('example.com', { family: 4 });
 		await cachedDnsLookup('example.com', { family: 4 });
