@@ -206,7 +206,7 @@ describe('index module', () => {
 		await import('../../src/probe.js');
 
 		mockSocket.emit('connect_error', new Error('ip limit'));
-		mockSocket.emit('connect_error', new Error('asn limit'));
+		mockSocket.emit('connect_error', new Error('user asn limit'));
 		mockSocket.emit('connect_error', new Error('vpn detected'));
 		mockSocket.emit('connect_error', new Error('unresolvable geoip'));
 

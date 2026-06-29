@@ -6,7 +6,7 @@ const logger = scopedLogger('api:error');
 
 const probeErrors = [
 	'ip limit',
-	'asn limit',
+	'user asn limit',
 	'vpn detected',
 	'unresolvable geoip',
 ];
@@ -43,7 +43,7 @@ class ErrorHandler {
 		if (isProbeError) {
 			if (error.message.startsWith('ip limit')) {
 				logger.error(`Only 1 probe per IP address or IPv6 /64 range is allowed. Please make sure you don't have another probe running on IP ${error?.data?.ipAddress || ''}.`);
-			} else if (error.message.startsWith('asn limit')) {
+			} else if (error.message.startsWith('user asn limit')) {
 				logger.error(`You've reached the maximum of 2 adopted probes allowed in the same network (ASN) and city. Please consider connecting from another network or city.`);
 			}
 
