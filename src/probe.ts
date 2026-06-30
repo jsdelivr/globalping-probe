@@ -92,7 +92,7 @@ function connect (workerId?: number) {
 		query: {
 			version: VERSION,
 			nodeVersion: process.version,
-			totalMemory: os.totalmem(),
+			totalMemory: process.constrainedMemory?.() || os.totalmem(),
 			totalDiskSize: getTotalDiskSize(),
 			availableDiskSpace: getAvailableDiskSpace(),
 			uuid: probeUuid,
