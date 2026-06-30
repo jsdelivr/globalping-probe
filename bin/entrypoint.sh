@@ -60,6 +60,11 @@ function try_update() {
 
 			availableDiskSpaceMb=$(df --block-size=MB --output=avail / | tail -1 | tr -dc '0-9')
 
+			if [ -z "$availableDiskSpaceMb" ]; then
+				echo "Failed to determine the available disk space. Skipping the update."
+				return
+			fi
+
 			if [ "$availableDiskSpaceMb" -lt "$UPDATE_MIN_DISK_SPACE_MB" ]; then
 				echo "
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
