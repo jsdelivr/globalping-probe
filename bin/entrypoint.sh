@@ -2,6 +2,8 @@
 
 update-ca-certificates
 
+UPDATE_MIN_DISK_SPACE_MB=200
+
 function run_probe() {
 	exec node /app/dist/index.js
 	return
@@ -55,6 +57,19 @@ function try_update() {
 			loadedTarball="globalping-probe-${latestVersion}"
 
 			echo "Starting self-update process to v$latestVersion..."
+
+			availableDiskSpaceMb=$(df --block-size=MB --output=avail / | tail -1 | tr -dc '0-9')
+
+			if [ "$availableDiskSpaceMb" -lt "$UPDATE_MIN_DISK_SPACE_MB" ]; then
+				echo "
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@      WARNING: LOW DISK SPACE, SKIPPING THE UPDATE       @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+Only ${availableDiskSpaceMb}MB of disk space is available (minimum ${UPDATE_MIN_DISK_SPACE_MB}MB required to download an update).
+Skipping the update. Please increase the available disk size.
+"
+				return
+			fi
 
 			curl -XGET -Lf -sS "${latestBundleA}" -o "/tmp/${loadedTarball}.tar.gz"
 

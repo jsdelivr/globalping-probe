@@ -155,11 +155,11 @@ function getLines (stats: ResourceStats) {
 	const lines = [];
 
 	if (!stats.hasMemory) {
-		lines.push(`  Memory: ${Math.round(stats.memory / 1e6)} MB total (minimum ${MIN_NODE_UPDATE_MEMORY / 1e6} MB required)`);
+		lines.push(`  Memory: ${Math.round(stats.memory / 1e6)}MB total (minimum ${MIN_NODE_UPDATE_MEMORY / 1e6}MB required)`);
 	}
 
 	if (!stats.hasDisk) {
-		lines.push(`  Disk: ${stats.disk} MB available (minimum ${MIN_NODE_UPDATE_DISK_SPACE_MB} MB required)`);
+		lines.push(`  Disk: ${stats.disk}MB available (minimum ${MIN_NODE_UPDATE_DISK_SPACE_MB}MB required)`);
 	}
 
 	return lines.join('\n');
