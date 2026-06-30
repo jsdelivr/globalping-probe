@@ -50,7 +50,7 @@ function updateNode () {
 	console.log(`[${new Date().toISOString()}] Wanted node.js version ${WANTED_VERSION}`);
 
 	const isNodeUpToDate = process.version === WANTED_VERSION;
-	const memory = process.constrainedMemory?.() || os.totalmem();
+	const memory = Math.min(process.constrainedMemory?.() || Infinity, os.totalmem());
 	const disk = getAvailableDiskSpace();
 	const hasMemory = memory >= MIN_NODE_UPDATE_MEMORY;
 	const hasDisk = disk >= MIN_NODE_UPDATE_DISK_SPACE_MB;
