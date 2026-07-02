@@ -1,5 +1,4 @@
 import config from 'config';
-import dns from 'node:dns';
 import { isIP } from 'node:net';
 import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
@@ -7,8 +6,10 @@ import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface } from '../types.js';
 import { byLine } from '../lib/by-line.js';
 import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
+import { cachedDnsLookup, type IpFamily } from '../lib/dns.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
+import { InternalError, isExposed } from '../lib/internal-error.js';
 import { scopedLogger } from '../lib/logger.js';
 import { getBackstopTimeout, MAX_MEASUREMENT_TIMEOUT, MIN_MEASUREMENT_TIMEOUT } from '../lib/measurement-timeout.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
@@ -30,8 +31,6 @@ export type MtrOptions = {
 	ipVersion: number;
 	timeout?: number;
 };
-
-type DnsResolver = (addr: string, rrtype?: string) => Promise<string[]>;
 
 const logger = scopedLogger('mtr-command');
 const allowedIpVersions = [ 4, 6 ];
@@ -87,7 +86,7 @@ export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
 };
 
 export class MtrCommand implements CommandInterface<MtrOptions> {
-	constructor (private readonly cmd: typeof mtrCmd, readonly dnsResolver: DnsResolver = dns.promises.resolve) {}
+	constructor (private readonly cmd: typeof mtrCmd, private readonly lookup = cachedDnsLookup) {}
 
 	async run (socket: Socket, measurementId: string, testId: string, options: MtrOptions): Promise<unknown> {
 		const validationResult = mtrOptionsSchema.validate(options);
@@ -98,44 +97,38 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 		const { value: cmdOptions } = validationResult;
 		const buffer = new ProgressBuffer(socket, testId, measurementId, 'overwrite');
-		const cmd = this.cmd(cmdOptions);
 		let result: ResultType = getResultInitState();
-		let isResultPrivate = false;
-
-		if (cmd.stdout) {
-			// TODO: remove:
-			// eslint-disable-next-line @typescript-eslint/no-misused-promises
-			byLine(cmd.stdout, async (data) => {
-				if (data.startsWith('mtr:')) {
-					cmd.kill('SIGKILL');
-					return;
-				}
-
-				for (const line of data.split(NEW_LINE_REG_EXP)) {
-					if (!line) {
-						continue;
-					}
-
-					result.data.push(line);
-				}
-
-				const output = await this.parseResult(result.data, false);
-				result.hops = output.hops;
-				result.rawOutput = output.rawOutput;
-
-				if (cmdOptions.inProgressUpdates) {
-					buffer.pushProgress({
-						rawOutput: result.rawOutput,
-					});
-				}
-			});
-		}
+		let cmd: ExecaChildProcess | undefined;
 
 		try {
-			await this.checkForPrivateDest(cmdOptions.target);
+			const target = await this.resolveTarget(cmdOptions);
+			cmd = this.cmd({ ...cmdOptions, target });
+
+			if (cmd.stdout) {
+				byLine(cmd.stdout, (data) => {
+					if (data.startsWith('mtr:')) {
+						cmd!.kill('SIGKILL');
+						return;
+					}
+
+					for (const line of data.split(NEW_LINE_REG_EXP)) {
+						if (!line) {
+							continue;
+						}
+
+						result.data.push(line);
+					}
+
+					if (cmdOptions.inProgressUpdates) {
+						buffer.pushLazyProgress(async () => ({
+							rawOutput: (await this.parseResult(result.data, false)).rawOutput,
+						}));
+					}
+				});
+			}
+
 			await cmd;
 			result = await this.parseResult(result.data, true);
-			isResultPrivate = isResultPrivate || isIpPrivate(result.resolvedAddress ?? '');
 		} catch (error: unknown) {
 			result.status = 'failed';
 
@@ -143,29 +136,21 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 				result.rawOutput = error.stdout.toString();
 				error.timedOut && (result.rawOutput += '\n\nThe measurement command timed out.');
 			} else {
-				cmd.kill('SIGKILL');
+				cmd?.kill('SIGKILL');
 
 				if (error instanceof Error) {
 					result.hops = [];
 					result.data = [];
-				}
 
-				if (error instanceof Error && error.message === 'private destination') {
-					isResultPrivate = true;
-				} else {
-					logger.error(error);
+					if (isExposed(error)) {
+						result.rawOutput = error.message;
+					} else {
+						logger.error(error);
+					}
 				}
 			}
 
 			!result.rawOutput && (result.rawOutput = 'Test failed. Please try again.');
-		}
-
-		if (isResultPrivate) {
-			result = {
-				...getResultInitState(),
-				status: 'failed',
-				rawOutput: 'Private IP ranges are not allowed.',
-			};
 		}
 
 		const out = this.toJsonOutput(result);
@@ -233,9 +218,9 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 	async lookupAsn (addr: string): Promise<string | undefined> {
 		const reversedAddr = addr.split('.').reverse().join('.');
-		const result = await this.dnsResolver(`${reversedAddr}.origin.asn.cymru.com`, 'TXT');
+		const result = await this.lookup(`${reversedAddr}.origin.asn.cymru.com`, { rrtype: 'TXT' });
 
-		return result.flat()[0];
+		return result[0];
 	}
 
 	private toJsonOutput (input: ResultType): ResultTypeJson {
@@ -252,19 +237,17 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		};
 	}
 
-	private async checkForPrivateDest (target: string): Promise<void> {
-		if (isIP(target) !== 0) {
-			if (isIpPrivate(target)) {
-				throw new Error('private destination');
+	private async resolveTarget (options: MtrOptions): Promise<string> {
+		if (isIP(options.target) !== 0) {
+			if (isIpPrivate(options.target)) {
+				throw new InternalError('Private IP ranges are not allowed.');
 			}
 
-			return;
+			return options.target;
 		}
 
-		const ipAddresses = await this.dnsResolver(target).catch(() => []);
+		const [ address ] = await this.lookup(options.target, { family: options.ipVersion as IpFamily });
 
-		if (ipAddresses.some(ip => isIpPrivate(String(ip)))) {
-			throw new Error('private destination');
-		}
+		return address;
 	}
 }

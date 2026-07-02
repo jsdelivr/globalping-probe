@@ -447,7 +447,7 @@ describe('tcp-ping', () => {
 				ipVersion: 4 as const,
 			};
 
-			const resolver = sandbox.stub().returns([ HOST ]);
+			const resolver = sandbox.stub().rejects(new Error('Private IP ranges are not allowed.'));
 			const results = await tcpPing(options, () => {}, resolver);
 
 			expect(resolver.callCount).to.equal(1);

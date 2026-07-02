@@ -206,13 +206,14 @@ describe('index module', () => {
 		await import('../../src/probe.js');
 
 		mockSocket.emit('connect_error', new Error('ip limit'));
+		mockSocket.emit('connect_error', new Error('user asn limit'));
 		mockSocket.emit('connect_error', new Error('vpn detected'));
 		mockSocket.emit('connect_error', new Error('unresolvable geoip'));
 
 		sandbox.clock.tick(60 * 1000 + 50);
 		expect(connectStub.callCount).to.equal(0);
 		sandbox.clock.tick(60 * 60 * 1000 + 50);
-		expect(connectStub.callCount).to.equal(3);
+		expect(connectStub.callCount).to.equal(4);
 	});
 
 	it('should reconnect after 1 minute delay on "api" type errors', async () => {

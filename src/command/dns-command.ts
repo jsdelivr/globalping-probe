@@ -6,7 +6,7 @@ import type { CommandInterface } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { byLine } from '../lib/by-line.js';
 import { isIpPrivate } from '../lib/private-ip.js';
-import { InternalError } from '../lib/internal-error.js';
+import { isExposed } from '../lib/internal-error.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { scopedLogger } from '../lib/logger.js';
 import { getBackstopTimeout, MAX_MEASUREMENT_TIMEOUT, MIN_MEASUREMENT_TIMEOUT } from '../lib/measurement-timeout.js';
@@ -139,7 +139,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 						return;
 					}
 				} catch (error: unknown) {
-					if (error instanceof InternalError && error.expose && error.message?.length > 0) {
+					if (isExposed(error)) {
 						output = error.message;
 					} else {
 						logger.error(error);
@@ -171,7 +171,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		} catch (error: unknown) {
 			let output = 'Test failed. Please try again.';
 
-			if (error instanceof InternalError && error.expose) {
+			if (isExposed(error)) {
 				output = error.message;
 			} else if (isExecaError(error) && error.timedOut) {
 				output = this.rewrite(error.stdout.toString(), cmdOptions.trace) + '\n\nThe measurement command timed out.';
