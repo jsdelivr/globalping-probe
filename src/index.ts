@@ -70,7 +70,7 @@ function updateNode () {
 		}
 
 		if (!hasResources) {
-			console.log(`[${new Date().toISOString()}] Resources are below the required threshold. Not updating.`);
+			console.log(`[${new Date().toISOString()}] Insufficient resources for auto-update. Not updating.`);
 			logUpdateContainerMessage({ memory, disk, hasMemory, hasDisk });
 			return;
 		}
@@ -155,25 +155,32 @@ function getLines (stats: ResourceStats) {
 	const lines = [];
 
 	if (!stats.hasMemory) {
-		lines.push(`  Memory: ${Math.round(stats.memory / 1e6)}MB total (minimum ${MIN_NODE_UPDATE_MEMORY / 1e6}MB required)`);
+		lines.push(`  Memory: ${Math.round(stats.memory / 1e6)} MB is available to the probe. At least ${MIN_NODE_UPDATE_MEMORY / 1e6} MB is required.`);
 	}
 
 	if (!stats.hasDisk) {
-		lines.push(`  Disk: ${stats.disk}MB available (minimum ${MIN_NODE_UPDATE_DISK_SPACE_MB}MB required)`);
+		lines.push(`  Disk: ${stats.disk} MB is available. At least ${MIN_NODE_UPDATE_DISK_SPACE_MB} MB is required.`);
 	}
 
 	return lines.join('\n');
 }
 
+function getResourceIncreaseText (stats: ResourceStats) {
+	return [
+		!stats.hasMemory && `RAM to at least ${(MIN_NODE_UPDATE_MEMORY / 1e6) * 2} MB`,
+		!stats.hasDisk && `disk space to at least ${MIN_NODE_UPDATE_DISK_SPACE_MB} MB`,
+	].filter(Boolean).join(' and ');
+}
+
 function logLowResourcesMessage (stats: ResourceStats) {
 	console.log(`
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-@      WARNING: LOW RESOURCES, AUTO-UPDATES WILL FAIL     @
+@      WARNING: LOW RESOURCES, AUTO-UPDATES DISABLED      @
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-This probe is below the resources needed to run auto-updates.
-It will stop working once a new version is released.
+This probe does not meet the minimum resource requirements for automatic updates.
+It may stop working after a new version is released.
 ${getLines(stats)}
-Please increase the available ${[ !stats.hasMemory && `RAM to >= ${(MIN_NODE_UPDATE_MEMORY / 1e6) * 2}MB`, !stats.hasDisk && `disk size to >= ${MIN_NODE_UPDATE_DISK_SPACE_MB}MB` ].filter(Boolean).join(' and ')}.
+Please increase ${getResourceIncreaseText(stats)}.
 	`);
 
 	setTimeout(() => logLowResourcesMessage(stats), 10 * 60 * 1000);
@@ -184,11 +191,11 @@ function logUpdateContainerMessage (stats: ResourceStats) {
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @     WARNING: PROBE CONTAINER OUTDATED, PLEASE UPDATE    @
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-Current probe container is out of date and we couldn't update it automatically.
+The current probe container is out of date, and it could not be updated automatically.
 ${getLines(stats)}
 Please either:
 - update it manually: https://github.com/jsdelivr/globalping-probe#optional-container-update
-- increase the available ${[ !stats.hasMemory && `RAM to >= ${(MIN_NODE_UPDATE_MEMORY / 1e6) * 2}MB`, !stats.hasDisk && `disk size to >= ${MIN_NODE_UPDATE_DISK_SPACE_MB}MB` ].filter(Boolean).join(' and ')}
+- increase ${getResourceIncreaseText(stats)}
 	`);
 
 	setTimeout(() => logUpdateContainerMessage(stats), 10 * 60 * 1000);

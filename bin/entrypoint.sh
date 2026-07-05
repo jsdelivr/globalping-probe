@@ -61,7 +61,7 @@ function try_update() {
 			availableDiskSpaceMb=$(df --block-size=MB --output=avail / | tail -1 | tr -dc '0-9')
 
 			if [ -z "$availableDiskSpaceMb" ]; then
-				echo "Failed to determine the available disk space. Skipping the update."
+				echo "Failed to determine available disk space. Skipping the update."
 				return
 			fi
 
@@ -70,8 +70,8 @@ function try_update() {
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @      WARNING: LOW DISK SPACE, SKIPPING THE UPDATE       @
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-Only ${availableDiskSpaceMb}MB of disk space is available (minimum ${UPDATE_MIN_DISK_SPACE_MB}MB required to download an update).
-Skipping the update. Please increase the available disk size.
+Only ${availableDiskSpaceMb} MB of disk space is available. At least ${UPDATE_MIN_DISK_SPACE_MB} MB is required for the update.
+Please increase the available disk space.
 "
 				return
 			fi
