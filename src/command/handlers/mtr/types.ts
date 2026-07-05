@@ -4,17 +4,17 @@ export type HopTimesType = {
 };
 
 export type HopStatsType = {
-	min: number;
-	max: number;
-	avg: number;
+	min: number | null;
+	max: number | null;
+	avg: number | null;
 	total: number;
 	loss: number;
 	rcv: number;
 	drop: number;
-	stDev: number;
-	jMin: number;
-	jMax: number;
-	jAvg: number;
+	stDev: number | null;
+	jMin: number | null;
+	jMax: number | null;
+	jAvg: number | null;
 };
 
 export type HopType = {

@@ -9,17 +9,17 @@ export const NEW_LINE_REG_EXP = /\r?\n/;
 
 const getInitialHopState = (): HopType => ({
 	stats: {
-		min: 0,
-		max: 0,
-		avg: 0,
+		min: null,
+		max: null,
+		avg: null,
 		total: 0,
 		loss: 0,
 		rcv: 0,
 		drop: 0,
-		stDev: 0,
-		jMin: 0,
-		jMax: 0,
-		jAvg: 0,
+		stDev: null,
+		jMin: null,
+		jMax: null,
+		jAvg: null,
 	},
 	asn: [],
 	timings: [],
@@ -43,6 +43,8 @@ const roundNumber = (value: number): number => {
 
 	return Number.parseFloat(value.toFixed(1));
 };
+
+const formatTimingStat = (value: number | null): string => (value ?? 0).toFixed(1);
 
 export const MtrParser = {
 	outputBuilder (hops: HopType[]): string {
@@ -109,9 +111,9 @@ export const MtrParser = {
 			const loss = withSpacing(((hop.stats.drop / hop.stats.total) * 100).toFixed(1), spacings.loss, true);
 			const drop = withSpacing(hop.stats.drop, spacings.drop, true);
 			const rcv = withSpacing((hop.stats.rcv), spacings.rcv, true);
-			const avg = withSpacing(hop.stats.avg.toFixed(1), spacings.avg, true);
-			const stDev = withSpacing(hop.stats.stDev.toFixed(1), spacings.stDev, true);
-			const jAvg = withSpacing(hop.stats.jAvg.toFixed(1), spacings.jAvg, true);
+			const avg = withSpacing(formatTimingStat(hop.stats.avg), spacings.avg, true);
+			const stDev = withSpacing(formatTimingStat(hop.stats.stDev), spacings.stDev, true);
+			const jAvg = withSpacing(formatTimingStat(hop.stats.jAvg), spacings.jAvg, true);
 
 			let line = `${sIndex}. ${sAsn} ${sHostname} `;
 
@@ -259,13 +261,13 @@ export const MtrParser = {
 
 		stats.total = hop.timings.length;
 
-		const timesArray = hop.timings.map(t => t.rtt).filter(is.truthy);
+		const timesArray = hop.timings.map(t => t.rtt).filter(is.number);
 
 		if (timesArray.length > 0) {
 			stats.min = Math.min(...timesArray);
 			stats.max = Math.max(...timesArray);
 			stats.avg = roundNumber(timesArray.reduce((a, b) => a + b, 0) / timesArray.length);
-			stats.stDev = roundNumber(Math.sqrt(timesArray.map(x => (x - stats.avg) ** 2).reduce((a, b) => a + b, 0) / timesArray.length));
+			stats.stDev = roundNumber(Math.sqrt(timesArray.map(x => (x - stats.avg!) ** 2).reduce((a, b) => a + b, 0) / timesArray.length));
 		}
 
 		stats.rcv = 0;
