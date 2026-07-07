@@ -35,14 +35,24 @@ function updateEntrypoint () {
 		return;
 	}
 
-	// Changing the script while it's running might result in unexpected behavior
-	// as bash continues reading the (changed) file from the original byte offset.
-	// By replacing the file with just one command here, we cause the execution
-	// to stop (the new file is shorter than the current offset), and we copy
-	// the update after the restart (and then restart again for the same reason).
-	console.log(`[${new Date().toISOString()}] Entrypoint change detected. Updating and restarting.`);
-	fs.writeFileSync(currentEntrypointPath, `cp ${newEntrypointPath} ${currentEntrypointPath} && exit\n`);
-	process.exit(0);
+	// Editing the file in place would be unsafe if the script is still running (non-exec
+	// legacy images): bash reads it lazily and would continue from the original byte
+	// offset within the new content. Renaming a new file over it is safe - a running
+	// bash keeps reading the old inode, and the new entrypoint takes effect at the
+	// next container start. No restart is needed as the running app is already
+	// up to date.
+	console.log(`[${new Date().toISOString()}] Entrypoint change detected. Updating.`);
+
+	try {
+		const tmpPath = `${currentEntrypointPath}.tmp`;
+		fs.writeFileSync(tmpPath, newEntrypoint);
+		fs.chmodSync(tmpPath, fs.statSync(currentEntrypointPath).mode);
+		fs.renameSync(tmpPath, currentEntrypointPath);
+		console.log(`[${new Date().toISOString()}] Entrypoint updated. The new version will be used after the next restart.`);
+	} catch (e) {
+		console.error(`[${new Date().toISOString()}] Failed to update the entrypoint:`);
+		console.error(e);
+	}
 }
 
 function updateNode () {
