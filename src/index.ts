@@ -79,6 +79,15 @@ function updateNode () {
 			return;
 		}
 
+		// The install below ends with process.exit() to restart into the new node.js. On a
+		// filesystem that doesn't persist across restarts the install would be undone on the
+		// next boot and repeat forever. The UUID file, written on a previous boot, is the
+		// persistence probe: if it's gone, don't attempt the update - just warn.
+		if (!fs.existsSync(UUID_FILE)) {
+			console.log(`[${new Date().toISOString()}] Ephemeral filesystem detected. Skipping the node.js update to avoid a restart loop.`);
+			return;
+		}
+
 		if (!hasResources) {
 			console.log(`[${new Date().toISOString()}] Insufficient resources for auto-update. Not updating.`);
 			logUpdateContainerMessage({ memory, disk, hasMemory, hasDisk });
