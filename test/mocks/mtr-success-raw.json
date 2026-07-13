@@ -31,17 +31,17 @@
 			},
 			{
 				"stats": {
-					"min": 0,
-					"max": 0,
-					"avg": 0,
+					"min": null,
+					"max": null,
+					"avg": null,
 					"total": 3,
 					"loss": 100,
 					"rcv": 0,
 					"drop": 3,
-					"stDev": 0,
-					"jMin": 0,
-					"jMax": 0,
-					"jAvg": 0
+					"stDev": null,
+					"jMin": null,
+					"jMax": null,
+					"jAvg": null
 				},
 				"timings": [],
 				"asn": [],
@@ -81,17 +81,17 @@
 			},
 			{
 				"stats": {
-					"min": 0,
-					"max": 0,
-					"avg": 0,
+					"min": null,
+					"max": null,
+					"avg": null,
 					"total": 3,
 					"loss": 100,
 					"rcv": 0,
 					"drop": 3,
-					"stDev": 0,
-					"jMin": 0,
-					"jMax": 0,
-					"jAvg": 0
+					"stDev": null,
+					"jMin": null,
+					"jMax": null,
+					"jAvg": null
 				},
 				"timings": [],
 				"asn": [],

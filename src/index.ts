@@ -13,6 +13,13 @@ const MIN_NODE_UPDATE_DISK_SPACE_MB = 1000;
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const UUID_FILE = `/.globalping-probe-uuid`;
 
+type ResourceStats = {
+	memory: number;
+	disk: number;
+	hasMemory: boolean;
+	hasDisk: boolean;
+};
+
 function updateEntrypoint () {
 	const currentEntrypointPath = path.join(dirname, '../../entrypoint.sh');
 	const newEntrypointPath = path.join(dirname, '../bin/entrypoint.sh');
@@ -42,25 +49,29 @@ function updateNode () {
 	console.log(`[${new Date().toISOString()}] Current node.js version ${process.version}`);
 	console.log(`[${new Date().toISOString()}] Wanted node.js version ${WANTED_VERSION}`);
 
-	if (process.version === WANTED_VERSION) {
+	const isNodeUpToDate = process.version === WANTED_VERSION;
+	const memory = Math.min(process.constrainedMemory?.() || Infinity, os.totalmem());
+	const disk = getAvailableDiskSpace();
+	const hasMemory = memory >= MIN_NODE_UPDATE_MEMORY;
+	const hasDisk = disk >= MIN_NODE_UPDATE_DISK_SPACE_MB;
+	const hasResources = hasMemory && hasDisk;
+	const isHwProbe = process.env['GP_HOST_HW'] || looksLikeV1HardwareDevice();
+
+	if (isNodeUpToDate) {
+		!isHwProbe && !hasResources && logLowResourcesMessage({ memory, disk, hasMemory, hasDisk });
 		return;
 	}
 
 	try {
-		const IS_HW_PROBE = process.env['GP_HOST_HW'] || looksLikeV1HardwareDevice();
-
-		if (IS_HW_PROBE) {
+		if (isHwProbe) {
 			console.log(`[${new Date().toISOString()}] Hardware probe detected. Not updating.`);
 			logUpdateFirmwareMessage();
 			return;
 		}
 
-		const PROBE_MEMORY = os.totalmem();
-		const PROBE_DISK_SPACE_MB = getAvailableDiskSpace();
-
-		if (PROBE_MEMORY < MIN_NODE_UPDATE_MEMORY || PROBE_DISK_SPACE_MB < MIN_NODE_UPDATE_DISK_SPACE_MB) {
-			console.log(`[${new Date().toISOString()}] Total system memory (${PROBE_MEMORY}) or disk space (${PROBE_DISK_SPACE_MB}MB} below the required threshold. Not updating.`);
-			logUpdateContainerMessage();
+		if (!hasResources) {
+			console.log(`[${new Date().toISOString()}] Insufficient resources for auto-update. Not updating.`);
+			logUpdateContainerMessage({ memory, disk, hasMemory, hasDisk });
 			return;
 		}
 
@@ -140,18 +151,54 @@ https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware
 	setTimeout(logUpdateFirmwareMessage, 10 * 60 * 1000);
 }
 
-function logUpdateContainerMessage () {
+function getLines (stats: ResourceStats) {
+	const lines = [];
+
+	if (!stats.hasMemory) {
+		lines.push(`  Memory: ${Math.round(stats.memory / 1e6)} MB is available to the probe. At least ${MIN_NODE_UPDATE_MEMORY / 1e6} MB is required.`);
+	}
+
+	if (!stats.hasDisk) {
+		lines.push(`  Disk: ${stats.disk} MB is available. At least ${MIN_NODE_UPDATE_DISK_SPACE_MB} MB is required.`);
+	}
+
+	return lines.join('\n');
+}
+
+function getResourceIncreaseText (stats: ResourceStats) {
+	return [
+		!stats.hasMemory && `RAM to at least ${(MIN_NODE_UPDATE_MEMORY / 1e6) * 2} MB`,
+		!stats.hasDisk && `disk space to at least ${MIN_NODE_UPDATE_DISK_SPACE_MB} MB`,
+	].filter(Boolean).join(' and ');
+}
+
+function logLowResourcesMessage (stats: ResourceStats) {
+	console.log(`
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@      WARNING: LOW RESOURCES, AUTO-UPDATES DISABLED      @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+This probe does not meet the minimum resource requirements for automatic updates.
+It may stop working after a new version is released.
+${getLines(stats)}
+Please increase ${getResourceIncreaseText(stats)}.
+	`);
+
+	setTimeout(() => logLowResourcesMessage(stats), 10 * 60 * 1000);
+}
+
+function logUpdateContainerMessage (stats: ResourceStats) {
 	console.log(`
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @     WARNING: PROBE CONTAINER OUTDATED, PLEASE UPDATE    @
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-Current probe container is out of date and we couldn't update it automatically.
+The current probe container is out of date, and it could not be updated automatically.
+${getLines(stats)}
 Please either:
 - update it manually: https://github.com/jsdelivr/globalping-probe#optional-container-update
-- increase the available RAM to >= 500MB and disk size to >= 1GB
+- increase ${getResourceIncreaseText(stats)}
 	`);
 
-	setTimeout(logUpdateContainerMessage, 10 * 60 * 1000);
+	setTimeout(() => logUpdateContainerMessage(stats), 10 * 60 * 1000);
 }
 
 updateEntrypoint();
