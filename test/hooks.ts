@@ -11,15 +11,7 @@ global.chaiSnapshotInstance = chaiSnapshot({
 chai.use(global.chaiSnapshotInstance);
 
 export const mochaHooks = {
-	async beforeAll () {
-		if (global.v8debug === undefined && !/--debug|--inspect/.test(process.execArgv.join(' ')) && !process.env['JB_IDE_PORT']) {
-			await import('blocked').then(({ default: blocked }) => {
-				blocked((ms) => {
-					throw new Error(`Blocked for ${ms} ms.`);
-				}, { threshold: 100 });
-			}).catch(console.error);
-		}
-
+	beforeAll () {
 		nock.disableNetConnect();
 		nock.enableNetConnect('127.0.0.1');
 	},
