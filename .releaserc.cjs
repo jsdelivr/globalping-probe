@@ -1,9 +1,23 @@
+const { DEFAULT_COMMIT_TYPES } = require('conventional-changelog-conventionalcommits');
+
 module.exports = {
 	branches: [ 'master' ],
 	repositoryUrl: 'https://github.com/jsdelivr/globalping-probe.git',
 	plugins: [
-		'@semantic-release/commit-analyzer',
-		'@semantic-release/release-notes-generator',
+		[ '@semantic-release/commit-analyzer', {
+			releaseRules: [
+				{ type: 'misc', release: 'patch' },
+			],
+		}],
+		[ '@semantic-release/release-notes-generator', {
+			preset: 'conventionalcommits',
+			presetConfig: {
+				types: [
+					...DEFAULT_COMMIT_TYPES,
+					{ type: 'misc', section: 'Miscellaneous' },
+				],
+			},
+		}],
 		[ '@semantic-release/github', {
 			assets: [
 				{ path: 'globalping-probe.bundle.tar.gz', label: 'globalping-probe.bundle.tar.gz' },
