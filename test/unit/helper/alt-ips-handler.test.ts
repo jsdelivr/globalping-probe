@@ -116,7 +116,7 @@ describe('apiConnectAltIpsHandler', async () => {
 			});
 
 		const emit = sinon.stub();
-		const altIpsClient = new AltIpsClient({ emit } as unknown as Socket, '1.1.1.1');
+		const altIpsClient = new AltIpsClient({ volatile: { emit } } as unknown as Socket, '1.1.1.1');
 		await altIpsClient.refreshAltIps();
 
 		expect(reqs.length).to.equal(3);

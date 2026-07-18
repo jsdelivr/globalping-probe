@@ -19,6 +19,7 @@ export class AltIpsClient {
 	private currentIps: string[] = [];
 	private currentRejectedIps: Record<string, string> = {};
 	private currentFailedIps: Record<string, string> = {};
+	private lifecycleId = 0;
 
 	constructor (socket: Socket, ip: string) {
 		this.socket = socket;
@@ -32,19 +33,24 @@ export class AltIpsClient {
 	}
 
 	start () {
+		const lifecycleId = ++this.lifecycleId;
 		clearTimeout(this.timer);
-		this.run();
+		this.run(lifecycleId);
 	}
 
-	private run () {
-		void this.refreshAltIps().catch((error) => {
+	private run (lifecycleId: number) {
+		void this.refreshAltIps(lifecycleId).catch((error) => {
 			altIpsLogger.error(error);
 		}).finally(() => {
-			this.timer = setTimeout(() => this.run(), this.INTERVAL_TIME);
+			if (lifecycleId !== this.lifecycleId) {
+				return;
+			}
+
+			this.timer = setTimeout(() => this.run(lifecycleId), this.INTERVAL_TIME);
 		});
 	}
 
-	async refreshAltIps (): Promise<void> {
+	async refreshAltIps (lifecycleId = this.lifecycleId): Promise<void> {
 		const addresses = Array.from(getLocalIps(true));
 
 		const results = await Promise.allSettled(addresses.map((address) => {
@@ -69,7 +75,15 @@ export class AltIpsClient {
 			}
 		});
 
-		this.socket.emit('probe:alt-ips', ipsToTokens, ({ addedAltIps, rejectedIpsToReasons }: { addedAltIps: string[]; rejectedIpsToReasons: Record<string, string> }) => {
+		if (lifecycleId !== this.lifecycleId) {
+			return;
+		}
+
+		this.socket.volatile.emit('probe:alt-ips', ipsToTokens, ({ addedAltIps, rejectedIpsToReasons }: { addedAltIps: string[]; rejectedIpsToReasons: Record<string, string> }) => {
+			if (lifecycleId !== this.lifecycleId) {
+				return;
+			}
+
 			const uniqAcceptedIps = _.uniq([ this.ip, ...addedAltIps.sort() ]);
 			rejectedIps = { ...rejectedIps, ...rejectedIpsToReasons };
 
