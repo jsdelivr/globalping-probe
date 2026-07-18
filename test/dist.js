@@ -3,7 +3,8 @@ import { setTimeout } from 'timers/promises';
 
 describe('dist build', () => {
 	it('loads and doesn\'t crash', async () => {
-		await import('../dist/index.js');
+		// using String() here to avoid linter checks as the file doesn't exist before `npm run build`
+		await import(String('../dist/index.js'));
 
 		await setTimeout(10000);
 
