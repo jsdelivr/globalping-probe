@@ -9,6 +9,8 @@ import _ from 'lodash';
 import { ProgressBuffer } from '../../../helper/progress-buffer.js';
 import type { HttpOptions } from '../../http-command.js';
 import { dnsLookup, type IpFamily } from '../../../lib/dns.js';
+import { getFailureSource, InternalError } from '../../../lib/internal-error.js';
+import type { FailureSource, TestStatus } from '../../../types.js';
 import { callbackify } from '../../../lib/util.js';
 import { isIpPrivate } from '../../../lib/private-ip.js';
 import { truncateHeaderPairs } from './truncate-headers.js';
@@ -48,7 +50,8 @@ type Timings = {
 };
 
 type Result = {
-	status: 'finished' | 'failed';
+	status: TestStatus;
+	failureSource?: FailureSource;
 	resolvedAddress: string | null;
 	httpVersion: string | null;
 	headers: Record<string, string | string[]>;
@@ -62,7 +65,8 @@ type Result = {
 };
 
 export type OutputJson = {
-	status: 'finished' | 'failed';
+	status: TestStatus;
+	failureSource?: FailureSource;
 	resolvedAddress: string | null;
 	headers: Record<string, string | string[]>;
 	rawHeaders: string | null;
@@ -108,10 +112,15 @@ function getConnector (
 			lookup: dnsResolver,
 		});
 
-		tcpSocket.on('lookup', (_err, address) => {
+		tcpSocket.on('lookup', (error, address) => {
+			if (error) {
+				// Handled in onError().
+				return;
+			}
+
 			if (isIpPrivate(address)) {
 				tcpSocket.destroy();
-				callback(new Error('Private IP ranges are not allowed.'), null);
+				callback(new InternalError('Private IP ranges are not allowed.'), null);
 				return;
 			}
 
@@ -130,7 +139,7 @@ function getConnector (
 				|| isIpPrivate(tcpSocket.remoteAddress)
 			) {
 				tcpSocket.destroy();
-				callback(new Error('Private IP ranges are not allowed.'), null);
+				callback(new InternalError('Private IP ranges are not allowed.'), null);
 				return;
 			}
 
@@ -259,7 +268,7 @@ export class HttpHandler {
 		const allowH2 = this.options.protocol === 'HTTP2';
 		const connector = getConnector(this.options, this.port, this.isHttps, dnsResolver, this.result, this.timings);
 		this.undiciClient = new Client(this.url.origin, { connect: connector, allowH2 });
-		this.timeoutTimer = setTimeout(() => this.handleError('Request timeout.'), this.REQUEST_TIMEOUT);
+		this.timeoutTimer = setTimeout(() => this.handleError('Request timeout.', 'target'), this.REQUEST_TIMEOUT);
 
 		this.undiciClient.dispatch({
 			path: this.url.pathname + this.url.search,
@@ -273,7 +282,7 @@ export class HttpHandler {
 			}),
 		}, {
 			onConnect: () => {},
-			onError: (err: Error) => this.handleError(err.message),
+			onError: (err: Error) => this.handleError(err, 'target'),
 			onHeaders: (statusCode, headers, _resume, statusText) => {
 				this.timings.firstByte = Date.now() - this.timings.start! - (this.timings.dns ?? 0) - (this.timings.tcp ?? 0) - (this.timings.tls ?? 0);
 				this.result.statusCode = statusCode;
@@ -363,7 +372,7 @@ export class HttpHandler {
 		this.decompressor = decompressor();
 		this.decompressor.on('data', (chunk: Buffer) => this.onHttpData(chunk));
 		this.decompressor.on('end', () => this.handleSuccess());
-		this.decompressor.on('error', (err: Error) => this.handleError(err.message));
+		this.decompressor.on('error', (err: Error) => this.handleError(err, 'target'));
 	}
 
 	private onHttpData = (chunk: Buffer) => {
@@ -447,14 +456,16 @@ export class HttpHandler {
 		this.sendResult();
 	};
 
-	private handleError = (message: string) => {
+	private handleError = (error: Error | string, fallbackSource: FailureSource) => {
 		if (this.done) {
 			return;
 		}
 
+		const message = error instanceof Error ? error.message : error;
 		this.done = true;
 		Object.assign(this.result, this.getInitialResult());
 		this.result.status = 'failed';
+		this.result.failureSource = getFailureSource(error, fallbackSource);
 		this.result.rawOutput = message;
 
 		for (const key of Object.keys(this.timings) as (keyof Timings)[]) {
@@ -475,6 +486,7 @@ export class HttpHandler {
 	private getJsonOutput (): OutputJson {
 		return {
 			status: this.result.status,
+			...(this.result.status === 'failed' && { failureSource: this.result.failureSource }),
 			resolvedAddress: this.result.resolvedAddress || null,
 			headers: this.result.headers,
 			rawHeaders: this.result.rawHeaders || null,
