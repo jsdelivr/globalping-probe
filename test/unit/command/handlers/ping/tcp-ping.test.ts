@@ -2,6 +2,7 @@ import net from 'node:net';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import * as td from 'testdouble';
+import { InternalError } from '../../../../../src/lib/internal-error.js';
 
 // This must remain type-only
 import type * as tcpPingModule from '../../../../../src/command/handlers/ping/tcp-ping.js';
@@ -457,7 +458,48 @@ describe('tcp-ping', () => {
 			expect(errorData).to.deep.equal({
 				type: 'error',
 				message: 'Private IP ranges are not allowed.',
+				failureSource: 'internal',
 			});
+		});
+
+		it('should preserve target DNS failure classification', async () => {
+			const options = {
+				target: 'missing.example',
+				port: openPort,
+				packets: 1,
+				timeout: TIMEOUT,
+				interval: INTERVAL,
+				ipVersion: 4 as const,
+			};
+			const resolver = sandbox.stub().rejects(new InternalError('ENOTFOUND missing.example', true, 'target'));
+
+			const results = await tcpPing(options, () => {}, resolver);
+
+			expect(results).to.deep.equal([{
+				type: 'error',
+				message: 'ENOTFOUND missing.example',
+				failureSource: 'target',
+			}]);
+		});
+
+		it('should preserve resolver failure classification', async () => {
+			const options = {
+				target: 'example.com',
+				port: openPort,
+				packets: 1,
+				timeout: TIMEOUT,
+				interval: INTERVAL,
+				ipVersion: 4 as const,
+			};
+			const resolver = sandbox.stub().rejects(new InternalError('queryA ETIMEOUT example.com', true, 'resolver'));
+
+			const results = await tcpPing(options, () => {}, resolver);
+
+			expect(results).to.deep.equal([{
+				type: 'error',
+				message: 'queryA ETIMEOUT example.com',
+				failureSource: 'resolver',
+			}]);
 		});
 	});
 
@@ -569,6 +611,7 @@ describe('tcp-ping', () => {
 				{
 					type: 'error',
 					message: 'DNS resolution failed',
+					failureSource: 'internal',
 				},
 			];
 
@@ -648,12 +691,14 @@ describe('tcp-ping', () => {
 				{
 					type: 'error',
 					message: 'DNS resolution failed',
+					failureSource: 'target',
 				},
 			];
 
 			const result = formatTcpPingResult(lines);
 
 			expect(result.status).to.equal('failed');
+			expect(result.failureSource).to.equal('target');
 			expect(result.rawOutput).to.equal('DNS resolution failed');
 		});
 
@@ -676,12 +721,14 @@ describe('tcp-ping', () => {
 				{
 					type: 'error',
 					message: 'Connection interrupted',
+					failureSource: 'internal',
 				},
 			];
 
 			const result = formatTcpPingResult(lines);
 
 			expect(result.status).to.equal('failed');
+			expect(result.failureSource).to.equal('internal');
 			expect(result.resolvedAddress).to.equal('93.184.216.34');
 		});
 	});

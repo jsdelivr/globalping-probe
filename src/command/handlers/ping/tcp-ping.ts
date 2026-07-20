@@ -3,6 +3,8 @@ import { Socket } from 'node:net';
 import { performance } from 'node:perf_hooks';
 import { setTimeout as setTimeoutAsync } from 'node:timers/promises';
 import { cachedDnsLookup } from '../../../lib/dns.js';
+import { getFailureSource } from '../../../lib/internal-error.js';
+import type { FailureSource } from '../../../types.js';
 import type { PingParseOutput } from './parse.js';
 
 export type InternalTcpPingOptions = {
@@ -58,6 +60,7 @@ type TcpPingStatsData = {
 type TcpPingErrorData = {
 	type: 'error';
 	message: string;
+	failureSource: FailureSource;
 };
 
 export type TcpPingData = TcpPingStartData | TcpPingProbeData | TcpPingStatsData | TcpPingErrorData;
@@ -122,7 +125,7 @@ export async function tcpPing (
 		try {
 			[ address ] = await lookup(target, { family: ipVersion });
 		} catch (e) {
-			return [{ type: 'error', message: (e as Error).message || '' }];
+			return [{ type: 'error', message: (e as Error).message || '', failureSource: getFailureSource(e, 'internal') }];
 		}
 	}
 
@@ -236,6 +239,7 @@ export function formatTcpPingResult (lines: Array<TcpPingData>): PingParseOutput
 
 		return {
 			status: 'failed',
+			failureSource: errorData[0]?.failureSource ?? 'internal',
 			rawOutput: toRawTcpOutput(lines),
 			...resolvedAddress ? { resolvedAddress } : {},
 		};

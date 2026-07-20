@@ -1,4 +1,5 @@
 import is from '@sindresorhus/is';
+import type { FailureSource, TestStatus } from '../../../types.js';
 
 type PingStats = {
 	min?: number;
@@ -22,7 +23,8 @@ type TcpTimings = {
 type PingTimings = IcmpTimings | TcpTimings;
 
 export type PingParseOutput = {
-	status: 'finished' | 'failed';
+	status: TestStatus;
+	failureSource?: FailureSource;
 	rawOutput: string;
 	resolvedHostname?: string;
 	resolvedAddress?: string;

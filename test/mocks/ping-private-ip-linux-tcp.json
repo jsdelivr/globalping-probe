@@ -3,6 +3,7 @@
 	"measurementId": "measurement",
 	"result": {
 		"status": "failed",
+		"failureSource": "internal",
 		"resolvedAddress": null,
 		"resolvedHostname": null,
 		"stats": {
