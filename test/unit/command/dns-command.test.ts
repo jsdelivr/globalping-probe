@@ -1041,6 +1041,7 @@ describe('dns command', () => {
 					measurementId: 'measurement',
 					result: {
 						status: 'failed',
+						failureSource: 'resolver',
 						rawOutput: '\n\nThe measurement command timed out.',
 						statusCodeName: null,
 						statusCode: null,

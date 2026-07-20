@@ -5,15 +5,18 @@ import {
 	type DnsParseLoopResponse,
 	type DnsParseLoopResponseJson,
 } from './shared.js';
+import type { FailureSource, TestStatus } from '../../../types.js';
 
 export type DnsParseResponse = {
-	status: 'finished' | 'failed';
+	status: TestStatus;
+	failureSource?: FailureSource;
 	hops: DnsParseLoopResponse[];
 	rawOutput: string;
 };
 
 export type DnsParseResponseJson = {
-	status: 'finished' | 'failed';
+	status: TestStatus;
+	failureSource?: FailureSource;
 	hops: DnsParseLoopResponseJson[];
 	rawOutput: string;
 };
@@ -89,6 +92,7 @@ export const TraceDigParser = {
 	toJsonOutput (result: Partial<DnsParseResponse>): DnsParseResponseJson {
 		return {
 			status: result.status!,
+			...(result.status === 'failed' && { failureSource: result.failureSource }),
 			rawOutput: result.rawOutput!,
 			hops: (result.hops ?? []).map(h => ({
 				answers: h.answers ?? [],
