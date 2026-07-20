@@ -374,6 +374,7 @@ describe('trace command', () => {
 						measurementId: 'measurement',
 						result: {
 							status: 'failed',
+							failureSource: 'target',
 							rawOutput: 'traceroute to hello.com (216.239.38.21), 20 hops max, 60 byte packets\n'
 								+ '\n'
 								+ 'The measurement command timed out.',
@@ -381,6 +382,34 @@ describe('trace command', () => {
 					},
 				]);
 			});
+
+			for (const { expectedSource, output } of [
+				{ expectedSource: 'target', output: 'traceroute: missing.example: Name or service not known' },
+				{ expectedSource: 'target', output: 'traceroute to example.com (1.1.1.1), 20 hops max\n 1  192.0.2.1  1.0 ms !H' },
+				{ expectedSource: 'internal', output: 'traceroute: connect: Network is unreachable' },
+			] as const) {
+				it(`should classify "${output}" as ${expectedSource}`, async () => {
+					const options = {
+						type: 'traceroute' as TraceOptions['type'],
+						target: 'example.com',
+						port: 53,
+						protocol: 'UDP',
+						inProgressUpdates: false,
+						ipVersion: 4,
+					};
+					const mockCmd = getExecaMock();
+					const command = new TracerouteCommand((): any => mockCmd);
+					const runPromise = command.run(mockSocket as any, 'measurement', 'test', options);
+					const error = new Error(output) as ExecaError;
+					error.stderr = '';
+					error.stdout = output;
+					mockCmd.reject(error);
+
+					await runPromise;
+
+					expect((mockSocket.emit.lastCall.args[1] as any).result.failureSource).to.equal(expectedSource);
+				});
+			}
 
 			it('should reject private target on validation', async () => {
 				try {
