@@ -9,7 +9,7 @@ import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
 import { cachedDnsLookup, type IpFamily } from '../lib/dns.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
-import { InternalError, isExposed } from '../lib/internal-error.js';
+import { getFailureSource, InternalError, isExposed } from '../lib/internal-error.js';
 import { scopedLogger } from '../lib/logger.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 
@@ -126,6 +126,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			result = await this.parseResult(result.data, true);
 		} catch (error: unknown) {
 			result.status = 'failed';
+			result.failureSource = getFailureSource(error, isExecaError(error) && error.timedOut ? 'target' : 'internal');
 
 			if (isExecaError(error)) {
 				result.rawOutput = error.stdout.toString();
@@ -221,6 +222,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 	private toJsonOutput (input: ResultType): ResultTypeJson {
 		return {
 			status: input.status,
+			...(input.status === 'failed' && { failureSource: input.failureSource }),
 			rawOutput: input.rawOutput,
 			resolvedAddress: input.resolvedAddress ? String(input.resolvedAddress) : null,
 			resolvedHostname: input.resolvedHostname ? String(input.resolvedHostname) : null,
