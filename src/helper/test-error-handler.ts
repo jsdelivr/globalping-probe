@@ -13,6 +13,7 @@ export const handleTestError = (error: unknown, socket: Socket, measurementId: s
 		measurementId,
 		result: {
 			status: 'failed',
+			failureSource: 'internal',
 			rawOutput,
 		},
 	});
