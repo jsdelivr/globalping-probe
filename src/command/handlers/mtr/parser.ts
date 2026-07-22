@@ -78,25 +78,7 @@ export const MtrParser = {
 
 		rawOutput.push(header.join(' '));
 
-		const filteredHops: HopType[] = [];
-
 		for (const [ i, hop ] of hops.entries()) {
-			if (!hop) {
-				continue;
-			}
-
-			if (!hop.resolvedAddress) {
-				const isEmptyUntilEnd = hops.slice(i - 1).every(h => !h.resolvedAddress);
-
-				if (isEmptyUntilEnd) {
-					continue;
-				}
-			}
-
-			filteredHops.push(hop);
-		}
-
-		for (const [ i, hop ] of filteredHops.entries()) {
 			// Index
 			const sIndex = withSpacing(String(i + 1), spacings.index, true);
 
@@ -211,9 +193,17 @@ export const MtrParser = {
 
 		hops = MtrParser.removeDuplicates(hops);
 
+		hops = MtrParser.trimHops(hops);
+
 		hops = MtrParser.fulfillMissingHostnames(addressToHostname, hops);
 
 		return MtrParser.hopFinalParse(hops);
+	},
+
+	trimHops (hops: HopType[]): HopType[] {
+		const lastRespondingIndex = hops.reduce((last, hop, i) => hop.resolvedAddress ? i : last, -1);
+
+		return hops.slice(0, lastRespondingIndex + 2);
 	},
 
 	removeDuplicates (hops: HopType[]): HopType[] {
