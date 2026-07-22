@@ -33,6 +33,16 @@ describe('mtr parser helper', () => {
 
 			expect(parsedOutput).to.deep.equal(expectedResult);
 		});
+	});
+
+	describe('outputBuilder', () => {
+		it('should transform obj into MTR-styled response', () => {
+			const testCase = 'mtr-success-raw-helper-final';
+			const data = (getCmdMockResult(testCase) as MockResult).result;
+			const output = MtrParser.outputBuilder(data.hops);
+
+			expect(output).to.deep.equal(data.rawOutput);
+		});
 
 		it('should trim all but one trailing empty hops', () => {
 			const rawOutput = [
@@ -45,11 +55,16 @@ describe('mtr parser helper', () => {
 				'x 4 33004',
 			].join('\n');
 
-			const parsedOutput = MtrParser.rawParse(rawOutput, true);
+			const hops = MtrParser.rawParse(rawOutput, true);
 
-			expect(parsedOutput.length).to.equal(2);
-			expect(parsedOutput[0]!.resolvedAddress).to.equal('192.168.0.1');
-			expect(parsedOutput[1]!.resolvedAddress).to.be.undefined;
+			expect(hops.map(hop => hop.resolvedAddress)).to.deep.equal([ '192.168.0.1', undefined ]);
+
+			expect(MtrParser.outputBuilder(hops)).to.equal([
+				'Host                    Loss% Drop Rcv Avg  StDev  Javg ',
+				'1. AS??? _gateway (192.168.0.1)    0.0%    0   1 1.0    0.0   1.0',
+				'2. AS??? (waiting for reply) ',
+				'',
+			].join('\n'));
 		});
 
 		it('should keep intermediate empty hops while trimming the trailing ones', () => {
@@ -65,10 +80,18 @@ describe('mtr parser helper', () => {
 				'x 4 33004',
 			].join('\n');
 
-			const parsedOutput = MtrParser.rawParse(rawOutput, true);
+			const hops = MtrParser.rawParse(rawOutput, true);
 
-			expect(parsedOutput.length).to.equal(4);
-			expect(parsedOutput.map(hop => hop.resolvedAddress)).to.deep.equal([ '192.168.0.1', undefined, '62.252.67.181', undefined ]);
+			expect(hops.map(hop => hop.resolvedAddress)).to.deep.equal([ '192.168.0.1', undefined, '62.252.67.181', undefined ]);
+
+			expect(MtrParser.outputBuilder(hops)).to.equal([
+				'Host                      Loss% Drop Rcv Avg  StDev  Javg ',
+				'1. AS??? _gateway (192.168.0.1)    0.0%    0   1 1.0    0.0   1.0',
+				'2. AS??? (waiting for reply) ',
+				'3. AS??? 62.252.67.181 (62.252.67.181)    0.0%    0   1 10.0    0.0  10.0',
+				'4. AS??? (waiting for reply) ',
+				'',
+			].join('\n'));
 		});
 
 		it('should keep a single empty hop when no hop responded', () => {
@@ -78,20 +101,15 @@ describe('mtr parser helper', () => {
 				'x 2 33002',
 			].join('\n');
 
-			const parsedOutput = MtrParser.rawParse(rawOutput, true);
+			const hops = MtrParser.rawParse(rawOutput, true);
 
-			expect(parsedOutput.length).to.equal(1);
-			expect(parsedOutput[0]!.resolvedAddress).to.be.undefined;
-		});
-	});
+			expect(hops.map(hop => hop.resolvedAddress)).to.deep.equal([ undefined ]);
 
-	describe('outputBuilder', () => {
-		it('should transform obj into MTR-styled response', () => {
-			const testCase = 'mtr-success-raw-helper-final';
-			const data = (getCmdMockResult(testCase) as MockResult).result;
-			const output = MtrParser.outputBuilder(data.hops);
-
-			expect(output).to.deep.equal(data.rawOutput);
+			expect(MtrParser.outputBuilder(hops)).to.equal([
+				'Host          Loss% Drop Rcv Avg  StDev  Javg ',
+				'1. AS??? (waiting for reply) ',
+				'',
+			].join('\n'));
 		});
 	});
 });
