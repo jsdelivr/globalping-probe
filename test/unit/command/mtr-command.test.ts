@@ -281,7 +281,7 @@ describe('mtr command executor', () => {
 			const rawOutput = getCmdMock(testCase);
 			const mockCmd = getExecaMock();
 
-			const mtr = new MtrCommand((): any => mockCmd, dnsResolver('1.1.1.1'));
+			const mtr = new MtrCommand((): any => mockCmd, dnsResolver('2a00:1450:4026:802::200e'));
 			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
 
 			const { emitChunks } = chunkOutput(rawOutput);
