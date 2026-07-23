@@ -102,6 +102,14 @@ export class AltIpsClient {
 				Object.entries(this.currentFailedIps).forEach(([ ip, error ]) => altIpsLogger.warn(`${error} (via ${ip}).`));
 				Object.entries(this.currentRejectedIps).forEach(([ ip, reason ]) => altIpsLogger.warn(`IP ${ip} rejected: ${reason}`));
 				mainLogger.info(`${pluralize('IP address', 'IP addresses', uniqAcceptedIps.length)} of the probe: ${uniqAcceptedIps.join(', ')}.`);
+			} else {
+				const groups = [
+					`Accepted: ${uniqAcceptedIps.join(', ')}.`,
+					Object.keys(rejectedIps).length ? `Rejected: ${Object.keys(rejectedIps).join(', ')}.` : '',
+					Object.keys(failedIps).length ? `Failed: ${Object.keys(failedIps).join(', ')}.` : '',
+				].filter(Boolean);
+
+				altIpsLogger.debug(`Alt IP status unchanged. ${groups.join(' ')}`);
 			}
 		});
 	}
