@@ -124,6 +124,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 			await cmd;
 			result = await this.parseResult(result.data, true);
+			result.resolvedAddress = target;
 		} catch (error: unknown) {
 			result.status = 'failed';
 
@@ -159,14 +160,13 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		nHops = this.populateAsn(nHops, asnList);
 		const rawOutput = MtrParser.outputBuilder(nHops);
 
-		const lastHop = [ ...nHops ].reverse().find(h => h.resolvedAddress);
+		const lastHop = nHops.at(-1);
 
 		return {
 			status: 'finished',
 			rawOutput,
 			hops: nHops,
 			data,
-			resolvedAddress: lastHop?.resolvedAddress ?? null,
 			resolvedHostname: lastHop?.resolvedHostname ?? null,
 		};
 	}
