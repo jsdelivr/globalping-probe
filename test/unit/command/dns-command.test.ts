@@ -57,6 +57,37 @@ describe('dns command', () => {
 			expect(args).to.include('+trace');
 		});
 
+		it('should default +timeout to 3 when no timeout is provided', () => {
+			const options = {
+				type: 'dns' as DnsOptions['type'],
+				target: 'google.com',
+				protocol: 'udp',
+				port: 53,
+				trace: false,
+				query: { type: 'A' },
+				inProgressUpdates: false,
+				ipVersion: 4 as const,
+			};
+
+			expect(argBuilder(options)).to.include('+timeout=3');
+		});
+
+		it('should derive +timeout from the timeout option', () => {
+			const options = {
+				type: 'dns' as DnsOptions['type'],
+				target: 'google.com',
+				protocol: 'udp',
+				port: 53,
+				trace: false,
+				query: { type: 'A' },
+				inProgressUpdates: false,
+				ipVersion: 4 as const,
+				timeout: 8,
+			};
+
+			expect(argBuilder(options)).to.include('+timeout=8');
+		});
+
 		describe('ipVersion', () => {
 			it('should set -4 flag', () => {
 				const options = {

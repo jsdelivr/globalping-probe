@@ -216,7 +216,7 @@ function getConnector (
 }
 
 export class HttpHandler {
-	private readonly REQUEST_TIMEOUT: number = 10_000;
+	private readonly REQUEST_TIMEOUT: number;
 	private readonly DOWNLOAD_LIMIT: number = 10_000;
 	private readonly url: URL;
 	private readonly port: number;
@@ -244,6 +244,7 @@ export class HttpHandler {
 		private readonly buffer: ProgressBuffer,
 	) {
 		this.result = this.getInitialResult();
+		this.REQUEST_TIMEOUT = options.timeout != null ? options.timeout * 1000 : 10_000;
 		this.port = options.port ? options.port : (options.protocol === 'HTTP' ? 80 : 443);
 		this.isHttps = options.protocol !== 'HTTP';
 		this.url = new URL(this.urlBuilder());

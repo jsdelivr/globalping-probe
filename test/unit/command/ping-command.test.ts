@@ -50,6 +50,35 @@ describe('ping command executor', () => {
 			expect(args.join(' ')).to.contain('-i 1');
 		});
 
+		it('should default the -w deadline to 10 when no timeout is provided', () => {
+			const options = {
+				type: 'ping' as PingOptions['type'],
+				target: 'google.com',
+				packets: 1,
+				protocol: 'ICMP',
+				port: 80,
+				inProgressUpdates: false,
+				ipVersion: 4 as const,
+			};
+
+			expect(argBuilder(options).join(' ')).to.contain('-w 10');
+		});
+
+		it('should set the -w deadline from the timeout option', () => {
+			const options = {
+				type: 'ping' as PingOptions['type'],
+				target: 'google.com',
+				packets: 1,
+				protocol: 'ICMP',
+				port: 80,
+				inProgressUpdates: false,
+				ipVersion: 4 as const,
+				timeout: 7,
+			};
+
+			expect(argBuilder(options).join(' ')).to.contain('-w 7');
+		});
+
 		describe('ipVersion', () => {
 			it('should set -4 flag', () => {
 				const options = {

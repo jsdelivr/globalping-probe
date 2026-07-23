@@ -30,6 +30,10 @@ module.exports = {
 	},
 	commands: {
 		timeout: 25,
+		// Extra seconds added to a per-measurement `timeout` before the process is
+		// force-killed, giving tools with a native deadline (e.g. `ping -w`) time
+		// to exit cleanly first.
+		backstopGrace: 3,
 		progressInterval: 500,
 		ping: {
 			interval: 0.5,

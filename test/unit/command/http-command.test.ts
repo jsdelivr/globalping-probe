@@ -953,6 +953,49 @@ describe(`.run() method`, () => {
 		expect(result.timings.total).to.be.null;
 	});
 
+	it('should time out after the per-measurement timeout option', async () => {
+		const fakeSocket = new Duplex({
+			read () {},
+			write (_chunk, _encoding, callback) {
+				callback();
+			},
+		});
+		(fakeSocket as any).remoteAddress = '93.184.216.34';
+
+		netConnectStub.callsFake(() => {
+			process.nextTick(() => {
+				fakeSocket.emit('lookup', null, '93.184.216.34', 4, 'google.com');
+				fakeSocket.emit('connect');
+			});
+
+			return fakeSocket as any;
+		});
+
+		const promise = new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http' as const,
+			target: 'google.com',
+			inProgressUpdates: false,
+			protocol: 'HTTP',
+			request: { method: 'GET', path: '/timeout', query: '' },
+			ipVersion: 4,
+			timeout: 2,
+		});
+
+		// Still pending at 1.9s, fails right after the 2s deadline.
+		sandbox.clock.tick(1900);
+		expect(mockedSocket.emit.called).to.equal(false);
+
+		sandbox.clock.tick(200);
+
+		await promise;
+
+		const result = mockedSocket.emit.firstCall.args[1].result;
+
+		expect(result.status).to.equal('failed');
+		expect(result.rawOutput).to.equal('Request timeout.');
+		expect(result.timings.total).to.be.null;
+	});
+
 	it('should decompress gzip response', async () => {
 		const originalText = 'This is a test gzip compressed response body';
 		const compressedBody = zlib.gzipSync(originalText);
