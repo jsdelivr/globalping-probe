@@ -142,7 +142,7 @@ describe('dnsLookup / cachedDnsLookup', () => {
 		}
 
 		expect(threw?.message).to.equal('Private IP ranges are not allowed.');
-		expect(getFailureSource(threw, 'target')).to.equal('internal');
+		expect(getFailureSource(threw, 'internal')).to.equal('target');
 	});
 
 	it('classifies missing target records as target', async () => {

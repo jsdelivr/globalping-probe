@@ -103,7 +103,7 @@ const toResult = (records: string[], hostname: string, options: Options): [strin
 	const address = options.allowPrivate ? records[0] : records.find(ip => !isIpPrivate(ip));
 
 	if (!address) {
-		throw new InternalError('Private IP ranges are not allowed.');
+		throw new InternalError('Private IP ranges are not allowed.', true, 'target');
 	}
 
 	return [ address, options.family ];

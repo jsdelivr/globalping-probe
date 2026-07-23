@@ -120,7 +120,7 @@ function getConnector (
 
 			if (isIpPrivate(address)) {
 				tcpSocket.destroy();
-				callback(new InternalError('Private IP ranges are not allowed.'), null);
+				callback(new InternalError('Private IP ranges are not allowed.', true, 'target'), null);
 				return;
 			}
 
@@ -139,7 +139,7 @@ function getConnector (
 				|| isIpPrivate(tcpSocket.remoteAddress)
 			) {
 				tcpSocket.destroy();
-				callback(new InternalError('Private IP ranges are not allowed.'), null);
+				callback(new InternalError('Private IP ranges are not allowed.', true, 'target'), null);
 				return;
 			}
 

@@ -448,7 +448,7 @@ describe('tcp-ping', () => {
 				ipVersion: 4 as const,
 			};
 
-			const resolver = sandbox.stub().rejects(new Error('Private IP ranges are not allowed.'));
+			const resolver = sandbox.stub().rejects(new InternalError('Private IP ranges are not allowed.', true, 'target'));
 			const results = await tcpPing(options, () => {}, resolver);
 
 			expect(resolver.callCount).to.equal(1);
@@ -458,7 +458,7 @@ describe('tcp-ping', () => {
 			expect(errorData).to.deep.equal({
 				type: 'error',
 				message: 'Private IP ranges are not allowed.',
-				failureSource: 'internal',
+				failureSource: 'target',
 			});
 		});
 

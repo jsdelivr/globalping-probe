@@ -191,7 +191,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		if (isResultPrivate) {
 			result = {
 				status: 'failed',
-				failureSource: 'internal',
+				failureSource: 'target',
 				rawOutput: 'Private IP ranges are not allowed.',
 				...(!cmdOptions.trace ? { resolver: (result as DnsParseResponseClassic).resolver } : {}),
 			};

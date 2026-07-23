@@ -3,7 +3,7 @@
 	"measurementId": "measurement",
 	"result": {
 		"status": "failed",
-		"failureSource": "internal",
+		"failureSource": "target",
 		"statusCodeName": null,
 		"statusCode": null,
 		"rawOutput": "Private IP ranges are not allowed.",

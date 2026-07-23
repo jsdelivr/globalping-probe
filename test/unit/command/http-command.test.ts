@@ -802,6 +802,29 @@ describe(`.run() method`, () => {
 		expect(result.rawOutput).to.equal('HTTP/2 is not supported by the server.');
 	});
 
+	it('should classify a resolved private target as target', async () => {
+		const fakeSocket = new Duplex({ read () {}, write (_chunk, _encoding, callback) { callback(); } });
+		netConnectStub.callsFake(() => {
+			process.nextTick(() => fakeSocket.emit('lookup', null, '192.168.0.1', 4, 'example.com'));
+			return fakeSocket as any;
+		});
+
+		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http',
+			target: 'example.com',
+			inProgressUpdates: false,
+			protocol: 'HTTP',
+			request: { method: 'GET', path: '/', query: '' },
+			ipVersion: 4,
+		});
+
+		const result = mockedSocket.emit.lastCall.args[1].result;
+
+		expect(result.status).to.equal('failed');
+		expect(result.failureSource).to.equal('target');
+		expect(result.rawOutput).to.equal('Private IP ranges are not allowed.');
+	});
+
 	for (const { failureSource, message } of [
 		{ failureSource: 'target' as const, message: 'queryA ENOTFOUND missing.example' },
 		{ failureSource: 'resolver' as const, message: 'queryA ETIMEOUT example.com' },

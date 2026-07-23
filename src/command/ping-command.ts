@@ -178,7 +178,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		if (isResultPrivate) {
 			result = {
 				status: 'failed',
-				failureSource: 'internal',
+				failureSource: 'target',
 				rawOutput: 'Private IP ranges are not allowed.',
 			};
 		}

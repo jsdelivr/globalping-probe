@@ -237,7 +237,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 	private async resolveTarget (options: MtrOptions): Promise<string> {
 		if (isIP(options.target) !== 0) {
 			if (isIpPrivate(options.target)) {
-				throw new InternalError('Private IP ranges are not allowed.');
+				throw new InternalError('Private IP ranges are not allowed.', true, 'target');
 			}
 
 			return options.target;
