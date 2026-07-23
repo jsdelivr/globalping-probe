@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import dns from 'node:dns';
 import { getDnsServers, dnsLookup, cachedDnsLookup, clearDnsCache } from '../../../src/lib/dns.js';
+import { getFailureSource } from '../../../src/lib/internal-error.js';
 import { callbackify } from '../../../src/lib/util.js';
 
 const client = (list: string[]) => () => list;
@@ -141,6 +142,51 @@ describe('dnsLookup / cachedDnsLookup', () => {
 		}
 
 		expect(threw?.message).to.equal('Private IP ranges are not allowed.');
+		expect(getFailureSource(threw, 'internal')).to.equal('target');
+	});
+
+	it('classifies missing target records as target', async () => {
+		resolve4.resolves([]);
+
+		let failureSource;
+
+		try {
+			await dnsLookup('example.com', { family: 4 });
+		} catch (error) {
+			failureSource = getFailureSource(error, 'internal');
+		}
+
+		expect(failureSource).to.equal('target');
+	});
+
+	it('classifies ENOTFOUND as target', async () => {
+		const error = Object.assign(new Error('queryA ENOTFOUND example.com'), { code: 'ENOTFOUND' });
+		resolve4.rejects(error);
+
+		let failureSource;
+
+		try {
+			await dnsLookup('example.com', { family: 4 });
+		} catch (error) {
+			failureSource = getFailureSource(error, 'internal');
+		}
+
+		expect(failureSource).to.equal('target');
+	});
+
+	it('classifies resolver failures as internal', async () => {
+		const error = Object.assign(new Error('queryA ETIMEOUT example.com'), { code: 'ETIMEOUT' });
+		resolve4.rejects(error);
+
+		let failureSource;
+
+		try {
+			await dnsLookup('example.com', { family: 4 });
+		} catch (error) {
+			failureSource = getFailureSource(error, 'target');
+		}
+
+		expect(failureSource).to.equal('resolver');
 	});
 
 	it('returns a private address when allowPrivate is set', async () => {

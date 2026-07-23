@@ -3,6 +3,7 @@
 	"measurementId": "measurement",
 	"result": {
 		"status": "failed",
+		"failureSource": "target",
 		"resolvedAddress": null,
 		"resolvedHostname": null,
 		"hops": [],

@@ -2,7 +2,7 @@ import config from 'config';
 import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
-import type { CommandInterface } from '../types.js';
+import type { CommandInterface, FailureSource, TestStatus } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
@@ -37,7 +37,8 @@ type ParsedOutput = {
 
 type ParsedOutputJson = {
 	rawOutput: string;
-	status: 'finished' | 'failed';
+	status: TestStatus;
+	failureSource?: FailureSource;
 	resolvedAddress: string | null;
 	resolvedHostname: string | null;
 	hops: Array<{
@@ -48,6 +49,25 @@ type ParsedOutputJson = {
 };
 
 const logger = scopedLogger('traceroute-command');
+
+const targetNameFailureMessages = [
+	'Name or service not known',
+	'Address family for hostname not supported',
+	'unknown host',
+];
+const upstreamUnreachablePattern = /(?:^|\s)!(?:N|H|P|X|S|F|V|C|\d+)(?:\s|$)/m;
+
+const classifyTracerouteFailure = (error: unknown, output: string): FailureSource => {
+	if (isExecaError(error) && error.timedOut) {
+		return 'target';
+	}
+
+	if (targetNameFailureMessages.some(message => output.toLowerCase().includes(message.toLowerCase())) || upstreamUnreachablePattern.test(output)) {
+		return 'target';
+	}
+
+	return 'internal';
+};
 
 const allowedIpVersions = [ 4, 6 ];
 
@@ -157,6 +177,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 
 			result = {
 				status: 'failed',
+				failureSource: classifyTracerouteFailure(error, output),
 				rawOutput: output || 'Test failed. Please try again.',
 			};
 		}
@@ -164,6 +185,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		if (isResultPrivate) {
 			result = {
 				status: 'failed',
+				failureSource: 'target',
 				rawOutput: 'Private IP ranges are not allowed.',
 			};
 		}

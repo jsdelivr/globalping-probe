@@ -5,6 +5,9 @@ import type { TraceOptions } from './command/traceroute-command.js';
 import type { MtrOptions } from './command/mtr-command.js';
 import type { HttpOptions } from './command/http-command.js';
 
+type FailureSource = 'target' | 'resolver' | 'internal';
+type TestStatus = 'finished' | 'failed';
+
 type MeasurementRequest = {
 	measurementId: string;
 	testId: string;

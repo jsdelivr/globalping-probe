@@ -2,7 +2,7 @@ import config from 'config';
 import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
-import type { CommandInterface } from '../types.js';
+import type { CommandInterface, FailureSource, TestStatus } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
@@ -47,7 +47,8 @@ const pingOptionsSchema = Joi.object<PingOptions>({
 });
 
 export type PingParseOutputJson = {
-	status: 'finished' | 'failed';
+	status: TestStatus;
+	failureSource?: FailureSource;
 	rawOutput: string;
 	resolvedHostname: string | null;
 	resolvedAddress: string | null;
@@ -67,6 +68,19 @@ export type PingParseOutputJson = {
 };
 
 const logger = scopedLogger('ping-command');
+
+const targetNameFailureMessages = [
+	'Name or service not known',
+	'Address family for hostname not supported',
+];
+
+const classifyIcmpFailure = (error: unknown, rawOutput: string): FailureSource => {
+	if (isExecaError(error) && error.timedOut) {
+		return 'target';
+	}
+
+	return targetNameFailureMessages.some(message => rawOutput.includes(message)) ? 'target' : 'internal';
+};
 
 export const argBuilder = (options: PingOptions, commandOptions: PingCommandOptions = {}): string[] => {
 	const interval = commandOptions.interval ?? config.get<number>('commands.ping.interval');
@@ -136,14 +150,19 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			const parseResult = parse(cmdResult.stdout);
 			result = parseResult;
 
+			if (result.status === 'failed') {
+				result.failureSource = 'internal';
+			}
+
 			if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
 				isResultPrivate = true;
 			}
 		} catch (error: unknown) {
-			result = { status: 'failed', rawOutput: 'Test failed. Please try again.' };
+			result = { status: 'failed', failureSource: 'internal', rawOutput: 'Test failed. Please try again.' };
 
 			if (isExecaError(error)) {
 				result = parse(error.stdout.toString());
+				result.failureSource = classifyIcmpFailure(error, result.rawOutput);
 
 				if (error.timedOut) {
 					result.status = 'failed';
@@ -159,6 +178,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		if (isResultPrivate) {
 			result = {
 				status: 'failed',
+				failureSource: 'target',
 				rawOutput: 'Private IP ranges are not allowed.',
 			};
 		}
@@ -200,6 +220,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 	private toJsonOutput (input: PingParseOutput): PingParseOutputJson {
 		return {
 			status: input.status,
+			...(input.status === 'failed' && { failureSource: input.failureSource }),
 			rawOutput: input.rawOutput,
 			resolvedAddress: input.resolvedAddress ? input.resolvedAddress : null,
 			resolvedHostname: input.resolvedHostname ? input.resolvedHostname : null,

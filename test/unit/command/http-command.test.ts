@@ -7,6 +7,7 @@ import * as sinon from 'sinon';
 import { Socket } from 'socket.io-client';
 import { HttpCommand } from '../../../src/command/http-command.js';
 import { HttpHandler } from '../../../src/command/handlers/http/undici.js';
+import { InternalError } from '../../../src/lib/internal-error.js';
 import { hasLoneSurrogate, useSandboxWithFakeTimers } from '../../utils.js';
 
 describe('url builder', () => {
@@ -797,8 +798,58 @@ describe(`.run() method`, () => {
 		const result = lastCall.args[1].result;
 
 		expect(result.status).to.equal('failed');
+		expect(result.failureSource).to.equal('target');
 		expect(result.rawOutput).to.equal('HTTP/2 is not supported by the server.');
 	});
+
+	it('should classify a resolved private target as target', async () => {
+		const fakeSocket = new Duplex({ read () {}, write (_chunk, _encoding, callback) { callback(); } });
+		netConnectStub.callsFake(() => {
+			process.nextTick(() => fakeSocket.emit('lookup', null, '192.168.0.1', 4, 'example.com'));
+			return fakeSocket as any;
+		});
+
+		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http',
+			target: 'example.com',
+			inProgressUpdates: false,
+			protocol: 'HTTP',
+			request: { method: 'GET', path: '/', query: '' },
+			ipVersion: 4,
+		});
+
+		const result = mockedSocket.emit.lastCall.args[1].result;
+
+		expect(result.status).to.equal('failed');
+		expect(result.failureSource).to.equal('target');
+		expect(result.rawOutput).to.equal('Private IP ranges are not allowed.');
+	});
+
+	for (const { failureSource, message } of [
+		{ failureSource: 'target' as const, message: 'queryA ENOTFOUND missing.example' },
+		{ failureSource: 'resolver' as const, message: 'queryA ETIMEOUT example.com' },
+	]) {
+		it(`should preserve ${failureSource} lookup failure classification`, async () => {
+			const fakeSocket = new Duplex({ read () {}, write (_chunk, _encoding, callback) { callback(); } });
+			netConnectStub.callsFake(() => {
+				process.nextTick(() => fakeSocket.emit('error', new InternalError(message, true, failureSource)));
+				return fakeSocket as any;
+			});
+
+			await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+				type: 'http',
+				target: 'example.com',
+				inProgressUpdates: false,
+				protocol: 'HTTP',
+				request: { method: 'GET', path: '/', query: '' },
+				ipVersion: 4,
+			});
+
+			const result = mockedSocket.emit.lastCall.args[1].result;
+			expect(result.failureSource).to.equal(failureSource);
+			expect(result.rawOutput).to.equal(message);
+		});
+	}
 
 	it('should truncate response body when exceeds download limit', async () => {
 		const largeBody = 'x'.repeat(15000);
@@ -949,6 +1000,7 @@ describe(`.run() method`, () => {
 		const result = mockedSocket.emit.firstCall.args[1].result;
 
 		expect(result.status).to.equal('failed');
+		expect(result.failureSource).to.equal('target');
 		expect(result.rawOutput).to.equal('Request timeout.');
 		expect(result.timings.total).to.be.null;
 	});

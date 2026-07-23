@@ -3,7 +3,7 @@ import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
 import tldts from 'tldts';
-import type { CommandInterface } from '../types.js';
+import type { CommandInterface, FailureSource } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { byLine } from '../lib/by-line.js';
 import { isIpPrivate } from '../lib/private-ip.js';
@@ -42,6 +42,11 @@ export type DnsOptions = {
 export type DnsParseResponseJson = DnsParseResponseClassicJson | DnsParseResponseTraceJson;
 
 const logger = scopedLogger('dns-command');
+const resolverFailurePattern = /couldn't get address for|got bad packet:|connection (?:refused|timed out)|communications error|no servers could be reached/i;
+
+const classifyDnsFailure = (error: unknown, output: string): FailureSource => {
+	return (isExecaError(error) && error.timedOut) || resolverFailurePattern.test(output) ? 'resolver' : 'internal';
+};
 
 const isTrace = (output: unknown): output is DnsParseResponseTrace => Array.isArray((output as DnsParseResponseTrace).hops);
 
@@ -178,6 +183,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 
 			result = {
 				status: 'failed',
+				failureSource: classifyDnsFailure(error, output),
 				rawOutput: output,
 			};
 		}
@@ -185,6 +191,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		if (isResultPrivate) {
 			result = {
 				status: 'failed',
+				failureSource: 'target',
 				rawOutput: 'Private IP ranges are not allowed.',
 				...(!cmdOptions.trace ? { resolver: (result as DnsParseResponseClassic).resolver } : {}),
 			};

@@ -571,6 +571,7 @@ describe('ping command executor', () => {
 				measurementId: 'measurement',
 				result: {
 					status: 'failed',
+					failureSource: 'internal',
 					rawOutput: '',
 					resolvedAddress: null,
 					resolvedHostname: null,
@@ -579,6 +580,31 @@ describe('ping command executor', () => {
 				},
 			}]);
 		});
+
+		for (const message of [ 'Name or service not known', 'Address family for hostname not supported' ]) {
+			it(`should classify "${message}" as target`, async () => {
+				const mockedCmd = getExecaMock();
+				const ping = new PingCommand();
+				const options = {
+					type: 'ping' as PingOptions['type'],
+					target: 'missing.example',
+					packets: 3,
+					protocol: 'ICMP',
+					port: 80,
+					inProgressUpdates: false,
+					ipVersion: 4 as const,
+				};
+				const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
+				const error = new Error(message) as ExecaError;
+				error.stderr = '';
+				error.stdout = `ping: missing.example: ${message}`;
+				mockedCmd.reject(error);
+
+				await runPromise;
+
+				expect((mockedSocket.emit.firstCall.args[1] as any).result.failureSource).to.equal('target');
+			});
+		}
 
 		it('should fail in case of execa timeout', async () => {
 			const mockedCmd = getExecaMock();
@@ -612,6 +638,7 @@ describe('ping command executor', () => {
 					measurementId: 'measurement',
 					result: {
 						status: 'failed',
+						failureSource: 'target',
 						rawOutput: 'PING google.com (172.217.20.206) 56(84) bytes of data.\n'
 							+ '64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=1 ttl=37 time=7.99 ms\n'
 							+ '64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=2 ttl=37 time=8.12 ms\n'

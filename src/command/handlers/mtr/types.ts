@@ -1,3 +1,5 @@
+import type { FailureSource, TestStatus } from '../../../types.js';
+
 export type HopTimesType = {
 	seq?: string;
 	rtt?: number;
@@ -31,7 +33,8 @@ export type ProgressType = {
 };
 
 export type ResultType = {
-	status: 'finished' | 'failed';
+	status: TestStatus;
+	failureSource?: FailureSource;
 	resolvedAddress?: string | null;
 	resolvedHostname?: string | null;
 	hops: HopType[];
@@ -40,7 +43,8 @@ export type ResultType = {
 };
 
 export type ResultTypeJson = {
-	status: 'finished' | 'failed';
+	status: TestStatus;
+	failureSource?: FailureSource;
 	resolvedAddress: string | null;
 	resolvedHostname: string | null;
 	hops: Array<{
