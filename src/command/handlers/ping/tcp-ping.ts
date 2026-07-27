@@ -142,7 +142,7 @@ export async function tcpPing (
 		try {
 			[ address ] = await lookup(target, { family: ipVersion, signal });
 		} catch (e) {
-			return [{ type: 'error', message: (e as Error).message || '', failureSource: getFailureSource(e, 'internal') }];
+			return [{ type: 'error', message: (e as Error).message || '', failureSource: signal.aborted ? 'resolver' : getFailureSource(e, 'internal') }];
 		}
 	}
 

@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import * as td from 'testdouble';
 import { InternalError } from '../../../../../src/lib/internal-error.js';
+import type { cachedDnsLookup } from '../../../../../src/lib/dns.js';
 
 // This must remain type-only
 import type * as tcpPingModule from '../../../../../src/command/handlers/ping/tcp-ping.js';
@@ -519,6 +520,30 @@ describe('tcp-ping', () => {
 			expect(results).to.deep.equal([{
 				type: 'error',
 				message: 'queryA ETIMEOUT example.com',
+				failureSource: 'resolver',
+			}]);
+		});
+
+		it('should classify a DNS deadline as resolver', async () => {
+			const controller = new AbortController();
+			sandbox.stub(AbortSignal, 'timeout').returns(controller.signal);
+			const resolver = ((_hostname: string, options: any) => new Promise((_resolve, reject) => {
+				options.signal.addEventListener('abort', () => reject(options.signal.reason), { once: true });
+			})) as typeof cachedDnsLookup;
+			const promise = tcpPing({
+				target: 'example.com',
+				port: openPort,
+				packets: 1,
+				timeout: TIMEOUT,
+				interval: INTERVAL,
+				ipVersion: 4,
+			}, () => {}, resolver);
+
+			controller.abort();
+
+			expect(await promise).to.deep.equal([{
+				type: 'error',
+				message: 'This operation was aborted',
 				failureSource: 'resolver',
 			}]);
 		});
