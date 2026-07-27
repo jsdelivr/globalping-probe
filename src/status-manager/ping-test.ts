@@ -68,7 +68,7 @@ export class PingTest {
 
 		for (const target of targets) {
 			try {
-				const result = await this.pingCmd({ type: 'ping', ipVersion, target, packets, protocol: 'ICMP', port: 80, inProgressUpdates: false });
+				const result = await this.pingCmd({ type: 'ping', timeout: 10, ipVersion, target, packets, protocol: 'ICMP', port: 80, inProgressUpdates: false });
 				const parsed = parse(result.stdout);
 				const isSuccessful = parsed.stats?.loss === 0;
 

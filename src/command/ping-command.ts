@@ -11,6 +11,7 @@ import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import parse, { type PingParseOutput } from './handlers/ping/parse.js';
 import { tcpPing, formatTcpPingResult, TcpPingData } from './handlers/ping/tcp-ping.js';
+import { getPacketInterval, getProcessTimeout } from '../helper/timeout.js';
 
 export type PingOptions = {
 	type: 'ping';
@@ -20,6 +21,7 @@ export type PingOptions = {
 	protocol: string;
 	port: number;
 	ipVersion: 4 | 6;
+	timeout: number;
 };
 
 export type PingCommandOptions = {
@@ -44,6 +46,8 @@ const pingOptionsSchema = Joi.object<PingOptions>({
 			otherwise: Joi.valid(...allowedIpVersions).default(4),
 		}),
 	}),
+	// TODO: Remove the default after the API timeout rollout is complete.
+	timeout: Joi.number().integer().default(25),
 });
 
 export type PingParseOutputJson = {
@@ -84,12 +88,13 @@ const classifyIcmpFailure = (error: unknown, rawOutput: string): FailureSource =
 
 export const argBuilder = (options: PingOptions, commandOptions: PingCommandOptions = {}): string[] => {
 	const interval = commandOptions.interval ?? config.get<number>('commands.ping.interval');
+	const packetInterval = getPacketInterval(options.packets, options.timeout, interval, config.get<number>('commands.ping.minInterval'));
 	const args = [
 		`-${options.ipVersion}`,
 		'-O',
 		[ '-c', options.packets.toString() ],
-		[ '-i', String(interval) ],
-		[ '-w', '10' ],
+		[ '-i', String(packetInterval) ],
+		[ '-w', String(options.timeout) ],
 		options.target,
 	].flat();
 
@@ -98,7 +103,7 @@ export const argBuilder = (options: PingOptions, commandOptions: PingCommandOpti
 
 export const pingCmd = (options: PingOptions, commandOptions: PingCommandOptions = {}): ExecaChildProcess => {
 	const args = argBuilder(options, commandOptions);
-	return execa('unbuffer', [ 'ping', ...args ], { timeout: config.get<number>('commands.timeout') * 1000 });
+	return execa('unbuffer', [ 'ping', ...args ], { timeout: getProcessTimeout(options.timeout, config.get<number>('commands.processGrace')) });
 };
 
 export class PingCommand implements CommandInterface<PingOptions> {
@@ -200,7 +205,8 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			});
 		} : undefined;
 
-		const tcpPingResult = await cmdFn({ ...cmdOptions, timeout: 10_000, interval: 500 }, progressHandler);
+		const interval = getPacketInterval(cmdOptions.packets, cmdOptions.timeout, config.get<number>('commands.ping.interval'), config.get<number>('commands.ping.minInterval'));
+		const tcpPingResult = await cmdFn({ ...cmdOptions, timeout: cmdOptions.timeout * 1000, interval: interval * 1000 }, progressHandler);
 		const result = formatTcpPingResult(tcpPingResult);
 
 		const out = this.toJsonOutput(result);

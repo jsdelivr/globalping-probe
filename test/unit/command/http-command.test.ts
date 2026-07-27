@@ -17,6 +17,7 @@ describe('url builder', () => {
 		it('should set http:// prefix (HTTP)', () => {
 			const options = {
 				type: 'http' as const,
+				timeout: 5,
 				target: 'google.com',
 				protocol: 'HTTP',
 				request: {
@@ -36,6 +37,7 @@ describe('url builder', () => {
 		it('should set https:// prefix (HTTPS)', () => {
 			const options = {
 				type: 'http' as const,
+				timeout: 5,
 				target: 'google.com',
 				protocol: 'HTTPS',
 				request: {
@@ -55,6 +57,7 @@ describe('url builder', () => {
 		it('should set https:// prefix (HTTP2)', () => {
 			const options = {
 				type: 'http' as const,
+				timeout: 5,
 				target: 'google.com',
 				protocol: 'HTTP2',
 				request: {
@@ -76,6 +79,7 @@ describe('url builder', () => {
 		it('should enclose an IPv6 address in brackets', () => {
 			const options = {
 				type: 'http' as const,
+				timeout: 5,
 				target: '2606:4700:4700::1111',
 				protocol: 'HTTP',
 				request: {
@@ -95,6 +99,7 @@ describe('url builder', () => {
 		it('should not enclose an IPv4 address in brackets', () => {
 			const options = {
 				type: 'http' as const,
+				timeout: 5,
 				target: '1.1.1.1',
 				protocol: 'HTTP',
 				request: {
@@ -116,6 +121,7 @@ describe('url builder', () => {
 		it('should set custom port', () => {
 			const options = {
 				type: 'http' as const,
+				timeout: 5,
 				target: 'google.com',
 				protocol: 'HTTP',
 				port: 1212,
@@ -136,6 +142,7 @@ describe('url builder', () => {
 		it('should set default HTTP port', () => {
 			const options = {
 				type: 'http' as const,
+				timeout: 5,
 				target: 'google.com',
 				protocol: 'HTTP',
 				request: {
@@ -155,6 +162,7 @@ describe('url builder', () => {
 		it('should set default HTTPS port', () => {
 			const options = {
 				type: 'http' as const,
+				timeout: 5,
 				target: 'google.com',
 				protocol: 'HTTPS',
 				request: {
@@ -176,6 +184,7 @@ describe('url builder', () => {
 		it('should prefix pathname with (/) sign', () => {
 			const options = {
 				type: 'http' as const,
+				timeout: 5,
 				target: 'google.com',
 				protocol: 'HTTP',
 				request: {
@@ -195,6 +204,7 @@ describe('url builder', () => {
 		it('should append pathname at the end of url (prevent double /)', () => {
 			const options = {
 				type: 'http' as const,
+				timeout: 5,
 				target: 'google.com',
 				protocol: 'HTTP',
 				request: {
@@ -216,6 +226,7 @@ describe('url builder', () => {
 		it('should prefix query with (?) sign', () => {
 			const options = {
 				type: 'http' as const,
+				timeout: 5,
 				target: 'google.com',
 				protocol: 'HTTP',
 				request: {
@@ -235,6 +246,7 @@ describe('url builder', () => {
 		it('should append query at the end of url (prevent double ?)', () => {
 			const options = {
 				type: 'http' as const,
+				timeout: 5,
 				target: 'google.com',
 				protocol: 'HTTP',
 				request: {
@@ -386,6 +398,7 @@ describe(`.run() method`, () => {
 
 		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
+			timeout: 5,
 			target: 'google.com',
 			inProgressUpdates: true,
 			protocol: 'HTTP',
@@ -443,6 +456,7 @@ describe(`.run() method`, () => {
 
 		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
+			timeout: 5,
 			target: 'google.com',
 			inProgressUpdates: false,
 			protocol: 'HTTP',
@@ -477,6 +491,7 @@ describe(`.run() method`, () => {
 
 		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
+			timeout: 5,
 			target: 'google.com',
 			inProgressUpdates: true,
 			protocol: 'HTTP',
@@ -505,6 +520,7 @@ describe(`.run() method`, () => {
 
 		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
+			timeout: 5,
 			target: 'google.com',
 			inProgressUpdates: false,
 			protocol: 'HTTP',
@@ -532,6 +548,7 @@ describe(`.run() method`, () => {
 
 		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
+			timeout: 5,
 			target: 'google.com',
 			inProgressUpdates: false,
 			protocol: 'HTTP',
@@ -581,6 +598,7 @@ describe(`.run() method`, () => {
 
 		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
+			timeout: 5,
 			target: 'api.example.com',
 			inProgressUpdates: false,
 			protocol: 'HTTP',
@@ -618,6 +636,7 @@ describe(`.run() method`, () => {
 
 		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
+			timeout: 5,
 			target: 'api.example.com',
 			port: 8080,
 			inProgressUpdates: false,
@@ -652,6 +671,7 @@ describe(`.run() method`, () => {
 
 		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
+			timeout: 5,
 			target: 'api.example.com',
 			inProgressUpdates: false,
 			protocol: 'HTTP',
@@ -684,6 +704,7 @@ describe(`.run() method`, () => {
 
 		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
+			timeout: 5,
 			target: '2606:4700:4700::1111',
 			inProgressUpdates: false,
 			protocol: 'HTTP',
@@ -708,6 +729,7 @@ describe(`.run() method`, () => {
 
 		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
+			timeout: 5,
 			target: 'example.com',
 			inProgressUpdates: false,
 			protocol: 'HTTPS',
@@ -784,6 +806,7 @@ describe(`.run() method`, () => {
 
 		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
+			timeout: 5,
 			target: 'example.com',
 			inProgressUpdates: false,
 			protocol: 'HTTP2',
@@ -811,6 +834,7 @@ describe(`.run() method`, () => {
 
 		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http',
+			timeout: 5,
 			target: 'example.com',
 			inProgressUpdates: false,
 			protocol: 'HTTP',
@@ -838,6 +862,7 @@ describe(`.run() method`, () => {
 
 			await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 				type: 'http',
+				timeout: 5,
 				target: 'example.com',
 				inProgressUpdates: false,
 				protocol: 'HTTP',
@@ -864,6 +889,7 @@ describe(`.run() method`, () => {
 
 		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
+			timeout: 5,
 			target: 'google.com',
 			inProgressUpdates: false,
 			protocol: 'HTTP',
@@ -890,6 +916,7 @@ describe(`.run() method`, () => {
 
 		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
+			timeout: 5,
 			target: 'cdn.jsdelivr.net',
 			inProgressUpdates: false,
 			protocol: 'HTTP',
@@ -918,6 +945,7 @@ describe(`.run() method`, () => {
 
 		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
+			timeout: 5,
 			target: 'cdn.jsdelivr.net',
 			inProgressUpdates: true,
 			protocol: 'HTTP',
@@ -951,6 +979,7 @@ describe(`.run() method`, () => {
 
 		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
+			timeout: 5,
 			target: 'google.com',
 			inProgressUpdates: false,
 			protocol: 'HTTP',
@@ -966,7 +995,7 @@ describe(`.run() method`, () => {
 		expect(result.rawOutput.length).to.equal(10_019); // 'HTTP/1.1 200' (12) + '\n' (1) + rawHeaders (10000) + '\n\n' (2) + 'body' (4)
 	});
 
-	it('should timeout after 10 seconds', async () => {
+	it('should use the requested timeout', async () => {
 		const fakeSocket = new Duplex({
 			read () {},
 			write (_chunk, _encoding, callback) {
@@ -986,6 +1015,7 @@ describe(`.run() method`, () => {
 
 		const promise = new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
+			timeout: 5,
 			target: 'google.com',
 			inProgressUpdates: false,
 			protocol: 'HTTP',
@@ -993,7 +1023,7 @@ describe(`.run() method`, () => {
 			ipVersion: 4,
 		});
 
-		sandbox.clock.tick(10_001);
+		sandbox.clock.tick(5_001);
 
 		await promise;
 
@@ -1041,6 +1071,7 @@ describe(`.run() method`, () => {
 
 		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
+			timeout: 5,
 			target: 'google.com',
 			inProgressUpdates: false,
 			protocol: 'HTTP',
@@ -1070,6 +1101,7 @@ describe(`.run() method`, () => {
 
 		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
+			timeout: 5,
 			target: 'google.com',
 			inProgressUpdates: false,
 			protocol: 'HTTP',
@@ -1091,6 +1123,7 @@ describe(`.run() method`, () => {
 		try {
 			await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 				type: 'http' as const,
+				timeout: 5,
 				target: '127.0.0.1',
 				inProgressUpdates: false,
 				protocol: 'HTTP',
@@ -1109,6 +1142,7 @@ describe(`.run() method`, () => {
 		try {
 			await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 				type: 'http' as const,
+				timeout: 5,
 				target: 'example.com',
 				resolver: '127.0.0.1',
 				inProgressUpdates: false,

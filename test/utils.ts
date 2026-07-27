@@ -92,7 +92,7 @@ export const makeSnapshotTests = <T> (tester: CommandTester<T>, testTemplate: an
 
 	testCases.forEach((testCase: T) => {
 		it(util.format(`should work with ${stringifyObject(testCase, { inlineCharacterLimit: Infinity })}${note ? ` - ${note}` : ''}`), async () => {
-			await tester.execute(testCase);
+			await tester.execute({ timeout: 5, ...testCase });
 		});
 	});
 };

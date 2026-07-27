@@ -1,5 +1,5 @@
-import config from 'config';
 import Joi from 'joi';
+import config from 'config';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface, FailureSource, TestStatus } from '../types.js';
@@ -9,6 +9,7 @@ import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
 import { scopedLogger } from '../lib/logger.js';
 import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
+import { getProcessTimeout } from '../helper/timeout.js';
 
 const reHost = /(\S+?)(%\w+)?(\s+)\(((?:\d+\.){3}\d+|[\da-fA-F:]+)(%\w+)?\)/;
 const reRtt = /(\d+(?:\.?\d+)?)\s+ms(!\S*)?/g;
@@ -20,6 +21,7 @@ export type TraceOptions = {
 	protocol: string;
 	port: number;
 	ipVersion: number;
+	timeout: number;
 };
 
 type ParsedLine = {
@@ -86,6 +88,8 @@ const traceOptionsSchema = Joi.object<TraceOptions>({
 			otherwise: Joi.valid(...allowedIpVersions).default(4),
 		}),
 	}),
+	// TODO: Remove the default after the API timeout rollout is complete.
+	timeout: Joi.number().integer().default(25),
 });
 
 export const argBuilder = (options: TraceOptions): string[] => {
@@ -97,7 +101,7 @@ export const argBuilder = (options: TraceOptions): string[] => {
 		// Max ttl
 		[ '-m', '20' ],
 		// MAX timeout; note that this also disables the HERE and NEAR limits
-		[ '-w', '2' ],
+		[ '-w', String(Math.floor(options.timeout / 2)) ],
 		// Probe packets per hop
 		[ '-q', '2' ],
 		// Concurrent packets
@@ -115,7 +119,7 @@ export const argBuilder = (options: TraceOptions): string[] => {
 
 export const traceCmd = (options: TraceOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', [ 'traceroute', ...args ], { timeout: config.get<number>('commands.timeout') * 1000 });
+	return execa('unbuffer', [ 'traceroute', ...args ], { timeout: getProcessTimeout(options.timeout, config.get<number>('commands.processGrace')) });
 };
 
 export class TracerouteCommand implements CommandInterface<TraceOptions> {

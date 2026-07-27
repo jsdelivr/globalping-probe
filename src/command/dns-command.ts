@@ -1,5 +1,5 @@
-import config from 'config';
 import Joi from 'joi';
+import config from 'config';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
 import tldts from 'tldts';
@@ -11,6 +11,7 @@ import { isExposed } from '../lib/internal-error.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { scopedLogger } from '../lib/logger.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
+import { getProcessTimeout } from '../helper/timeout.js';
 
 import ClassicDigParser from './handlers/dig/classic.js';
 import type {
@@ -37,6 +38,7 @@ export type DnsOptions = {
 		type: string;
 	};
 	ipVersion: number;
+	timeout: number;
 };
 
 export type DnsParseResponseJson = DnsParseResponseClassicJson | DnsParseResponseTraceJson;
@@ -74,6 +76,8 @@ const dnsOptionsSchema = Joi.object<DnsOptions>({
 			otherwise: Joi.valid(...allowedIpVersions).default(4),
 		}),
 	}),
+	// TODO: Remove the default after the API timeout rollout is complete.
+	timeout: Joi.number().integer().default(25),
 });
 
 export const argBuilder = (options: DnsOptions): string[] => {
@@ -88,7 +92,7 @@ export const argBuilder = (options: DnsOptions): string[] => {
 		resolverArg,
 		[ '-p', String(options.port) ],
 		`-${options.ipVersion}`,
-		'+timeout=3',
+		`+timeout=${Math.floor(options.timeout / 2)}`,
 		'+tries=2',
 		'+nocookie',
 		'+nosplit',
@@ -102,7 +106,7 @@ export const argBuilder = (options: DnsOptions): string[] => {
 
 export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', [ 'dig', ...args ], { timeout: config.get<number>('commands.timeout') * 1000 });
+	return execa('unbuffer', [ 'dig', ...args ], { timeout: getProcessTimeout(options.timeout, config.get<number>('commands.processGrace')) });
 };
 
 export class DnsCommand implements CommandInterface<DnsOptions> {

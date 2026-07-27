@@ -21,6 +21,7 @@ export type HttpOptions = {
 		headers?: Record<string, string>;
 	};
 	ipVersion: number;
+	timeout: number;
 };
 
 const allowedHttpProtocols = [ 'HTTP', 'HTTPS', 'HTTP2' ];
@@ -50,6 +51,8 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 			otherwise: Joi.valid(...allowedIpVersions).default(4),
 		}),
 	}),
+	// TODO: Remove the default after the API timeout rollout is complete.
+	timeout: Joi.number().integer().default(10),
 });
 
 export class HttpCommand implements CommandInterface<HttpOptions> {

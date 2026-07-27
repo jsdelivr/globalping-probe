@@ -14,6 +14,7 @@ describe('trace command', () => {
 		it('should include all arguments', () => {
 			const options = {
 				type: 'traceroute' as TraceOptions['type'],
+				timeout: 5,
 				target: 'google.com',
 				port: 80,
 				protocol: 'TCP',
@@ -34,10 +35,25 @@ describe('trace command', () => {
 			expect(joinedArgs).to.contain(`-p ${options.port}`);
 		});
 
+		it('should derive the native wait from the measurement timeout', () => {
+			const args = argBuilder({
+				type: 'traceroute',
+				timeout: 11,
+				target: 'google.com',
+				port: 80,
+				protocol: 'TCP',
+				inProgressUpdates: false,
+				ipVersion: 4,
+			});
+
+			expect(args.join(' ')).to.contain('-w 5');
+		});
+
 		describe('ipVersion', () => {
 			it('should set -4 flag', () => {
 				const options = {
 					type: 'traceroute' as TraceOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					port: 80,
 					protocol: 'TCP',
@@ -52,6 +68,7 @@ describe('trace command', () => {
 			it('should set -6 flag', () => {
 				const options = {
 					type: 'traceroute' as TraceOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					port: 80,
 					protocol: 'TCP',
@@ -68,6 +85,7 @@ describe('trace command', () => {
 			it('should set -p 90 flag (TCP)', () => {
 				const options = {
 					type: 'traceroute' as TraceOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					port: 90,
 					protocol: 'TCP',
@@ -83,6 +101,7 @@ describe('trace command', () => {
 			it('should NOT set -p flag (UDP)', () => {
 				const options = {
 					type: 'traceroute' as TraceOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					port: 90,
 					protocol: 'UDP',
@@ -100,6 +119,7 @@ describe('trace command', () => {
 			it('should set --tcp flag (TCP)', () => {
 				const options = {
 					type: 'traceroute' as TraceOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					port: 90,
 					protocol: 'TCP',
@@ -115,6 +135,7 @@ describe('trace command', () => {
 			it('should NOT set --udp flag (UDP)', () => {
 				const options = {
 					type: 'traceroute' as TraceOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					port: 90,
 					protocol: 'UDP',
@@ -141,6 +162,7 @@ describe('trace command', () => {
 			it('should run and parse trace with progress messages', async () => {
 				const options = {
 					type: 'traceroute' as TraceOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					port: 53,
 					protocol: 'UDP',
@@ -172,6 +194,7 @@ describe('trace command', () => {
 			it('should run and parse trace', async () => {
 				const options = {
 					type: 'traceroute' as TraceOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					port: 53,
 					protocol: 'UDP',
@@ -202,6 +225,7 @@ describe('trace command', () => {
 			it('should run and parse trace - ipv6-trace-success', async () => {
 				const options = {
 					type: 'traceroute' as TraceOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					port: 53,
 					protocol: 'UDP',
@@ -232,6 +256,7 @@ describe('trace command', () => {
 			it('should run and parse trace - ipv6-trace-success-ip', async () => {
 				const options = {
 					type: 'traceroute' as TraceOptions['type'],
+					timeout: 5,
 					target: '2a00:1450:4026:808::200f',
 					port: 53,
 					protocol: 'UDP',
@@ -262,6 +287,7 @@ describe('trace command', () => {
 			it('should run and parse private ip trace on progress step', async () => {
 				const options = {
 					type: 'traceroute' as TraceOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					port: 53,
 					protocol: 'UDP',
@@ -292,6 +318,7 @@ describe('trace command', () => {
 			it('should run and parse private ip trace on result step', async () => {
 				const options = {
 					type: 'traceroute' as TraceOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					port: 53,
 					protocol: 'UDP',
@@ -318,6 +345,7 @@ describe('trace command', () => {
 			it('should run and parse private ip trace on result step without progress messages', async () => {
 				const options = {
 					type: 'traceroute' as TraceOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					port: 53,
 					protocol: 'UDP',
@@ -347,6 +375,7 @@ describe('trace command', () => {
 			it('should fail in case of execa timeout', async () => {
 				const options = {
 					type: 'traceroute' as TraceOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					port: 53,
 					protocol: 'UDP',
@@ -391,6 +420,7 @@ describe('trace command', () => {
 				it(`should classify "${output}" as ${expectedSource}`, async () => {
 					const options = {
 						type: 'traceroute' as TraceOptions['type'],
+						timeout: 5,
 						target: 'example.com',
 						port: 53,
 						protocol: 'UDP',
@@ -417,6 +447,7 @@ describe('trace command', () => {
 						throw new Error('should not be called');
 					}) as any).run(mockSocket as any, 'measurement', 'test', {
 						type: 'traceroute',
+						timeout: 5,
 						target: '127.0.0.1',
 						port: 53,
 						protocol: 'UDP',

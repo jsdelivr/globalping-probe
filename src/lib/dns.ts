@@ -6,8 +6,8 @@ import { InternalError } from './internal-error.js';
 
 export type IpFamily = 4 | 6;
 
-export type LookupOptions = { family: IpFamily; server?: string; allowPrivate?: boolean };
-export type RecordOptions = { rrtype: 'TXT'; server?: string };
+export type LookupOptions = { family: IpFamily; server?: string; allowPrivate?: boolean; signal?: AbortSignal };
+export type RecordOptions = { rrtype: 'TXT'; server?: string; signal?: AbortSignal };
 type Options = LookupOptions | RecordOptions;
 
 type ResolvedRecords = { records: string[]; ttl: number };
@@ -91,6 +91,30 @@ const cachedResolveRecords = (hostname: string, options: Options): Promise<strin
 	return pending;
 };
 
+const waitForRecords = async (promise: Promise<string[]>, signal?: AbortSignal): Promise<string[]> => {
+	if (!signal) {
+		return promise;
+	}
+
+	const abortError = () => signal.reason instanceof Error ? signal.reason : new Error('DNS lookup aborted.');
+
+	if (signal.aborted) {
+		throw abortError();
+	}
+
+	let abort: () => void;
+	const abortPromise = new Promise<never>((_resolve, reject) => {
+		abort = () => reject(abortError());
+		signal.addEventListener('abort', abort, { once: true });
+	});
+
+	try {
+		return await Promise.race([ promise, abortPromise ]);
+	} finally {
+		signal.removeEventListener('abort', abort!);
+	}
+};
+
 const toResult = (records: string[], hostname: string, options: Options): [string, IpFamily] | string[] => {
 	if ('rrtype' in options) {
 		return records;
@@ -113,13 +137,13 @@ export function dnsLookup (hostname: string, options: LookupOptions): Promise<[s
 export function dnsLookup (hostname: string, options: RecordOptions): Promise<string[]>;
 
 export async function dnsLookup (hostname: string, options: Options): Promise<[string, IpFamily] | string[]> {
-	const { records } = await resolveRecords(hostname, options);
-	return toResult(records, hostname, options);
+	const records = resolveRecords(hostname, options).then(result => result.records);
+	return toResult(await waitForRecords(records, options.signal), hostname, options);
 }
 
 export function cachedDnsLookup (hostname: string, options: LookupOptions): Promise<[string, IpFamily]>;
 export function cachedDnsLookup (hostname: string, options: RecordOptions): Promise<string[]>;
 
 export async function cachedDnsLookup (hostname: string, options: Options): Promise<[string, IpFamily] | string[]> {
-	return toResult(await cachedResolveRecords(hostname, options), hostname, options);
+	return toResult(await waitForRecords(cachedResolveRecords(hostname, options), options.signal), hostname, options);
 }

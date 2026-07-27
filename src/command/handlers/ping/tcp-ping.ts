@@ -1,7 +1,7 @@
 import { isIP } from 'node:net';
 import { Socket } from 'node:net';
 import { performance } from 'node:perf_hooks';
-import { setTimeout as setTimeoutAsync } from 'node:timers/promises';
+import { setTimeout as delay } from 'node:timers/promises';
 import { cachedDnsLookup } from '../../../lib/dns.js';
 import { getFailureSource } from '../../../lib/internal-error.js';
 import type { FailureSource } from '../../../types.js';
@@ -72,32 +72,47 @@ export type TcpPingData = TcpPingStartData | TcpPingProbeData | TcpPingStatsData
  * @param port The port to connect to
  * @param ipVersion 4 or 6
  * @param timeout The timeout in milliseconds
+ * @param signal An optional signal used to abort the connection attempt
  */
-export async function tcpPingSingle (hostname: string, address: string, port: number, ipVersion: number, timeout: number): Promise<TcpPingProbeData | TcpPingErrorData> {
+export async function tcpPingSingle (hostname: string, address: string, port: number, ipVersion: number, timeout: number, signal?: AbortSignal): Promise<TcpPingProbeData | TcpPingErrorData> {
 	return new Promise((resolve) => {
-		const startTime = performance.now();
+		if (signal?.aborted) {
+			resolve({ type: 'probe', address, hostname, port, success: false });
+			return;
+		}
+
+		const finish = (result: TcpPingProbeData) => {
+			signal?.removeEventListener('abort', abort);
+			socket.destroy();
+			resolve(result);
+		};
+
+		const abort = () => {
+			finish({ type: 'probe', address, hostname, port, success: false });
+		};
+
 		const socket = new Socket();
+		const startTime = performance.now();
 
 		socket.on('connect', () => {
 			const endTime = performance.now();
 			const rtt = endTime - startTime;
-			resolve({ type: 'probe', address, hostname, port, rtt, success: true });
-			socket.destroy();
+			finish({ type: 'probe', address, hostname, port, rtt, success: true });
 		});
 
 		socket.on('error', () => {
-			resolve({ type: 'probe', address, hostname, port, success: false });
-			socket.destroy();
+			finish({ type: 'probe', address, hostname, port, success: false });
 		});
 
 		socket.on('timeout', () => {
-			resolve({ type: 'probe', address, hostname, port, success: false });
-			socket.destroy();
+			finish({ type: 'probe', address, hostname, port, success: false });
 		});
 
 		socket.setNoDelay(true);
 		socket.setTimeout(timeout);
 		socket.connect({ port, host: address, family: ipVersion });
+
+		signal?.addEventListener('abort', abort, { once: true });
 	});
 }
 
@@ -117,13 +132,15 @@ export async function tcpPing (
 	const startTime = performance.now();
 	const results: Array<TcpPingData> = [];
 	const successTimings: Array<TcpPingSuccessProbeData> = [];
-	let address;
+	const deadline = Date.now() + timeout;
+	const signal = AbortSignal.timeout(timeout);
+	let address: string;
 
 	if (isIP(target)) {
 		address = target;
 	} else {
 		try {
-			[ address ] = await lookup(target, { family: ipVersion });
+			[ address ] = await lookup(target, { family: ipVersion, signal });
 		} catch (e) {
 			return [{ type: 'error', message: (e as Error).message || '', failureSource: getFailureSource(e, 'internal') }];
 		}
@@ -136,33 +153,29 @@ export async function tcpPing (
 		onProgress(start);
 	}
 
-	const pingPromises: Promise<void>[] = [];
+	const pingPromises = Array.from({ length: packets }, async (_, i): Promise<TcpPingProbeData | TcpPingErrorData> => {
+		try {
+			await delay(i * interval, undefined, { signal });
+			const remaining = Math.max(0, deadline - Date.now());
+			return await tcpPingSingle(target, address, port, ipVersion, remaining, signal);
+		} catch {
+			return { type: 'probe', address, hostname: target, port, success: false };
+		}
+	});
 
-	for (let i = 0; i < packets; i++) {
-		if (i > 0) {
-			await setTimeoutAsync(interval);
+	for (const pingPromise of pingPromises) {
+		const result = await pingPromise;
+
+		if (result.type === 'probe' && result.success) {
+			successTimings.push(result);
 		}
 
-		// The ping runs in a non-blocking way so that we can start a new one every `interval`.
-		const pingPromise = tcpPingSingle(target, address, port, ipVersion, timeout).then(async (result) => {
-			// Ensure we preserve the correct order.
-			await Promise.all(pingPromises.slice(0, i));
+		if (onProgress) {
+			onProgress(result);
+		}
 
-			if (result.type === 'probe' && result.success) {
-				successTimings.push(result);
-			}
-
-			if (onProgress) {
-				onProgress(result);
-			}
-
-			results.push(result);
-		});
-
-		pingPromises.push(pingPromise);
+		results.push(result);
 	}
-
-	await Promise.all(pingPromises);
 
 	const rtts = successTimings.map(t => t.rtt);
 	const min = rtts.length > 0 ? Math.min(...rtts) : undefined;

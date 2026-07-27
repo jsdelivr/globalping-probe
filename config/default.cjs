@@ -29,13 +29,15 @@ module.exports = {
 		maxUptime: 604800,
 	},
 	commands: {
-		timeout: 25,
+		processGrace: 1,
 		progressInterval: 500,
 		ping: {
 			interval: 0.5,
+			minInterval: 0.2,
 		},
 		mtr: {
 			interval: 0.5,
+			minInterval: 0.2,
 		},
 	},
 	adoptionServer: {

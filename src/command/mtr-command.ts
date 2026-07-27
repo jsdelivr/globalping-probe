@@ -12,6 +12,7 @@ import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { getFailureSource, InternalError, isExposed } from '../lib/internal-error.js';
 import { scopedLogger } from '../lib/logger.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
+import { getProcessTimeout } from '../helper/timeout.js';
 
 import type {
 	HopType,
@@ -28,10 +29,13 @@ export type MtrOptions = {
 	port: number;
 	packets: number;
 	ipVersion: number;
+	timeout: number;
 };
 
 const logger = scopedLogger('mtr-command');
 const allowedIpVersions = [ 4, 6 ];
+const mtrConfig = config.get<{ interval: number; minInterval: number }>('commands.mtr');
+const processGrace = config.get<number>('commands.processGrace');
 
 const mtrOptionsSchema = Joi.object<MtrOptions>({
 	type: Joi.string().valid('mtr'),
@@ -49,12 +53,17 @@ const mtrOptionsSchema = Joi.object<MtrOptions>({
 			otherwise: Joi.valid(...allowedIpVersions).default(4),
 		}),
 	}),
+	// TODO: Remove the default after the API timeout rollout is complete.
+	timeout: Joi.number().integer().default(25),
 });
 
 export const getResultInitState = (): ResultType => ({ status: 'finished', hops: [], rawOutput: '', data: [] });
 
 export const argBuilder = (options: MtrOptions): string[] => {
-	const intervalArg = [ '--interval', String(config.get<number>('commands.mtr.interval')) ];
+	const interval = options.packets * mtrConfig.interval > options.timeout - 1 ? mtrConfig.minInterval : mtrConfig.interval;
+	const remaining = Math.floor(options.timeout - options.packets * interval);
+	const grace = Math.min(3, remaining);
+	const intervalArg = [ '--interval', String(interval) ];
 	const protocolArg = options.protocol === 'icmp' ? [] : `--${options.protocol}`;
 	const packetsArg = String(options.packets);
 
@@ -62,9 +71,9 @@ export const argBuilder = (options: MtrOptions): string[] => {
 		// Ipv4 or IPv6
 		`-${options.ipVersion}`,
 		intervalArg,
-		[ '--gracetime', '3' ],
+		[ '--gracetime', String(grace) ],
 		[ '--max-ttl', '30' ],
-		[ '--timeout', '15' ],
+		[ '--timeout', String(remaining) ],
 		protocolArg,
 		[ '-c', packetsArg ],
 		[ '--raw' ],
@@ -75,10 +84,12 @@ export const argBuilder = (options: MtrOptions): string[] => {
 	return args;
 };
 
-export const mtrCmd = (options: MtrOptions): ExecaChildProcess => {
+export const mtrCmd = (options: MtrOptions, processTimeout = getProcessTimeout(options.timeout, processGrace)): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', [ 'mtr', ...args ], { timeout: config.get<number>('commands.timeout') * 1000 });
+	return execa('unbuffer', [ 'mtr', ...args ], { timeout: processTimeout });
 };
+
+const deadlineTimeoutError = () => new InternalError('The measurement command timed out.', true, 'target');
 
 export class MtrCommand implements CommandInterface<MtrOptions> {
 	constructor (private readonly cmd: typeof mtrCmd, private readonly lookup = cachedDnsLookup) {}
@@ -92,12 +103,40 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 		const { value: cmdOptions } = validationResult;
 		const buffer = new ProgressBuffer(socket, testId, measurementId, 'overwrite');
+		const deadline = Date.now() + cmdOptions.timeout * 1000;
+		const deadlineSignal = AbortSignal.timeout(Math.max(deadline - Date.now(), 0));
 		let result: ResultType = getResultInitState();
 		let cmd: ExecaChildProcess | undefined;
 
 		try {
-			const target = await this.resolveTarget(cmdOptions);
-			cmd = this.cmd({ ...cmdOptions, target });
+			const minimumRuntime = (cmdOptions.packets * mtrConfig.minInterval + 1) * 1000;
+			const lookupTimeout = deadline - minimumRuntime - Date.now();
+
+			if (lookupTimeout <= 0) {
+				throw deadlineTimeoutError();
+			}
+
+			const lookupSignal = AbortSignal.timeout(lookupTimeout);
+			let target: string;
+
+			try {
+				target = await this.resolveTarget(cmdOptions, lookupSignal);
+			} catch (error: unknown) {
+				if (lookupSignal.aborted) {
+					throw deadlineTimeoutError();
+				}
+
+				throw error;
+			}
+
+			const remaining = deadline - Date.now();
+
+			if (remaining <= 0) {
+				throw deadlineTimeoutError();
+			}
+
+			const remainingTimeout = Math.ceil(remaining / 1000);
+			cmd = this.cmd({ ...cmdOptions, target, timeout: remainingTimeout }, remaining);
 
 			if (cmd.stdout) {
 				byLine(cmd.stdout, (data) => {
@@ -116,14 +155,14 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 					if (cmdOptions.inProgressUpdates) {
 						buffer.pushLazyProgress(async () => ({
-							rawOutput: (await this.parseResult(result.data, false)).rawOutput,
+							rawOutput: (await this.parseResult(result.data, false, deadlineSignal)).rawOutput,
 						}));
 					}
 				});
 			}
 
 			await cmd;
-			result = await this.parseResult(result.data, true);
+			result = await this.parseResult(result.data, true, deadlineSignal);
 			result.resolvedAddress = target;
 		} catch (error: unknown) {
 			result.status = 'failed';
@@ -155,9 +194,10 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		return out;
 	}
 
-	async parseResult (data: string[], isFinalResult = false): Promise<ResultType> {
+	async parseResult (data: string[], isFinalResult = false, signal?: AbortSignal): Promise<ResultType> {
 		let nHops = MtrParser.rawParse(data.join('\n'), isFinalResult);
-		const asnList = await this.queryAsn(nHops);
+		const asnList = await this.queryAsn(nHops, signal);
+
 		nHops = this.populateAsn(nHops, asnList);
 		const rawOutput = MtrParser.outputBuilder(nHops);
 
@@ -189,10 +229,10 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		});
 	}
 
-	async queryAsn (hops: HopType[]): Promise<string[][]> {
+	async queryAsn (hops: HopType[], signal?: AbortSignal): Promise<string[][]> {
 		const dnsResult = await Promise.allSettled(hops.map(h => (
 			h?.asn.length < 1 && h?.resolvedAddress && !isIpPrivate(h?.resolvedAddress)
-				? this.lookupAsn(h?.resolvedAddress)
+				? this.lookupAsn(h?.resolvedAddress, signal)
 				: Promise.reject(new Error('didn\'t lookup ASN'))
 		)));
 
@@ -212,9 +252,12 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		return asnList;
 	}
 
-	async lookupAsn (addr: string): Promise<string | undefined> {
+	async lookupAsn (addr: string, signal?: AbortSignal): Promise<string | undefined> {
 		const reversedAddr = addr.split('.').reverse().join('.');
-		const result = await this.lookup(`${reversedAddr}.origin.asn.cymru.com`, { rrtype: 'TXT' });
+		const result = await this.lookup(`${reversedAddr}.origin.asn.cymru.com`, {
+			rrtype: 'TXT',
+			...(signal ? { signal } : {}),
+		});
 
 		return result[0];
 	}
@@ -234,7 +277,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		};
 	}
 
-	private async resolveTarget (options: MtrOptions): Promise<string> {
+	private async resolveTarget (options: MtrOptions, signal?: AbortSignal): Promise<string> {
 		if (isIP(options.target) !== 0) {
 			if (isIpPrivate(options.target)) {
 				throw new InternalError('Private IP ranges are not allowed.', true, 'target');
@@ -243,7 +286,10 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			return options.target;
 		}
 
-		const [ address ] = await this.lookup(options.target, { family: options.ipVersion as IpFamily });
+		const [ address ] = await this.lookup(options.target, {
+			family: options.ipVersion as IpFamily,
+			...(signal ? { signal } : {}),
+		});
 
 		return address;
 	}

@@ -97,6 +97,10 @@ describe('tcp-ping', () => {
 	let formatTcpPingResult: typeof tcpPingModule.formatTcpPingResult;
 	let toRawTcpOutput: typeof tcpPingModule.toRawTcpOutput;
 	let serverDelayFn = () => 0;
+	let socketFactory = () => new net.Socket();
+	const Socket = function () {
+		return socketFactory();
+	};
 
 	const setServerDelay = (delay: number | (() => number)) => {
 		if (typeof delay === 'function') {
@@ -127,7 +131,7 @@ describe('tcp-ping', () => {
 
 		await td.replaceEsm('node:net', {
 			...net,
-			Socket: net.Socket,
+			Socket,
 		});
 
 		const tcpPingModule = await import('../../../../../src/command/handlers/ping/tcp-ping.js');
@@ -139,6 +143,7 @@ describe('tcp-ping', () => {
 
 	afterEach(() => {
 		setServerDelay(0);
+		socketFactory = () => new net.Socket();
 		sandbox.reset();
 		sandbox.restore();
 	});
@@ -150,6 +155,22 @@ describe('tcp-ping', () => {
 	});
 
 	describe('tcpPingSingle', () => {
+		it('should destroy its socket when the global deadline aborts', async () => {
+			const socket = new net.Socket();
+			const connect = sandbox.stub(socket, 'connect').returns(socket);
+			const destroy = sandbox.stub(socket, 'destroy').returns(socket);
+			socketFactory = () => socket;
+			const controller = new AbortController();
+			const promise = tcpPingSingle(HOST, HOST, 80, 4, 5000, controller.signal);
+
+			controller.abort();
+			const result = await promise;
+
+			expect(result).to.include({ type: 'probe', success: false });
+			expect(connect.calledOnce).to.equal(true);
+			expect(destroy.calledOnce).to.equal(true);
+		});
+
 		it('should successfully ping a fast server with low RTT', async () => {
 			const result = await tcpPingSingle(HOST, HOST, openPort, 4, TIMEOUT);
 
@@ -254,7 +275,7 @@ describe('tcp-ping', () => {
 				target: HOST,
 				port: openPort,
 				packets: PACKETS,
-				timeout: TIMEOUT,
+				timeout: 100,
 				interval: INTERVAL,
 				ipVersion: 4 as const,
 			};
@@ -292,7 +313,7 @@ describe('tcp-ping', () => {
 				target: HOST,
 				port: openPort,
 				packets: PACKETS,
-				timeout: TIMEOUT,
+				timeout: 100,
 				interval: INTERVAL,
 				ipVersion: 4 as const,
 			};

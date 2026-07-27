@@ -30,12 +30,12 @@ describe('PingTest', () => {
 		await pingTest.start();
 
 		expect(pingCmd.callCount).to.equal(6);
-		expect(pingCmd.args[0]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[1]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[2]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[3]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[4]).to.deep.equal([{ type: 'ping', ipVersion: 4, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
-		expect(pingCmd.args[5]).to.deep.equal([{ type: 'ping', ipVersion: 6, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
+		expect(pingCmd.args[0]).to.deep.equal([{ type: 'ping', timeout: 10, ipVersion: 4, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
+		expect(pingCmd.args[1]).to.deep.equal([{ type: 'ping', timeout: 10, ipVersion: 6, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
+		expect(pingCmd.args[2]).to.deep.equal([{ type: 'ping', timeout: 10, ipVersion: 4, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
+		expect(pingCmd.args[3]).to.deep.equal([{ type: 'ping', timeout: 10, ipVersion: 6, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
+		expect(pingCmd.args[4]).to.deep.equal([{ type: 'ping', timeout: 10, ipVersion: 4, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
+		expect(pingCmd.args[5]).to.deep.equal([{ type: 'ping', timeout: 10, ipVersion: 6, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false }]);
 		expect(updateStatus.callCount).to.equal(1);
 		expect(updateStatus.args[0]).to.deep.equal([ 'ping-test-failed', false ]);
 		expect(socket.emit.callCount).to.equal(2);

@@ -241,6 +241,32 @@ describe('dnsLookup / cachedDnsLookup', () => {
 		expect(resolve4.callCount).to.equal(1);
 	});
 
+	it('stops waiting on an aborted signal without cancelling the cached lookup', async () => {
+		let finishLookup!: (records: Array<{ address: string; ttl: number }>) => void;
+
+		resolve4.returns(new Promise((resolve) => {
+			finishLookup = resolve;
+		}));
+
+		const controller = new AbortController();
+		const lookup = cachedDnsLookup('example.com', { family: 4, signal: controller.signal });
+		controller.abort(new Error('Measurement timeout.'));
+
+		let error;
+
+		try {
+			await lookup;
+		} catch (caughtError) {
+			error = caughtError;
+		}
+
+		expect(error).to.be.instanceOf(Error).with.property('message', 'Measurement timeout.');
+
+		finishLookup([{ address: '1.1.1.1', ttl: 300 }]);
+		expect(await cachedDnsLookup('example.com', { family: 4 })).to.deep.equal([ '1.1.1.1', 4 ]);
+		expect(resolve4.callCount).to.equal(1);
+	});
+
 	it('resolves IPv6 via resolve6', async () => {
 		const resolve6 = sandbox.stub(dns.promises.Resolver.prototype, 'resolve6').resolves([{ address: '2606:4700:4700::1111', ttl: 300 }]);
 
