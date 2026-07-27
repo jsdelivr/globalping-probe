@@ -19,7 +19,7 @@ describe('command timeout helpers', () => {
 		expect(getLastPacketTime(16, 0.25)).to.equal(3.75);
 	});
 
-	it('should allow one extra second for the process timeout', () => {
+	it('should allow two extra seconds for the process timeout', () => {
 		expect(getProcessTimeout(5, 2)).to.equal(7000);
 	});
 });
