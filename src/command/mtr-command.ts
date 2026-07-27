@@ -3,7 +3,7 @@ import { isIP } from 'node:net';
 import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
-import type { CommandInterface } from '../types.js';
+import type { CommandInterface, FailureSource } from '../types.js';
 import { byLine } from '../lib/by-line.js';
 import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
 import { cachedDnsLookup, type IpFamily } from '../lib/dns.js';
@@ -89,7 +89,7 @@ export const mtrCmd = (options: MtrOptions, processTimeout = getProcessTimeout(o
 	return execa('unbuffer', [ 'mtr', ...args ], { timeout: processTimeout });
 };
 
-const deadlineTimeoutError = () => new InternalError('The measurement command timed out.', true, 'target');
+const deadlineTimeoutError = (failureSource: FailureSource = 'target') => new InternalError('The measurement command timed out.', true, failureSource);
 
 export class MtrCommand implements CommandInterface<MtrOptions> {
 	constructor (private readonly cmd: typeof mtrCmd, private readonly lookup = cachedDnsLookup) {}
@@ -109,7 +109,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		let cmd: ExecaChildProcess | undefined;
 
 		try {
-			const minimumRuntime = (cmdOptions.packets * mtrConfig.minInterval + 1) * 1000;
+			const minimumRuntime = Math.round((cmdOptions.packets * mtrConfig.minInterval + 1) * 1000);
 			const lookupTimeout = deadline - minimumRuntime - Date.now();
 
 			if (lookupTimeout <= 0) {
@@ -123,7 +123,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 				target = await this.resolveTarget(cmdOptions, lookupSignal);
 			} catch (error: unknown) {
 				if (lookupSignal.aborted) {
-					throw deadlineTimeoutError();
+					throw deadlineTimeoutError('resolver');
 				}
 
 				throw error;
@@ -135,8 +135,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 				throw deadlineTimeoutError();
 			}
 
-			const remainingTimeout = Math.ceil(remaining / 1000);
-			cmd = this.cmd({ ...cmdOptions, target, timeout: remainingTimeout }, remaining);
+			cmd = this.cmd({ ...cmdOptions, target, timeout: remaining / 1000 }, remaining);
 
 			if (cmd.stdout) {
 				byLine(cmd.stdout, (data) => {

@@ -256,7 +256,7 @@ describe('mtr command executor', () => {
 			})) as typeof cachedDnsLookup;
 			const mtr = new MtrCommand(cmdFn, lookup);
 			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', {
-				type: 'mtr', timeout: 5, target: 'jsdelivr.net', protocol: 'icmp', port: 80, packets: 3, inProgressUpdates: false, ipVersion: 4,
+				type: 'mtr', timeout: 5, target: 'jsdelivr.net', protocol: 'icmp', port: 80, packets: 7, inProgressUpdates: false, ipVersion: 4,
 			});
 
 			await clock.tickAsync(0);
@@ -265,17 +265,49 @@ describe('mtr command executor', () => {
 			lookupController.abort();
 			await runPromise;
 
-			expect(timeoutStub.calledWith(3400)).to.be.true;
+			expect(timeoutStub.calledWith(2600)).to.be.true;
 			expect(cmdFn.notCalled).to.be.true;
 			expect(mockedSocket.emit.calledOnce).to.be.true;
 
 			expect((mockedSocket.emit.firstCall.args[1] as any).result).to.include({
 				status: 'failed',
-				failureSource: 'target',
+				failureSource: 'resolver',
 				rawOutput: 'The measurement command timed out.',
 			});
 
 			timeoutStub.restore();
+			clock.restore();
+		});
+
+		it('should derive MTR arguments from the exact remaining budget', async () => {
+			const clock = sandbox.useFakeTimers();
+			const mockCmd = getExecaMock();
+			let passedArgs: string[] = [];
+			let passedProcessTimeout: number | undefined;
+			const cmdFn = (cmdOptions: MtrOptions, processTimeout?: number): any => {
+				passedArgs = argBuilder(cmdOptions);
+				passedProcessTimeout = processTimeout;
+				return mockCmd;
+			};
+			const lookup = (async (_hostname: string, options: any) => {
+				if (options.rrtype) {
+					return [ '123 | abc | abc' ];
+				}
+
+				return new Promise(resolve => setTimeout(() => resolve([ '1.1.1.1', options.family ]), 2900));
+			}) as typeof cachedDnsLookup;
+			const mtr = new MtrCommand(cmdFn, lookup);
+			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', {
+				type: 'mtr', timeout: 5, target: 'jsdelivr.net', protocol: 'icmp', port: 80, packets: 3, inProgressUpdates: false, ipVersion: 4,
+			});
+
+			await clock.tickAsync(2900);
+
+			expect(passedArgs[passedArgs.indexOf('--interval') + 1]).to.equal('0.2');
+			expect(passedProcessTimeout).to.equal(2100);
+
+			mockCmd.resolve({ stdout: '' });
+			await runPromise;
 			clock.restore();
 		});
 
