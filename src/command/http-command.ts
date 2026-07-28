@@ -2,6 +2,7 @@ import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
 import type { CommandInterface } from '../types.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
+import { validateCommandOptions } from '../helper/validate-command-options.js';
 import { joiValidateIp } from '../lib/private-ip.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import { HttpHandler } from './handlers/http/undici.js';
@@ -57,7 +58,7 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 
 export class HttpCommand implements CommandInterface<HttpOptions> {
 	async run (socket: Socket, measurementId: string, testId: string, cmdOptions: HttpOptions): Promise<unknown> {
-		const validationResult = httpOptionsSchema.validate(cmdOptions);
+		const validationResult = validateCommandOptions(httpOptionsSchema, cmdOptions);
 
 		if (validationResult.error) {
 			throw new InvalidOptionsException('http', validationResult.error);

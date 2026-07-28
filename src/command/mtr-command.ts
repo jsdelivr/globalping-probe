@@ -13,6 +13,7 @@ import { getFailureSource, InternalError, isExposed } from '../lib/internal-erro
 import { scopedLogger } from '../lib/logger.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import { getProcessTimeout } from '../helper/timeout.js';
+import { validateCommandOptions } from '../helper/validate-command-options.js';
 
 import type {
 	HopType,
@@ -94,7 +95,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 	constructor (private readonly cmd: typeof mtrCmd, private readonly lookup = cachedDnsLookup) {}
 
 	async run (socket: Socket, measurementId: string, testId: string, options: MtrOptions): Promise<unknown> {
-		const validationResult = mtrOptionsSchema.validate(options);
+		const validationResult = validateCommandOptions(mtrOptionsSchema, options);
 
 		if (validationResult.error) {
 			throw new InvalidOptionsException('mtr', validationResult.error);
