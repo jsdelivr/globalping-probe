@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import * as td from 'testdouble';
 import { InternalError } from '../../../../../src/lib/internal-error.js';
+import type { cachedDnsLookup } from '../../../../../src/lib/dns.js';
 
 // This must remain type-only
 import type * as tcpPingModule from '../../../../../src/command/handlers/ping/tcp-ping.js';
@@ -97,6 +98,10 @@ describe('tcp-ping', () => {
 	let formatTcpPingResult: typeof tcpPingModule.formatTcpPingResult;
 	let toRawTcpOutput: typeof tcpPingModule.toRawTcpOutput;
 	let serverDelayFn = () => 0;
+	let socketFactory = () => new net.Socket();
+	const Socket = function () {
+		return socketFactory();
+	};
 
 	const setServerDelay = (delay: number | (() => number)) => {
 		if (typeof delay === 'function') {
@@ -127,7 +132,7 @@ describe('tcp-ping', () => {
 
 		await td.replaceEsm('node:net', {
 			...net,
-			Socket: net.Socket,
+			Socket,
 		});
 
 		const tcpPingModule = await import('../../../../../src/command/handlers/ping/tcp-ping.js');
@@ -139,6 +144,7 @@ describe('tcp-ping', () => {
 
 	afterEach(() => {
 		setServerDelay(0);
+		socketFactory = () => new net.Socket();
 		sandbox.reset();
 		sandbox.restore();
 	});
@@ -150,6 +156,22 @@ describe('tcp-ping', () => {
 	});
 
 	describe('tcpPingSingle', () => {
+		it('should destroy its socket when the global deadline aborts', async () => {
+			const socket = new net.Socket();
+			const connect = sandbox.stub(socket, 'connect').returns(socket);
+			const destroy = sandbox.stub(socket, 'destroy').returns(socket);
+			socketFactory = () => socket;
+			const controller = new AbortController();
+			const promise = tcpPingSingle(HOST, HOST, 80, 4, 5000, controller.signal);
+
+			controller.abort();
+			const result = await promise;
+
+			expect(result).to.include({ type: 'probe', success: false });
+			expect(connect.calledOnce).to.equal(true);
+			expect(destroy.calledOnce).to.equal(true);
+		});
+
 		it('should successfully ping a fast server with low RTT', async () => {
 			const result = await tcpPingSingle(HOST, HOST, openPort, 4, TIMEOUT);
 
@@ -254,7 +276,7 @@ describe('tcp-ping', () => {
 				target: HOST,
 				port: openPort,
 				packets: PACKETS,
-				timeout: TIMEOUT,
+				timeout: 100,
 				interval: INTERVAL,
 				ipVersion: 4 as const,
 			};
@@ -292,7 +314,7 @@ describe('tcp-ping', () => {
 				target: HOST,
 				port: openPort,
 				packets: PACKETS,
-				timeout: TIMEOUT,
+				timeout: 100,
 				interval: INTERVAL,
 				ipVersion: 4 as const,
 			};
@@ -498,6 +520,30 @@ describe('tcp-ping', () => {
 			expect(results).to.deep.equal([{
 				type: 'error',
 				message: 'queryA ETIMEOUT example.com',
+				failureSource: 'resolver',
+			}]);
+		});
+
+		it('should classify a DNS deadline as resolver', async () => {
+			const controller = new AbortController();
+			sandbox.stub(AbortSignal, 'timeout').returns(controller.signal);
+			const resolver = ((_hostname: string, options: any) => new Promise((_resolve, reject) => {
+				options.signal.addEventListener('abort', () => reject(options.signal.reason), { once: true });
+			})) as typeof cachedDnsLookup;
+			const promise = tcpPing({
+				target: 'example.com',
+				port: openPort,
+				packets: 1,
+				timeout: TIMEOUT,
+				interval: INTERVAL,
+				ipVersion: 4,
+			}, () => {}, resolver);
+
+			controller.abort();
+
+			expect(await promise).to.deep.equal([{
+				type: 'error',
+				message: 'This operation was aborted',
 				failureSource: 'resolver',
 			}]);
 		});

@@ -225,7 +225,6 @@ function getConnector (
 }
 
 export class HttpHandler {
-	private readonly REQUEST_TIMEOUT: number = 10_000;
 	private readonly DOWNLOAD_LIMIT: number = 10_000;
 	private readonly url: URL;
 	private readonly port: number;
@@ -268,7 +267,7 @@ export class HttpHandler {
 		const allowH2 = this.options.protocol === 'HTTP2';
 		const connector = getConnector(this.options, this.port, this.isHttps, dnsResolver, this.result, this.timings);
 		this.undiciClient = new Client(this.url.origin, { connect: connector, allowH2 });
-		this.timeoutTimer = setTimeout(() => this.handleError('Request timeout.', 'target'), this.REQUEST_TIMEOUT);
+		this.timeoutTimer = setTimeout(() => this.handleError('Request timeout.', 'target'), this.options.timeout * 1000);
 
 		this.undiciClient.dispatch({
 			path: this.url.pathname + this.url.search,

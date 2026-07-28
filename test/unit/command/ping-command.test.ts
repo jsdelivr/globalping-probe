@@ -15,6 +15,7 @@ describe('ping command executor', () => {
 		it('should include all arguments', () => {
 			const options = {
 				type: 'ping' as PingOptions['type'],
+				timeout: 5,
 				target: 'google.com',
 				packets: 1,
 				protocol: 'ICMP',
@@ -31,12 +32,23 @@ describe('ping command executor', () => {
 			expect(args[args.length - 1]).to.equal(options.target);
 			expect(joinedArgs).to.contain(`-c ${options.packets}`);
 			expect(joinedArgs).to.contain('-i 0.5');
-			expect(joinedArgs).to.contain('-w 10');
+			expect(joinedArgs).to.contain('-w 5');
+		});
+
+		it('should fit sixteen packets into a five-second deadline', () => {
+			const args = argBuilder({ type: 'ping', timeout: 5, target: 'google.com', packets: 16, protocol: 'ICMP', port: 80, inProgressUpdates: false, ipVersion: 4 });
+			expect(args.join(' ')).to.contain('-i 0.2 -w 5');
+		});
+
+		it('should keep the configured interval for an eleven-second deadline', () => {
+			const args = argBuilder({ type: 'ping', timeout: 11, target: 'google.com', packets: 16, protocol: 'ICMP', port: 80, inProgressUpdates: false, ipVersion: 4 });
+			expect(args.join(' ')).to.contain('-i 0.5 -w 11');
 		});
 
 		it('should allow overriding ping interval', () => {
 			const options = {
 				type: 'ping' as PingOptions['type'],
+				timeout: 5,
 				target: 'google.com',
 				packets: 1,
 				protocol: 'ICMP',
@@ -54,6 +66,7 @@ describe('ping command executor', () => {
 			it('should set -4 flag', () => {
 				const options = {
 					type: 'ping' as PingOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					packets: 1,
 					protocol: 'ICMP',
@@ -69,6 +82,7 @@ describe('ping command executor', () => {
 			it('should set -6 flag', () => {
 				const options = {
 					type: 'ping' as PingOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					packets: 1,
 					protocol: 'ICMP',
@@ -86,6 +100,7 @@ describe('ping command executor', () => {
 			it('should set -c 2 flag', () => {
 				const options = {
 					type: 'ping' as PingOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					packets: 2,
 					protocol: 'ICMP',
@@ -102,6 +117,7 @@ describe('ping command executor', () => {
 			it('should set -c 5 flag', () => {
 				const options = {
 					type: 'ping' as PingOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					packets: 5,
 					protocol: 'ICMP',
@@ -120,6 +136,7 @@ describe('ping command executor', () => {
 			it('should set target at the end of array', () => {
 				const options = {
 					type: 'ping' as PingOptions['type'],
+					timeout: 5,
 					target: 'abc.com',
 					packets: 2,
 					protocol: 'ICMP',
@@ -167,6 +184,7 @@ describe('ping command executor', () => {
 				const expectedResult = getCmdMockResult(command);
 				const options = {
 					type: 'ping' as PingOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					packets: 3,
 					protocol: 'ICMP',
@@ -200,6 +218,7 @@ describe('ping command executor', () => {
 				const expectedResult = getCmdMockResult(command);
 				const options = {
 					type: 'ping' as PingOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					packets: 3,
 					protocol: 'ICMP',
@@ -234,6 +253,7 @@ describe('ping command executor', () => {
 				const expectedResult = getCmdMockResult(command);
 				const options = {
 					type: 'ping' as PingOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					packets: 3,
 					protocol: 'TCP',
@@ -267,6 +287,7 @@ describe('ping command executor', () => {
 				const expectedResult = getCmdMockResult(command);
 				const options = {
 					type: 'ping' as PingOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					packets: 3,
 					protocol: 'TCP',
@@ -293,6 +314,7 @@ describe('ping command executor', () => {
 			const expectedResult = getCmdMockResult(testCase);
 			const options = {
 				type: 'ping' as PingOptions['type'],
+				timeout: 5,
 				target: 'google.com',
 				packets: 3,
 				protocol: 'ICMP',
@@ -324,6 +346,7 @@ describe('ping command executor', () => {
 			const expectedResult = getCmdMockResult(testCase);
 			const options = {
 				type: 'ping' as PingOptions['type'],
+				timeout: 5,
 				target: '2606:4700:4700::1111',
 				packets: 3,
 				protocol: 'ICMP',
@@ -355,6 +378,7 @@ describe('ping command executor', () => {
 			const expectedResult = getCmdMockResult(command);
 			const options = {
 				type: 'ping' as PingOptions['type'],
+				timeout: 5,
 				target: 'google.com',
 				packets: 3,
 				protocol: 'ICMP',
@@ -387,6 +411,7 @@ describe('ping command executor', () => {
 			const expectedResult = getCmdMockResult(command);
 			const options = {
 				type: 'ping' as PingOptions['type'],
+				timeout: 5,
 				target: 'google.com',
 				packets: 3,
 				protocol: 'TCP',
@@ -412,6 +437,7 @@ describe('ping command executor', () => {
 			const expectedResult = getCmdMockResult(command);
 			const options = {
 				type: 'ping' as PingOptions['type'],
+				timeout: 5,
 				target: 'google.com',
 				packets: 3,
 				protocol: 'ICMP',
@@ -440,6 +466,7 @@ describe('ping command executor', () => {
 			const expectedResult = getCmdMockResult(command);
 			const options = {
 				type: 'ping' as PingOptions['type'],
+				timeout: 5,
 				target: 'google.com',
 				packets: 3,
 				protocol: 'ICMP',
@@ -471,6 +498,7 @@ describe('ping command executor', () => {
 			const expectedResult = getCmdMockResult(command);
 			const options = {
 				type: 'ping' as PingOptions['type'],
+				timeout: 5,
 				target: 'google.com',
 				packets: 3,
 				protocol: 'TCP',
@@ -498,6 +526,7 @@ describe('ping command executor', () => {
 				const expectedResult = getCmdMockResult(command);
 				const options = {
 					type: 'ping' as PingOptions['type'],
+					timeout: 5,
 					target: 'google.com',
 					packets: 3,
 					protocol: 'ICMP',
@@ -527,6 +556,7 @@ describe('ping command executor', () => {
 			const expectedResult = getCmdMockResult(command);
 			const options = {
 				type: 'ping' as PingOptions['type'],
+				timeout: 5,
 				target: 'google.com',
 				packets: 3,
 				protocol: 'ICMP',
@@ -554,6 +584,7 @@ describe('ping command executor', () => {
 			const ping = new PingCommand();
 			const options = {
 				type: 'ping' as PingOptions['type'],
+				timeout: 5,
 				target: 'google.com',
 				packets: 3,
 				protocol: 'ICMP',
@@ -587,6 +618,7 @@ describe('ping command executor', () => {
 				const ping = new PingCommand();
 				const options = {
 					type: 'ping' as PingOptions['type'],
+					timeout: 5,
 					target: 'missing.example',
 					packets: 3,
 					protocol: 'ICMP',
@@ -611,6 +643,7 @@ describe('ping command executor', () => {
 			const ping = new PingCommand();
 			const options = {
 				type: 'ping' as PingOptions['type'],
+				timeout: 5,
 				target: 'google.com',
 				packets: 3,
 				protocol: 'ICMP',
@@ -665,6 +698,7 @@ describe('ping command executor', () => {
 			try {
 				await new PingCommand().run(mockedSocket as any, 'measurement', 'test', {
 					type: 'ping',
+					timeout: 5,
 					target: '127.0.0.1',
 					packets: 1,
 					protocol: 'ICMP',

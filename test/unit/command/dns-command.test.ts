@@ -31,6 +31,7 @@ describe('dns command', () => {
 		it('should include all arguments', () => {
 			const options = {
 				type: 'dns' as DnsOptions['type'],
+				timeout: 7,
 				target: 'google.com',
 				resolver: '1.1.1.1',
 				protocol: 'udp',
@@ -61,6 +62,7 @@ describe('dns command', () => {
 			it('should set -4 flag', () => {
 				const options = {
 					type: 'dns' as DnsOptions['type'],
+					timeout: 7,
 					target: 'google.com',
 					resolver: '1.1.1.1',
 					protocol: 'udp',
@@ -80,6 +82,7 @@ describe('dns command', () => {
 			it('should set -6 flag', () => {
 				const options = {
 					type: 'dns' as DnsOptions['type'],
+					timeout: 7,
 					target: 'google.com',
 					resolver: '64:ff9b:1::1a2b:3c4d',
 					protocol: 'udp',
@@ -98,9 +101,29 @@ describe('dns command', () => {
 		});
 
 		describe('trace', () => {
+			it('should use a fixed three-second query timeout', () => {
+				const options = {
+					type: 'dns' as DnsOptions['type'],
+					timeout: 30,
+					target: 'google.com',
+					resolver: '1.1.1.1',
+					protocol: 'udp',
+					port: 90,
+					trace: true,
+					query: {
+						type: 'TXT',
+					},
+					inProgressUpdates: false,
+					ipVersion: 4,
+				};
+
+				expect(argBuilder(options)).to.include('+timeout=3');
+			});
+
 			it('should not add the flag', () => {
 				const options = {
 					type: 'dns' as DnsOptions['type'],
+					timeout: 7,
 					target: 'google.com',
 					resolver: '1.1.1.1',
 					protocol: 'udp',
@@ -120,6 +143,7 @@ describe('dns command', () => {
 			it('should add the flag', () => {
 				const options = {
 					type: 'dns' as DnsOptions['type'],
+					timeout: 7,
 					target: 'google.com',
 					resolver: '1.1.1.1',
 					protocol: 'udp',
@@ -141,6 +165,7 @@ describe('dns command', () => {
 			it('should set -p 90 flag', () => {
 				const options = {
 					type: 'dns' as DnsOptions['type'],
+					timeout: 7,
 					target: 'google.com',
 					resolver: '1.1.1.1',
 					protocol: 'UDP',
@@ -162,6 +187,7 @@ describe('dns command', () => {
 			it('should set -t A flag before the target', () => {
 				const options = {
 					type: 'dns' as DnsOptions['type'],
+					timeout: 7,
 					target: 'google.com',
 					resolver: '1.1.1.1',
 					protocol: 'UDP',
@@ -181,6 +207,7 @@ describe('dns command', () => {
 			it('should set -x flag before the target', () => {
 				const options = {
 					type: 'dns' as DnsOptions['type'],
+					timeout: 7,
 					target: '8.8.8.8',
 					resolver: '1.1.1.1',
 					protocol: 'UDP',
@@ -202,6 +229,7 @@ describe('dns command', () => {
 			it('should not add the flag (UDP)', () => {
 				const options = {
 					type: 'dns' as DnsOptions['type'],
+					timeout: 7,
 					target: 'google.com',
 					resolver: '1.1.1.1',
 					protocol: 'udp',
@@ -222,6 +250,7 @@ describe('dns command', () => {
 			it('should add the flag (TCP)', () => {
 				const options = {
 					type: 'dns' as DnsOptions['type'],
+					timeout: 7,
 					target: 'google.com',
 					resolver: '1.1.1.1',
 					protocol: 'tcp',
@@ -245,6 +274,7 @@ describe('dns command', () => {
 			const testCase = 'dns-trace-success';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'cdn.jsdelivr.net',
 				trace: true,
 				query: {
@@ -278,6 +308,7 @@ describe('dns command', () => {
 			const testCase = 'dns-trace-success';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'cdn.jsdelivr.net',
 				trace: true,
 				query: {
@@ -313,6 +344,7 @@ describe('dns command', () => {
 			const testCase = 'dns-success-linux';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'google.com',
 				trace: false,
 				query: {
@@ -349,6 +381,7 @@ describe('dns command', () => {
 			const testCase = 'ipv6-resolver-dns-success';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'google.com',
 				trace: false,
 				query: {
@@ -386,6 +419,7 @@ describe('dns command', () => {
 			const testCase = 'ipv6-dns-success-ip';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: '2a00:1450:4026:802::200e',
 				trace: false,
 				query: {
@@ -423,6 +457,7 @@ describe('dns command', () => {
 			const testCase = 'dns-success-linux';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'google.com',
 				trace: false,
 				query: {
@@ -458,6 +493,7 @@ describe('dns command', () => {
 			const testCase = 'dns-client-formerr';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: '_dns.resolver.arpa',
 				trace: false,
 				query: {
@@ -494,6 +530,7 @@ describe('dns command', () => {
 			const testCase = 'dns-resolved-private-ip-linux';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'gitlab.test.com',
 				trace: false,
 				query: {
@@ -527,6 +564,7 @@ describe('dns command', () => {
 			const testCase = 'dns-resolved-private-ip-linux';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'gitlab.test.com',
 				trace: false,
 				query: {
@@ -562,6 +600,7 @@ describe('dns command', () => {
 			const testCase = 'ipv6-dns-resolved-private-ip-linux';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'gitlab.test.com',
 				trace: false,
 				query: {
@@ -595,6 +634,7 @@ describe('dns command', () => {
 			const testCase = 'ipv6-dns-resolved-private-ip-linux';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'gitlab.test.com',
 				trace: false,
 				query: {
@@ -630,6 +670,7 @@ describe('dns command', () => {
 			const testCase = 'dns-trace-resolved-private-ip-linux';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'test.com',
 				trace: true,
 				query: {
@@ -665,6 +706,7 @@ describe('dns command', () => {
 			const testCase = 'dns-resolved-private-ip-invalid-hostname-linux';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'dev.home',
 				trace: false,
 				query: {
@@ -698,6 +740,7 @@ describe('dns command', () => {
 			const testCase = 'ipv6-dns-resolved-private-ip-invalid-hostname-linux';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'dev.home',
 				trace: false,
 				query: {
@@ -731,6 +774,7 @@ describe('dns command', () => {
 			const testCase = 'dns-trace-resolved-private-ip-invalid-hostname-linux';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'dev.home',
 				trace: true,
 				query: {
@@ -770,6 +814,7 @@ describe('dns command', () => {
 			const testCase = 'ipv6-dns-trace-resolved-private-ip-invalid-hostname-linux';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'dev.home',
 				trace: true,
 				query: {
@@ -809,6 +854,7 @@ describe('dns command', () => {
 			const testCase = 'dns-resolver-error-linux';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'google.com',
 				resolver: 'sdsa',
 				trace: false,
@@ -840,6 +886,7 @@ describe('dns command', () => {
 			const testCase = 'dns-connection-refused-error-linux';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'test.com',
 				trace: false,
 				query: {
@@ -875,6 +922,7 @@ describe('dns command', () => {
 			const testCase = 'dns-connection-refused-private-error-linux';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'test.com',
 				trace: false,
 				query: {
@@ -908,6 +956,7 @@ describe('dns command', () => {
 			const testCase = 'dns-connection-refused-private-error-linux';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'test.com',
 				trace: false,
 				query: {
@@ -943,6 +992,7 @@ describe('dns command', () => {
 			const testCase = 'ipv6-dns-connection-refused-private-error-linux';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'test.com',
 				trace: false,
 				query: {
@@ -976,6 +1026,7 @@ describe('dns command', () => {
 			const testCase = 'ipv6-dns-connection-refused-private-error-linux';
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'test.com',
 				trace: false,
 				query: {
@@ -1010,6 +1061,7 @@ describe('dns command', () => {
 		it('should fail in case of execa timeout', async () => {
 			const options = {
 				type: 'dns' as const,
+				timeout: 7,
 				target: 'google.com',
 				trace: false,
 				query: {

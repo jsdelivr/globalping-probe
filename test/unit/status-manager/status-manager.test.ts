@@ -119,12 +119,12 @@ describe('StatusManager', () => {
 		new StatusManager(socket, pingCmd);
 
 		const pingTestPingCmd = initPingTest.firstCall.args[2] as (options: PingOptions) => Promise<{ stdout: string }>;
-		pingTestPingCmd({ type: 'ping', ipVersion: 4, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false });
+		pingTestPingCmd({ type: 'ping', timeout: 10, ipVersion: 4, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false });
 
 		expect(pingCmd.calledOnce).to.be.true;
 
 		expect(pingCmd.firstCall.args).to.deep.equal([
-			{ type: 'ping', ipVersion: 4, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false },
+			{ type: 'ping', timeout: 10, ipVersion: 4, target: 'api.globalping.io', packets: 6, protocol: 'ICMP', port: 80, inProgressUpdates: false },
 			{ interval: 1 },
 		]);
 	});

@@ -92,7 +92,7 @@ export class IcmpTcpTest {
 	private async measureDiff (target: string, ipVersion: 4 | 6): Promise<number | null> {
 		try {
 			const [ icmpResult, tcpResults ] = await Promise.all([
-				this.pingCmd({ type: 'ping', ipVersion, target, packets: 3, protocol: 'ICMP', port: 80, inProgressUpdates: false }),
+				this.pingCmd({ type: 'ping', timeout: 10, ipVersion, target, packets: 3, protocol: 'ICMP', port: 80, inProgressUpdates: false }),
 				this.runTcpPing({ target, port: 443, packets: 3, timeout: 10_000, interval: 500, ipVersion }),
 			]);
 
