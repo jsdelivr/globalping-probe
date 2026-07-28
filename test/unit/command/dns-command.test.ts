@@ -101,6 +101,25 @@ describe('dns command', () => {
 		});
 
 		describe('trace', () => {
+			it('should use a fixed three-second query timeout', () => {
+				const options = {
+					type: 'dns' as DnsOptions['type'],
+					timeout: 30,
+					target: 'google.com',
+					resolver: '1.1.1.1',
+					protocol: 'udp',
+					port: 90,
+					trace: true,
+					query: {
+						type: 'TXT',
+					},
+					inProgressUpdates: false,
+					ipVersion: 4,
+				};
+
+				expect(argBuilder(options)).to.include('+timeout=3');
+			});
+
 			it('should not add the flag', () => {
 				const options = {
 					type: 'dns' as DnsOptions['type'],

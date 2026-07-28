@@ -91,7 +91,7 @@ export const argBuilder = (options: DnsOptions): string[] => {
 		resolverArg,
 		[ '-p', String(options.port) ],
 		`-${options.ipVersion}`,
-		`+timeout=${Math.floor(options.timeout / 2)}`,
+		`+timeout=${options.trace ? 3 : Math.floor(options.timeout / 2)}`,
 		'+tries=2',
 		'+nocookie',
 		'+nosplit',
