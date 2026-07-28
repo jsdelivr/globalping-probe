@@ -103,7 +103,7 @@ export const argBuilder = (options: PingOptions, commandOptions: PingCommandOpti
 
 export const pingCmd = (options: PingOptions, commandOptions: PingCommandOptions = {}): ExecaChildProcess => {
 	const args = argBuilder(options, commandOptions);
-	return execa('unbuffer', [ 'ping', ...args ], { timeout: getProcessTimeout(options.timeout, config.get<number>('commands.processGrace')) });
+	return execa('unbuffer', [ 'ping', ...args ], { timeout: getProcessTimeout(options.timeout) });
 };
 
 export class PingCommand implements CommandInterface<PingOptions> {

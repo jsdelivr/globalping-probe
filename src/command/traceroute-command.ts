@@ -1,5 +1,4 @@
 import Joi from 'joi';
-import config from 'config';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface, FailureSource, TestStatus } from '../types.js';
@@ -119,7 +118,7 @@ export const argBuilder = (options: TraceOptions): string[] => {
 
 export const traceCmd = (options: TraceOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', [ 'traceroute', ...args ], { timeout: getProcessTimeout(options.timeout, config.get<number>('commands.processGrace')) });
+	return execa('unbuffer', [ 'traceroute', ...args ], { timeout: getProcessTimeout(options.timeout) });
 };
 
 export class TracerouteCommand implements CommandInterface<TraceOptions> {

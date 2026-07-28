@@ -35,7 +35,6 @@ export type MtrOptions = {
 const logger = scopedLogger('mtr-command');
 const allowedIpVersions = [ 4, 6 ];
 const mtrConfig = config.get<{ interval: number; minInterval: number }>('commands.mtr');
-const processGrace = config.get<number>('commands.processGrace');
 
 const mtrOptionsSchema = Joi.object<MtrOptions>({
 	type: Joi.string().valid('mtr'),
@@ -84,7 +83,7 @@ export const argBuilder = (options: MtrOptions): string[] => {
 	return args;
 };
 
-export const mtrCmd = (options: MtrOptions, processTimeout = getProcessTimeout(options.timeout, processGrace)): ExecaChildProcess => {
+export const mtrCmd = (options: MtrOptions, processTimeout = getProcessTimeout(options.timeout)): ExecaChildProcess => {
 	const args = argBuilder(options);
 	return execa('unbuffer', [ 'mtr', ...args ], { timeout: processTimeout });
 };
@@ -135,7 +134,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 				throw deadlineTimeoutError();
 			}
 
-			cmd = this.cmd({ ...cmdOptions, target, timeout: remaining / 1000 }, remaining);
+			cmd = this.cmd({ ...cmdOptions, target, timeout: remaining / 1000 }, getProcessTimeout(remaining / 1000));
 
 			if (cmd.stdout) {
 				byLine(cmd.stdout, (data) => {

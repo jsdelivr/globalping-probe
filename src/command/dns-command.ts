@@ -1,5 +1,4 @@
 import Joi from 'joi';
-import config from 'config';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
 import tldts from 'tldts';
@@ -106,7 +105,7 @@ export const argBuilder = (options: DnsOptions): string[] => {
 
 export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', [ 'dig', ...args ], { timeout: getProcessTimeout(options.timeout, config.get<number>('commands.processGrace')) });
+	return execa('unbuffer', [ 'dig', ...args ], { timeout: getProcessTimeout(options.timeout) });
 };
 
 export class DnsCommand implements CommandInterface<DnsOptions> {
