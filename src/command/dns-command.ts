@@ -11,6 +11,7 @@ import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { scopedLogger } from '../lib/logger.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import { getProcessTimeout } from '../helper/timeout.js';
+import { validateCommandOptions } from '../helper/validate-command-options.js';
 
 import ClassicDigParser from './handlers/dig/classic.js';
 import type {
@@ -112,7 +113,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 	constructor (private readonly cmd: typeof dnsCmd) {}
 
 	async run (socket: Socket, measurementId: string, testId: string, options: DnsOptions): Promise<unknown> {
-		const validationResult = dnsOptionsSchema.validate(options);
+		const validationResult = validateCommandOptions(dnsOptionsSchema, options);
 
 		if (validationResult.error) {
 			throw new InvalidOptionsException('dns', validationResult.error);

@@ -9,6 +9,7 @@ import { scopedLogger } from '../lib/logger.js';
 import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import { getProcessTimeout } from '../helper/timeout.js';
+import { validateCommandOptions } from '../helper/validate-command-options.js';
 
 const reHost = /(\S+?)(%\w+)?(\s+)\(((?:\d+\.){3}\d+|[\da-fA-F:]+)(%\w+)?\)/;
 const reRtt = /(\d+(?:\.?\d+)?)\s+ms(!\S*)?/g;
@@ -125,7 +126,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 	constructor (private readonly cmd: typeof traceCmd) {}
 
 	async run (socket: Socket, measurementId: string, testId: string, options: TraceOptions): Promise<unknown> {
-		const validationResult = traceOptionsSchema.validate(options);
+		const validationResult = validateCommandOptions(traceOptionsSchema, options);
 
 		if (validationResult.error) {
 			throw new InvalidOptionsException('traceroute', validationResult.error);

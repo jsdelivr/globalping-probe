@@ -12,6 +12,7 @@ import { InvalidOptionsException } from './exception/invalid-options-exception.j
 import parse, { type PingParseOutput } from './handlers/ping/parse.js';
 import { tcpPing, formatTcpPingResult, TcpPingData } from './handlers/ping/tcp-ping.js';
 import { getPacketInterval, getProcessTimeout } from '../helper/timeout.js';
+import { validateCommandOptions } from '../helper/validate-command-options.js';
 
 export type PingOptions = {
 	type: 'ping';
@@ -108,7 +109,7 @@ export const pingCmd = (options: PingOptions, commandOptions: PingCommandOptions
 
 export class PingCommand implements CommandInterface<PingOptions> {
 	async run (socket: Socket, measurementId: string, testId: string, options: PingOptions): Promise<unknown> {
-		const validationResult = pingOptionsSchema.validate(options);
+		const validationResult = validateCommandOptions(pingOptionsSchema, options);
 
 		if (validationResult.error) {
 			throw new InvalidOptionsException('ping', validationResult.error);
