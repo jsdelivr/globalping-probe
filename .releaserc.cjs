@@ -11,7 +11,7 @@ const releaseNoteTypes = [
 	{ type: 'test', section: 'Tests', hidden: true },
 	{ type: 'build', section: 'Build System', hidden: true },
 	{ type: 'ci', section: 'Continuous Integration', hidden: true },
-	{ type: 'misc', section: 'Miscellaneous' },
+	{ type: 'misc', section: 'Miscellaneous', hidden: true },
 ];
 
 module.exports = {
