@@ -15,6 +15,7 @@ jobs:
     container: node:22-bookworm-slim
 
     needs: test
+    environment: release
 
     permissions:
       contents: write
@@ -30,6 +31,8 @@ jobs:
         run: apt update && apt install -y git
 
       - uses: actions/checkout@v7
+        with:
+          ssh-key: ${{ secrets.RELEASE_SSH_KEY }}
 
       - name: Change directory ownership to the node user
         run: chown -R node:node .

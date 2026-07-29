@@ -16,7 +16,7 @@ const releaseNoteTypes = [
 
 module.exports = {
 	branches: [ 'master' ],
-	repositoryUrl: 'https://github.com/jsdelivr/globalping-probe.git',
+	repositoryUrl: 'git@github.com:jsdelivr/globalping-probe.git',
 	plugins: [
 		[ '@semantic-release/commit-analyzer', {
 			releaseRules: [
