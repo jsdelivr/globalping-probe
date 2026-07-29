@@ -47,8 +47,7 @@ const pingOptionsSchema = Joi.object<PingOptions>({
 			otherwise: Joi.valid(...allowedIpVersions).default(4),
 		}),
 	}),
-	// TODO: Remove the default after the API timeout rollout is complete.
-	timeout: Joi.number().integer().default(25),
+	timeout: Joi.number().integer(),
 });
 
 export type PingParseOutputJson = {

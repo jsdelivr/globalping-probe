@@ -52,8 +52,7 @@ export const httpOptionsSchema = Joi.object<HttpOptions>({
 			otherwise: Joi.valid(...allowedIpVersions).default(4),
 		}),
 	}),
-	// TODO: Remove the default after the API timeout rollout is complete.
-	timeout: Joi.number().integer().default(10),
+	timeout: Joi.number().integer(),
 });
 
 export class HttpCommand implements CommandInterface<HttpOptions> {
