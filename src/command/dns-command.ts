@@ -177,7 +177,8 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			if (isExposed(error)) {
 				output = error.message;
 			} else if (isExecaError(error) && error.timedOut) {
-				output = this.rewrite(error.stdout.toString(), cmdOptions.trace) + '\n\nThe measurement command timed out.';
+				output = this.rewrite(error.stdout.toString(), cmdOptions.trace);
+				output += `${output ? '\n\n' : ''}The measurement command timed out.`;
 			} else if (isExecaError(error) && error.stdout.toString().length > 0) {
 				output = this.rewrite(error.stdout.toString(), cmdOptions.trace);
 			} else {

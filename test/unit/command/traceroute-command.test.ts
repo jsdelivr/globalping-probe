@@ -412,6 +412,30 @@ describe('trace command', () => {
 				]);
 			});
 
+			it('should not prepend blank lines to a timeout without command output', async () => {
+				const options = {
+					type: 'traceroute' as TraceOptions['type'],
+					timeout: 5,
+					target: 'google.com',
+					port: 53,
+					protocol: 'UDP',
+					inProgressUpdates: false,
+					ipVersion: 4,
+				};
+				const mockCmd = getExecaMock();
+				const traceroute = new TracerouteCommand((): any => mockCmd);
+				const runPromise = traceroute.run(mockSocket as any, 'measurement', 'test', options);
+				const timeoutError = new Error('Timeout') as ExecaError;
+				timeoutError.stderr = '';
+				timeoutError.stdout = '';
+				timeoutError.timedOut = true;
+				mockCmd.reject(timeoutError);
+
+				await runPromise;
+
+				expect((mockSocket.emit.lastCall.args[1] as any).result.rawOutput).to.equal('The measurement command timed out.');
+			});
+
 			for (const { expectedSource, output } of [
 				{ expectedSource: 'target', output: 'traceroute: missing.example: Name or service not known' },
 				{ expectedSource: 'target', output: 'traceroute to example.com (1.1.1.1), 20 hops max\n 1  192.0.2.1  1.0 ms !H' },
