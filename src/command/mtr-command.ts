@@ -53,8 +53,7 @@ const mtrOptionsSchema = Joi.object<MtrOptions>({
 			otherwise: Joi.valid(...allowedIpVersions).default(4),
 		}),
 	}),
-	// TODO: Remove the default after the API timeout rollout is complete.
-	timeout: Joi.number().integer().default(25),
+	timeout: Joi.number().integer(),
 });
 
 export const getResultInitState = (): ResultType => ({ status: 'finished', hops: [], rawOutput: '', data: [] });
