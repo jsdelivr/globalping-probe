@@ -694,6 +694,31 @@ describe('ping command executor', () => {
 			]);
 		});
 
+		it('should not prepend blank lines to a timeout without command output', async () => {
+			const mockedCmd = getExecaMock();
+			const ping = new PingCommand();
+			const options = {
+				type: 'ping' as PingOptions['type'],
+				timeout: 5,
+				target: 'google.com',
+				packets: 3,
+				protocol: 'ICMP',
+				port: 80,
+				inProgressUpdates: false,
+				ipVersion: 4 as const,
+			};
+			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
+			const timeoutError = new Error('Timeout') as ExecaError;
+			timeoutError.stderr = '';
+			timeoutError.stdout = '';
+			timeoutError.timedOut = true;
+			mockedCmd.reject(timeoutError);
+
+			await runPromise;
+
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput).to.equal('The measurement command timed out.');
+		});
+
 		it('should reject private target on validation', async () => {
 			try {
 				await new PingCommand().run(mockedSocket as any, 'measurement', 'test', {

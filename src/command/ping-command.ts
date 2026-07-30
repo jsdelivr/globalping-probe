@@ -171,7 +171,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 
 				if (error.timedOut) {
 					result.status = 'failed';
-					result.rawOutput += '\n\nThe measurement command timed out.';
+					result.rawOutput += `${result.rawOutput ? '\n\n' : ''}The measurement command timed out.`;
 				}
 
 				!result.rawOutput && (result.rawOutput = 'Test failed. Please try again.');
