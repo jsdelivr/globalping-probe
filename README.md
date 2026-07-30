@@ -84,10 +84,11 @@ docker run -d --log-driver local --network host --restart=always --name globalpi
 ```
 
 ## Limitations
-- You can run only one (1) probe per IP address.
+- You may run only one probe per public IPv4 address or IPv6 `/64` prefix.
+- You may have at most two adopted probes in the same ASN and city.
+- You may not modify the probe's code or behavior in any way.
 - We disconnect probes that we can't reliably resolve to a physical location.
 - We block probes whose traffic is routed through anonymous proxies, Tor exit nodes, or VPN services.
-
 
 ## Security
 - The probe only connects to our API over a secure connection; it doesn't open ports on your device or accepts any incoming connections.
