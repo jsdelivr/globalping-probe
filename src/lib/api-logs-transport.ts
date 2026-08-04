@@ -80,6 +80,11 @@ class ApiLogsTransport extends Transport {
 		this.scheduleSend();
 	}
 
+	async flush () {
+		clearTimeout(this.timer);
+		await this.sendLogs();
+	}
+
 	private scheduleSend () {
 		clearTimeout(this.timer);
 

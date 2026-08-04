@@ -114,24 +114,30 @@ function connect (workerId?: number) {
 		.on('probe:sigkill', () => {
 			logger.info(`Probe restart requested by the API. Waiting for active measurements to finish...`);
 			statusManager.stop();
+			void apiLogsTransport.flush();
 
 			const closeTimeout = setTimeout(() => {
 				logger.warn('Probe restart timeout. Force closing.');
-				forceCloseProcess();
+				void forceCloseProcess(true);
 			}, 40_000);
 
 			const closeInterval = setInterval(() => {
 				if (worker.jobs.size === 0) {
 					clearTimeout(closeTimeout);
-					forceCloseProcess();
+					void forceCloseProcess();
 				}
 			}, 1000);
 
-			const forceCloseProcess = () => {
+			const forceCloseProcess = async (force = false) => {
 				clearInterval(closeInterval);
 				clearInterval(worker.jobsInterval);
 
 				logger.debug('Closing process.');
+
+				if (!force) {
+					await apiLogsTransport.flush();
+				}
+
 				process.exit(0);
 			};
 		})

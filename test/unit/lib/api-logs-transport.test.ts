@@ -96,6 +96,17 @@ describe('ApiLogsTransport', () => {
 	});
 
 	describe('sending logs', () => {
+		it('should flush logs before the send interval', async () => {
+			const { transport, logger } = createTransportAndLogger({ isActive: true, sendInterval: 10_000 });
+
+			logger.info('test');
+			const flushPromise = transport.flush();
+			await sandbox.clock.tickAsync(ACK_DELAY);
+			await flushPromise;
+
+			expect(socket.emitWithAck.calledOnceWith('probe:logs')).to.be.true;
+		});
+
 		it('should not send logs if sending is disabled', async () => {
 			const { logger } = createTransportAndLogger({ sendInterval: 1000 });
 
