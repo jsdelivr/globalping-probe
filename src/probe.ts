@@ -112,7 +112,10 @@ function connect (workerId?: number) {
 
 	socket
 		.on('probe:sigkill', () => {
-			logger.info(`Probe restart requested by the API. Waiting for active measurements to finish...`);
+			logger.info(worker.jobs.size > 0
+				? `Probe restart requested by the API. Waiting for active measurements to finish...`
+				: `Probe restart requested by the API. Exiting...`);
+
 			statusManager.stop();
 			void apiLogsTransport.flush();
 
