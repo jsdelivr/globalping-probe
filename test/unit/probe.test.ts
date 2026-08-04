@@ -267,12 +267,74 @@ describe('index module', () => {
 		process.emit('SIGTERM');
 	});
 
-	it('should exit on "probe:sigkill" event', async () => {
+	it('should stop the status manager and exit on "probe:sigkill" when there are no active measurements', async () => {
 		const exitStub = sandbox.stub(process, 'exit');
 
 		await import('../../src/probe.js');
 		mockSocket.emit('probe:sigkill');
+		await sandbox.clock.tickAsync(1000);
 
+		expect(statusManagerStub.stop.calledOnceWithExactly()).to.be.true;
+		expect(exitStub.calledOnce).to.be.true;
+	});
+
+	it('should exit on "probe:sigkill" after active measurements finish', async () => {
+		const exitStub = sandbox.stub(process, 'exit');
+		let finishMeasurement: (() => void) | undefined;
+		runIcmpStub.returns(new Promise<void>((resolve) => {
+			finishMeasurement = resolve;
+		}));
+
+		await import('../../src/probe.js');
+		mockSocket.emit('probe:measurement:request', { measurementId: '123', testId: 'test', measurement: { type: 'ping' } });
+		mockSocket.emit('probe:sigkill');
+		await sandbox.clock.tickAsync(1000);
+
+		expect(exitStub.notCalled).to.be.true;
+
+		finishMeasurement?.();
+		await sandbox.clock.tickAsync(1000);
+
+		expect(exitStub.calledOnce).to.be.true;
+	});
+
+	it('should force exit on "probe:sigkill" after 40 seconds with active measurements', async () => {
+		const exitStub = sandbox.stub(process, 'exit');
+		let finishMeasurement: (() => void) | undefined;
+		runIcmpStub.returns(new Promise<void>((resolve) => {
+			finishMeasurement = resolve;
+		}));
+
+		await import('../../src/probe.js');
+		mockSocket.emit('probe:measurement:request', { measurementId: '123', testId: 'test', measurement: { type: 'ping' } });
+		mockSocket.emit('probe:sigkill');
+		await sandbox.clock.tickAsync(39_999);
+
+		expect(exitStub.notCalled).to.be.true;
+
+		await sandbox.clock.tickAsync(1);
+
+		expect(exitStub.calledOnce).to.be.true;
+
+		// The process exit is stubbed, so finish the measurement to clean up its job.
+		finishMeasurement?.();
+		await sandbox.clock.nextAsync();
+	});
+
+	it('should not accept new measurements while shutting down after "probe:sigkill"', async () => {
+		const exitStub = sandbox.stub(process, 'exit');
+		statusManagerStub.stop.callsFake(() => {
+			statusManagerStub.getStatus.returns('sigterm');
+		});
+
+		await import('../../src/probe.js');
+		mockSocket.emit('probe:sigkill');
+		mockSocket.emit('probe:measurement:request', { measurementId: '123', testId: 'test', measurement: { type: 'ping' } });
+
+		expect(handlers['probe:measurement:ack'].notCalled).to.be.true;
+		expect(runIcmpStub.notCalled).to.be.true;
+
+		await sandbox.clock.tickAsync(1000);
 		expect(exitStub.calledOnce).to.be.true;
 	});
 });
