@@ -28,6 +28,7 @@ class ApiLogsTransport extends Transport {
 	private logBuffer: TransportInfo[] = [];
 	private droppedLogs: number = 0;
 	private timer: NodeJS.Timeout | undefined = undefined;
+	private sendQueue: Promise<void> = Promise.resolve();
 
 	constructor (opts?: ApiTransportOptions) {
 		super(opts);
@@ -95,7 +96,13 @@ class ApiLogsTransport extends Transport {
 		}
 	}
 
-	private async sendLogs () {
+	private sendLogs () {
+		const send = this.sendQueue.then(() => this.sendLogsOnce());
+		this.sendQueue = send.catch(() => undefined);
+		return send;
+	}
+
+	private async sendLogsOnce () {
 		if (!this.isActive || !this.socket?.connected || !this.logBuffer.length) {
 			return this.scheduleSend();
 		}
