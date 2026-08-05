@@ -109,40 +109,46 @@ function connect (workerId?: number) {
 
 	const statusManager = initStatusManager(socket, pingCmd);
 	const errorHandler = initErrorHandler(socket);
+	const shutdownProbe = (message: string, timeoutMessage: string, timeout = 60_000) => {
+		logger.info(message);
+		statusManager.stop();
+		void apiLogsTransport.flush();
+
+		const closeTimeout = setTimeout(() => {
+			logger.warn(timeoutMessage);
+			void forceCloseProcess(true);
+		}, timeout);
+
+		const closeInterval = setInterval(() => {
+			if (worker.jobs.size === 0) {
+				clearTimeout(closeTimeout);
+				void forceCloseProcess();
+			}
+		}, 100);
+
+		const forceCloseProcess = async (force = false) => {
+			clearInterval(closeInterval);
+			clearInterval(worker.jobsInterval);
+
+			logger.debug('Exiting probe process.');
+
+			if (!force) {
+				await apiLogsTransport.flush();
+			}
+
+			process.exit(0);
+		};
+	};
 
 	socket
 		.on('probe:sigkill', () => {
-			logger.info(worker.jobs.size > 0
-				? `Probe restart requested by the API. Waiting for active measurements to finish...`
-				: `Probe restart requested by the API. Exiting...`);
-
-			statusManager.stop();
-			void apiLogsTransport.flush();
-
-			const closeTimeout = setTimeout(() => {
-				logger.warn('Probe restart timeout. Force closing.');
-				void forceCloseProcess(true);
-			}, 40_000);
-
-			const closeInterval = setInterval(() => {
-				if (worker.jobs.size === 0) {
-					clearTimeout(closeTimeout);
-					void forceCloseProcess();
-				}
-			}, 1000);
-
-			const forceCloseProcess = async (force = false) => {
-				clearInterval(closeInterval);
-				clearInterval(worker.jobsInterval);
-
-				logger.debug('Closing process.');
-
-				if (!force) {
-					await apiLogsTransport.flush();
-				}
-
-				process.exit(0);
-			};
+			shutdownProbe(
+				worker.jobs.size > 0
+					? `Probe restart requested. Waiting for active measurements to finish...`
+					: `Probe restart requested. Exiting...`,
+				'Probe restart timeout. Force closing.',
+				40_000,
+			);
 		})
 		.on('connect', async () => {
 			logger.debug('Connection to API established.');
@@ -188,31 +194,7 @@ function connect (workerId?: number) {
 		.on('probe:adoption:code', logAdoptionCode)
 		.on('api:logs-transport:set', (data: ApiTransportSettings) => apiLogsTransport.updateSettings(data));
 
-	process.on('SIGTERM', () => {
-		logger.info('SIGTERM received.');
-
-		statusManager.stop();
-
-		const closeTimeout = setTimeout(() => {
-			logger.warn('SIGTERM timeout. Force closing.');
-			forceCloseProcess();
-		}, 60_000);
-
-		const closeInterval = setInterval(() => {
-			if (worker.jobs.size === 0) {
-				clearTimeout(closeTimeout);
-				forceCloseProcess();
-			}
-		}, 100);
-
-		const forceCloseProcess = () => {
-			clearInterval(closeInterval);
-			clearInterval(worker.jobsInterval);
-
-			logger.debug('Closing process.');
-			process.exit(0);
-		};
-	});
+	process.on('SIGTERM', () => shutdownProbe('SIGTERM received.', 'SIGTERM timeout. Force closing.'));
 }
 
 if (process.env['NODE_ENV'] === 'development') {

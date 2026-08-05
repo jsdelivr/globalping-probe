@@ -241,14 +241,12 @@ describe('index module', () => {
 		const exitStub = sandbox.stub(process, 'exit');
 		await import('../../src/probe.js');
 
-		process.once('SIGTERM', () => {
-			sandbox.clock.tick(150);
-			expect(statusManagerStub.stop.callCount).to.equal(1);
-			expect(statusManagerStub.stop.args[0]).to.deep.equal([]);
-			expect(exitStub.calledOnce).to.be.true;
-		});
-
 		process.emit('SIGTERM');
+		await sandbox.clock.tickAsync(150);
+
+		expect(statusManagerStub.stop.callCount).to.equal(1);
+		expect(statusManagerStub.stop.args[0]).to.deep.equal([]);
+		expect(exitStub.calledOnce).to.be.true;
 	});
 
 	it('should exit on SIGTERM if there are active measurements', async () => {
@@ -257,14 +255,12 @@ describe('index module', () => {
 		mockSocket.emit('connect');
 		mockSocket.emit('probe:measurement:request', { id: '123', measurement: { type: 'ping' } });
 
-		process.once('SIGTERM', () => {
-			sandbox.clock.tick(60_500);
-			expect(statusManagerStub.stop.callCount).to.equal(1);
-			expect(statusManagerStub.stop.args[0]).to.deep.equal([]);
-			expect(exitStub.calledOnce).to.be.true;
-		});
-
 		process.emit('SIGTERM');
+		await sandbox.clock.tickAsync(60_500);
+
+		expect(statusManagerStub.stop.callCount).to.equal(1);
+		expect(statusManagerStub.stop.args[0]).to.deep.equal([]);
+		expect(exitStub.calledOnce).to.be.true;
 	});
 
 	it('should stop the status manager and exit on "probe:sigkill" when there are no active measurements', async () => {
