@@ -995,6 +995,68 @@ describe(`.run() method`, () => {
 		expect(result.rawOutput.length).to.equal(10_019); // 'HTTP/1.1 200' (12) + '\n' (1) + rawHeaders (10000) + '\n\n' (2) + 'body' (4)
 	});
 
+	it('should classify a timeout during DNS lookup as resolver', async () => {
+		const fakeSocket = new Duplex({
+			read () {},
+			write (_chunk, _encoding, callback) {
+				callback();
+			},
+		});
+
+		netConnectStub.returns(fakeSocket as any);
+
+		const promise = new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http' as const,
+			timeout: 5,
+			target: 'google.com',
+			inProgressUpdates: false,
+			protocol: 'HTTP',
+			request: { method: 'GET', path: '/timeout', query: '' },
+			ipVersion: 4,
+		});
+
+		sandbox.clock.tick(5_001);
+
+		await promise;
+
+		const result = mockedSocket.emit.firstCall.args[1].result;
+
+		expect(result.status).to.equal('failed');
+		expect(result.failureSource).to.equal('resolver');
+		expect(result.rawOutput).to.equal('Request timeout.');
+	});
+
+	it('should classify a timeout for an IP target as target', async () => {
+		const fakeSocket = new Duplex({
+			read () {},
+			write (_chunk, _encoding, callback) {
+				callback();
+			},
+		});
+
+		netConnectStub.returns(fakeSocket as any);
+
+		const promise = new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http' as const,
+			timeout: 5,
+			target: '93.184.216.34',
+			inProgressUpdates: false,
+			protocol: 'HTTP',
+			request: { method: 'GET', path: '/timeout', query: '' },
+			ipVersion: 4,
+		});
+
+		sandbox.clock.tick(5_001);
+
+		await promise;
+
+		const result = mockedSocket.emit.firstCall.args[1].result;
+
+		expect(result.status).to.equal('failed');
+		expect(result.failureSource).to.equal('target');
+		expect(result.rawOutput).to.equal('Request timeout.');
+	});
+
 	it('should use the requested timeout', async () => {
 		const fakeSocket = new Duplex({
 			read () {},
@@ -1023,6 +1085,7 @@ describe(`.run() method`, () => {
 			ipVersion: 4,
 		});
 
+		await new Promise(resolve => process.nextTick(resolve));
 		sandbox.clock.tick(5_001);
 
 		await promise;
