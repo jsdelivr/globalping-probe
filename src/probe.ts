@@ -171,11 +171,13 @@ function connect (workerId?: number) {
 			const { measurementId, testId, measurement } = data;
 
 			logger.debug(`${measurement.type} request ${measurementId} received.`);
+			worker.jobs.set(measurementId, Date.now());
 
 			socket.emit('probe:measurement:ack', null, async () => {
 				const handler = handlersMap.get(measurement.type);
 
 				if (!handler) {
+					worker.jobs.delete(measurementId);
 					return;
 				}
 

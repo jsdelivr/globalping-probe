@@ -177,7 +177,7 @@ describe('index module', () => {
 		runIcmpStub.rejects(new Error('Some error message'));
 
 		mockSocket.emit('probe:measurement:request', { measurementId: 'measurementid', testId: 'testid', measurement: { type: 'ping' } });
-		const emitSpy = sinon.spy(mockSocket, 'emit');
+		const emitSpy = sandbox.spy(mockSocket, 'emit');
 		await sandbox.clock.nextAsync();
 
 		expect(emitSpy.callCount).to.equal(1);
@@ -260,6 +260,33 @@ describe('index module', () => {
 
 		expect(statusManagerStub.stop.callCount).to.equal(1);
 		expect(statusManagerStub.stop.args[0]).to.deep.equal([]);
+		expect(exitStub.calledOnce).to.be.true;
+	});
+
+	it('should wait for a measurement acknowledgment before exiting on SIGTERM', async () => {
+		const exitStub = sandbox.stub(process, 'exit');
+		let acknowledgeMeasurement: (() => void) | undefined;
+		await import('../../src/probe.js');
+
+		const measurementRequestHandler = mockSocket.listeners('probe:measurement:request').at(-1);
+		sandbox.stub(mockSocket, 'emit').callsFake((event: string, _data?: unknown, callback?: () => void) => {
+			if (event === 'probe:measurement:ack') {
+				acknowledgeMeasurement = callback;
+			}
+
+			return true;
+		});
+
+		measurementRequestHandler?.({ measurementId: '123', testId: 'test', measurement: { type: 'ping' } });
+		process.emit('SIGTERM');
+		await sandbox.clock.tickAsync(150);
+
+		expect(exitStub.notCalled).to.be.true;
+
+		acknowledgeMeasurement?.();
+		await sandbox.clock.tickAsync(100);
+
+		expect(runIcmpStub.calledOnce).to.be.true;
 		expect(exitStub.calledOnce).to.be.true;
 	});
 
