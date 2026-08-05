@@ -11,7 +11,7 @@ import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import parse, { type PingParseOutput } from './handlers/ping/parse.js';
 import { tcpPing, formatTcpPingResult, TcpPingData } from './handlers/ping/tcp-ping.js';
-import { getPacketInterval, getProcessTimeout } from '../helper/timeout.js';
+import { getLastPacketTime, getPacketInterval, getProcessTimeout } from '../helper/timeout.js';
 import { validateCommandOptions } from '../helper/validate-command-options.js';
 
 export type PingOptions = {
@@ -89,12 +89,13 @@ const classifyIcmpFailure = (error: unknown, rawOutput: string): FailureSource =
 export const argBuilder = (options: PingOptions, commandOptions: PingCommandOptions = {}): string[] => {
 	const interval = commandOptions.interval ?? config.get<number>('commands.ping.interval');
 	const packetInterval = getPacketInterval(options.packets, options.timeout, interval, config.get<number>('commands.ping.minInterval'));
+	const responseTimeout = options.timeout - 1 - getLastPacketTime(options.packets, packetInterval);
 	const args = [
 		`-${options.ipVersion}`,
 		'-O',
 		[ '-c', options.packets.toString() ],
 		[ '-i', String(packetInterval) ],
-		[ '-w', String(options.timeout) ],
+		[ '-W', String(responseTimeout) ],
 		options.target,
 	].flat();
 

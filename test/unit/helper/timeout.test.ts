@@ -24,6 +24,6 @@ describe('command timeout helpers', () => {
 	});
 
 	it('should use the configured process grace by default', () => {
-		expect(getProcessTimeout(5)).to.equal(6000);
+		expect(getProcessTimeout(5)).to.equal(7000);
 	});
 });

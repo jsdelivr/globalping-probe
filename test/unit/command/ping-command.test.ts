@@ -17,7 +17,7 @@ describe('ping command executor', () => {
 				type: 'ping' as PingOptions['type'],
 				timeout: 5,
 				target: 'google.com',
-				packets: 1,
+				packets: 3,
 				protocol: 'ICMP',
 				port: 80,
 				inProgressUpdates: false,
@@ -32,17 +32,17 @@ describe('ping command executor', () => {
 			expect(args[args.length - 1]).to.equal(options.target);
 			expect(joinedArgs).to.contain(`-c ${options.packets}`);
 			expect(joinedArgs).to.contain('-i 0.5');
-			expect(joinedArgs).to.contain('-w 5');
+			expect(joinedArgs).to.contain('-W 3');
 		});
 
-		it('should fit sixteen packets into a five-second deadline', () => {
+		it('should fit sixteen packets and the response wait into four seconds', () => {
 			const args = argBuilder({ type: 'ping', timeout: 5, target: 'google.com', packets: 16, protocol: 'ICMP', port: 80, inProgressUpdates: false, ipVersion: 4 });
-			expect(args.join(' ')).to.contain('-i 0.2 -w 5');
+			expect(args.join(' ')).to.contain('-i 0.2 -W 1');
 		});
 
-		it('should keep the configured interval for an eleven-second deadline', () => {
+		it('should keep the configured interval and a fractional response wait', () => {
 			const args = argBuilder({ type: 'ping', timeout: 11, target: 'google.com', packets: 16, protocol: 'ICMP', port: 80, inProgressUpdates: false, ipVersion: 4 });
-			expect(args.join(' ')).to.contain('-i 0.5 -w 11');
+			expect(args.join(' ')).to.contain('-i 0.5 -W 2.5');
 		});
 
 		it('should allow overriding ping interval', () => {

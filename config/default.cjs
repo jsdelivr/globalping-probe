@@ -29,7 +29,7 @@ module.exports = {
 		maxUptime: 604800,
 	},
 	commands: {
-		processGrace: 1,
+		processGrace: 2,
 		progressInterval: 500,
 		ping: {
 			interval: 0.5,

@@ -304,7 +304,7 @@ describe('mtr command executor', () => {
 			await clock.tickAsync(2900);
 
 			expect(passedArgs[passedArgs.indexOf('--interval') + 1]).to.equal('0.2');
-			expect(passedProcessTimeout).to.equal(3100);
+			expect(passedProcessTimeout).to.equal(4100);
 
 			mockCmd.resolve({ stdout: '' });
 			await runPromise;
@@ -591,7 +591,7 @@ describe('mtr command executor', () => {
 			await runPromise;
 
 			expect(passedTarget).to.equal('1.1.1.1');
-			expect(passedProcessTimeout).to.equal(6000);
+			expect(passedProcessTimeout).to.equal(7000);
 			expect(mockCmd.kill.notCalled).to.be.true;
 			clock.restore();
 		});
