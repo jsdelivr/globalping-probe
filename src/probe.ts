@@ -77,7 +77,7 @@ function connect (workerId?: number) {
 		jobs: new Map<string, number>(),
 		jobsInterval: setInterval(() => {
 			for (const [ key, value ] of worker.jobs) {
-				if (Date.now() >= (value + 30_000)) {
+				if (Date.now() >= (value + 40_000)) {
 					worker.jobs.delete(key);
 				}
 			}
