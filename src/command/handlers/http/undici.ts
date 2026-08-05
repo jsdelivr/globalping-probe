@@ -80,6 +80,7 @@ export type OutputJson = {
 };
 
 type Decompressor = zlib.Gunzip | zlib.Inflate | zlib.BrotliDecompress;
+type ConnectionState = { isResolving: boolean };
 
 const lowerCaseKeys = (obj: Record<string, string>) => _.mapKeys(obj, (_value, key) => _.toLower(key)) as Record<string, string>;
 
@@ -100,9 +101,11 @@ function getConnector (
 	dnsResolver: LookupFunction,
 	result: Omit<Result, 'timings'>,
 	timings: Timings,
+	connectionState: ConnectionState,
 ): buildConnector.connector {
 	return (connectorOptions, callback) => {
 		timings.start = Date.now();
+		connectionState.isResolving = isIP(connectorOptions.hostname) === 0;
 
 		const tcpSocket = net.connect({
 			host: connectorOptions.hostname,
@@ -113,6 +116,8 @@ function getConnector (
 		});
 
 		tcpSocket.on('lookup', (error, address) => {
+			connectionState.isResolving = false;
+
 			if (error) {
 				// Handled in onError().
 				return;
@@ -265,9 +270,14 @@ export class HttpHandler {
 			...(server ? { server } : {}),
 		}), true);
 		const allowH2 = this.options.protocol === 'HTTP2';
-		const connector = getConnector(this.options, this.port, this.isHttps, dnsResolver, this.result, this.timings);
+		const connectionState: ConnectionState = { isResolving: false };
+		const connector = getConnector(this.options, this.port, this.isHttps, dnsResolver, this.result, this.timings, connectionState);
 		this.undiciClient = new Client(this.url.origin, { connect: connector, allowH2 });
-		this.timeoutTimer = setTimeout(() => this.handleError('Request timeout.', 'target'), this.options.timeout * 1000);
+
+		this.timeoutTimer = setTimeout(
+			() => this.handleError('Request timeout.', connectionState.isResolving ? 'resolver' : 'target'),
+			this.options.timeout * 1000,
+		);
 
 		this.undiciClient.dispatch({
 			path: this.url.pathname + this.url.search,
