@@ -10,6 +10,7 @@ import {
 	argBuilder,
 	type MtrOptions,
 } from '../../../src/command/mtr-command.js';
+import MtrParser from '../../../src/command/handlers/mtr/parser.js';
 
 const dnsResolver = (result?: string | Error): typeof cachedDnsLookup => (async (_hostname: string, options: any) => {
 	if (options.rrtype) {
@@ -619,7 +620,8 @@ describe('mtr command executor', () => {
 				+ 'x 1 33001\n'
 				+ 'x 2 33002\n'
 				+ 'h 2 62.252.67.181\n'
-				+ 'd 2 62.252.67.181';
+				+ 'd 2 62.252.67.181\n'
+				+ 'p 2 10000 33002';
 
 			mockCmd.reject(timeoutError);
 
@@ -643,6 +645,7 @@ describe('mtr command executor', () => {
 							+ 'x 2 33002\n'
 							+ 'h 2 62.252.67.181\n'
 							+ 'd 2 62.252.67.181\n'
+							+ 'p 2 10000 33002\n'
 							+ '\n'
 							+ 'The measurement command timed out.',
 						resolvedAddress: null,
@@ -651,6 +654,63 @@ describe('mtr command executor', () => {
 					},
 				},
 			]);
+		});
+
+		it('should classify an execa timeout after an equivalent IPv6 target responds before an unresolved hop as internal', async () => {
+			const options = {
+				type: 'mtr' as const,
+				timeout: 5,
+				target: '2606:4700:4700:0000:0000:0000:0000:1111',
+				inProgressUpdates: false,
+				ipVersion: 6,
+			};
+			const mockCmd = getExecaMock();
+			const mtr = new MtrCommand((): any => mockCmd);
+			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+			const timeoutError = new Error('Timeout') as ExecaError;
+			timeoutError.stderr = '';
+			timeoutError.timedOut = true;
+
+			timeoutError.stdout = 'x 0 33000\n'
+				+ 'h 0 2606:4700:4700::1111\n'
+				+ 'd 0 one.one.one.one\n'
+				+ 'p 0 7990 33000\n'
+				+ 'x 1 33001';
+
+			mockCmd.reject(timeoutError);
+
+			await runPromise;
+
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.failureSource).to.equal('internal');
+		});
+
+		it('should preserve an execa timeout if partial output parsing fails', async () => {
+			const options = {
+				type: 'mtr' as const,
+				timeout: 5,
+				target: 'jsdelivr.net',
+				inProgressUpdates: false,
+				ipVersion: 4,
+			};
+			const mockCmd = getExecaMock();
+			const mtr = new MtrCommand((): any => mockCmd, dnsResolver('1.1.1.1'));
+			const rawParseStub = sandbox.stub(MtrParser, 'rawParse').throws(new Error('Failed to parse partial output.'));
+			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
+			const timeoutError = new Error('Timeout') as ExecaError;
+			timeoutError.stderr = '';
+			timeoutError.timedOut = true;
+			timeoutError.stdout = 'invalid partial output';
+			mockCmd.reject(timeoutError);
+
+			try {
+				await runPromise;
+			} finally {
+				rawParseStub.restore();
+			}
+
+			const result = (mockedSocket.emit.lastCall.args[1] as any).result;
+			expect(result.failureSource).to.equal('target');
+			expect(result.rawOutput).to.equal('invalid partial output\n\nThe measurement command timed out.');
 		});
 
 		it('should not prepend blank lines to a timeout without command output', async () => {

@@ -5,7 +5,7 @@ import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface, FailureSource } from '../types.js';
 import { byLine } from '../lib/by-line.js';
-import { joiValidateIp, isIpPrivate } from '../lib/ip.js';
+import { ipEquals, joiValidateIp, isIpPrivate } from '../lib/ip.js';
 import { cachedDnsLookup, type IpFamily } from '../lib/dns.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
@@ -106,6 +106,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		const deadlineSignal = AbortSignal.timeout(Math.max(deadline - Date.now(), 0));
 		let result: ResultType = getResultInitState();
 		let cmd: ExecaChildProcess | undefined;
+		let target: string | undefined;
 
 		try {
 			const minimumRuntime = Math.round((cmdOptions.packets * mtrConfig.minInterval + 1) * 1000);
@@ -116,7 +117,6 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			}
 
 			const lookupSignal = AbortSignal.timeout(lookupTimeout);
-			let target: string;
 
 			try {
 				target = await this.resolveTarget(cmdOptions, lookupSignal);
@@ -164,7 +164,21 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			result.resolvedAddress = target;
 		} catch (error: unknown) {
 			result.status = 'failed';
-			result.failureSource = getFailureSource(error, isExecaError(error) && error.timedOut ? 'target' : 'internal');
+			let failureSourceFallback: FailureSource = 'internal';
+
+			if (isExecaError(error) && error.timedOut) {
+				failureSourceFallback = 'target';
+
+				try {
+					const lastHop = MtrParser.rawParse(error.stdout.toString(), false, target).at(-1);
+
+					if (lastHop?.resolvedAddress && target && ipEquals(lastHop.resolvedAddress, target) && lastHop.timings.length > 0) {
+						failureSourceFallback = 'internal';
+					}
+				} catch {}
+			}
+
+			result.failureSource = getFailureSource(error, failureSourceFallback);
 
 			if (isExecaError(error)) {
 				result.rawOutput = error.stdout.toString();

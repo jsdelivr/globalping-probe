@@ -59,9 +59,9 @@ const targetNameFailureMessages = [
 ];
 const upstreamUnreachablePattern = /(?:^|\s)!(?:N|H|P|X|S|F|V|C|\d+)(?:\s|$)/m;
 
-const classifyTracerouteFailure = (error: unknown, output: string): FailureSource => {
+const classifyTracerouteFailure = (error: unknown, output: string, targetResponded = false): FailureSource => {
 	if (isExecaError(error) && error.timedOut) {
-		return 'target';
+		return targetResponded ? 'internal' : 'target';
 	}
 
 	if (targetNameFailureMessages.some(message => output.toLowerCase().includes(message.toLowerCase())) || upstreamUnreachablePattern.test(output)) {
@@ -170,17 +170,27 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 			}
 		} catch (error: unknown) {
 			let output = '';
+			let targetResponded = false;
 
 			if (isExecaError(error)) {
 				output = error.stdout.toString();
-				error.timedOut && (output += `${output ? '\n\n' : ''}The measurement command timed out.`);
+
+				if (error.timedOut) {
+					try {
+						const parsedOutput = this.parse(output.trim());
+						const lastHop = parsedOutput.hops?.at(-1);
+						targetResponded = lastHop !== undefined && lastHop.resolvedAddress === parsedOutput.resolvedAddress && lastHop.timings.length > 0;
+					} catch {}
+
+					output += `${output ? '\n\n' : ''}The measurement command timed out.`;
+				}
 			} else {
 				logger.error(error);
 			}
 
 			result = {
 				status: 'failed',
-				failureSource: classifyTracerouteFailure(error, output),
+				failureSource: classifyTracerouteFailure(error, output, targetResponded),
 				rawOutput: output || 'Test failed. Please try again.',
 			};
 		}

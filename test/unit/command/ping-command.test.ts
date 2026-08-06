@@ -638,7 +638,7 @@ describe('ping command executor', () => {
 			});
 		}
 
-		it('should fail in case of execa timeout', async () => {
+		it('should classify an execa timeout after receiving replies as internal', async () => {
 			const mockedCmd = getExecaMock();
 			const ping = new PingCommand();
 			const options = {
@@ -671,7 +671,7 @@ describe('ping command executor', () => {
 					measurementId: 'measurement',
 					result: {
 						status: 'failed',
-						failureSource: 'target',
+						failureSource: 'internal',
 						rawOutput: 'PING google.com (172.217.20.206) 56(84) bytes of data.\n'
 							+ '64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=1 ttl=37 time=7.99 ms\n'
 							+ '64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=2 ttl=37 time=8.12 ms\n'
@@ -716,7 +716,9 @@ describe('ping command executor', () => {
 
 			await runPromise;
 
-			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput).to.equal('The measurement command timed out.');
+			const result = (mockedSocket.emit.lastCall.args[1] as any).result;
+			expect(result.failureSource).to.equal('target');
+			expect(result.rawOutput).to.equal('The measurement command timed out.');
 		});
 
 		it('should reject private target on validation', async () => {
