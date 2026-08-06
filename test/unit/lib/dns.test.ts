@@ -124,6 +124,53 @@ describe('dnsLookup / cachedDnsLookup', () => {
 		expect(await dnsLookup('example.com', { family: 4 })).to.deep.equal([ '1.1.1.1', 4 ]);
 	});
 
+	it('tries the next configured resolver after SERVFAIL', async () => {
+		sandbox.stub(dns.promises.Resolver.prototype, 'getServers').returns([ '192.0.2.1', '1.1.1.1' ]);
+		resolve4.onFirstCall().rejects(Object.assign(new Error('queryA ESERVFAIL example.com'), { code: 'ESERVFAIL' }));
+		resolve4.onSecondCall().resolves([{ address: '1.1.1.1', ttl: 300 }]);
+
+		expect(await dnsLookup('example.com', { family: 4 })).to.deep.equal([ '1.1.1.1', 4 ]);
+	});
+
+	it('tries the next configured resolver for cached lookups after SERVFAIL', async () => {
+		sandbox.stub(dns.promises.Resolver.prototype, 'getServers').returns([ '192.0.2.1', '1.1.1.1' ]);
+		resolve4.onFirstCall().rejects(Object.assign(new Error('queryA ESERVFAIL example.com'), { code: 'ESERVFAIL' }));
+		resolve4.onSecondCall().resolves([{ address: '1.1.1.1', ttl: 300 }]);
+
+		expect(await cachedDnsLookup('example.com', { family: 4 })).to.deep.equal([ '1.1.1.1', 4 ]);
+	});
+
+	it('does not fall back from an explicitly selected resolver', async () => {
+		resolve4.onFirstCall().rejects(Object.assign(new Error('queryA ESERVFAIL example.com'), { code: 'ESERVFAIL' }));
+		resolve4.onSecondCall().resolves([{ address: '1.1.1.1', ttl: 300 }]);
+
+		let error;
+
+		try {
+			await dnsLookup('example.com', { family: 4, server: '192.0.2.1' });
+		} catch (caughtError) {
+			error = caughtError as Error;
+		}
+
+		expect(error?.message).to.equal('queryA ESERVFAIL example.com');
+	});
+
+	it('does not fall back after an authoritative missing-name response', async () => {
+		sandbox.stub(dns.promises.Resolver.prototype, 'getServers').returns([ '192.0.2.1', '1.1.1.1' ]);
+		resolve4.onFirstCall().rejects(Object.assign(new Error('queryA ENOTFOUND example.com'), { code: 'ENOTFOUND' }));
+		resolve4.onSecondCall().resolves([{ address: '1.1.1.1', ttl: 300 }]);
+
+		let error;
+
+		try {
+			await dnsLookup('example.com', { family: 4 });
+		} catch (caughtError) {
+			error = caughtError as Error;
+		}
+
+		expect(error?.message).to.equal('queryA ENOTFOUND example.com');
+	});
+
 	it('skips private addresses', async () => {
 		resolve4.resolves([{ address: '192.168.0.1', ttl: 300 }, { address: '1.1.1.1', ttl: 300 }]);
 

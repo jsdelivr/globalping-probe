@@ -33,38 +33,52 @@ export const getDnsServers = (getServers: () => string[] = dns.getServers): stri
 
 const resolveRecords = async (hostname: string, options: Options): Promise<ResolvedRecords> => {
 	const resolver = new dns.promises.Resolver();
+	const servers: Array<string | undefined> = options.server ? [ options.server ] : resolver.getServers();
 
-	if (options.server) {
-		resolver.setServers([ options.server ]);
+	// Keep the resolver's default behavior if the system has no configured servers.
+	if (!servers.length) {
+		servers.push(undefined);
 	}
 
-	try {
-		if ('rrtype' in options) {
-			// Only TXT records are supported as other RRtypes have different TS return types.
-			const records = (await resolver.resolveTxt(hostname)).map(record => record.join(''));
-			// TXT records carry no TTL here, so they fall back to the max cache TTL.
-			return { records, ttl: DNS_CACHE_MAX_TTL };
+	for (const [ index, server ] of servers.entries()) {
+		if (server) {
+			resolver.setServers([ server ]);
 		}
 
-		const records = options.family === 6
-			? await resolver.resolve6(hostname, { ttl: true })
-			: await resolver.resolve4(hostname, { ttl: true });
+		try {
+			if ('rrtype' in options) {
+				// Only TXT records are supported as other RRtypes have different TS return types.
+				const records = (await resolver.resolveTxt(hostname)).map(record => record.join(''));
+				// TXT records carry no TTL here, so they fall back to the max cache TTL.
+				return { records, ttl: DNS_CACHE_MAX_TTL };
+			}
 
-		let ttl = DNS_CACHE_MAX_TTL;
+			const records = options.family === 6
+				? await resolver.resolve6(hostname, { ttl: true })
+				: await resolver.resolve4(hostname, { ttl: true });
 
-		if (records.length) {
-			const minResolvedTtl = Math.min(DNS_CACHE_MAX_TTL, Math.min(...records.map(record => record.ttl)) * 1000);
-			// TTL: 0 is invalid, so we set it to 1.
-			ttl = Math.max(1, minResolvedTtl);
+			let ttl = DNS_CACHE_MAX_TTL;
+
+			if (records.length) {
+				const minResolvedTtl = Math.min(DNS_CACHE_MAX_TTL, Math.min(...records.map(record => record.ttl)) * 1000);
+				// TTL: 0 is invalid, so we set it to 1.
+				ttl = Math.max(1, minResolvedTtl);
+			}
+
+			return { records: records.map(record => record.address), ttl };
+		} catch (error) {
+			const code = (error as NodeJS.ErrnoException).code;
+			const isTargetFailure = code === 'ENOTFOUND' || code === 'ENODATA';
+
+			if (!isTargetFailure && index < servers.length - 1) {
+				continue;
+			}
+
+			throw new InternalError((error as Error).message, true, isTargetFailure ? 'target' : 'resolver');
 		}
-
-		return { records: records.map(record => record.address), ttl };
-	} catch (error) {
-		const code = (error as NodeJS.ErrnoException).code;
-		const failureSource = code === 'ENOTFOUND' || code === 'ENODATA' ? 'target' : 'resolver';
-
-		throw new InternalError((error as Error).message, true, failureSource);
 	}
+
+	throw new InternalError('DNS lookup failed.', true, 'resolver');
 };
 
 const cachedResolveRecords = (hostname: string, options: Options): Promise<string[]> => {

@@ -51,6 +51,7 @@ describe('dns command', () => {
 			expect(args).to.include('-4');
 			expect(args).to.include('+timeout=3');
 			expect(args).to.include('+tries=2');
+			expect(args).to.include('+nofail');
 			expect(args).to.include('+nocookie');
 			expect(args).to.include('+nsid');
 			// Optional values:
