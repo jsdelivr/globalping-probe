@@ -51,6 +51,14 @@ export const ClassicDigParser = {
 			}
 		} else {
 			output = lines.map((line) => {
+				if (line.includes('trying next server')) {
+					for (const ip of line.match(IP_REG_EXP) ?? []) {
+						if (isIpPrivate(ip)) {
+							line = line.replaceAll(ip, 'x.x.x.x');
+						}
+					}
+				}
+
 				const serverMatch = ClassicDigParser.getResolverServer(line);
 
 				if (serverMatch && isIpPrivate(serverMatch)) {

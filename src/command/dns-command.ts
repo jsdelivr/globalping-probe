@@ -93,6 +93,7 @@ export const argBuilder = (options: DnsOptions): string[] => {
 		`-${options.ipVersion}`,
 		`+timeout=${options.trace ? 3 : Math.floor(options.timeout / 2)}`,
 		'+tries=2',
+		'+nofail',
 		'+nocookie',
 		'+nosplit',
 		'+nsid',
