@@ -4,7 +4,7 @@ import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface, FailureSource, TestStatus } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
-import { joiValidateIp, isIpPrivate } from '../lib/ip.js';
+import { ipEquals, joiValidateIp, isIpPrivate } from '../lib/ip.js';
 import { scopedLogger } from '../lib/logger.js';
 import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
@@ -179,7 +179,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 					try {
 						const parsedOutput = this.parse(output.trim());
 						const lastHop = parsedOutput.hops?.at(-1);
-						targetResponded = lastHop !== undefined && lastHop.resolvedAddress === parsedOutput.resolvedAddress && lastHop.timings.length > 0;
+						targetResponded = lastHop?.resolvedAddress !== undefined && parsedOutput.resolvedAddress !== undefined && ipEquals(lastHop.resolvedAddress, parsedOutput.resolvedAddress) && lastHop.timings.length > 0;
 					} catch {}
 
 					output += `${output ? '\n\n' : ''}The measurement command timed out.`;

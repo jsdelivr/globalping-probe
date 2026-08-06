@@ -416,7 +416,7 @@ describe('trace command', () => {
 				]);
 			});
 
-			it('should classify an execa timeout after the target responds as internal', async () => {
+			it('should classify an execa timeout after the target responds with an equivalent IPv6 address as internal', async () => {
 				const options = {
 					type: 'traceroute' as TraceOptions['type'],
 					timeout: 5,
@@ -424,7 +424,7 @@ describe('trace command', () => {
 					port: 53,
 					protocol: 'UDP',
 					inProgressUpdates: false,
-					ipVersion: 4,
+					ipVersion: 6,
 				};
 				const mockCmd = getExecaMock();
 				const traceroute = new TracerouteCommand((): any => mockCmd);
@@ -433,8 +433,8 @@ describe('trace command', () => {
 				timeoutError.stderr = '';
 				timeoutError.timedOut = true;
 
-				timeoutError.stdout = 'traceroute to hello.com (216.239.38.21), 20 hops max, 60 byte packets\n'
-					+ ' 1  hello.com (216.239.38.21)  7.99 ms  8.12 ms';
+				timeoutError.stdout = 'traceroute to hello.com (2606:4700:4700:0000:0000:0000:0000:1111), 20 hops max, 60 byte packets\n'
+					+ ' 1  hello.com (2606:4700:4700::1111)  7.99 ms  8.12 ms';
 
 				mockCmd.reject(timeoutError);
 
