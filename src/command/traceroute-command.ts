@@ -179,7 +179,10 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 					try {
 						const parsedOutput = this.parse(output.trim());
 						const lastHop = parsedOutput.hops?.at(-1);
-						targetResponded = lastHop?.resolvedAddress !== undefined && parsedOutput.resolvedAddress !== undefined && ipEquals(lastHop.resolvedAddress, parsedOutput.resolvedAddress) && lastHop.timings.length > 0;
+						targetResponded = !!lastHop?.resolvedAddress
+							&& !!parsedOutput.resolvedAddress
+							&& ipEquals(lastHop.resolvedAddress, parsedOutput.resolvedAddress)
+							&& lastHop.timings.length > 0;
 					} catch {}
 
 					output += `${output ? '\n\n' : ''}The measurement command timed out.`;
