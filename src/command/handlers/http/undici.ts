@@ -12,7 +12,7 @@ import { dnsLookup, type IpFamily } from '../../../lib/dns.js';
 import { getFailureSource, InternalError } from '../../../lib/internal-error.js';
 import type { FailureSource, TestStatus } from '../../../types.js';
 import { callbackify } from '../../../lib/util.js';
-import { isIpPrivate } from '../../../lib/private-ip.js';
+import { isIpPrivate } from '../../../lib/ip.js';
 import { truncateHeaderPairs } from './truncate-headers.js';
 import { truncateToWellFormedString } from './truncate-string.js';
 

@@ -3,7 +3,7 @@ import type { Socket } from 'socket.io-client';
 import type { CommandInterface } from '../types.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { validateCommandOptions } from '../helper/validate-command-options.js';
-import { joiValidateIp } from '../lib/private-ip.js';
+import { joiValidateIp } from '../lib/ip.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import { HttpHandler } from './handlers/http/undici.js';
 

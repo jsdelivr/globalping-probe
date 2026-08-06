@@ -5,7 +5,7 @@ import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface, FailureSource } from '../types.js';
 import { byLine } from '../lib/by-line.js';
-import { joiValidateIp, isIpPrivate } from '../lib/private-ip.js';
+import { joiValidateIp, isIpPrivate } from '../lib/ip.js';
 import { cachedDnsLookup, type IpFamily } from '../lib/dns.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
@@ -153,14 +153,14 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 					if (cmdOptions.inProgressUpdates) {
 						buffer.pushLazyProgress(async () => ({
-							rawOutput: (await this.parseResult(result.data, false, deadlineSignal)).rawOutput,
+							rawOutput: (await this.parseResult(result.data, false, deadlineSignal, target)).rawOutput,
 						}));
 					}
 				});
 			}
 
 			await cmd;
-			result = await this.parseResult(result.data, true, deadlineSignal);
+			result = await this.parseResult(result.data, true, deadlineSignal, target);
 			result.resolvedAddress = target;
 		} catch (error: unknown) {
 			result.status = 'failed';
@@ -192,8 +192,8 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 		return out;
 	}
 
-	async parseResult (data: string[], isFinalResult = false, signal?: AbortSignal): Promise<ResultType> {
-		let nHops = MtrParser.rawParse(data.join('\n'), isFinalResult);
+	async parseResult (data: string[], isFinalResult = false, signal?: AbortSignal, target?: string): Promise<ResultType> {
+		let nHops = MtrParser.rawParse(data.join('\n'), isFinalResult, target);
 		const asnList = await this.queryAsn(nHops, signal);
 
 		nHops = this.populateAsn(nHops, asnList);

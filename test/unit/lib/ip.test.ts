@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { isIpPrivate } from '../../../src/lib/private-ip.js';
+import { isIpPrivate } from '../../../src/lib/ip.js';
 
 describe('private ip validator', async () => {
 	it('should pass ipv4', () => {

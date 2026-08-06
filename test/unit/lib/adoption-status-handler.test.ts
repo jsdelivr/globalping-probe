@@ -17,14 +17,14 @@ describe('adoptionStatusHandler', () => {
 		prevHwEnv = process.env['GP_HOST_HW'];
 
 		const adoptionServerPath = path.resolve('src/lib/adoption-server.ts');
-		const privateIpPath = path.resolve('src/lib/private-ip.ts');
+		const ipPath = path.resolve('src/lib/ip.ts');
 
 		await td.replaceEsm(adoptionServerPath, {
 			startLocalAdoptionServer: startServerStub,
 			stopLocalAdoptionServer: stopServerStub,
 		});
 
-		await td.replaceEsm(privateIpPath, {
+		await td.replaceEsm(ipPath, {
 			getLocalIps: getLocalIpsStub,
 		});
 

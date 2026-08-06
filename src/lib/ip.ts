@@ -6,6 +6,20 @@ import Joi from 'joi';
 
 const privateBlockList = new BlockList();
 
+export const ipEquals = (first: string, second: string): boolean => {
+	const ipVersion = isIP(first);
+
+	if (ipVersion === 0 || ipVersion !== isIP(second)) {
+		return false;
+	}
+
+	const family = ipVersion === 4 ? 'ipv4' : 'ipv6';
+	const blockList = new BlockList();
+	blockList.addAddress(first, family);
+
+	return blockList.check(second, family);
+};
+
 // https://en.wikipedia.org/wiki/Reserved_IP_addresses
 // IPv4
 privateBlockList.addSubnet('0.0.0.0', 8, 'ipv4');

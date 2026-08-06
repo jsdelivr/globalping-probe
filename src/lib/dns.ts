@@ -1,7 +1,7 @@
 import dns from 'node:dns';
 import { isIPv6 } from 'node:net';
 import { TTLCache } from '@isaacs/ttlcache';
-import { isIpPrivate } from './private-ip.js';
+import { isIpPrivate } from './ip.js';
 import { InternalError } from './internal-error.js';
 
 export type IpFamily = 4 | 6;
