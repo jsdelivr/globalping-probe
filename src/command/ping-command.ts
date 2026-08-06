@@ -168,7 +168,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 
 			if (isExecaError(error)) {
 				result = parse(error.stdout.toString());
-				result.failureSource = classifyIcmpFailure(error, result.rawOutput);
+				result.failureSource = error.timedOut && result.timings?.length ? 'internal' : classifyIcmpFailure(error, result.rawOutput);
 
 				if (error.timedOut) {
 					result.status = 'failed';

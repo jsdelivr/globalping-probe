@@ -389,7 +389,10 @@ describe('trace command', () => {
 				const timeoutError = new Error('Timeout') as ExecaError;
 				timeoutError.stderr = '';
 				timeoutError.timedOut = true;
-				timeoutError.stdout = 'traceroute to hello.com (216.239.38.21), 20 hops max, 60 byte packets';
+
+				timeoutError.stdout = 'traceroute to hello.com (216.239.38.21), 20 hops max, 60 byte packets\n'
+					+ ' 1  intermediate.example (192.0.2.1)  7.99 ms  8.12 ms';
+
 				mockCmd.reject(timeoutError);
 
 				await runPromise;
@@ -405,11 +408,67 @@ describe('trace command', () => {
 							status: 'failed',
 							failureSource: 'target',
 							rawOutput: 'traceroute to hello.com (216.239.38.21), 20 hops max, 60 byte packets\n'
+								+ ' 1  intermediate.example (192.0.2.1)  7.99 ms  8.12 ms\n'
 								+ '\n'
 								+ 'The measurement command timed out.',
 						},
 					},
 				]);
+			});
+
+			it('should classify an execa timeout after the target responds with an equivalent IPv6 address as internal', async () => {
+				const options = {
+					type: 'traceroute' as TraceOptions['type'],
+					timeout: 5,
+					target: 'hello.com',
+					port: 53,
+					protocol: 'UDP',
+					inProgressUpdates: false,
+					ipVersion: 6,
+				};
+				const mockCmd = getExecaMock();
+				const traceroute = new TracerouteCommand((): any => mockCmd);
+				const runPromise = traceroute.run(mockSocket as any, 'measurement', 'test', options);
+				const timeoutError = new Error('Timeout') as ExecaError;
+				timeoutError.stderr = '';
+				timeoutError.timedOut = true;
+
+				timeoutError.stdout = 'traceroute to hello.com (2606:4700:4700:0000:0000:0000:0000:1111), 20 hops max, 60 byte packets\n'
+					+ ' 1  hello.com (2606:4700:4700::1111)  7.99 ms  8.12 ms';
+
+				mockCmd.reject(timeoutError);
+
+				await runPromise;
+
+				const result = (mockSocket.emit.lastCall.args[1] as any).result;
+				expect(result.failureSource).to.equal('internal');
+			});
+
+			it('should preserve an execa timeout if partial output parsing fails', async () => {
+				const options = {
+					type: 'traceroute' as TraceOptions['type'],
+					timeout: 5,
+					target: 'hello.com',
+					port: 53,
+					protocol: 'UDP',
+					inProgressUpdates: false,
+					ipVersion: 4,
+				};
+				const mockCmd = getExecaMock();
+				const traceroute = new TracerouteCommand((): any => mockCmd);
+				sandbox.stub(traceroute as any, 'parse').throws(new Error('Failed to parse partial output.'));
+				const runPromise = traceroute.run(mockSocket as any, 'measurement', 'test', options);
+				const timeoutError = new Error('Timeout') as ExecaError;
+				timeoutError.stderr = '';
+				timeoutError.timedOut = true;
+				timeoutError.stdout = 'invalid partial output';
+				mockCmd.reject(timeoutError);
+
+				await runPromise;
+
+				const result = (mockSocket.emit.lastCall.args[1] as any).result;
+				expect(result.failureSource).to.equal('target');
+				expect(result.rawOutput).to.equal('invalid partial output\n\nThe measurement command timed out.');
 			});
 
 			it('should not prepend blank lines to a timeout without command output', async () => {
