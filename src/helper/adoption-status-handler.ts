@@ -1,6 +1,6 @@
 import { scopedLogger } from '../lib/logger.js';
 import { startLocalAdoptionServer, stopLocalAdoptionServer } from '../lib/adoption-server.js';
-import { getLocalIps } from '../lib/private-ip.js';
+import { getLocalIps } from '../lib/ip.js';
 import type { Socket } from 'socket.io-client';
 
 const logger = scopedLogger('api:connect:adoption');

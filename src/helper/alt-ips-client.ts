@@ -5,7 +5,7 @@ import { scopedLogger } from '../lib/logger.js';
 import got, { RequestError } from 'got';
 import type { Socket } from 'socket.io-client';
 import { callbackify, pluralize } from '../lib/util.js';
-import { getLocalIps } from '../lib/private-ip.js';
+import { getLocalIps } from '../lib/ip.js';
 import { cachedDnsLookup } from '../lib/dns.js';
 
 const mainLogger = scopedLogger('general');

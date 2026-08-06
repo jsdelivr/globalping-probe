@@ -5,7 +5,7 @@ import tldts from 'tldts';
 import type { CommandInterface, FailureSource } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { byLine } from '../lib/by-line.js';
-import { isIpPrivate } from '../lib/private-ip.js';
+import { isIpPrivate } from '../lib/ip.js';
 import { isExposed } from '../lib/internal-error.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { scopedLogger } from '../lib/logger.js';

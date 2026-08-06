@@ -1,5 +1,6 @@
 import is from '@sindresorhus/is';
 import _ from 'lodash';
+import { ipEquals } from '../../../lib/ip.js';
 import type {
 	HopStatsType,
 	HopType,
@@ -45,6 +46,12 @@ const roundNumber = (value: number): number => {
 };
 
 const formatTimingStat = (value: number | null): string => (value ?? 0).toFixed(1);
+
+const isTargetHop = (hop: HopType, target: string): boolean => {
+	return !!hop.resolvedAddress
+		&& hop.timings.some(timing => timing.rtt !== undefined)
+		&& ipEquals(hop.resolvedAddress, target);
+};
 
 export const MtrParser = {
 	outputBuilder (hops: HopType[]): string {
@@ -111,7 +118,7 @@ export const MtrParser = {
 		return rawOutput.join('');
 	},
 
-	rawParse (data: string, isFinalResult?: boolean): HopType[] {
+	rawParse (data: string, isFinalResult?: boolean, target?: string): HopType[] {
 		const sData = data.split(NEW_LINE_REG_EXP);
 
 		let hops = [];
@@ -193,14 +200,22 @@ export const MtrParser = {
 
 		hops = MtrParser.removeDuplicates(hops);
 
-		hops = MtrParser.trimHops(hops);
+		hops = MtrParser.trimHops(hops, target);
 
 		hops = MtrParser.fulfillMissingHostnames(addressToHostname, hops);
 
 		return MtrParser.hopFinalParse(hops);
 	},
 
-	trimHops (hops: HopType[]): HopType[] {
+	trimHops (hops: HopType[], target?: string): HopType[] {
+		const targetIndex = target
+			? hops.findIndex(hop => isTargetHop(hop, target))
+			: -1;
+
+		if (targetIndex !== -1) {
+			return hops.slice(0, targetIndex + 1);
+		}
+
 		const lastRespondingIndex = hops.reduce((last, hop, i) => hop.resolvedAddress ? i : last, -1);
 
 		return hops.slice(0, lastRespondingIndex + 2);

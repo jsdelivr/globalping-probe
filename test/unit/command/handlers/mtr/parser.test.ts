@@ -33,6 +33,71 @@ describe('mtr parser helper', () => {
 
 			expect(parsedOutput).to.deep.equal(expectedResult);
 		});
+
+		it('should remove an unresolved probe after the responding target', () => {
+			const rawOutput = [
+				'x 0 33000',
+				'h 0 192.0.2.1',
+				'p 0 1000 33000',
+				'x 1 33001',
+				'h 1 203.0.113.10',
+				'p 1 12000 33001',
+				'x 2 33002',
+			].join('\n');
+
+			const hops = MtrParser.rawParse(rawOutput, true, '203.0.113.10');
+
+			expect(hops.map(hop => hop.resolvedAddress)).to.deep.equal([ '192.0.2.1', '203.0.113.10' ]);
+		});
+
+		it('should remove a duplicate target response after the first responding target', () => {
+			const rawOutput = [
+				'x 0 33000',
+				'h 0 192.0.2.1',
+				'p 0 1000 33000',
+				'x 1 33001',
+				'h 1 203.0.113.10',
+				'p 1 12000 33001',
+				'x 2 33002',
+				'h 2 203.0.113.10',
+				'p 2 13000 33002',
+			].join('\n');
+
+			const hops = MtrParser.rawParse(rawOutput, true, '203.0.113.10');
+
+			expect(hops.map(hop => hop.resolvedAddress)).to.deep.equal([ '192.0.2.1', '203.0.113.10' ]);
+		});
+
+		it('should match equivalent IPv6 target representations', () => {
+			const rawOutput = [
+				'x 0 33000',
+				'h 0 2001:db8::1',
+				'p 0 1000 33000',
+				'x 1 33001',
+				'h 1 2001:db8::2',
+				'p 1 12000 33001',
+				'x 2 33002',
+			].join('\n');
+
+			const hops = MtrParser.rawParse(rawOutput, true, '2001:0db8:0000:0000:0000:0000:0000:0002');
+
+			expect(hops.map(hop => hop.resolvedAddress)).to.deep.equal([ '2001:db8::1', '2001:db8::2' ]);
+		});
+
+		it('should not truncate after a target address without a received timing', () => {
+			const rawOutput = [
+				'x 0 33000',
+				'h 0 203.0.113.10',
+				'x 1 33001',
+				'h 1 192.0.2.1',
+				'p 1 12000 33001',
+				'x 2 33002',
+			].join('\n');
+
+			const hops = MtrParser.rawParse(rawOutput, true, '203.0.113.10');
+
+			expect(hops.map(hop => hop.resolvedAddress)).to.deep.equal([ '203.0.113.10', '192.0.2.1', undefined ]);
+		});
 	});
 
 	describe('outputBuilder', () => {
