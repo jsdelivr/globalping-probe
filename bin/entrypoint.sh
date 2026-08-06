@@ -93,7 +93,7 @@ Please increase the available disk space.
 				fi
 			fi
 
-			tar -xzf "/tmp/${loadedTarball}.tar.gz" --one-top-level="/tmp/${loadedTarball}"
+			tar --no-same-owner -xzf "/tmp/${loadedTarball}.tar.gz" --one-top-level="/tmp/${loadedTarball}"
 
 			if [ $? != 0 ]; then
 				echo "Failed to extract the release tarball."
