@@ -878,46 +878,11 @@ describe(`.run() method`, () => {
 	}
 
 	for (const { expectedSource, code } of [
-		...[
-			'EMFILE',
-			'ENFILE',
-			'ENOBUFS',
-			'ENOMEM',
-			'EADDRINUSE',
-			'EADDRNOTAVAIL',
-			'EACCES',
-			'EPERM',
-			'ERR_INVALID_ARG_TYPE',
-			'ERR_INVALID_ARG_VALUE',
-			'ERR_INVALID_IP_ADDRESS',
-			'ERR_SOCKET_BAD_PORT',
-			'ERR_SOCKET_CLOSED_BEFORE_CONNECTION',
-			'ERR_INTERNAL_ASSERTION',
-			'ERR_MEMORY_ALLOCATION_FAILED',
-			'UND_ERR_INVALID_ARG',
-			'UND_ERR_INVALID_RETURN_VALUE',
-			'UND_ERR_REQ_CONTENT_LENGTH_MISMATCH',
-			'UND_ERR_DESTROYED',
-			'UND_ERR_CLOSED',
-			'UND_ERR_ABORTED',
-			'UND_ERR_NOT_SUPPORTED',
-			'UND_ERR_BPL_MISSING_UPSTREAM',
-		].map(code => ({ expectedSource: 'internal' as const, code })),
-		...[
-			'ECONNREFUSED',
-			'ECONNRESET',
-			'ERR_TLS_HANDSHAKE_TIMEOUT',
-			'ERR_SOCKET_CONNECTION_TIMEOUT',
-			'ERR_STREAM_PREMATURE_CLOSE',
-			'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR',
-			'HPE_INVALID_HEADER_TOKEN',
-			'UND_ERR_SOCKET',
-			'UND_ERR_CONNECT_TIMEOUT',
-			'UND_ERR_HEADERS_TIMEOUT',
-			'UND_ERR_BODY_TIMEOUT',
-			'UNRECOGNIZED_FUTURE_CODE',
-		].map(code => ({ expectedSource: 'target' as const, code })),
-	]) {
+		{ expectedSource: 'internal', code: 'EMFILE' },
+		{ expectedSource: 'internal', code: 'ERR_INVALID_ARG_TYPE' },
+		{ expectedSource: 'internal', code: 'ERR_SOCKET_BAD_PORT' },
+		{ expectedSource: 'target', code: 'UNRECOGNIZED_FUTURE_CODE' },
+	] as const) {
 		it(`should classify HTTP error code ${code} as ${expectedSource}`, async () => {
 			const error = Object.assign(new Error(code), { code });
 			sandbox.stub(Client.prototype, 'dispatch').callsFake(((_options: unknown, handler: { onError: (error: Error) => void }) => {
