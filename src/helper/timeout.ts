@@ -32,11 +32,9 @@ export const getPingBudget = (packets: number, timeout: number, intervalOverride
 	const preferredDnsHeadroomFloor = 2;
 	const preferredResponseTimeout = 3;
 	const maximumResponseTimeout = 5;
-	const maximumInterval = intervalOverride ?? pingConfig.interval;
+	const targetInterval = intervalOverride ?? pingConfig.interval;
 	const packetGaps = packets - 1;
-	const canPreserveInterval = intervalOverride !== undefined
-		&& packetGaps * intervalOverride + minimumDnsHeadroom + minimumResponseTimeout <= timeout;
-	let interval = canPreserveInterval || packetGaps === 0 ? maximumInterval : pingConfig.minInterval;
+	let interval = intervalOverride ?? (packetGaps === 0 ? targetInterval : pingConfig.minInterval);
 	let remaining = timeout - packetGaps * interval;
 
 	const take = (requested: number): number => {
@@ -51,7 +49,7 @@ export const getPingBudget = (packets: number, timeout: number, intervalOverride
 	dnsHeadroom += take(preferredDnsHeadroom - dnsHeadroom);
 	responseTimeout += take(preferredResponseTimeout - responseTimeout);
 
-	const intervalUpgrade = canPreserveInterval ? 0 : maximumInterval - interval;
+	const intervalUpgrade = intervalOverride === undefined ? targetInterval - interval : 0;
 	const intervalUpgradeCost = packetGaps * intervalUpgrade;
 	const responseUpgrade = maximumResponseTimeout - responseTimeout;
 	const combinedUpgradeCost = intervalUpgradeCost + responseUpgrade;

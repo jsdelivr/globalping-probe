@@ -35,12 +35,8 @@ describe('command timeout helpers', () => {
 			}
 		});
 
-		it('should preserve an explicit interval when the minimum DNS and response budgets still fit', () => {
+		it('should preserve an explicit interval', () => {
 			expect(getPingBudget(6, 10, 1)).to.deep.equal({ interval: 1, responseTimeout: 3, dnsHeadroom: 2 });
-		});
-
-		it('should fall back to dynamic allocation when an explicit interval does not fit', () => {
-			expect(getPingBudget(16, 5, 1)).to.deep.equal({ interval: 0.2, responseTimeout: 1, dnsHeadroom: 1 });
 		});
 	});
 
