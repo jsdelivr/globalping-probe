@@ -29,25 +29,32 @@ describe('trace command', () => {
 			expect(args[args.length - 1]).to.equal(options.target);
 			expect(joinedArgs).to.contain('-m 20');
 			expect(joinedArgs).to.contain('-N 20');
-			expect(joinedArgs).to.contain('-w 2');
+			expect(joinedArgs).to.contain('-w 1.5');
 			expect(joinedArgs).to.contain('-q 2');
 			expect(joinedArgs).to.contain(`--${options.protocol.toLowerCase()}`);
 			expect(joinedArgs).to.contain(`-p ${options.port}`);
 		});
 
-		it('should derive the native wait from the measurement timeout', () => {
-			const args = argBuilder({
-				type: 'traceroute',
-				timeout: 11,
-				target: 'google.com',
-				port: 80,
-				protocol: 'TCP',
-				inProgressUpdates: false,
-				ipVersion: 4,
-			});
+		for (const { timeout, wait } of [
+			{ timeout: 10, wait: 3 },
+			{ timeout: 16, wait: 4.8 },
+			{ timeout: 17, wait: 5 },
+			{ timeout: 30, wait: 5 },
+		]) {
+			it(`should derive a ${wait} second native wait from a ${timeout} second timeout`, () => {
+				const args = argBuilder({
+					type: 'traceroute',
+					timeout,
+					target: 'google.com',
+					port: 80,
+					protocol: 'TCP',
+					inProgressUpdates: false,
+					ipVersion: 4,
+				});
 
-			expect(args.join(' ')).to.contain('-w 5');
-		});
+				expect(args.join(' ')).to.contain(`-w ${wait}`);
+			});
+		}
 
 		describe('ipVersion', () => {
 			it('should set -4 flag', () => {

@@ -8,7 +8,7 @@ import { ipEquals, joiValidateIp, isIpPrivate } from '../lib/ip.js';
 import { scopedLogger } from '../lib/logger.js';
 import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
-import { getProcessTimeout } from '../helper/timeout.js';
+import { getProcessTimeout, getTracerouteBudget } from '../helper/timeout.js';
 import { validateCommandOptions } from '../helper/validate-command-options.js';
 
 const reHost = /(\S+?)(%\w+)?(\s+)\(((?:\d+\.){3}\d+|[\da-fA-F:]+)(%\w+)?\)/;
@@ -92,17 +92,19 @@ const traceOptionsSchema = Joi.object<TraceOptions>({
 });
 
 export const argBuilder = (options: TraceOptions): string[] => {
+	const packets = 2;
 	const port = options.protocol === 'TCP' ? [ '-p', `${options.port}` ] : [];
+	const { wait } = getTracerouteBudget(options.timeout, packets);
 
 	const args = [
 		// Ipv4 or IPv6
 		`-${options.ipVersion}`,
 		// Max ttl
 		[ '-m', '20' ],
-		// MAX timeout; note that this also disables the HERE and NEAR limits
-		[ '-w', String(Math.floor(options.timeout / 2)) ],
+		// Reserve 40% for DNS and overhead; the packets share the rest.
+		[ '-w', String(wait) ],
 		// Probe packets per hop
-		[ '-q', '2' ],
+		[ '-q', String(packets) ],
 		// Concurrent packets
 		[ '-N', '20' ],
 		// Protocol

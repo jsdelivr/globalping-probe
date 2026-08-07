@@ -31,8 +31,13 @@ describe('ping command executor', () => {
 			expect(args[1]).to.equal('-O');
 			expect(args[args.length - 1]).to.equal(options.target);
 			expect(joinedArgs).to.contain(`-c ${options.packets}`);
-			expect(joinedArgs).to.contain('-i 0.5');
-			expect(joinedArgs).to.contain('-W 3');
+			expect(joinedArgs).to.contain('-i 0.2');
+			expect(joinedArgs).to.contain('-W 2.6');
+		});
+
+		it('should use full interval and response wait with the default timeout', () => {
+			const args = argBuilder({ type: 'ping', timeout: 10, target: 'google.com', packets: 3, protocol: 'ICMP', port: 80, inProgressUpdates: false, ipVersion: 4 });
+			expect(args.join(' ')).to.contain('-i 0.5 -W 5');
 		});
 
 		it('should fit sixteen packets and the response wait into four seconds', () => {
@@ -40,9 +45,9 @@ describe('ping command executor', () => {
 			expect(args.join(' ')).to.contain('-i 0.2 -W 1');
 		});
 
-		it('should keep the configured interval and a fractional response wait', () => {
-			const args = argBuilder({ type: 'ping', timeout: 11, target: 'google.com', packets: 16, protocol: 'ICMP', port: 80, inProgressUpdates: false, ipVersion: 4 });
-			expect(args.join(' ')).to.contain('-i 0.5 -W 2.5');
+		it('should increase interval and response wait gradually', () => {
+			const args = argBuilder({ type: 'ping', timeout: 10, target: 'google.com', packets: 16, protocol: 'ICMP', port: 80, inProgressUpdates: false, ipVersion: 4 });
+			expect(args.join(' ')).to.contain('-i 0.29 -W 3.61');
 		});
 
 		it('should allow overriding ping interval', () => {
@@ -280,6 +285,25 @@ describe('ping command executor', () => {
 				expect(mockedSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 			});
 		}
+
+		it('should use the dynamic packet interval for TCP ping', async () => {
+			const options = {
+				type: 'ping' as PingOptions['type'],
+				timeout: 10,
+				target: 'google.com',
+				packets: 16,
+				protocol: 'TCP',
+				port: 80,
+				inProgressUpdates: false,
+				ipVersion: 4 as const,
+			};
+			const tcpHandler = sandbox.stub().resolves([]);
+			const ping = new PingCommand();
+
+			await ping.runTcp(tcpHandler, mockedSocket as any, 'measurement', 'test', options);
+
+			expect(tcpHandler.firstCall.args[0]).to.deep.include({ timeout: 10_000, interval: 290 });
+		});
 
 		for (const command of tcpCommands) {
 			it(`should run and parse successful commands without progress updates - ${command}`, async () => {
