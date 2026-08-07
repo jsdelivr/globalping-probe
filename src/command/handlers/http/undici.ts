@@ -13,6 +13,7 @@ import { getFailureSource, InternalError } from '../../../lib/internal-error.js'
 import type { FailureSource, TestStatus } from '../../../types.js';
 import { callbackify } from '../../../lib/util.js';
 import { isIpPrivate } from '../../../lib/ip.js';
+import { getErrorCode } from '../../../lib/error-code.js';
 import { truncateHeaderPairs } from './truncate-headers.js';
 import { truncateToWellFormedString } from './truncate-string.js';
 
@@ -83,6 +84,34 @@ type Decompressor = zlib.Gunzip | zlib.Inflate | zlib.BrotliDecompress;
 type ConnectionState = { isResolving: boolean };
 
 const lowerCaseKeys = (obj: Record<string, string>) => _.mapKeys(obj, (_value, key) => _.toLower(key)) as Record<string, string>;
+
+const internalHttpErrorCodes = new Set([
+	'EMFILE',
+	'ENFILE',
+	'ENOBUFS',
+	'ENOMEM',
+	'EADDRINUSE',
+	'EADDRNOTAVAIL',
+	'EACCES',
+	'EPERM',
+	'ERR_SOCKET_CLOSED_BEFORE_CONNECTION',
+	'ERR_INTERNAL_ASSERTION',
+	'ERR_MEMORY_ALLOCATION_FAILED',
+	'UND_ERR_INVALID_ARG',
+	'UND_ERR_INVALID_RETURN_VALUE',
+	'UND_ERR_REQ_CONTENT_LENGTH_MISMATCH',
+	'UND_ERR_DESTROYED',
+	'UND_ERR_CLOSED',
+	'UND_ERR_ABORTED',
+	'UND_ERR_NOT_SUPPORTED',
+	'UND_ERR_BPL_MISSING_UPSTREAM',
+]);
+
+const isInternalHttpErrorCode = (code: string | undefined) => Boolean(code && (
+	internalHttpErrorCodes.has(code)
+	|| code.startsWith('ERR_INVALID_')
+	|| code.startsWith('ERR_SOCKET_BAD_')
+));
 
 const decompressors = Object.assign(Object.create(null), {
 	'gzip': zlib.createGunzip,
@@ -474,7 +503,8 @@ export class HttpHandler {
 		this.done = true;
 		Object.assign(this.result, this.getInitialResult());
 		this.result.status = 'failed';
-		this.result.failureSource = getFailureSource(error, fallbackSource);
+		const codeFallback = isInternalHttpErrorCode(getErrorCode(error)) ? 'internal' : fallbackSource;
+		this.result.failureSource = getFailureSource(error, codeFallback);
 		this.result.rawOutput = message;
 
 		for (const key of Object.keys(this.timings) as (keyof Timings)[]) {

@@ -5,6 +5,7 @@ import tls from 'node:tls';
 import zlib from 'node:zlib';
 import * as sinon from 'sinon';
 import { Socket } from 'socket.io-client';
+import { Client } from 'undici';
 import { HttpCommand } from '../../../src/command/http-command.js';
 import { HttpHandler } from '../../../src/command/handlers/http/undici.js';
 import { InternalError } from '../../../src/lib/internal-error.js';
@@ -856,7 +857,7 @@ describe(`.run() method`, () => {
 		it(`should preserve ${failureSource} lookup failure classification`, async () => {
 			const fakeSocket = new Duplex({ read () {}, write (_chunk, _encoding, callback) { callback(); } });
 			netConnectStub.callsFake(() => {
-				process.nextTick(() => fakeSocket.emit('error', new InternalError(message, true, failureSource)));
+				process.nextTick(() => fakeSocket.emit('error', Object.assign(new InternalError(message, true, failureSource), { code: 'EMFILE' })));
 				return fakeSocket as any;
 			});
 
@@ -873,6 +874,69 @@ describe(`.run() method`, () => {
 			const result = mockedSocket.emit.lastCall.args[1].result;
 			expect(result.failureSource).to.equal(failureSource);
 			expect(result.rawOutput).to.equal(message);
+		});
+	}
+
+	for (const { expectedSource, code } of [
+		...[
+			'EMFILE',
+			'ENFILE',
+			'ENOBUFS',
+			'ENOMEM',
+			'EADDRINUSE',
+			'EADDRNOTAVAIL',
+			'EACCES',
+			'EPERM',
+			'ERR_INVALID_ARG_TYPE',
+			'ERR_INVALID_ARG_VALUE',
+			'ERR_INVALID_IP_ADDRESS',
+			'ERR_SOCKET_BAD_PORT',
+			'ERR_SOCKET_CLOSED_BEFORE_CONNECTION',
+			'ERR_INTERNAL_ASSERTION',
+			'ERR_MEMORY_ALLOCATION_FAILED',
+			'UND_ERR_INVALID_ARG',
+			'UND_ERR_INVALID_RETURN_VALUE',
+			'UND_ERR_REQ_CONTENT_LENGTH_MISMATCH',
+			'UND_ERR_DESTROYED',
+			'UND_ERR_CLOSED',
+			'UND_ERR_ABORTED',
+			'UND_ERR_NOT_SUPPORTED',
+			'UND_ERR_BPL_MISSING_UPSTREAM',
+		].map(code => ({ expectedSource: 'internal' as const, code })),
+		...[
+			'ECONNREFUSED',
+			'ECONNRESET',
+			'ERR_TLS_HANDSHAKE_TIMEOUT',
+			'ERR_SOCKET_CONNECTION_TIMEOUT',
+			'ERR_STREAM_PREMATURE_CLOSE',
+			'ERR_SSL_TLSV1_ALERT_INTERNAL_ERROR',
+			'HPE_INVALID_HEADER_TOKEN',
+			'UND_ERR_SOCKET',
+			'UND_ERR_CONNECT_TIMEOUT',
+			'UND_ERR_HEADERS_TIMEOUT',
+			'UND_ERR_BODY_TIMEOUT',
+			'UNRECOGNIZED_FUTURE_CODE',
+		].map(code => ({ expectedSource: 'target' as const, code })),
+	]) {
+		it(`should classify HTTP error code ${code} as ${expectedSource}`, async () => {
+			const error = Object.assign(new Error(code), { code });
+			sandbox.stub(Client.prototype, 'dispatch').callsFake(((_options: unknown, handler: { onError: (error: Error) => void }) => {
+				process.nextTick(() => handler.onError(error));
+				return true;
+			}) as any);
+
+			await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+				type: 'http',
+				timeout: 5,
+				target: 'example.com',
+				inProgressUpdates: false,
+				protocol: 'HTTP',
+				request: { method: 'GET', path: '/', query: '' },
+				ipVersion: 4,
+			});
+
+			const result = mockedSocket.emit.lastCall.args[1].result;
+			expect(result.failureSource).to.equal(expectedSource);
 		});
 	}
 
