@@ -12,6 +12,8 @@ import parse, { type PingParseOutput } from './handlers/ping/parse.js';
 import { tcpPing, formatTcpPingResult, TcpPingData } from './handlers/ping/tcp-ping.js';
 import { getPingBudget, getProcessTimeout } from '../helper/timeout.js';
 import { validateCommandOptions } from '../helper/validate-command-options.js';
+import { getNativeCommandOptions } from '../helper/native-command-options.js';
+import { getNativeNameResolutionFailureSource } from '../helper/native-name-resolution-failure.js';
 
 export type PingOptions = {
 	type: 'ping';
@@ -72,17 +74,12 @@ export type PingParseOutputJson = {
 
 const logger = scopedLogger('ping-command');
 
-const targetNameFailureMessages = [
-	'Name or service not known',
-	'Address family for hostname not supported',
-];
-
 const classifyIcmpFailure = (error: unknown, rawOutput: string): FailureSource => {
 	if (isExecaError(error) && error.timedOut) {
 		return 'target';
 	}
 
-	return targetNameFailureMessages.some(message => rawOutput.includes(message)) ? 'target' : 'internal';
+	return getNativeNameResolutionFailureSource(rawOutput) ?? 'internal';
 };
 
 export const argBuilder = (options: PingOptions, commandOptions: PingCommandOptions = {}): string[] => {
@@ -102,7 +99,7 @@ export const argBuilder = (options: PingOptions, commandOptions: PingCommandOpti
 
 export const pingCmd = (options: PingOptions, commandOptions: PingCommandOptions = {}): ExecaChildProcess => {
 	const args = argBuilder(options, commandOptions);
-	return execa('unbuffer', [ 'ping', ...args ], { timeout: getProcessTimeout(options.timeout) });
+	return execa('unbuffer', [ 'ping', ...args ], getNativeCommandOptions(getProcessTimeout(options.timeout)));
 };
 
 export class PingCommand implements CommandInterface<PingOptions> {

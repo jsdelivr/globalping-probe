@@ -12,6 +12,7 @@ import { scopedLogger } from '../lib/logger.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import { getProcessTimeout } from '../helper/timeout.js';
 import { validateCommandOptions } from '../helper/validate-command-options.js';
+import { getNativeCommandOptions } from '../helper/native-command-options.js';
 
 import ClassicDigParser from './handlers/dig/classic.js';
 import type {
@@ -106,7 +107,7 @@ export const argBuilder = (options: DnsOptions): string[] => {
 
 export const dnsCmd = (options: DnsOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', [ 'dig', ...args ], { timeout: getProcessTimeout(options.timeout) });
+	return execa('unbuffer', [ 'dig', ...args ], getNativeCommandOptions(getProcessTimeout(options.timeout)));
 };
 
 export class DnsCommand implements CommandInterface<DnsOptions> {

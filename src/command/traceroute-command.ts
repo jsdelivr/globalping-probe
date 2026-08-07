@@ -10,6 +10,8 @@ import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import { getProcessTimeout, getTracerouteBudget } from '../helper/timeout.js';
 import { validateCommandOptions } from '../helper/validate-command-options.js';
+import { getNativeCommandOptions } from '../helper/native-command-options.js';
+import { getNativeNameResolutionFailureSource } from '../helper/native-name-resolution-failure.js';
 
 const reHost = /(\S+?)(%\w+)?(\s+)\(((?:\d+\.){3}\d+|[\da-fA-F:]+)(%\w+)?\)/;
 const reRtt = /(\d+(?:\.?\d+)?)\s+ms(!\S*)?/g;
@@ -52,11 +54,6 @@ type ParsedOutputJson = {
 
 const logger = scopedLogger('traceroute-command');
 
-const targetNameFailureMessages = [
-	'Name or service not known',
-	'Address family for hostname not supported',
-	'unknown host',
-];
 const upstreamUnreachablePattern = /(?:^|\s)!(?:N|H|P|X|S|F|V|C|\d+)(?:\s|$)/m;
 
 const classifyTracerouteFailure = (error: unknown, output: string, targetResponded = false): FailureSource => {
@@ -64,11 +61,13 @@ const classifyTracerouteFailure = (error: unknown, output: string, targetRespond
 		return targetResponded ? 'internal' : 'target';
 	}
 
-	if (targetNameFailureMessages.some(message => output.toLowerCase().includes(message.toLowerCase())) || upstreamUnreachablePattern.test(output)) {
-		return 'target';
+	const nameResolutionSource = getNativeNameResolutionFailureSource(output);
+
+	if (nameResolutionSource) {
+		return nameResolutionSource;
 	}
 
-	return 'internal';
+	return upstreamUnreachablePattern.test(output) ? 'target' : 'internal';
 };
 
 const allowedIpVersions = [ 4, 6 ];
@@ -120,7 +119,7 @@ export const argBuilder = (options: TraceOptions): string[] => {
 
 export const traceCmd = (options: TraceOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', [ 'traceroute', ...args ], { timeout: getProcessTimeout(options.timeout) });
+	return execa('unbuffer', [ 'traceroute', ...args ], getNativeCommandOptions(getProcessTimeout(options.timeout)));
 };
 
 export class TracerouteCommand implements CommandInterface<TraceOptions> {

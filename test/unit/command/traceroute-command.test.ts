@@ -504,6 +504,7 @@ describe('trace command', () => {
 
 			for (const { expectedSource, output } of [
 				{ expectedSource: 'target', output: 'traceroute: missing.example: Name or service not known' },
+				{ expectedSource: 'resolver', output: 'traceroute: missing.example: Temporary failure in name resolution' },
 				{ expectedSource: 'target', output: 'traceroute to example.com (1.1.1.1), 20 hops max\n 1  192.0.2.1  1.0 ms !H' },
 				{ expectedSource: 'internal', output: 'traceroute: connect: Network is unreachable' },
 			] as const) {

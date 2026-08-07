@@ -636,8 +636,12 @@ describe('ping command executor', () => {
 			}]);
 		});
 
-		for (const message of [ 'Name or service not known', 'Address family for hostname not supported' ]) {
-			it(`should classify "${message}" as target`, async () => {
+		for (const { expectedSource, message } of [
+			{ expectedSource: 'target', message: 'Name or service not known' },
+			{ expectedSource: 'target', message: 'Address family for hostname not supported' },
+			{ expectedSource: 'resolver', message: 'Temporary failure in name resolution' },
+		] as const) {
+			it(`should classify "${message}" as ${expectedSource}`, async () => {
 				const mockedCmd = getExecaMock();
 				const ping = new PingCommand();
 				const options = {
@@ -658,7 +662,7 @@ describe('ping command executor', () => {
 
 				await runPromise;
 
-				expect((mockedSocket.emit.firstCall.args[1] as any).result.failureSource).to.equal('target');
+				expect((mockedSocket.emit.firstCall.args[1] as any).result.failureSource).to.equal(expectedSource);
 			});
 		}
 
