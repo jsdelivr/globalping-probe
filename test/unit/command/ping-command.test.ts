@@ -50,12 +50,12 @@ describe('ping command executor', () => {
 			expect(args.join(' ')).to.contain('-i 0.29 -W 3.61');
 		});
 
-		it('should allow overriding ping interval', () => {
+		it('should preserve the status-check ping interval', () => {
 			const options = {
 				type: 'ping' as PingOptions['type'],
-				timeout: 5,
-				target: 'google.com',
-				packets: 1,
+				timeout: 10,
+				target: 'api.globalping.io',
+				packets: 6,
 				protocol: 'ICMP',
 				port: 80,
 				inProgressUpdates: false,
@@ -64,7 +64,7 @@ describe('ping command executor', () => {
 
 			const args = argBuilder(options, { interval: 1 });
 
-			expect(args.join(' ')).to.contain('-i 1');
+			expect(args.join(' ')).to.contain('-i 1 -W 3');
 		});
 
 		describe('ipVersion', () => {
