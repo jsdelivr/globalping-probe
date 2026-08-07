@@ -879,6 +879,7 @@ describe(`.run() method`, () => {
 
 	for (const { expectedSource, code } of [
 		{ expectedSource: 'internal', code: 'EMFILE' },
+		{ expectedSource: 'internal', code: 'EAFNOSUPPORT' },
 		{ expectedSource: 'internal', code: 'ERR_INVALID_ARG_TYPE' },
 		{ expectedSource: 'internal', code: 'ERR_SOCKET_BAD_PORT' },
 		{ expectedSource: 'target', code: 'UNRECOGNIZED_FUTURE_CODE' },
