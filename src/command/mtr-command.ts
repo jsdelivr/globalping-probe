@@ -12,7 +12,7 @@ import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { getFailureSource, InternalError, isExposed } from '../lib/internal-error.js';
 import { scopedLogger } from '../lib/logger.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
-import { getProcessTimeout } from '../helper/timeout.js';
+import { getMtrBudget, getProcessTimeout } from '../helper/timeout.js';
 import { validateCommandOptions } from '../helper/validate-command-options.js';
 
 import type {
@@ -59,9 +59,7 @@ const mtrOptionsSchema = Joi.object<MtrOptions>({
 export const getResultInitState = (): ResultType => ({ status: 'finished', hops: [], rawOutput: '', data: [] });
 
 export const argBuilder = (options: MtrOptions): string[] => {
-	const interval = options.packets * mtrConfig.interval > options.timeout - 1 ? mtrConfig.minInterval : mtrConfig.interval;
-	const remaining = Math.floor(options.timeout - options.packets * interval);
-	const grace = Math.min(3, remaining);
+	const { interval, grace, nativeTimeout } = getMtrBudget(options.packets, options.timeout);
 	const intervalArg = [ '--interval', String(interval) ];
 	const protocolArg = options.protocol === 'icmp' ? [] : `--${options.protocol}`;
 	const packetsArg = String(options.packets);
@@ -72,7 +70,7 @@ export const argBuilder = (options: MtrOptions): string[] => {
 		intervalArg,
 		[ '--gracetime', String(grace) ],
 		[ '--max-ttl', '30' ],
-		[ '--timeout', String(remaining) ],
+		[ '--timeout', String(nativeTimeout) ],
 		protocolArg,
 		[ '-c', packetsArg ],
 		[ '--raw' ],
@@ -130,7 +128,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 			const remaining = deadline - Date.now();
 
-			if (remaining <= 0) {
+			if (remaining < minimumRuntime) {
 				throw deadlineTimeoutError();
 			}
 

@@ -53,9 +53,11 @@ describe('mtr command executor', () => {
 		});
 
 		for (const { packets, timeout, interval, grace, remaining } of [
-			{ packets: 5, timeout: 5, interval: 0.5, grace: 2, remaining: 2 },
-			{ packets: 16, timeout: 5, interval: 0.2, grace: 1, remaining: 1 },
+			{ packets: 5, timeout: 5, interval: 0.4, grace: 3, remaining: 3 },
+			{ packets: 16, timeout: 5, interval: 0.25, grace: 1, remaining: 1 },
 			{ packets: 16, timeout: 11, interval: 0.5, grace: 3, remaining: 3 },
+			{ packets: 16, timeout: 6.8, interval: 0.23, grace: 3, remaining: 3 },
+			{ packets: 16, timeout: 4.2, interval: 0.2, grace: 1, remaining: 1 },
 		]) {
 			it(`should fit ${packets} packets into a ${timeout} second budget`, () => {
 				const args = argBuilder({
@@ -75,7 +77,7 @@ describe('mtr command executor', () => {
 			});
 		}
 
-		it('should keep the remaining budget at one second or more for supported options', () => {
+		it('should keep native arguments within every supported budget', () => {
 			for (let timeout = 5; timeout <= 30; timeout++) {
 				for (let packets = 1; packets <= 16; packets++) {
 					const args = argBuilder({
@@ -88,10 +90,15 @@ describe('mtr command executor', () => {
 						inProgressUpdates: false,
 						ipVersion: 4,
 					});
+					const interval = Number(args[args.indexOf('--interval') + 1]);
+					const grace = Number(args[args.indexOf('--gracetime') + 1]);
 					const remaining = Number(args[args.indexOf('--timeout') + 1]);
 
+					expect(interval).to.be.within(0.2, 0.5);
+					expect(grace).to.be.oneOf([ 1, 2, 3 ]);
 					expect(remaining).to.be.at.least(1);
 					expect(Number.isInteger(remaining)).to.equal(true);
+					expect(packets * interval + grace).to.be.at.most(timeout + 1e-9);
 				}
 			}
 		});
@@ -304,11 +311,44 @@ describe('mtr command executor', () => {
 
 			await clock.tickAsync(2900);
 
-			expect(passedArgs[passedArgs.indexOf('--interval') + 1]).to.equal('0.2');
+			expect(passedArgs[passedArgs.indexOf('--interval') + 1]).to.equal('0.36');
 			expect(passedProcessTimeout).to.equal(4100);
 
 			mockCmd.resolve({ stdout: '' });
 			await runPromise;
+			clock.restore();
+		});
+
+		it('should not start MTR when successful target lookup leaves less than the minimum runtime', async () => {
+			const clock = sandbox.useFakeTimers();
+			const timeoutStub = sandbox.stub(AbortSignal, 'timeout').returns(new AbortController().signal);
+			const mockCmd = getExecaMock();
+			const cmdFn = sandbox.spy((): any => mockCmd);
+			const lookup = (async (_hostname: string, options: any) => {
+				if (options.rrtype) {
+					return [ '123 | abc | abc' ];
+				}
+
+				return new Promise(resolve => setTimeout(() => resolve([ '1.1.1.1', options.family ]), 2700));
+			}) as typeof cachedDnsLookup;
+			const mtr = new MtrCommand(cmdFn, lookup);
+			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', {
+				type: 'mtr', timeout: 5, target: 'jsdelivr.net', protocol: 'icmp', port: 80, packets: 7, inProgressUpdates: false, ipVersion: 4,
+			});
+			mockCmd.resolve({ stdout: '' });
+
+			await clock.tickAsync(2700);
+			await runPromise;
+
+			expect(cmdFn.notCalled).to.be.true;
+
+			expect((mockedSocket.emit.firstCall.args[1] as any).result).to.include({
+				status: 'failed',
+				failureSource: 'target',
+				rawOutput: 'The measurement command timed out.',
+			});
+
+			timeoutStub.restore();
 			clock.restore();
 		});
 

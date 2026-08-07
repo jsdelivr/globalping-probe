@@ -1,4 +1,3 @@
-import config from 'config';
 import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
@@ -11,7 +10,7 @@ import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import parse, { type PingParseOutput } from './handlers/ping/parse.js';
 import { tcpPing, formatTcpPingResult, TcpPingData } from './handlers/ping/tcp-ping.js';
-import { getLastPacketTime, getPacketInterval, getProcessTimeout } from '../helper/timeout.js';
+import { getPingBudget, getProcessTimeout } from '../helper/timeout.js';
 import { validateCommandOptions } from '../helper/validate-command-options.js';
 
 export type PingOptions = {
@@ -87,9 +86,8 @@ const classifyIcmpFailure = (error: unknown, rawOutput: string): FailureSource =
 };
 
 export const argBuilder = (options: PingOptions, commandOptions: PingCommandOptions = {}): string[] => {
-	const interval = commandOptions.interval ?? config.get<number>('commands.ping.interval');
-	const packetInterval = getPacketInterval(options.packets, options.timeout, interval, config.get<number>('commands.ping.minInterval'));
-	const responseTimeout = options.timeout - 1 - getLastPacketTime(options.packets, packetInterval);
+	const { interval: packetInterval, responseTimeout } = getPingBudget(options.packets, options.timeout, commandOptions.interval);
+
 	const args = [
 		`-${options.ipVersion}`,
 		'-O',
@@ -206,7 +204,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			});
 		} : undefined;
 
-		const interval = getPacketInterval(cmdOptions.packets, cmdOptions.timeout, config.get<number>('commands.ping.interval'), config.get<number>('commands.ping.minInterval'));
+		const { interval } = getPingBudget(cmdOptions.packets, cmdOptions.timeout);
 		const tcpPingResult = await cmdFn({ ...cmdOptions, timeout: cmdOptions.timeout * 1000, interval: interval * 1000 }, progressHandler);
 		const result = formatTcpPingResult(tcpPingResult);
 
