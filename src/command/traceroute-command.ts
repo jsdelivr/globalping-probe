@@ -56,15 +56,24 @@ const logger = scopedLogger('traceroute-command');
 
 const upstreamUnreachablePattern = /(?:^|\s)!(?:N|H|P|X|S|F|V|C|\d+)(?:\s|$)/m;
 
-const classifyTracerouteFailure = (error: unknown, output: string, targetResponded = false): FailureSource => {
-	if (isExecaError(error) && error.timedOut) {
-		return targetResponded ? 'internal' : 'target';
-	}
-
+const classifyTracerouteFailure = (
+	error: unknown,
+	output: string,
+	resolutionCompleted: boolean,
+	targetResponded: boolean,
+): FailureSource => {
 	const nameResolutionSource = getNativeNameResolutionFailureSource(output);
 
 	if (nameResolutionSource) {
 		return nameResolutionSource;
+	}
+
+	if (isExecaError(error) && error.timedOut) {
+		if (targetResponded) {
+			return 'internal';
+		}
+
+		return resolutionCompleted ? 'target' : 'internal';
 	}
 
 	return upstreamUnreachablePattern.test(output) ? 'target' : 'internal';
@@ -171,6 +180,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 			}
 		} catch (error: unknown) {
 			let output = '';
+			let resolutionCompleted = false;
 			let targetResponded = false;
 
 			if (isExecaError(error)) {
@@ -180,6 +190,8 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 					try {
 						const parsedOutput = this.parse(output.trim());
 						const lastHop = parsedOutput.hops?.at(-1);
+						resolutionCompleted = Boolean(parsedOutput.resolvedAddress);
+
 						targetResponded = !!lastHop?.resolvedAddress
 							&& !!parsedOutput.resolvedAddress
 							&& ipEquals(lastHop.resolvedAddress, parsedOutput.resolvedAddress)
@@ -194,7 +206,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 
 			result = {
 				status: 'failed',
-				failureSource: classifyTracerouteFailure(error, output, targetResponded),
+				failureSource: classifyTracerouteFailure(error, output, resolutionCompleted, targetResponded),
 				rawOutput: output || 'Test failed. Please try again.',
 			};
 		}

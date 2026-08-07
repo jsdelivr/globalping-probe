@@ -74,12 +74,27 @@ export type PingParseOutputJson = {
 
 const logger = scopedLogger('ping-command');
 
-const classifyIcmpFailure = (error: unknown, rawOutput: string): FailureSource => {
-	if (isExecaError(error) && error.timedOut) {
-		return 'target';
+const classifyIcmpFailure = (
+	error: unknown,
+	rawOutput: string,
+	resolutionCompleted: boolean,
+	targetResponded: boolean,
+): FailureSource => {
+	const nameResolutionSource = getNativeNameResolutionFailureSource(rawOutput);
+
+	if (nameResolutionSource) {
+		return nameResolutionSource;
 	}
 
-	return getNativeNameResolutionFailureSource(rawOutput) ?? 'internal';
+	if (isExecaError(error) && error.timedOut) {
+		if (targetResponded) {
+			return 'internal';
+		}
+
+		return resolutionCompleted ? 'target' : 'internal';
+	}
+
+	return 'internal';
 };
 
 export const argBuilder = (options: PingOptions, commandOptions: PingCommandOptions = {}): string[] => {
@@ -163,7 +178,13 @@ export class PingCommand implements CommandInterface<PingOptions> {
 
 			if (isExecaError(error)) {
 				result = parse(error.stdout.toString());
-				result.failureSource = error.timedOut && result.timings?.length ? 'internal' : classifyIcmpFailure(error, result.rawOutput);
+
+				result.failureSource = classifyIcmpFailure(
+					error,
+					result.rawOutput,
+					Boolean(result.resolvedAddress),
+					Boolean(result.timings?.length),
+				);
 
 				if (error.timedOut) {
 					result.status = 'failed';

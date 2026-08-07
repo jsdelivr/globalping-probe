@@ -641,7 +641,7 @@ describe('ping command executor', () => {
 			{ expectedSource: 'target', message: 'Address family for hostname not supported' },
 			{ expectedSource: 'resolver', message: 'Temporary failure in name resolution' },
 		] as const) {
-			it(`should classify "${message}" as ${expectedSource}`, async () => {
+			it(`should classify a timeout with "${message}" as ${expectedSource}`, async () => {
 				const mockedCmd = getExecaMock();
 				const ping = new PingCommand();
 				const options = {
@@ -658,6 +658,7 @@ describe('ping command executor', () => {
 				const error = new Error(message) as ExecaError;
 				error.stderr = '';
 				error.stdout = `ping: missing.example: ${message}`;
+				error.timedOut = true;
 				mockedCmd.reject(error);
 
 				await runPromise;
@@ -722,6 +723,60 @@ describe('ping command executor', () => {
 			]);
 		});
 
+		it('should classify an execa timeout after emitting the header as target', async () => {
+			const mockedCmd = getExecaMock();
+			const ping = new PingCommand();
+			const options = {
+				type: 'ping' as PingOptions['type'],
+				timeout: 5,
+				target: 'google.com',
+				packets: 3,
+				protocol: 'ICMP',
+				port: 80,
+				inProgressUpdates: false,
+				ipVersion: 4 as const,
+			};
+			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
+			const timeoutError = new Error('Timeout') as ExecaError;
+			timeoutError.stderr = '';
+			timeoutError.stdout = 'PING google.com (172.217.20.206) 56(84) bytes of data.';
+			timeoutError.timedOut = true;
+			mockedCmd.reject(timeoutError);
+
+			await runPromise;
+
+			const result = (mockedSocket.emit.lastCall.args[1] as any).result;
+			expect(result.failureSource).to.equal('target');
+			expect(result.resolvedAddress).to.equal('172.217.20.206');
+		});
+
+		it('should classify an execa timeout with invalid output as internal', async () => {
+			const mockedCmd = getExecaMock();
+			const ping = new PingCommand();
+			const options = {
+				type: 'ping' as PingOptions['type'],
+				timeout: 5,
+				target: 'google.com',
+				packets: 3,
+				protocol: 'ICMP',
+				port: 80,
+				inProgressUpdates: false,
+				ipVersion: 4 as const,
+			};
+			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
+			const timeoutError = new Error('Timeout') as ExecaError;
+			timeoutError.stderr = '';
+			timeoutError.stdout = 'invalid partial output';
+			timeoutError.timedOut = true;
+			mockedCmd.reject(timeoutError);
+
+			await runPromise;
+
+			const result = (mockedSocket.emit.lastCall.args[1] as any).result;
+			expect(result.failureSource).to.equal('internal');
+			expect(result.resolvedAddress).to.equal(null);
+		});
+
 		it('should not prepend blank lines to a timeout without command output', async () => {
 			const mockedCmd = getExecaMock();
 			const ping = new PingCommand();
@@ -745,7 +800,7 @@ describe('ping command executor', () => {
 			await runPromise;
 
 			const result = (mockedSocket.emit.lastCall.args[1] as any).result;
-			expect(result.failureSource).to.equal('target');
+			expect(result.failureSource).to.equal('internal');
 			expect(result.rawOutput).to.equal('The measurement command timed out.');
 		});
 
