@@ -254,6 +254,28 @@ describe('mtr command executor', () => {
 			clearDnsCache();
 		});
 
+		it('should classify a deadline before target lookup as internal', async () => {
+			const clock = sandbox.useFakeTimers();
+			const timeoutStub = sandbox.stub(AbortSignal, 'timeout').callsFake(() => {
+				clock.tick(1000);
+				return new AbortController().signal;
+			});
+			const cmdFn = sandbox.spy((): any => getExecaMock());
+			const lookup = sandbox.stub();
+			const mtr = new MtrCommand(cmdFn, lookup as unknown as typeof cachedDnsLookup);
+
+			const result = await mtr.run(mockedSocket as any, 'measurement', 'test', {
+				type: 'mtr', timeout: 5, target: 'jsdelivr.net', protocol: 'icmp', port: 80, packets: 16, inProgressUpdates: false, ipVersion: 4,
+			}) as any;
+
+			timeoutStub.restore();
+			clock.restore();
+
+			expect(result.failureSource).to.equal('internal');
+			expect(cmdFn.notCalled).to.be.true;
+			expect(lookup.notCalled).to.be.true;
+		});
+
 		it('should stop target lookup when only the minimum MTR runtime remains', async () => {
 			const clock = sandbox.useFakeTimers();
 			const lookupController = new AbortController();
@@ -339,17 +361,16 @@ describe('mtr command executor', () => {
 
 			await clock.tickAsync(2700);
 			await runPromise;
+			timeoutStub.restore();
+			clock.restore();
 
 			expect(cmdFn.notCalled).to.be.true;
 
 			expect((mockedSocket.emit.firstCall.args[1] as any).result).to.include({
 				status: 'failed',
-				failureSource: 'target',
+				failureSource: 'internal',
 				rawOutput: 'The measurement command timed out.',
 			});
-
-			timeoutStub.restore();
-			clock.restore();
 		});
 
 		it('should run and parse mtr with progress messages', async () => {
