@@ -12,6 +12,7 @@ import parse, { type PingParseOutput } from './handlers/ping/parse.js';
 import { tcpPing, formatTcpPingResult, TcpPingData } from './handlers/ping/tcp-ping.js';
 import { getPingBudget, getProcessTimeout } from '../helper/timeout.js';
 import { validateCommandOptions } from '../helper/validate-command-options.js';
+import { getNativeNameResolutionFailureSource } from '../helper/native-name-resolution-failure.js';
 
 export type PingOptions = {
 	type: 'ping';
@@ -72,17 +73,27 @@ export type PingParseOutputJson = {
 
 const logger = scopedLogger('ping-command');
 
-const targetNameFailureMessages = [
-	'Name or service not known',
-	'Address family for hostname not supported',
-];
+const classifyIcmpFailure = (
+	error: unknown,
+	rawOutput: string,
+	resolutionCompleted: boolean,
+	targetResponded: boolean,
+): FailureSource => {
+	const nameResolutionSource = getNativeNameResolutionFailureSource(rawOutput);
 
-const classifyIcmpFailure = (error: unknown, rawOutput: string): FailureSource => {
-	if (isExecaError(error) && error.timedOut) {
-		return 'target';
+	if (nameResolutionSource) {
+		return nameResolutionSource;
 	}
 
-	return targetNameFailureMessages.some(message => rawOutput.includes(message)) ? 'target' : 'internal';
+	if (isExecaError(error) && error.timedOut) {
+		if (targetResponded) {
+			return 'internal';
+		}
+
+		return resolutionCompleted ? 'target' : 'internal';
+	}
+
+	return 'internal';
 };
 
 export const argBuilder = (options: PingOptions, commandOptions: PingCommandOptions = {}): string[] => {
@@ -166,7 +177,13 @@ export class PingCommand implements CommandInterface<PingOptions> {
 
 			if (isExecaError(error)) {
 				result = parse(error.stdout.toString());
-				result.failureSource = error.timedOut && result.timings?.length ? 'internal' : classifyIcmpFailure(error, result.rawOutput);
+
+				result.failureSource = classifyIcmpFailure(
+					error,
+					result.rawOutput,
+					Boolean(result.resolvedAddress),
+					Boolean(result.timings?.length),
+				);
 
 				if (error.timedOut) {
 					result.status = 'failed';

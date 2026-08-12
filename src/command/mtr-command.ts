@@ -86,7 +86,7 @@ export const mtrCmd = (options: MtrOptions, processTimeout = getProcessTimeout(o
 	return execa('unbuffer', [ 'mtr', ...args ], { timeout: processTimeout });
 };
 
-const deadlineTimeoutError = (failureSource: FailureSource = 'target') => new InternalError('The measurement command timed out.', true, failureSource);
+const deadlineTimeoutError = (failureSource: FailureSource = 'internal') => new InternalError('The measurement command timed out.', true, failureSource);
 
 export class MtrCommand implements CommandInterface<MtrOptions> {
 	constructor (private readonly cmd: typeof mtrCmd, private readonly lookup = cachedDnsLookup) {}

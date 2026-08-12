@@ -10,6 +10,7 @@ import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import { getProcessTimeout, getTracerouteBudget } from '../helper/timeout.js';
 import { validateCommandOptions } from '../helper/validate-command-options.js';
+import { getNativeNameResolutionFailureSource } from '../helper/native-name-resolution-failure.js';
 
 const reHost = /(\S+?)(%\w+)?(\s+)\(((?:\d+\.){3}\d+|[\da-fA-F:]+)(%\w+)?\)/;
 const reRtt = /(\d+(?:\.?\d+)?)\s+ms(!\S*)?/g;
@@ -52,23 +53,29 @@ type ParsedOutputJson = {
 
 const logger = scopedLogger('traceroute-command');
 
-const targetNameFailureMessages = [
-	'Name or service not known',
-	'Address family for hostname not supported',
-	'unknown host',
-];
 const upstreamUnreachablePattern = /(?:^|\s)!(?:N|H|P|X|S|F|V|C|\d+)(?:\s|$)/m;
 
-const classifyTracerouteFailure = (error: unknown, output: string, targetResponded = false): FailureSource => {
+const classifyTracerouteFailure = (
+	error: unknown,
+	output: string,
+	resolutionCompleted: boolean,
+	targetResponded: boolean,
+): FailureSource => {
+	const nameResolutionSource = getNativeNameResolutionFailureSource(output);
+
+	if (nameResolutionSource) {
+		return nameResolutionSource;
+	}
+
 	if (isExecaError(error) && error.timedOut) {
-		return targetResponded ? 'internal' : 'target';
+		if (targetResponded) {
+			return 'internal';
+		}
+
+		return resolutionCompleted ? 'target' : 'internal';
 	}
 
-	if (targetNameFailureMessages.some(message => output.toLowerCase().includes(message.toLowerCase())) || upstreamUnreachablePattern.test(output)) {
-		return 'target';
-	}
-
-	return 'internal';
+	return upstreamUnreachablePattern.test(output) ? 'target' : 'internal';
 };
 
 const allowedIpVersions = [ 4, 6 ];
@@ -172,6 +179,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 			}
 		} catch (error: unknown) {
 			let output = '';
+			let resolutionCompleted = false;
 			let targetResponded = false;
 
 			if (isExecaError(error)) {
@@ -181,6 +189,8 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 					try {
 						const parsedOutput = this.parse(output.trim());
 						const lastHop = parsedOutput.hops?.at(-1);
+						resolutionCompleted = Boolean(parsedOutput.resolvedAddress);
+
 						targetResponded = !!lastHop?.resolvedAddress
 							&& !!parsedOutput.resolvedAddress
 							&& ipEquals(lastHop.resolvedAddress, parsedOutput.resolvedAddress)
@@ -195,7 +205,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 
 			result = {
 				status: 'failed',
-				failureSource: classifyTracerouteFailure(error, output, targetResponded),
+				failureSource: classifyTracerouteFailure(error, output, resolutionCompleted, targetResponded),
 				rawOutput: output || 'Test failed. Please try again.',
 			};
 		}

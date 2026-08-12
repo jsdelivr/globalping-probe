@@ -5,6 +5,7 @@ import tls from 'node:tls';
 import zlib from 'node:zlib';
 import * as sinon from 'sinon';
 import { Socket } from 'socket.io-client';
+import { Client } from 'undici';
 import { HttpCommand } from '../../../src/command/http-command.js';
 import { HttpHandler } from '../../../src/command/handlers/http/undici.js';
 import { InternalError } from '../../../src/lib/internal-error.js';
@@ -856,7 +857,7 @@ describe(`.run() method`, () => {
 		it(`should preserve ${failureSource} lookup failure classification`, async () => {
 			const fakeSocket = new Duplex({ read () {}, write (_chunk, _encoding, callback) { callback(); } });
 			netConnectStub.callsFake(() => {
-				process.nextTick(() => fakeSocket.emit('error', new InternalError(message, true, failureSource)));
+				process.nextTick(() => fakeSocket.emit('error', Object.assign(new InternalError(message, true, failureSource), { code: 'EMFILE' })));
 				return fakeSocket as any;
 			});
 
@@ -873,6 +874,35 @@ describe(`.run() method`, () => {
 			const result = mockedSocket.emit.lastCall.args[1].result;
 			expect(result.failureSource).to.equal(failureSource);
 			expect(result.rawOutput).to.equal(message);
+		});
+	}
+
+	for (const { expectedSource, code } of [
+		{ expectedSource: 'internal', code: 'EMFILE' },
+		{ expectedSource: 'internal', code: 'EAFNOSUPPORT' },
+		{ expectedSource: 'internal', code: 'ERR_INVALID_ARG_TYPE' },
+		{ expectedSource: 'internal', code: 'ERR_SOCKET_BAD_PORT' },
+		{ expectedSource: 'target', code: 'UNRECOGNIZED_FUTURE_CODE' },
+	] as const) {
+		it(`should classify HTTP error code ${code} as ${expectedSource}`, async () => {
+			const error = Object.assign(new Error(code), { code });
+			sandbox.stub(Client.prototype, 'dispatch').callsFake(((_options: unknown, handler: { onError: (error: Error) => void }) => {
+				process.nextTick(() => handler.onError(error));
+				return true;
+			}) as any);
+
+			await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+				type: 'http',
+				timeout: 5,
+				target: 'example.com',
+				inProgressUpdates: false,
+				protocol: 'HTTP',
+				request: { method: 'GET', path: '/', query: '' },
+				ipVersion: 4,
+			});
+
+			const result = mockedSocket.emit.lastCall.args[1].result;
+			expect(result.failureSource).to.equal(expectedSource);
 		});
 	}
 

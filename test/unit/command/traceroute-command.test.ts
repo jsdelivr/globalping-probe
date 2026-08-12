@@ -451,7 +451,7 @@ describe('trace command', () => {
 				expect(result.failureSource).to.equal('internal');
 			});
 
-			it('should preserve an execa timeout if partial output parsing fails', async () => {
+			it('should classify an execa timeout with invalid output as internal', async () => {
 				const options = {
 					type: 'traceroute' as TraceOptions['type'],
 					timeout: 5,
@@ -463,7 +463,6 @@ describe('trace command', () => {
 				};
 				const mockCmd = getExecaMock();
 				const traceroute = new TracerouteCommand((): any => mockCmd);
-				sandbox.stub(traceroute as any, 'parse').throws(new Error('Failed to parse partial output.'));
 				const runPromise = traceroute.run(mockSocket as any, 'measurement', 'test', options);
 				const timeoutError = new Error('Timeout') as ExecaError;
 				timeoutError.stderr = '';
@@ -474,7 +473,7 @@ describe('trace command', () => {
 				await runPromise;
 
 				const result = (mockSocket.emit.lastCall.args[1] as any).result;
-				expect(result.failureSource).to.equal('target');
+				expect(result.failureSource).to.equal('internal');
 				expect(result.rawOutput).to.equal('invalid partial output\n\nThe measurement command timed out.');
 			});
 
@@ -499,13 +498,16 @@ describe('trace command', () => {
 
 				await runPromise;
 
-				expect((mockSocket.emit.lastCall.args[1] as any).result.rawOutput).to.equal('The measurement command timed out.');
+				const result = (mockSocket.emit.lastCall.args[1] as any).result;
+				expect(result.failureSource).to.equal('internal');
+				expect(result.rawOutput).to.equal('The measurement command timed out.');
 			});
 
-			for (const { expectedSource, output } of [
-				{ expectedSource: 'target', output: 'traceroute: missing.example: Name or service not known' },
-				{ expectedSource: 'target', output: 'traceroute to example.com (1.1.1.1), 20 hops max\n 1  192.0.2.1  1.0 ms !H' },
-				{ expectedSource: 'internal', output: 'traceroute: connect: Network is unreachable' },
+			for (const { expectedSource, output, timedOut } of [
+				{ expectedSource: 'target', output: 'traceroute: missing.example: Name or service not known', timedOut: true },
+				{ expectedSource: 'resolver', output: 'traceroute: missing.example: Temporary failure in name resolution', timedOut: true },
+				{ expectedSource: 'target', output: 'traceroute to example.com (1.1.1.1), 20 hops max\n 1  192.0.2.1  1.0 ms !H', timedOut: false },
+				{ expectedSource: 'internal', output: 'traceroute: connect: Network is unreachable', timedOut: false },
 			] as const) {
 				it(`should classify "${output}" as ${expectedSource}`, async () => {
 					const options = {
@@ -523,6 +525,7 @@ describe('trace command', () => {
 					const error = new Error(output) as ExecaError;
 					error.stderr = '';
 					error.stdout = output;
+					error.timedOut = timedOut;
 					mockCmd.reject(error);
 
 					await runPromise;
