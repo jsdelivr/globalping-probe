@@ -10,7 +10,6 @@ import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import { getProcessTimeout, getTracerouteBudget } from '../helper/timeout.js';
 import { validateCommandOptions } from '../helper/validate-command-options.js';
-import { getNativeCommandOptions } from '../helper/native-command-options.js';
 import { getNativeNameResolutionFailureSource } from '../helper/native-name-resolution-failure.js';
 
 const reHost = /(\S+?)(%\w+)?(\s+)\(((?:\d+\.){3}\d+|[\da-fA-F:]+)(%\w+)?\)/;
@@ -128,7 +127,7 @@ export const argBuilder = (options: TraceOptions): string[] => {
 
 export const traceCmd = (options: TraceOptions): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', [ 'traceroute', ...args ], getNativeCommandOptions(getProcessTimeout(options.timeout)));
+	return execa('unbuffer', [ 'traceroute', ...args ], { timeout: getProcessTimeout(options.timeout) });
 };
 
 export class TracerouteCommand implements CommandInterface<TraceOptions> {

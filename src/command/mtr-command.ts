@@ -14,7 +14,6 @@ import { scopedLogger } from '../lib/logger.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import { getMtrBudget, getProcessTimeout } from '../helper/timeout.js';
 import { validateCommandOptions } from '../helper/validate-command-options.js';
-import { getNativeCommandOptions } from '../helper/native-command-options.js';
 
 import type {
 	HopType,
@@ -84,7 +83,7 @@ export const argBuilder = (options: MtrOptions): string[] => {
 
 export const mtrCmd = (options: MtrOptions, processTimeout = getProcessTimeout(options.timeout)): ExecaChildProcess => {
 	const args = argBuilder(options);
-	return execa('unbuffer', [ 'mtr', ...args ], getNativeCommandOptions(processTimeout));
+	return execa('unbuffer', [ 'mtr', ...args ], { timeout: processTimeout });
 };
 
 const deadlineTimeoutError = (failureSource: FailureSource = 'internal') => new InternalError('The measurement command timed out.', true, failureSource);
