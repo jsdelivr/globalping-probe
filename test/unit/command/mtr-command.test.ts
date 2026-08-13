@@ -402,14 +402,14 @@ describe('mtr command executor', () => {
 			expect(mockedSocket.emit.args[0][1]).to.deep.include({
 				overwrite: true,
 				result: {
-					rawOutput: 'Host          Loss% Drop Rcv Avg  StDev  Javg \n1. AS??? (waiting for reply) \n',
+					rawOutput: 'Host                        Loss% Drop Rcv Avg  StDev  Javg \n1. AS??? (waiting for reply) \n',
 				},
 			});
 
 			expect(mockedSocket.emit.args[1][1]).to.deep.include({
 				overwrite: true,
 				result: {
-					rawOutput: 'Host                              Loss% Drop Rcv Avg  StDev  Javg \n1. AS??? _gateway (192.168.0.1)       0.0%    0   0 0.0    0.0   0.0\n2. AS??? (waiting for reply)       \n',
+					rawOutput: 'Host                           Loss% Drop Rcv Avg  StDev  Javg \n1. AS??? _gateway (192.168.0.1)    0.0%    0   0 0.0    0.0   0.0\n2. AS??? (waiting for reply)    \n',
 				},
 			});
 

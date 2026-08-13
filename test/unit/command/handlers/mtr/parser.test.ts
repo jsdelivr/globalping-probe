@@ -109,6 +109,49 @@ describe('mtr parser helper', () => {
 			expect(output).to.deep.equal(data.rawOutput);
 		});
 
+		it('should align statistic columns when a hostname falls back to its address', () => {
+			const rawOutput = [
+				'x 0 33000',
+				'h 0 10.239.107.1',
+				'p 0 200 33000',
+				'x 1 33001',
+				'h 1 185.1.206.113',
+				'p 1 2200 33001',
+			].join('\n');
+
+			const hops = MtrParser.rawParse(rawOutput, true);
+			hops[1]!.asn = [ 212_271 ];
+			const lines = MtrParser.outputBuilder(hops).trimEnd().split('\n');
+
+			expect(new Set(lines.map(line => line.indexOf('%'))).size).to.equal(1);
+		});
+
+		it('should size the host column from complete rendered host values', () => {
+			const rawOutput = [
+				'x 0 33000',
+				'h 0 10.0.0.1',
+				'p 0 200 33000',
+				'x 1 33001',
+				'h 1 2001:db8::1234',
+				'd 1 x',
+				'p 1 2200 33001',
+				'x 2 33002',
+				'h 2 1.1.1.1',
+				'd 2 long-hostname.example',
+				'p 2 2300 33002',
+			].join('\n');
+
+			const hops = MtrParser.rawParse(rawOutput, true);
+
+			for (const hop of hops) {
+				hop.asn = [ 123 ];
+			}
+
+			const output = MtrParser.outputBuilder(hops);
+
+			expect(output).to.contain('long-hostname.example (1.1.1.1)    0.0%');
+		});
+
 		it('should trim all but one trailing empty hops', () => {
 			const rawOutput = [
 				'x 0 33000',
@@ -125,9 +168,9 @@ describe('mtr parser helper', () => {
 			expect(hops.map(hop => hop.resolvedAddress)).to.deep.equal([ '192.168.0.1', undefined ]);
 
 			expect(MtrParser.outputBuilder(hops)).to.equal([
-				'Host                    Loss% Drop Rcv Avg  StDev  Javg ',
+				'Host                           Loss% Drop Rcv Avg  StDev  Javg ',
 				'1. AS??? _gateway (192.168.0.1)    0.0%    0   1 1.0    0.0   1.0',
-				'2. AS??? (waiting for reply) ',
+				'2. AS??? (waiting for reply)    ',
 				'',
 			].join('\n'));
 		});
@@ -150,11 +193,11 @@ describe('mtr parser helper', () => {
 			expect(hops.map(hop => hop.resolvedAddress)).to.deep.equal([ '192.168.0.1', undefined, '62.252.67.181', undefined ]);
 
 			expect(MtrParser.outputBuilder(hops)).to.equal([
-				'Host                      Loss% Drop Rcv Avg  StDev  Javg ',
-				'1. AS??? _gateway (192.168.0.1)    0.0%    0   1 1.0    0.0   1.0',
-				'2. AS??? (waiting for reply) ',
+				'Host                                  Loss% Drop Rcv Avg  StDev  Javg ',
+				'1. AS??? _gateway (192.168.0.1)           0.0%    0   1 1.0    0.0   1.0',
+				'2. AS??? (waiting for reply)           ',
 				'3. AS??? 62.252.67.181 (62.252.67.181)    0.0%    0   1 10.0    0.0  10.0',
-				'4. AS??? (waiting for reply) ',
+				'4. AS??? (waiting for reply)           ',
 				'',
 			].join('\n'));
 		});
@@ -171,7 +214,7 @@ describe('mtr parser helper', () => {
 			expect(hops.map(hop => hop.resolvedAddress)).to.deep.equal([ undefined ]);
 
 			expect(MtrParser.outputBuilder(hops)).to.equal([
-				'Host          Loss% Drop Rcv Avg  StDev  Javg ',
+				'Host                        Loss% Drop Rcv Avg  StDev  Javg ',
 				'1. AS??? (waiting for reply) ',
 				'',
 			].join('\n'));
