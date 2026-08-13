@@ -56,6 +56,7 @@ const isTargetHop = (hop: HopType, target: string): boolean => {
 export const MtrParser = {
 	outputBuilder (hops: HopType[]): string {
 		const rawOutput = [];
+		const asnLabels = hops.map(hop => hop.asn.length > 0 ? `AS${hop.asn.join(' ')}` : 'AS???');
 		const hostLabels = hops.map((hop, i) => {
 			const hostnameAlias = i === 0 ? '_gateway' : hop.resolvedHostname ?? hop.resolvedAddress;
 			return hop.resolvedAddress ? `${hostnameAlias ?? ''} (${hop.resolvedAddress})` : '(waiting for reply)';
@@ -63,7 +64,7 @@ export const MtrParser = {
 
 		const spacings = {
 			index: String(hops.length).length,
-			asn: 2 + Math.max(...hops.map(h => String(h?.asn.join(' ') ?? 0).length)),
+			asn: Math.max(...asnLabels.map(asnLabel => asnLabel.length)),
 			hostname: Math.max(...hostLabels.map(hostLabel => hostLabel.length)),
 			loss: 6,
 			drop: Math.max(4, ...hops.map(h => String(h?.stats?.drop ?? 0).length)),
@@ -91,7 +92,7 @@ export const MtrParser = {
 			const sIndex = withSpacing(String(i + 1), spacings.index, true);
 
 			// Asn
-			const sAsn = withSpacing((hop.asn.length > 0 ? `AS${hop.asn.join(' ')}` : 'AS???'), spacings.asn);
+			const sAsn = withSpacing(asnLabels[i]!, spacings.asn);
 
 			// Hostname
 			const sHostname = withSpacing(hostLabels[i]!, spacings.hostname);

@@ -126,6 +126,22 @@ describe('mtr parser helper', () => {
 			expect(new Set(lines.map(line => line.indexOf('%'))).size).to.equal(1);
 		});
 
+		it('should align statistic columns when ASNs are unknown', () => {
+			const rawOutput = [
+				'x 0 33000',
+				'h 0 192.168.100.1',
+				'p 0 5700 33000',
+				'x 1 33001',
+				'h 1 89.24.86.5',
+				'p 1 4100 33001',
+			].join('\n');
+
+			const hops = MtrParser.rawParse(rawOutput, false);
+			const lines = MtrParser.outputBuilder(hops).trimEnd().split('\n');
+
+			expect(new Set(lines.map(line => line.indexOf('%'))).size).to.equal(1);
+		});
+
 		it('should size the host column from complete rendered host values', () => {
 			const rawOutput = [
 				'x 0 33000',
@@ -168,7 +184,7 @@ describe('mtr parser helper', () => {
 			expect(hops.map(hop => hop.resolvedAddress)).to.deep.equal([ '192.168.0.1', undefined ]);
 
 			expect(MtrParser.outputBuilder(hops)).to.equal([
-				'Host                           Loss% Drop Rcv Avg  StDev  Javg ',
+				'Host                              Loss% Drop Rcv Avg  StDev  Javg ',
 				'1. AS??? _gateway (192.168.0.1)    0.0%    0   1 1.0    0.0   1.0',
 				'2. AS??? (waiting for reply)    ',
 				'',
@@ -193,7 +209,7 @@ describe('mtr parser helper', () => {
 			expect(hops.map(hop => hop.resolvedAddress)).to.deep.equal([ '192.168.0.1', undefined, '62.252.67.181', undefined ]);
 
 			expect(MtrParser.outputBuilder(hops)).to.equal([
-				'Host                                  Loss% Drop Rcv Avg  StDev  Javg ',
+				'Host                                     Loss% Drop Rcv Avg  StDev  Javg ',
 				'1. AS??? _gateway (192.168.0.1)           0.0%    0   1 1.0    0.0   1.0',
 				'2. AS??? (waiting for reply)           ',
 				'3. AS??? 62.252.67.181 (62.252.67.181)    0.0%    0   1 10.0    0.0  10.0',
@@ -214,7 +230,7 @@ describe('mtr parser helper', () => {
 			expect(hops.map(hop => hop.resolvedAddress)).to.deep.equal([ undefined ]);
 
 			expect(MtrParser.outputBuilder(hops)).to.equal([
-				'Host                        Loss% Drop Rcv Avg  StDev  Javg ',
+				'Host                           Loss% Drop Rcv Avg  StDev  Javg ',
 				'1. AS??? (waiting for reply) ',
 				'',
 			].join('\n'));
