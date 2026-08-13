@@ -292,6 +292,12 @@ describe('dnsLookup / cachedDnsLookup', () => {
 		await cachedDnsLookup('example.com', { family: 4 });
 
 		expect(resolve4.callCount).to.equal(1);
+
+		now = 10 * 60 * 1000;
+		await clock.tickAsync(5 * 60 * 1000 - 1);
+		await cachedDnsLookup('example.com', { family: 4 });
+
+		expect(resolve4.callCount).to.equal(2);
 	});
 
 	it('keeps at most 5000 entries', async () => {
