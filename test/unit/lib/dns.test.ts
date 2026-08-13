@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import dns from 'node:dns';
+import { performance } from 'node:perf_hooks';
 import { getDnsServers, dnsLookup, cachedDnsLookup, clearDnsCache } from '../../../src/lib/dns.js';
 import { getFailureSource } from '../../../src/lib/internal-error.js';
 import { callbackify } from '../../../src/lib/util.js';
@@ -118,7 +119,10 @@ describe('dnsLookup / cachedDnsLookup', () => {
 		resolve4 = sandbox.stub(dns.promises.Resolver.prototype, 'resolve4').resolves([{ address: '1.1.1.1', ttl: 300 }]);
 	});
 
-	afterEach(() => sandbox.restore());
+	afterEach(() => {
+		clearDnsCache();
+		sandbox.restore();
+	});
 
 	it('returns the first public address with its family', async () => {
 		expect(await dnsLookup('example.com', { family: 4 })).to.deep.equal([ '1.1.1.1', 4 ]);
@@ -256,14 +260,52 @@ describe('dnsLookup / cachedDnsLookup', () => {
 		expect(resolve4.callCount).to.equal(3);
 	});
 
-	it('expires the cache entry once the record ttl elapses', async () => {
+	it('caches records for at least one minute', async () => {
+		let now = 0;
+		sandbox.stub(performance, 'now').callsFake(() => now);
+		const clock = sandbox.useFakeTimers({ toFake: [ 'setTimeout', 'clearTimeout' ] });
 		resolve4.resolves([{ address: '1.1.1.1', ttl: 0 }]);
 
 		await cachedDnsLookup('example.com', { family: 4 });
-		await new Promise(resolve => setTimeout(resolve, 10));
+		now = 59_999;
+		await clock.tickAsync(59_999);
+		await cachedDnsLookup('example.com', { family: 4 });
+
+		expect(resolve4.callCount).to.equal(1);
+
+		now = 60_000;
+		await clock.tickAsync(1);
 		await cachedDnsLookup('example.com', { family: 4 });
 
 		expect(resolve4.callCount).to.equal(2);
+	});
+
+	it('honors authoritative ttls longer than five minutes', async () => {
+		let now = 0;
+		sandbox.stub(performance, 'now').callsFake(() => now);
+		const clock = sandbox.useFakeTimers({ toFake: [ 'setTimeout', 'clearTimeout' ] });
+		resolve4.resolves([{ address: '1.1.1.1', ttl: 600 }]);
+
+		await cachedDnsLookup('example.com', { family: 4 });
+		now = 5 * 60 * 1000 + 1;
+		await clock.tickAsync(5 * 60 * 1000 + 1);
+		await cachedDnsLookup('example.com', { family: 4 });
+
+		expect(resolve4.callCount).to.equal(1);
+	});
+
+	it('keeps at most 5000 entries', async () => {
+		resolve4.resolves([{ address: '1.1.1.1', ttl: 300 }]);
+
+		for (let i = 0; i < 5001; i++) {
+			await cachedDnsLookup(`example-${i}.com`, { family: 4 });
+		}
+
+		await cachedDnsLookup('example-1.com', { family: 4 });
+		expect(resolve4.callCount).to.equal(5001);
+
+		await cachedDnsLookup('example-0.com', { family: 4 });
+		expect(resolve4.callCount).to.equal(5002);
 	});
 
 	it('does not cache failures', async () => {
