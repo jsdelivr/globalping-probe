@@ -1,3 +1,4 @@
+import { getProbeSettings, updateProbeSettings } from './lib/probe-settings.js';
 import config from 'config';
 import os from 'node:os';
 import net from 'node:net';
@@ -8,7 +9,7 @@ import throng from 'throng';
 import { io } from 'socket.io-client';
 import physicalCpuCount from 'physical-cpu-count';
 import { getFakeIp } from './lib/fake-ip.js';
-import type { CommandInterface, MeasurementRequest } from './types.js';
+import type { CommandInterface, MeasurementRequest, ProbeSettings } from './types.js';
 import { loadAll as loadAllDeps } from './lib/dependencies.js';
 import { apiLogsTransport, scopedLogger } from './lib/logger.js';
 import { ApiTransportSettings } from './lib/api-logs-transport.js';
@@ -160,6 +161,10 @@ function connect (workerId?: number) {
 		.on('api:connect:location', apiConnectLocationHandler(socket))
 		.on('api:connect:adoption', adoptionStatusHandler(socket))
 		.on('api:connect:ip', ipHandler(socket))
+		.on('api:settings:update', (settings: Partial<ProbeSettings>) => {
+			updateProbeSettings(settings);
+			logger.debug('Probe settings updated.', { settings: getProbeSettings() });
+		})
 		.on('probe:measurement:request', (data: MeasurementRequest) => {
 			const status = statusManager.getStatus();
 
