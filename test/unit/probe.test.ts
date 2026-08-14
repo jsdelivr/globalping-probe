@@ -151,10 +151,11 @@ describe('index module', () => {
 		await import('../../src/probe.js');
 		const settings = { meteredConnection: false };
 		updateProbeSettingsStub.returns({ success: false, source: 'persistence', error: new Error('Failed to persist settings.') });
+		getProbeSettingsStub.returns(settings);
 
 		expect(() => mockSocket.emit('api:settings:update', settings)).not.to.throw();
 		expect(updateProbeSettingsStub.calledOnceWithExactly(settings)).to.be.true;
-		expect(getProbeSettingsStub.notCalled).to.be.true;
+		expect(getProbeSettingsStub.calledOnce).to.be.true;
 	});
 
 	it('should ignore invalid probe settings received from the API', async () => {

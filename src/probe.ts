@@ -166,15 +166,15 @@ function connect (workerId?: number) {
 
 			if ('source' in result) {
 				if (result.source === 'persistence') {
-					logger.error('Probe settings updated in memory, but failed to persist them:', result.error);
+					logger.error('Probe settings updated in memory, but failed to persist them:', { settings: getProbeSettings(), error: result.error });
 				} else {
-					logger.warn('Invalid probe settings received:', result.error);
+					logger.error('Invalid probe settings received:', result.error);
 				}
 
 				return;
 			}
 
-			logger.debug('Probe settings updated.', { settings: getProbeSettings() });
+			logger.info('Probe settings updated.', { settings: getProbeSettings() });
 		})
 		.on('probe:measurement:request', (data: MeasurementRequest) => {
 			const status = statusManager.getStatus();
