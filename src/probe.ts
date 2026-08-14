@@ -162,7 +162,18 @@ function connect (workerId?: number) {
 		.on('api:connect:adoption', adoptionStatusHandler(socket))
 		.on('api:connect:ip', ipHandler(socket))
 		.on('api:settings:update', (settings: Partial<ProbeSettings>) => {
-			updateProbeSettings(settings);
+			const result = updateProbeSettings(settings);
+
+			if ('source' in result) {
+				if (result.source === 'persistence') {
+					logger.error('Probe settings updated in memory, but failed to persist them:', result.error);
+				} else {
+					logger.warn('Invalid probe settings received:', result.error);
+				}
+
+				return;
+			}
+
 			logger.debug('Probe settings updated.', { settings: getProbeSettings() });
 		})
 		.on('probe:measurement:request', (data: MeasurementRequest) => {

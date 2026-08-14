@@ -2,19 +2,23 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { expect } from 'chai';
+import * as sinon from 'sinon';
 import { ProbeSettingsStore } from '../../../src/lib/probe-settings.js';
 import type { ProbeSettings } from '../../../src/types.js';
 
 describe('probe settings', () => {
 	let directory: string;
 	let settingsFile: string;
+	let sandbox: sinon.SinonSandbox;
 
 	beforeEach(() => {
+		sandbox = sinon.createSandbox();
 		directory = fs.mkdtempSync(path.join(os.tmpdir(), 'globalping-probe-settings-'));
 		settingsFile = path.join(directory, '.PROBE-SETTINGS');
 	});
 
 	afterEach(() => {
+		sandbox.restore();
 		fs.rmSync(directory, { recursive: true, force: true });
 	});
 
@@ -30,6 +34,24 @@ describe('probe settings', () => {
 		const store = new ProbeSettingsStore(settingsFile);
 
 		expect(store.get()).to.deep.equal({ meteredConnection: true });
+	});
+
+	it('should remove settings with invalid values and use defaults', () => {
+		fs.writeFileSync(settingsFile, JSON.stringify({ meteredConnection: 'true' }));
+
+		const store = new ProbeSettingsStore(settingsFile);
+
+		expect(store.get()).to.deep.equal({ meteredConnection: false });
+		expect(fs.existsSync(settingsFile)).to.be.false;
+	});
+
+	it('should remove settings with unknown properties and use defaults', () => {
+		fs.writeFileSync(settingsFile, JSON.stringify({ unknown: true }));
+
+		const store = new ProbeSettingsStore(settingsFile);
+
+		expect(store.get()).to.deep.equal({ meteredConnection: false });
+		expect(fs.existsSync(settingsFile)).to.be.false;
 	});
 
 	it('should persist updated settings', () => {
@@ -50,12 +72,37 @@ describe('probe settings', () => {
 		expect(store.get()).to.deep.equal({ meteredConnection: false });
 	});
 
-	it('should not update in-memory settings when persistence fails', () => {
+	it('should update in-memory settings when persistence fails', () => {
 		const store = new ProbeSettingsStore(settingsFile);
 		fs.mkdirSync(settingsFile);
 
-		expect(() => store.update({ meteredConnection: true })).to.throw();
+		const result = store.update({ meteredConnection: true });
+
+		expect(result).to.include({ success: false, source: 'persistence' });
+		expect(result).to.have.property('error').that.is.an.instanceOf(Error);
+		expect(store.get()).to.deep.equal({ meteredConnection: true });
+	});
+
+	it('should reject updates with invalid values', () => {
+		const store = new ProbeSettingsStore(settingsFile);
+
+		const result = store.update({ meteredConnection: 'true' } as unknown as Partial<ProbeSettings>);
+
+		expect(result).to.include({ success: false, source: 'validation' });
+		expect(result).to.have.property('error').that.is.an.instanceOf(Error);
 		expect(store.get()).to.deep.equal({ meteredConnection: false });
+		expect(fs.existsSync(settingsFile)).to.be.false;
+	});
+
+	it('should reject updates with unknown properties', () => {
+		const store = new ProbeSettingsStore(settingsFile);
+
+		const result = store.update({ unknown: true } as unknown as Partial<ProbeSettings>);
+
+		expect(result).to.include({ success: false, source: 'validation' });
+		expect(result).to.have.property('error').that.is.an.instanceOf(Error);
+		expect(store.get()).to.deep.equal({ meteredConnection: false });
+		expect(fs.existsSync(settingsFile)).to.be.false;
 	});
 
 	it('should remove invalid settings and use defaults', () => {
@@ -67,12 +114,25 @@ describe('probe settings', () => {
 		expect(fs.existsSync(settingsFile)).to.be.false;
 	});
 
-	it('should use defaults when an unreadable settings file cannot be removed', () => {
+	it('should preserve the settings path when it cannot be read', () => {
 		fs.mkdirSync(settingsFile);
 
 		const store = new ProbeSettingsStore(settingsFile);
 
 		expect(store.get()).to.deep.equal({ meteredConnection: false });
+		expect(fs.existsSync(settingsFile)).to.be.true;
+	});
+
+	it('should preserve a valid file after a filesystem read failure', () => {
+		fs.writeFileSync(settingsFile, JSON.stringify({ meteredConnection: true }));
+		const readError = Object.assign(new Error('Permission denied'), { code: 'EACCES' });
+		const rmStub = sandbox.spy(fs, 'rmSync');
+		sandbox.stub(fs, 'readFileSync').throws(readError);
+
+		const store = new ProbeSettingsStore(settingsFile);
+
+		expect(store.get()).to.deep.equal({ meteredConnection: false });
+		expect(rmStub.notCalled).to.be.true;
 		expect(fs.existsSync(settingsFile)).to.be.true;
 	});
 });
