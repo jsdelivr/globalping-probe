@@ -12,11 +12,13 @@ type Options = LookupOptions | RecordOptions;
 
 type ResolvedRecords = { records: string[]; ttl: number };
 
-const DNS_CACHE_MAX_TTL = 5 * 60 * 1000;
+const DNS_CACHE_MIN_TTL = 60 * 1000;
+const DNS_CACHE_TXT_TTL = 5 * 60 * 1000;
+const DNS_CACHE_MAX_ENTRIES = 5000;
 
 const cache = new TTLCache<string, Promise<string[]>>({
-	max: 1000,
-	ttl: DNS_CACHE_MAX_TTL,
+	max: DNS_CACHE_MAX_ENTRIES,
+	ttl: DNS_CACHE_TXT_TTL,
 });
 
 export const clearDnsCache = () => cache.clear();
@@ -49,20 +51,19 @@ const resolveRecords = async (hostname: string, options: Options): Promise<Resol
 			if ('rrtype' in options) {
 				// Only TXT records are supported as other RRtypes have different TS return types.
 				const records = (await resolver.resolveTxt(hostname)).map(record => record.join(''));
-				// TXT records carry no TTL here, so they fall back to the max cache TTL.
-				return { records, ttl: DNS_CACHE_MAX_TTL };
+				// TXT records carry no TTL here, so they use a fixed cache TTL.
+				return { records, ttl: DNS_CACHE_TXT_TTL };
 			}
 
 			const records = options.family === 6
 				? await resolver.resolve6(hostname, { ttl: true })
 				: await resolver.resolve4(hostname, { ttl: true });
 
-			let ttl = DNS_CACHE_MAX_TTL;
+			let ttl = DNS_CACHE_MIN_TTL;
 
 			if (records.length) {
-				const minResolvedTtl = Math.min(DNS_CACHE_MAX_TTL, Math.min(...records.map(record => record.ttl)) * 1000);
-				// TTL: 0 is invalid, so we set it to 1.
-				ttl = Math.max(1, minResolvedTtl);
+				const minResolvedTtl = Math.min(...records.map(record => record.ttl)) * 1000;
+				ttl = Math.max(DNS_CACHE_MIN_TTL, minResolvedTtl);
 			}
 
 			return { records: records.map(record => record.address), ttl };
