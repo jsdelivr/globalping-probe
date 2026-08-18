@@ -6,7 +6,7 @@ import { tcpPing } from '../command/handlers/ping/tcp-ping.js';
 import type { PingOptions } from '../command/ping-command.js';
 import { getPingBudget } from '../helper/timeout.js';
 import { resolveCommandTarget, type CommandTargetLookup } from '../helper/resolve-command-target.js';
-import { cachedDnsLookup } from '../lib/dns.js';
+import { cachedDnsLookupOne } from '../lib/dns.js';
 import { scopedLogger } from '../lib/logger.js';
 
 const logger = scopedLogger('status-manager');
@@ -23,7 +23,7 @@ export class IcmpTcpTest {
 		socket: Socket,
 		private readonly pingCmd: (options: PingOptions) => ExecaChildProcess,
 		private readonly runTcpPing: typeof tcpPing,
-		private readonly lookup: CommandTargetLookup = cachedDnsLookup,
+		private readonly lookup: CommandTargetLookup = cachedDnsLookupOne,
 	) {
 		socket.on('api:connect:isProxy', async ({ isProxy }: { isProxy: boolean }) => {
 			this.isProxy = isProxy;
@@ -159,7 +159,7 @@ export const initIcmpTcpTest = (
 	socket: Socket,
 	pingCmd: (options: PingOptions) => ExecaChildProcess,
 	runTcpPing: typeof tcpPing = tcpPing,
-	lookup: CommandTargetLookup = cachedDnsLookup,
+	lookup: CommandTargetLookup = cachedDnsLookupOne,
 ) => {
 	icmpTcpTest = new IcmpTcpTest(updateStatus, socket, pingCmd, runTcpPing, lookup);
 	return icmpTcpTest;

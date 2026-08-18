@@ -6,7 +6,7 @@ import { InternalError } from '../../../src/lib/internal-error.js';
 describe('resolveCommandTarget', () => {
 	it('keeps a requested hostname without performing a target PTR lookup', async () => {
 		const signal = new AbortController().signal;
-		const lookup = sinon.stub().resolves([ '1.1.1.1', 4 ]);
+		const lookup = sinon.stub().resolves('1.1.1.1');
 
 		expect(await resolveCommandTarget('example.com', 4, signal, lookup)).to.deep.equal({
 			address: '1.1.1.1',
@@ -18,7 +18,7 @@ describe('resolveCommandTarget', () => {
 
 	it('starts with PTR lookup when the target is already an IP', async () => {
 		const signal = new AbortController().signal;
-		const lookup = sinon.stub().resolves([ 'one.one.one.one' ]);
+		const lookup = sinon.stub().resolves('one.one.one.one');
 
 		expect(await resolveCommandTarget('1.1.1.1', 4, signal, lookup)).to.deep.equal({
 			address: '1.1.1.1',

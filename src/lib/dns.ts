@@ -157,9 +157,31 @@ export async function dnsLookup (hostname: string, options: Options): Promise<[s
 	return toResult(await waitForRecords(records, options.signal), hostname, options);
 }
 
+export function dnsLookupOne (hostname: string, options: LookupOptions): Promise<string>;
+export function dnsLookupOne (hostname: string, options: RecordOptions): Promise<string | undefined>;
+
+export async function dnsLookupOne (hostname: string, options: Options): Promise<string | undefined> {
+	if ('rrtype' in options) {
+		return (await dnsLookup(hostname, options))[0];
+	}
+
+	return (await dnsLookup(hostname, options))[0];
+}
+
 export function cachedDnsLookup (hostname: string, options: LookupOptions): Promise<[string, IpFamily]>;
 export function cachedDnsLookup (hostname: string, options: RecordOptions): Promise<string[]>;
 
 export async function cachedDnsLookup (hostname: string, options: Options): Promise<[string, IpFamily] | string[]> {
 	return toResult(await waitForRecords(cachedResolveRecords(hostname, options), options.signal), hostname, options);
+}
+
+export function cachedDnsLookupOne (hostname: string, options: LookupOptions): Promise<string>;
+export function cachedDnsLookupOne (hostname: string, options: RecordOptions): Promise<string | undefined>;
+
+export async function cachedDnsLookupOne (hostname: string, options: Options): Promise<string | undefined> {
+	if ('rrtype' in options) {
+		return (await cachedDnsLookup(hostname, options))[0];
+	}
+
+	return (await cachedDnsLookup(hostname, options))[0];
 }

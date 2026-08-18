@@ -14,7 +14,7 @@ import { createMeasurementDeadline, getPingBudget, getProcessTimeout } from '../
 import { validateCommandOptions } from '../helper/validate-command-options.js';
 import { resolveCommandTarget, type CommandTargetLookup } from '../helper/resolve-command-target.js';
 import { getFailureSource, isExposed } from '../lib/internal-error.js';
-import { cachedDnsLookup } from '../lib/dns.js';
+import { cachedDnsLookupOne } from '../lib/dns.js';
 
 export type PingOptions = {
 	type: 'ping';
@@ -140,7 +140,7 @@ export const pingCmd = (options: PingOptions, commandOptions: PingCommandOptions
 };
 
 export class PingCommand implements CommandInterface<PingOptions> {
-	constructor (private readonly cmd = pingCmd, private readonly lookup: CommandTargetLookup = cachedDnsLookup) {}
+	constructor (private readonly cmd = pingCmd, private readonly lookup: CommandTargetLookup = cachedDnsLookupOne) {}
 
 	async run (socket: Socket, measurementId: string, testId: string, options: PingOptions): Promise<unknown> {
 		const validationResult = validateCommandOptions(pingOptionsSchema, options);
