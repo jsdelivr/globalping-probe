@@ -217,7 +217,7 @@ describe('ping command executor', () => {
 				ipVersion: 4 as const,
 			};
 			const lookup = sandbox.stub();
-			lookup.onFirstCall().resolves([ '1.1.1.1', 4 ]);
+			lookup.onFirstCall().resolves('1.1.1.1');
 			const mockedCmd = getExecaMock();
 			const cmd = sandbox.stub().returns(mockedCmd);
 			const runPromise = new PingCommand(cmd, lookup).run(mockedSocket as any, 'measurement', 'test', options);
@@ -245,7 +245,7 @@ describe('ping command executor', () => {
 		});
 
 		it('does not derive target metadata from an intermediate error response', async () => {
-			const lookup = sandbox.stub().resolves([ '1.1.1.1', 4 ]);
+			const lookup = sandbox.stub().resolves('1.1.1.1');
 			const mockedCmd = getExecaMock();
 			const command = new PingCommand(sandbox.stub().returns(mockedCmd), lookup);
 			const runPromise = command.run(mockedSocket as any, 'measurement', 'test', {
@@ -266,7 +266,7 @@ describe('ping command executor', () => {
 		});
 
 		it('resolves a TCP hostname before dispatching the numeric target', async () => {
-			const lookup = sandbox.stub().resolves([ '1.1.1.1', 4 ]);
+			const lookup = sandbox.stub().resolves('1.1.1.1');
 			const command = new PingCommand(sandbox.stub(), lookup);
 			sandbox.stub(command, 'runTcp').callsFake(async (...args: any[]) => ({
 				target: args[4].target,
@@ -281,7 +281,7 @@ describe('ping command executor', () => {
 		});
 
 		it('uses a best-effort PTR hostname when dispatching a TCP IP target', async () => {
-			const lookup = sandbox.stub().resolves([ 'one.one.one.one' ]);
+			const lookup = sandbox.stub().resolves('one.one.one.one');
 			const command = new PingCommand(sandbox.stub(), lookup);
 			sandbox.stub(command, 'runTcp').callsFake(async (...args: any[]) => ({
 				target: args[4].target,

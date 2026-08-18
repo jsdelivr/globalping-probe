@@ -49,10 +49,7 @@ describe('IcmpTcpTest', () => {
 		updateStatus = sandbox.stub();
 		pingCmd = sandbox.stub();
 
-		lookup = sandbox.stub().callsFake(async (target: string, options: { family: 4 | 6 }) => [
-			getResolvedTarget(target, options.family),
-			options.family,
-		]);
+		lookup = sandbox.stub().callsFake(async (target: string, options: { family: 4 | 6 }) => getResolvedTarget(target, options.family));
 
 		// Default: ICMP avg=20, TCP avg=10 → diff=10 (below all thresholds)
 		pingCmd.resolves({ stdout: makeIcmpOutput(20) });

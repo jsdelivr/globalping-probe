@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import dns from 'node:dns';
 import { performance } from 'node:perf_hooks';
-import { getDnsServers, dnsLookup, cachedDnsLookup, clearDnsCache } from '../../../src/lib/dns.js';
+import { getDnsServers, dnsLookup, dnsLookupOne, cachedDnsLookup, cachedDnsLookupOne, clearDnsCache } from '../../../src/lib/dns.js';
 import { getFailureSource } from '../../../src/lib/internal-error.js';
 import { callbackify } from '../../../src/lib/util.js';
 
@@ -126,6 +126,12 @@ describe('dnsLookup / cachedDnsLookup', () => {
 
 	it('returns the first public address with its family', async () => {
 		expect(await dnsLookup('example.com', { family: 4 })).to.deep.equal([ '1.1.1.1', 4 ]);
+	});
+
+	it('returns only the selected public address', async () => {
+		resolve4.resolves([{ address: '192.168.0.1', ttl: 300 }, { address: '1.1.1.1', ttl: 300 }]);
+
+		expect(await dnsLookupOne('example.com', { family: 4 })).to.equal('1.1.1.1');
 	});
 
 	it('tries the next configured resolver after SERVFAIL', async () => {
@@ -376,6 +382,14 @@ describe('dnsLookup / cachedDnsLookup', () => {
 	it('returns joined TXT records without filtering', async () => {
 		const resolveTxt = sandbox.stub(dns.promises.Resolver.prototype, 'resolveTxt').resolves([ [ 'AS123', ' | abc' ], [ 'AS456' ] ]);
 
+		expect(await cachedDnsLookup('example.com', { rrtype: 'TXT' })).to.deep.equal([ 'AS123 | abc', 'AS456' ]);
+		expect(resolveTxt.callCount).to.equal(1);
+	});
+
+	it('returns only the first cached record without truncating the cache entry', async () => {
+		const resolveTxt = sandbox.stub(dns.promises.Resolver.prototype, 'resolveTxt').resolves([ [ 'AS123', ' | abc' ], [ 'AS456' ] ]);
+
+		expect(await cachedDnsLookupOne('example.com', { rrtype: 'TXT' })).to.equal('AS123 | abc');
 		expect(await cachedDnsLookup('example.com', { rrtype: 'TXT' })).to.deep.equal([ 'AS123 | abc', 'AS456' ]);
 		expect(resolveTxt.callCount).to.equal(1);
 	});

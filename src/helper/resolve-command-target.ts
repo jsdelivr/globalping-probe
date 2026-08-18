@@ -1,11 +1,11 @@
 import { isIP } from 'node:net';
-import { cachedDnsLookup, type IpFamily, type LookupOptions, type RecordOptions } from '../lib/dns.js';
+import { cachedDnsLookupOne, type IpFamily, type LookupOptions, type RecordOptions } from '../lib/dns.js';
 import { InternalError } from '../lib/internal-error.js';
 import { isIpPrivate } from '../lib/ip.js';
 
 export type CommandTargetLookup = {
-	(hostname: string, options: LookupOptions): Promise<[string, IpFamily]>;
-	(hostname: string, options: RecordOptions): Promise<string[]>;
+	(hostname: string, options: LookupOptions): Promise<string>;
+	(hostname: string, options: RecordOptions): Promise<string | undefined>;
 };
 
 type ResolvedCommandTarget = {
@@ -17,7 +17,7 @@ export const resolveCommandTarget = async (
 	target: string,
 	family: IpFamily,
 	signal: AbortSignal,
-	lookup: CommandTargetLookup = cachedDnsLookup,
+	lookup: CommandTargetLookup = cachedDnsLookupOne,
 ): Promise<ResolvedCommandTarget> => {
 	const targetIsIp = isIP(target) !== 0;
 
@@ -27,7 +27,7 @@ export const resolveCommandTarget = async (
 
 	if (!targetIsIp) {
 		try {
-			const [ address ] = await lookup(target, { family, signal });
+			const address = await lookup(target, { family, signal });
 			return { address, hostname: target };
 		} catch (error: unknown) {
 			if (signal.aborted) {
@@ -41,8 +41,7 @@ export const resolveCommandTarget = async (
 	let hostname = target;
 
 	try {
-		const ptrRecords = await lookup(target, { rrtype: 'PTR', signal });
-		hostname = ptrRecords[0] ?? hostname;
+		hostname = await lookup(target, { rrtype: 'PTR', signal }) ?? hostname;
 	} catch {
 		// Reverse DNS only enriches output and never changes measurement attribution.
 	}
