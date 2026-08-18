@@ -7,6 +7,7 @@ import { toRawTcpOutput } from '../../../src/command/handlers/ping/tcp-ping.js';
 import {
 	PingCommand,
 	argBuilder,
+	normalizePingOutput,
 	type PingOptions,
 } from '../../../src/command/ping-command.js';
 
@@ -29,6 +30,7 @@ describe('ping command executor', () => {
 
 			expect(args[0]).to.equal('-4');
 			expect(args[1]).to.equal('-O');
+			expect(args).to.include('-n');
 			expect(args[args.length - 1]).to.equal(options.target);
 			expect(joinedArgs).to.contain(`-c ${options.packets}`);
 			expect(joinedArgs).to.contain('-i 0.2');
@@ -58,7 +60,7 @@ describe('ping command executor', () => {
 				packets: 6,
 				protocol: 'ICMP',
 				port: 80,
-				inProgressUpdates: false,
+				inProgressUpdates: true,
 				ipVersion: 4 as const,
 			};
 
@@ -157,6 +159,28 @@ describe('ping command executor', () => {
 		});
 	});
 
+	describe('output normalization', () => {
+		it('restores the target hostname in headers, replies, and statistics', () => {
+			const output = 'PING 1.1.1.1 (1.1.1.1) 56(84) bytes of data.\n'
+				+ '64 bytes from 1.1.1.1: icmp_seq=1 ttl=57 time=4.25 ms\n'
+				+ '--- 1.1.1.1 ping statistics ---';
+			const expected = 'PING one.one.one.one (1.1.1.1) 56(84) bytes of data.\n'
+				+ '64 bytes from one.one.one.one (1.1.1.1): icmp_seq=1 ttl=57 time=4.25 ms\n'
+				+ '--- one.one.one.one ping statistics ---';
+
+			expect(normalizePingOutput(output, '1.1.1.1', 'one.one.one.one')).to.equal(expected);
+		});
+
+		it('restores the target hostname in target-originated errors only', () => {
+			const output = 'From 1.1.1.1 icmp_seq=1 Destination Host Unreachable\n'
+				+ 'From 10.0.0.1 icmp_seq=2 Destination Host Unreachable';
+			const expected = 'From one.one.one.one (1.1.1.1) icmp_seq=1 Destination Host Unreachable\n'
+				+ 'From 10.0.0.1 icmp_seq=2 Destination Host Unreachable';
+
+			expect(normalizePingOutput(output, '1.1.1.1', 'one.one.one.one')).to.equal(expected);
+		});
+	});
+
 	describe('command handler', () => {
 		const sandbox = sinon.createSandbox();
 		const mockedSocket = sandbox.createStubInstance(Socket);
@@ -181,16 +205,128 @@ describe('ping command executor', () => {
 			sandbox.reset();
 		});
 
-		const successfulCommands = [ 'ping-success-linux', 'ping-success-linux-no-domain', 'ping-no-source-ip-linux', 'ping-unreachable-linux' ];
+		it('resolves the ICMP target before starting ping and restores its hostname', async () => {
+			const options = {
+				type: 'ping' as PingOptions['type'],
+				timeout: 5,
+				target: 'example.com',
+				packets: 3,
+				protocol: 'ICMP',
+				port: 80,
+				inProgressUpdates: true,
+				ipVersion: 4 as const,
+			};
+			const lookup = sandbox.stub();
+			lookup.onFirstCall().resolves([ '1.1.1.1', 4 ]);
+			const mockedCmd = getExecaMock();
+			const cmd = sandbox.stub().returns(mockedCmd);
+			const runPromise = new PingCommand(cmd, lookup).run(mockedSocket as any, 'measurement', 'test', options);
+			const rawOutput = 'PING 1.1.1.1 (1.1.1.1) 56(84) bytes of data.\n'
+				+ '64 bytes from 1.1.1.1: icmp_seq=1 ttl=57 time=4.25 ms\n'
+				+ '\n--- 1.1.1.1 ping statistics ---\n'
+				+ '1 packets transmitted, 1 received, 0% packet loss\n'
+				+ 'rtt min/avg/max/mdev = 4.250/4.250/4.250/0.000 ms';
 
-		for (const command of successfulCommands) {
+			await new Promise(resolve => setImmediate(resolve));
+			mockedCmd.stdout.write('PING 1.1.1.1 (1.1.1.1) 56(84) bytes of data.\n');
+			await new Promise(resolve => setTimeout(resolve, 150));
+
+			mockedCmd.resolve({ stdout: rawOutput });
+
+			await runPromise;
+
+			expect(cmd.firstCall.args[0].target).to.equal('1.1.1.1');
+			const progressCall = mockedSocket.emit.getCalls().find(call => call.args[0] === 'probe:measurement:progress');
+			expect((progressCall?.args[1] as any).result.rawOutput).to.equal('PING example.com (1.1.1.1) 56(84) bytes of data.\n');
+			const result = (mockedSocket.emit.lastCall.args[1] as any).result;
+			expect(result.rawOutput).to.include('PING example.com (1.1.1.1)');
+			expect(result.rawOutput).to.include('64 bytes from example.com (1.1.1.1):');
+			expect(result.resolvedHostname).to.equal('example.com');
+		});
+
+		it('does not derive target metadata from an intermediate error response', async () => {
+			const lookup = sandbox.stub().resolves([ '1.1.1.1', 4 ]);
+			const mockedCmd = getExecaMock();
+			const command = new PingCommand(sandbox.stub().returns(mockedCmd), lookup);
+			const runPromise = command.run(mockedSocket as any, 'measurement', 'test', {
+				type: 'ping', timeout: 5, target: 'example.com', packets: 3, protocol: 'ICMP', port: 80, inProgressUpdates: false, ipVersion: 4,
+			});
+			const rawOutput = 'PING 1.1.1.1 (1.1.1.1) 56(84) bytes of data.\n'
+				+ 'From router.example (192.0.2.1) icmp_seq=1 Destination Host Unreachable\n'
+				+ '\n--- 1.1.1.1 ping statistics ---\n'
+				+ '1 packets transmitted, 0 received, +1 errors, 100% packet loss';
+
+			await new Promise(resolve => setImmediate(resolve));
+			mockedCmd.resolve({ stdout: rawOutput });
+
+			const result = await runPromise as any;
+
+			expect(result.resolvedAddress).to.equal('1.1.1.1');
+			expect(result.resolvedHostname).to.equal('example.com');
+		});
+
+		it('resolves a TCP hostname before dispatching the numeric target', async () => {
+			const lookup = sandbox.stub().resolves([ '1.1.1.1', 4 ]);
+			const command = new PingCommand(sandbox.stub(), lookup);
+			sandbox.stub(command, 'runTcp').callsFake(async (...args: any[]) => ({
+				target: args[4].target,
+				hostname: args[5],
+			}));
+
+			const result = await command.run(mockedSocket as any, 'measurement', 'test', {
+				type: 'ping', timeout: 5, target: 'example.com', packets: 3, protocol: 'TCP', port: 80, inProgressUpdates: false, ipVersion: 4,
+			});
+
+			expect(result).to.deep.equal({ target: '1.1.1.1', hostname: 'example.com' });
+		});
+
+		it('uses a best-effort PTR hostname when dispatching a TCP IP target', async () => {
+			const lookup = sandbox.stub().resolves([ 'one.one.one.one' ]);
+			const command = new PingCommand(sandbox.stub(), lookup);
+			sandbox.stub(command, 'runTcp').callsFake(async (...args: any[]) => ({
+				target: args[4].target,
+				hostname: args[5],
+			}));
+
+			const result = await command.run(mockedSocket as any, 'measurement', 'test', {
+				type: 'ping', timeout: 5, target: '1.1.1.1', packets: 3, protocol: 'TCP', port: 80, inProgressUpdates: false, ipVersion: 4,
+			});
+
+			expect(result).to.deep.equal({ target: '1.1.1.1', hostname: 'one.one.one.one' });
+		});
+
+		for (const protocol of [ 'ICMP', 'TCP' ]) {
+			it(`classifies an owned ${protocol} target lookup deadline as resolver`, async () => {
+				const lookup = sandbox.stub().callsFake((_target: string, { signal }: { signal: AbortSignal }) => new Promise((_resolve, reject) => {
+					signal.addEventListener('abort', () => reject(signal.reason), { once: true });
+				}));
+				const cmd = sandbox.stub();
+				const command = new PingCommand(cmd, lookup);
+
+				await command.run(mockedSocket as any, 'measurement', 'test', {
+					type: 'ping', timeout: 0, target: 'example.com', packets: 3, protocol, port: 80, inProgressUpdates: false, ipVersion: 4,
+				});
+
+				expect(cmd.notCalled).to.be.true;
+				expect((mockedSocket.emit.lastCall.args[1] as any).result.failureSource).to.equal('resolver');
+			});
+		}
+
+		const successfulCommands = [
+			{ command: 'ping-success-linux', address: '172.217.20.206', hostname: 'lhr25s33-in-f14.1e100.net' },
+			{ command: 'ping-success-linux-no-domain', address: '1.1.1.1', hostname: '1.1.1.1' },
+			{ command: 'ping-no-source-ip-linux', address: '172.217.20.206', hostname: 'lhr25s33-in-f14.1e100.net' },
+			{ command: 'ping-unreachable-linux', address: '104.18.186.31', hostname: 'eth2-1109-fsn-lf-e03.productsup.int' },
+		];
+
+		for (const { command, address, hostname } of successfulCommands) {
 			it(`should run and parse successful commands - ${command}`, async () => {
 				const rawOutput = getCmdMock(command);
 				const expectedResult = getCmdMockResult(command);
 				const options = {
 					type: 'ping' as PingOptions['type'],
 					timeout: 5,
-					target: 'google.com',
+					target: address,
 					packets: 3,
 					protocol: 'ICMP',
 					port: 80,
@@ -202,7 +338,7 @@ describe('ping command executor', () => {
 
 				const ping = new PingCommand();
 
-				const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
+				const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options, hostname);
 
 				const { emitChunks, verifyChunks } = chunkOutput(rawOutput);
 
@@ -217,14 +353,14 @@ describe('ping command executor', () => {
 			});
 		}
 
-		for (const command of successfulCommands) {
+		for (const { command, address, hostname } of successfulCommands) {
 			it(`should run and parse successful commands without progress updates - ${command}`, async () => {
 				const rawOutput = getCmdMock(command);
 				const expectedResult = getCmdMockResult(command);
 				const options = {
 					type: 'ping' as PingOptions['type'],
 					timeout: 5,
-					target: 'google.com',
+					target: address,
 					packets: 3,
 					protocol: 'ICMP',
 					port: 80,
@@ -236,7 +372,7 @@ describe('ping command executor', () => {
 
 				const ping = new PingCommand();
 
-				const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
+				const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options, hostname);
 
 				const { emitChunks } = chunkOutput(rawOutput);
 
@@ -290,7 +426,7 @@ describe('ping command executor', () => {
 			const options = {
 				type: 'ping' as PingOptions['type'],
 				timeout: 10,
-				target: 'google.com',
+				target: '1.1.1.1',
 				packets: 16,
 				protocol: 'TCP',
 				port: 80,
@@ -300,9 +436,14 @@ describe('ping command executor', () => {
 			const tcpHandler = sandbox.stub().resolves([]);
 			const ping = new PingCommand();
 
-			await ping.runTcp(tcpHandler, mockedSocket as any, 'measurement', 'test', options);
+			await ping.runTcp(tcpHandler, mockedSocket as any, 'measurement', 'test', options, 'example.com', 8000);
 
-			expect(tcpHandler.firstCall.args[0]).to.deep.include({ timeout: 10_000, interval: 290 });
+			expect(tcpHandler.firstCall.args[0]).to.deep.include({
+				address: '1.1.1.1',
+				hostname: 'example.com',
+				timeout: 8000,
+				interval: 290,
+			});
 		});
 
 		for (const command of tcpCommands) {
@@ -339,7 +480,7 @@ describe('ping command executor', () => {
 			const options = {
 				type: 'ping' as PingOptions['type'],
 				timeout: 5,
-				target: 'google.com',
+				target: '2a00:1450:4026:808::200e',
 				packets: 3,
 				protocol: 'ICMP',
 				port: 80,
@@ -351,7 +492,7 @@ describe('ping command executor', () => {
 
 			const ping = new PingCommand();
 
-			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
+			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options, 'hem08s10-in-x0e.1e100.net');
 
 			const { emitChunks } = chunkOutput(rawOutput);
 
@@ -383,7 +524,7 @@ describe('ping command executor', () => {
 
 			const ping = new PingCommand();
 
-			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
+			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options, '2606:4700:4700::1111');
 
 			const { emitChunks } = chunkOutput(rawOutput);
 
@@ -394,39 +535,6 @@ describe('ping command executor', () => {
 
 			expect(mockedSocket.emit.callCount).to.equal(1);
 			expect(mockedSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
-		});
-
-		it('should run and fail private ip command on the progress step', async () => {
-			const command = 'ping-private-ip-linux';
-			const rawOutput = getCmdMock(command);
-			const expectedResult = getCmdMockResult(command);
-			const options = {
-				type: 'ping' as PingOptions['type'],
-				timeout: 5,
-				target: 'google.com',
-				packets: 3,
-				protocol: 'ICMP',
-				port: 80,
-				inProgressUpdates: true,
-				ipVersion: 4 as const,
-			};
-
-			const mockedCmd = getExecaMock();
-
-			const ping = new PingCommand();
-
-			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
-
-			const { emitChunks } = chunkOutput(rawOutput);
-			await emitChunks(mockedCmd.stdout);
-
-			mockedCmd.reject(new Error('KILL'));
-
-			await runPromise;
-
-			expect(mockedCmd.kill.called).to.be.true;
-			expect(mockedSocket.emit.calledOnce).to.be.true;
-			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
 		it('should run and fail private ip command on the progress step (TCP)', async () => {
@@ -455,67 +563,6 @@ describe('ping command executor', () => {
 			expect(mockedSocket.emit.secondCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
-		it('should run and fail private ip command on the result step', async () => {
-			const command = 'ping-private-ip-linux';
-			const rawOutput = getCmdMock(command);
-			const expectedResult = getCmdMockResult(command);
-			const options = {
-				type: 'ping' as PingOptions['type'],
-				timeout: 5,
-				target: 'google.com',
-				packets: 3,
-				protocol: 'ICMP',
-				port: 80,
-				inProgressUpdates: true,
-				ipVersion: 4 as const,
-			};
-
-			const mockedCmd = getExecaMock();
-
-
-			const ping = new PingCommand();
-
-			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
-			mockedCmd.resolve({ stdout: rawOutput });
-			await runPromise;
-
-			expect(mockedCmd.kill.called).to.be.false;
-			expect(mockedSocket.emit.calledOnce).to.be.true;
-			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
-		});
-
-		it('should run and fail private ip command on the result step if progress updates are disabled', async () => {
-			const command = 'ping-private-ip-linux';
-			const rawOutput = getCmdMock(command);
-			const expectedResult = getCmdMockResult(command);
-			const options = {
-				type: 'ping' as PingOptions['type'],
-				timeout: 5,
-				target: 'google.com',
-				packets: 3,
-				protocol: 'ICMP',
-				port: 80,
-				inProgressUpdates: false,
-				ipVersion: 4 as const,
-			};
-
-			const mockedCmd = getExecaMock();
-
-			const ping = new PingCommand();
-
-			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
-
-			const { emitChunks } = chunkOutput(rawOutput);
-			await emitChunks(mockedCmd.stdout);
-
-			mockedCmd.resolve({ stdout: rawOutput });
-			await runPromise;
-
-			expect(mockedCmd.kill.called).to.be.false;
-			expect(mockedSocket.emit.calledOnce).to.be.true;
-			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
-		});
-
 		it('should run and fail private ip command on the result step if progress updates are disabled (TCP)', async () => {
 			const command = 'ping-private-ip-linux-tcp';
 			const rawOutput = getCmdMock(command);
@@ -542,16 +589,16 @@ describe('ping command executor', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
-		const failedCommands = [ 'ping-timeout-linux' ];
+		const failedCommands = [{ command: 'ping-timeout-linux', address: '123.21.43.124' }];
 
-		for (const command of failedCommands) {
+		for (const { command, address } of failedCommands) {
 			it(`should run and parse failed commands - ${command}`, async () => {
 				const rawOutput = getCmdMock(command);
 				const expectedResult = getCmdMockResult(command);
 				const options = {
 					type: 'ping' as PingOptions['type'],
 					timeout: 5,
-					target: 'google.com',
+					target: address,
 					packets: 3,
 					protocol: 'ICMP',
 					port: 80,
@@ -581,7 +628,7 @@ describe('ping command executor', () => {
 			const options = {
 				type: 'ping' as PingOptions['type'],
 				timeout: 5,
-				target: 'google.com',
+				target: '172.217.20.206',
 				packets: 3,
 				protocol: 'ICMP',
 				port: 80,
@@ -609,7 +656,7 @@ describe('ping command executor', () => {
 			const options = {
 				type: 'ping' as PingOptions['type'],
 				timeout: 5,
-				target: 'google.com',
+				target: '1.1.1.1',
 				packets: 3,
 				protocol: 'ICMP',
 				port: 80,
@@ -628,44 +675,13 @@ describe('ping command executor', () => {
 					status: 'failed',
 					failureSource: 'internal',
 					rawOutput: '',
-					resolvedAddress: null,
-					resolvedHostname: null,
+					resolvedAddress: '1.1.1.1',
+					resolvedHostname: '1.1.1.1',
 					timings: [],
 					stats: { min: null, max: null, avg: null, total: null, loss: null, rcv: null, drop: null },
 				},
 			}]);
 		});
-
-		for (const { expectedSource, message } of [
-			{ expectedSource: 'target', message: 'Name or service not known' },
-			{ expectedSource: 'target', message: 'Address family for hostname not supported' },
-			{ expectedSource: 'resolver', message: 'Temporary failure in name resolution' },
-		] as const) {
-			it(`should classify a timeout with "${message}" as ${expectedSource}`, async () => {
-				const mockedCmd = getExecaMock();
-				const ping = new PingCommand();
-				const options = {
-					type: 'ping' as PingOptions['type'],
-					timeout: 5,
-					target: 'missing.example',
-					packets: 3,
-					protocol: 'ICMP',
-					port: 80,
-					inProgressUpdates: false,
-					ipVersion: 4 as const,
-				};
-				const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
-				const error = new Error(message) as ExecaError;
-				error.stderr = '';
-				error.stdout = `ping: missing.example: ${message}`;
-				error.timedOut = true;
-				mockedCmd.reject(error);
-
-				await runPromise;
-
-				expect((mockedSocket.emit.firstCall.args[1] as any).result.failureSource).to.equal(expectedSource);
-			});
-		}
 
 		it('should classify an execa timeout after receiving replies as internal', async () => {
 			const mockedCmd = getExecaMock();
@@ -673,7 +689,7 @@ describe('ping command executor', () => {
 			const options = {
 				type: 'ping' as PingOptions['type'],
 				timeout: 5,
-				target: 'google.com',
+				target: '172.217.20.206',
 				packets: 3,
 				protocol: 'ICMP',
 				port: 80,
@@ -681,7 +697,7 @@ describe('ping command executor', () => {
 				ipVersion: 4 as const,
 			};
 
-			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
+			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options, 'lhr25s33-in-f14.1e100.net');
 			const timeoutError = new Error('Timeout') as ExecaError;
 			timeoutError.stderr = '';
 			timeoutError.timedOut = true;
@@ -723,13 +739,13 @@ describe('ping command executor', () => {
 			]);
 		});
 
-		it('should classify an execa timeout after emitting the header as target', async () => {
+		it('should classify an execa timeout after emitting only the header as internal', async () => {
 			const mockedCmd = getExecaMock();
 			const ping = new PingCommand();
 			const options = {
 				type: 'ping' as PingOptions['type'],
 				timeout: 5,
-				target: 'google.com',
+				target: '172.217.20.206',
 				packets: 3,
 				protocol: 'ICMP',
 				port: 80,
@@ -746,8 +762,33 @@ describe('ping command executor', () => {
 			await runPromise;
 
 			const result = (mockedSocket.emit.lastCall.args[1] as any).result;
-			expect(result.failureSource).to.equal('target');
+			expect(result.failureSource).to.equal('internal');
 			expect(result.resolvedAddress).to.equal('172.217.20.206');
+		});
+
+		it('should classify an execa timeout after ping reports no answer as target', async () => {
+			const mockedCmd = getExecaMock();
+			const ping = new PingCommand();
+			const options = {
+				type: 'ping' as PingOptions['type'],
+				timeout: 5,
+				target: '172.217.20.206',
+				packets: 3,
+				protocol: 'ICMP',
+				port: 80,
+				inProgressUpdates: false,
+				ipVersion: 4 as const,
+			};
+			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
+			const timeoutError = new Error('Timeout') as ExecaError;
+			timeoutError.stderr = '';
+			timeoutError.stdout = 'PING google.com (172.217.20.206) 56(84) bytes of data.\nno answer yet for icmp_seq=1';
+			timeoutError.timedOut = true;
+			mockedCmd.reject(timeoutError);
+
+			await runPromise;
+
+			expect((mockedSocket.emit.firstCall.args[1] as any).result.failureSource).to.equal('target');
 		});
 
 		it('should classify an execa timeout with invalid output as internal', async () => {
@@ -756,7 +797,7 @@ describe('ping command executor', () => {
 			const options = {
 				type: 'ping' as PingOptions['type'],
 				timeout: 5,
-				target: 'google.com',
+				target: '172.217.20.206',
 				packets: 3,
 				protocol: 'ICMP',
 				port: 80,
@@ -774,7 +815,7 @@ describe('ping command executor', () => {
 
 			const result = (mockedSocket.emit.lastCall.args[1] as any).result;
 			expect(result.failureSource).to.equal('internal');
-			expect(result.resolvedAddress).to.equal(null);
+			expect(result.resolvedAddress).to.equal('172.217.20.206');
 		});
 
 		it('should not prepend blank lines to a timeout without command output', async () => {
@@ -783,7 +824,7 @@ describe('ping command executor', () => {
 			const options = {
 				type: 'ping' as PingOptions['type'],
 				timeout: 5,
-				target: 'google.com',
+				target: '172.217.20.206',
 				packets: 3,
 				protocol: 'ICMP',
 				port: 80,

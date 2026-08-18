@@ -4,15 +4,17 @@ import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface, FailureSource, TestStatus } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
-import { joiValidateIp, isIpPrivate } from '../lib/ip.js';
+import { joiValidateIp } from '../lib/ip.js';
 import { scopedLogger } from '../lib/logger.js';
 import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import parse, { type PingParseOutput } from './handlers/ping/parse.js';
 import { tcpPing, formatTcpPingResult, TcpPingData } from './handlers/ping/tcp-ping.js';
-import { getPingBudget, getProcessTimeout } from '../helper/timeout.js';
+import { createMeasurementDeadline, getPingBudget, getProcessTimeout } from '../helper/timeout.js';
 import { validateCommandOptions } from '../helper/validate-command-options.js';
-import { getNativeNameResolutionFailureSource } from '../helper/native-name-resolution-failure.js';
+import { resolveCommandTarget, type CommandTargetLookup } from '../helper/resolve-command-target.js';
+import { getFailureSource, isExposed } from '../lib/internal-error.js';
+import { cachedDnsLookup } from '../lib/dns.js';
 
 export type PingOptions = {
 	type: 'ping';
@@ -27,6 +29,7 @@ export type PingOptions = {
 
 export type PingCommandOptions = {
 	interval?: number;
+	processTimeout?: number;
 };
 
 const allowedIpVersions = [ 4, 6 ];
@@ -76,24 +79,43 @@ const logger = scopedLogger('ping-command');
 const classifyIcmpFailure = (
 	error: unknown,
 	rawOutput: string,
-	resolutionCompleted: boolean,
 	targetResponded: boolean,
 ): FailureSource => {
-	const nameResolutionSource = getNativeNameResolutionFailureSource(rawOutput);
-
-	if (nameResolutionSource) {
-		return nameResolutionSource;
-	}
-
 	if (isExecaError(error) && error.timedOut) {
 		if (targetResponded) {
 			return 'internal';
 		}
 
-		return resolutionCompleted ? 'target' : 'internal';
+		return /(?:^|\n)no answer yet for |100% packet loss/m.test(rawOutput) ? 'target' : 'internal';
 	}
 
 	return 'internal';
+};
+
+export const normalizePingOutput = (output: string, address: string, hostname: string): string => {
+	if (hostname === address) {
+		return output;
+	}
+
+	return output.split('\n').map((line) => {
+		if (line.startsWith(`PING ${address} (${address})`)) {
+			return line.replace(`PING ${address} (${address})`, `PING ${hostname} (${address})`);
+		}
+
+		if (line.includes(` bytes from ${address}:`)) {
+			return line.replace(` bytes from ${address}:`, ` bytes from ${hostname} (${address}):`);
+		}
+
+		if (line.startsWith(`From ${address} `)) {
+			return line.replace(`From ${address} `, `From ${hostname} (${address}) `);
+		}
+
+		if (line === `--- ${address} ping statistics ---`) {
+			return `--- ${hostname} ping statistics ---`;
+		}
+
+		return line;
+	}).join('\n');
 };
 
 export const argBuilder = (options: PingOptions, commandOptions: PingCommandOptions = {}): string[] => {
@@ -102,6 +124,7 @@ export const argBuilder = (options: PingOptions, commandOptions: PingCommandOpti
 	const args = [
 		`-${options.ipVersion}`,
 		'-O',
+		'-n',
 		[ '-c', options.packets.toString() ],
 		[ '-i', String(packetInterval) ],
 		[ '-W', String(responseTimeout) ],
@@ -113,10 +136,12 @@ export const argBuilder = (options: PingOptions, commandOptions: PingCommandOpti
 
 export const pingCmd = (options: PingOptions, commandOptions: PingCommandOptions = {}): ExecaChildProcess => {
 	const args = argBuilder(options, commandOptions);
-	return execa('unbuffer', [ 'ping', ...args ], { timeout: getProcessTimeout(options.timeout) });
+	return execa('unbuffer', [ 'ping', ...args ], { timeout: commandOptions.processTimeout ?? getProcessTimeout(options.timeout) });
 };
 
 export class PingCommand implements CommandInterface<PingOptions> {
+	constructor (private readonly cmd = pingCmd, private readonly lookup: CommandTargetLookup = cachedDnsLookup) {}
+
 	async run (socket: Socket, measurementId: string, testId: string, options: PingOptions): Promise<unknown> {
 		const validationResult = validateCommandOptions(pingOptionsSchema, options);
 
@@ -125,35 +150,60 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		}
 
 		const { value: cmdOptions } = validationResult;
+		const deadline = createMeasurementDeadline(cmdOptions.timeout);
+		const { dnsHeadroom } = getPingBudget(cmdOptions.packets, cmdOptions.timeout);
+		const lookupSignal = deadline.signalFor(dnsHeadroom);
 
-		return cmdOptions.protocol === 'TCP'
-			? this.runTcp(tcpPing, socket, measurementId, testId, cmdOptions)
-			: this.runIcmp(pingCmd, socket, measurementId, testId, cmdOptions);
+		let target;
+
+		try {
+			target = await resolveCommandTarget(cmdOptions.target, cmdOptions.ipVersion, lookupSignal, this.lookup);
+		} catch (error: unknown) {
+			let rawOutput = 'Test failed. Please try again.';
+
+			if (error instanceof Error && isExposed(error)) {
+				rawOutput = error.message;
+			} else {
+				logger.error(error);
+			}
+
+			const result: PingParseOutput = {
+				status: 'failed',
+				failureSource: getFailureSource(error, 'internal'),
+				rawOutput,
+			};
+
+			const out = this.toJsonOutput(result);
+			new ProgressBuffer(socket, testId, measurementId, 'append').pushResult(out);
+			return out;
+		}
+
+		const resolvedOptions = { ...cmdOptions, target: target.address };
+		const remaining = deadline.remainingMs();
+
+		if (cmdOptions.protocol === 'TCP') {
+			return this.runTcp(tcpPing, socket, measurementId, testId, resolvedOptions, target.hostname, remaining);
+		}
+
+		return this.runIcmp((commandOptions: PingOptions) => this.cmd(commandOptions, { processTimeout: deadline.processTimeout() }), socket, measurementId, testId, resolvedOptions, target.hostname);
 	}
 
-	async runIcmp (cmdFn: typeof pingCmd, socket: Socket, measurementId: string, testId: string, cmdOptions: PingOptions): Promise<unknown> {
+	async runIcmp (cmdFn: typeof pingCmd, socket: Socket, measurementId: string, testId: string, cmdOptions: PingOptions, resolvedHostname = cmdOptions.target): Promise<unknown> {
 		const buffer = new ProgressBuffer(socket, testId, measurementId, 'append');
-		let isResultPrivate = false;
+		const cmd = cmdFn(cmdOptions);
 		let result: PingParseOutput;
 
-		const cmd = cmdFn(cmdOptions);
-
 		if (cmd.stdout && cmdOptions.inProgressUpdates) {
-			const pStdout: string[] = [];
 			byLine(cmd.stdout, (data) => {
-				pStdout.push(data);
-
-				const parsed = parse(pStdout.join(''));
-				const isValid = this.validatePartialResult(parsed, cmd);
-
-				if (!isValid) {
-					isResultPrivate = true;
-					return;
-				}
-
-				buffer.pushProgress({ rawOutput: data });
+				buffer.pushProgress({ rawOutput: normalizePingOutput(data, cmdOptions.target, resolvedHostname) });
 			});
 		}
+
+		const toResult = (stdout: string): PingParseOutput => ({
+			...parse(normalizePingOutput(stdout, cmdOptions.target, resolvedHostname)),
+			resolvedAddress: cmdOptions.target,
+			resolvedHostname,
+		});
 
 		try {
 			const cmdResult = await cmd;
@@ -162,26 +212,20 @@ export class PingCommand implements CommandInterface<PingOptions> {
 				logger.error('Successful stdout is empty.', cmdResult);
 			}
 
-			const parseResult = parse(cmdResult.stdout);
-			result = parseResult;
+			result = toResult(cmdResult.stdout);
 
 			if (result.status === 'failed') {
 				result.failureSource = 'internal';
-			}
-
-			if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
-				isResultPrivate = true;
 			}
 		} catch (error: unknown) {
 			result = { status: 'failed', failureSource: 'internal', rawOutput: 'Test failed. Please try again.' };
 
 			if (isExecaError(error)) {
-				result = parse(error.stdout.toString());
+				result = toResult(error.stdout.toString());
 
 				result.failureSource = classifyIcmpFailure(
 					error,
 					result.rawOutput,
-					Boolean(result.resolvedAddress),
 					Boolean(result.timings?.length),
 				);
 
@@ -196,20 +240,12 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			}
 		}
 
-		if (isResultPrivate) {
-			result = {
-				status: 'failed',
-				failureSource: 'target',
-				rawOutput: 'Private IP ranges are not allowed.',
-			};
-		}
-
 		const out = this.toJsonOutput(result);
 		buffer.pushResult(out);
 		return out;
 	}
 
-	async runTcp (cmdFn: typeof tcpPing, socket: Socket, measurementId: string, testId: string, cmdOptions: PingOptions): Promise<unknown> {
+	async runTcp (cmdFn: typeof tcpPing, socket: Socket, measurementId: string, testId: string, cmdOptions: PingOptions, hostname = cmdOptions.target, timeout = cmdOptions.timeout * 1000): Promise<unknown> {
 		const buffer = new ProgressBuffer(socket, testId, measurementId, 'diff');
 		const progress: Array<TcpPingData> = [];
 
@@ -222,21 +258,12 @@ export class PingCommand implements CommandInterface<PingOptions> {
 		} : undefined;
 
 		const { interval } = getPingBudget(cmdOptions.packets, cmdOptions.timeout);
-		const tcpPingResult = await cmdFn({ ...cmdOptions, timeout: cmdOptions.timeout * 1000, interval: interval * 1000 }, progressHandler);
+		const tcpPingResult = await cmdFn({ address: cmdOptions.target, hostname, port: cmdOptions.port, packets: cmdOptions.packets, timeout, interval: interval * 1000, ipVersion: cmdOptions.ipVersion }, progressHandler);
 		const result = formatTcpPingResult(tcpPingResult);
 
 		const out = this.toJsonOutput(result);
 		buffer.pushResult(out);
 		return out;
-	}
-
-	private validatePartialResult (parsedOutput: PingParseOutput, cmd: ExecaChildProcess): boolean {
-		if (isIpPrivate(parsedOutput.resolvedAddress ?? '')) {
-			cmd.kill('SIGKILL');
-			return false;
-		}
-
-		return true;
 	}
 
 	private toJsonOutput (input: PingParseOutput): PingParseOutputJson {
