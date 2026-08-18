@@ -76,20 +76,16 @@ describe('probe settings', () => {
 		const store = new ProbeSettingsStore(settingsFile);
 		fs.mkdirSync(settingsFile);
 
-		const result = store.update({ meteredConnection: true });
+		store.update({ meteredConnection: true });
 
-		expect(result).to.include({ success: false, source: 'persistence' });
-		expect(result).to.have.property('error').that.is.an.instanceOf(Error);
 		expect(store.get()).to.deep.equal({ meteredConnection: true });
 	});
 
 	it('should reject updates with invalid values', () => {
 		const store = new ProbeSettingsStore(settingsFile);
 
-		const result = store.update({ meteredConnection: 'true' } as unknown as Partial<ProbeSettings>);
+		store.update({ meteredConnection: 'true' } as unknown as Partial<ProbeSettings>);
 
-		expect(result).to.include({ success: false, source: 'validation' });
-		expect(result).to.have.property('error').that.is.an.instanceOf(Error);
 		expect(store.get()).to.deep.equal({ meteredConnection: false });
 		expect(fs.existsSync(settingsFile)).to.be.false;
 	});
@@ -97,10 +93,8 @@ describe('probe settings', () => {
 	it('should reject updates with unknown properties', () => {
 		const store = new ProbeSettingsStore(settingsFile);
 
-		const result = store.update({ unknown: true } as unknown as Partial<ProbeSettings>);
+		store.update({ unknown: true } as unknown as Partial<ProbeSettings>);
 
-		expect(result).to.include({ success: false, source: 'validation' });
-		expect(result).to.have.property('error').that.is.an.instanceOf(Error);
 		expect(store.get()).to.deep.equal({ meteredConnection: false });
 		expect(fs.existsSync(settingsFile)).to.be.false;
 	});

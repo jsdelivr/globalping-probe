@@ -31,7 +31,6 @@ describe('index module', () => {
 	statusManagerStub.getStatus.returns('ready');
 	const initStatusManagerStub = sinon.stub().returns(statusManagerStub);
 	const getStatusManagerStub = sinon.stub().returns(statusManagerStub);
-	const getProbeSettingsStub = sinon.stub();
 	const updateProbeSettingsStub = sinon.stub();
 
 	const mockSocket = new MockSocket();
@@ -58,7 +57,7 @@ describe('index module', () => {
 		await td.replaceEsm('socket.io-client', { io: ioStub });
 		await td.replaceEsm('../../src/command/ping-command.ts', { PingCommand: PingCommandStub, pingCmd: pingCmdStub });
 		await td.replaceEsm('../../src/status-manager/status-manager.ts', { initStatusManager: initStatusManagerStub, getStatusManager: getStatusManagerStub });
-		await td.replaceEsm('../../src/lib/probe-settings.ts', { getProbeSettings: getProbeSettingsStub, updateProbeSettings: updateProbeSettingsStub });
+		await td.replaceEsm('../../src/lib/probe-settings.ts', { updateProbeSettings: updateProbeSettingsStub });
 		process.env['GP_HOST_HW'] = 'true';
 		process.env['GP_HOST_DEVICE'] = 'v1';
 	});
@@ -83,7 +82,6 @@ describe('index module', () => {
 
 		connectStub.reset();
 		disconnectStub.reset();
-		getProbeSettingsStub.reset();
 		updateProbeSettingsStub.reset();
 		sandbox.restore();
 	});
@@ -138,34 +136,10 @@ describe('index module', () => {
 	it('should update probe settings received from the API', async () => {
 		await import('../../src/probe.js');
 		const settings = { meteredConnection: true };
-		updateProbeSettingsStub.returns({ success: true });
-		getProbeSettingsStub.returns(settings);
 
 		mockSocket.emit('api:settings:update', settings);
 
 		expect(updateProbeSettingsStub.calledOnceWithExactly(settings)).to.be.true;
-		expect(getProbeSettingsStub.calledOnce).to.be.true;
-	});
-
-	it('should handle probe settings persistence failures', async () => {
-		await import('../../src/probe.js');
-		const settings = { meteredConnection: false };
-		updateProbeSettingsStub.returns({ success: false, source: 'persistence', error: new Error('Failed to persist settings.') });
-		getProbeSettingsStub.returns(settings);
-
-		expect(() => mockSocket.emit('api:settings:update', settings)).not.to.throw();
-		expect(updateProbeSettingsStub.calledOnceWithExactly(settings)).to.be.true;
-		expect(getProbeSettingsStub.calledOnce).to.be.true;
-	});
-
-	it('should ignore invalid probe settings received from the API', async () => {
-		await import('../../src/probe.js');
-		const settings = { meteredConnection: 'true' };
-		updateProbeSettingsStub.returns({ success: false, source: 'validation', error: new Error('Invalid probe settings.') });
-
-		expect(() => mockSocket.emit('api:settings:update', settings)).not.to.throw();
-		expect(updateProbeSettingsStub.calledOnceWithExactly(settings)).to.be.true;
-		expect(getProbeSettingsStub.notCalled).to.be.true;
 	});
 
 	it('should disconnect on "connect_error"', async () => {

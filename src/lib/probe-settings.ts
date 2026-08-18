@@ -1,9 +1,11 @@
 import fs from 'node:fs';
 import Joi from 'joi';
 import type { ProbeSettings } from '../types.js';
+import { scopedLogger } from './logger.js';
 
 const PROBE_SETTINGS_FILE = '/.PROBE-SETTINGS';
 const DEFAULT_PROBE_SETTINGS: ProbeSettings = { meteredConnection: false };
+const logger = scopedLogger('probe-settings');
 
 const probeSettingsSchema = Joi.object<Partial<ProbeSettings>>({
 	meteredConnection: Joi.boolean(),
@@ -14,8 +16,6 @@ const removeInvalidSettingsFile = (file: string): void => {
 		fs.rmSync(file, { force: true });
 	} catch {}
 };
-
-type ProbeSettingsUpdateResult = { success: true } | { success: false; source: 'validation' | 'persistence'; error: unknown };
 
 export class ProbeSettingsStore {
 	private settings: ProbeSettings;
@@ -53,11 +53,12 @@ export class ProbeSettingsStore {
 		return { ...this.settings };
 	}
 
-	public update (settings: Partial<ProbeSettings>): ProbeSettingsUpdateResult {
+	public update (settings: Partial<ProbeSettings>): void {
 		const result = probeSettingsSchema.validate(settings, { convert: false });
 
 		if (result.error) {
-			return { success: false, source: 'validation', error: result.error };
+			logger.error('Invalid probe settings received:', result.error);
+			return;
 		}
 
 		const updatedSettings = { ...this.settings, ...result.value };
@@ -66,10 +67,11 @@ export class ProbeSettingsStore {
 		try {
 			fs.writeFileSync(this.file, JSON.stringify(updatedSettings), 'utf8');
 		} catch (error: unknown) {
-			return { success: false, source: 'persistence', error };
+			logger.error('Probe settings updated in memory, but failed to persist them:', { settings: this.get(), error });
+			return;
 		}
 
-		return { success: true };
+		logger.info('Probe settings updated.', { settings: this.get() });
 	}
 }
 
@@ -77,6 +79,6 @@ const probeSettingsStore = new ProbeSettingsStore();
 
 export const getProbeSettings = (): Readonly<ProbeSettings> => probeSettingsStore.get();
 
-export const updateProbeSettings = (settings: Partial<ProbeSettings>): ProbeSettingsUpdateResult => {
+export const updateProbeSettings = (settings: Partial<ProbeSettings>): void => {
 	return probeSettingsStore.update(settings);
 };
