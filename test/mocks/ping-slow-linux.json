@@ -4,7 +4,7 @@
 	"result": {
 		"status": "finished",
 		"resolvedAddress": "172.217.20.206",
-		"resolvedHostname": null,
+		"resolvedHostname": "172.217.20.206",
 		"stats": {
 			"min": 507.950,
 			"avg": 507.970,

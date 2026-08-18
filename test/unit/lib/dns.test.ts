@@ -379,6 +379,13 @@ describe('dnsLookup / cachedDnsLookup', () => {
 		expect(await cachedDnsLookup('example.com', { rrtype: 'TXT' })).to.deep.equal([ 'AS123 | abc', 'AS456' ]);
 		expect(resolveTxt.callCount).to.equal(1);
 	});
+
+	it('returns PTR records from a reverse lookup', async () => {
+		const reverse = sandbox.stub(dns.promises.Resolver.prototype, 'reverse').resolves([ 'one.one.one.one' ]);
+
+		expect(await cachedDnsLookup('1.1.1.1', { rrtype: 'PTR' })).to.deep.equal([ 'one.one.one.one' ]);
+		expect(reverse.calledOnceWithExactly('1.1.1.1')).to.be.true;
+	});
 });
 
 describe('callbackify', () => {

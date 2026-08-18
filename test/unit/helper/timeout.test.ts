@@ -1,5 +1,7 @@
 import { expect } from 'chai';
+import * as sinon from 'sinon';
 import {
+	createMeasurementDeadline,
 	getMtrBudget,
 	getPingBudget,
 	getProcessTimeout,
@@ -7,6 +9,53 @@ import {
 } from '../../../src/helper/timeout.js';
 
 describe('command timeout helpers', () => {
+	describe('measurement deadline', () => {
+		it('should track the remaining measurement and process time', () => {
+			const clock = sinon.useFakeTimers();
+
+			try {
+				const deadline = createMeasurementDeadline(10);
+
+				expect(deadline.remainingMs()).to.equal(10_000);
+				expect(deadline.processTimeout()).to.equal(12_000);
+
+				clock.tick(3000);
+
+				expect(deadline.remainingMs()).to.equal(7000);
+				expect(deadline.processTimeout()).to.equal(9000);
+
+				clock.tick(7000);
+
+				expect(deadline.remainingMs()).to.equal(0);
+				expect(deadline.processTimeout()).to.equal(2000);
+			} finally {
+				clock.restore();
+			}
+		});
+
+		it('should create signals for a fixed interval and the remaining deadline', () => {
+			const clock = sinon.useFakeTimers();
+			const fixedSignal = new AbortController().signal;
+			const deadlineSignal = new AbortController().signal;
+			const timeout = sinon.stub(AbortSignal, 'timeout');
+			timeout.onFirstCall().returns(fixedSignal);
+			timeout.onSecondCall().returns(deadlineSignal);
+
+			try {
+				const deadline = createMeasurementDeadline(10);
+				clock.tick(3000);
+
+				expect(deadline.signalFor(4)).to.equal(fixedSignal);
+				expect(deadline.signal()).to.equal(deadlineSignal);
+				expect(timeout.firstCall.args).to.deep.equal([ 4000 ]);
+				expect(timeout.secondCall.args).to.deep.equal([ 7000 ]);
+			} finally {
+				timeout.restore();
+				clock.restore();
+			}
+		});
+	});
+
 	describe('ping budget', () => {
 		for (const { packets, timeout, expected } of [
 			{ packets: 3, timeout: 5, expected: { interval: 0.2, responseTimeout: 2.6, dnsHeadroom: 2 } },

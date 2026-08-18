@@ -25,7 +25,7 @@ const roundDown = (value: number, places = 2): number => {
 	return Math.floor((value + 1e-9) * scale) / scale;
 };
 
-export const getPingBudget = (packets: number, timeout: number, intervalOverride?: number): PingBudget => {
+export const getPingBudget = (packets: number, timeoutSeconds: number, intervalOverride?: number): PingBudget => {
 	const minimumDnsHeadroom = 1;
 	const minimumResponseTimeout = 1;
 	const dnsHeadroomShare = 0.2;
@@ -35,7 +35,7 @@ export const getPingBudget = (packets: number, timeout: number, intervalOverride
 	const targetInterval = intervalOverride ?? pingConfig.interval;
 	const packetGaps = packets - 1;
 	let interval = intervalOverride ?? (packetGaps === 0 ? targetInterval : pingConfig.minInterval);
-	let remaining = timeout - packetGaps * interval;
+	let remaining = timeoutSeconds - packetGaps * interval;
 
 	const take = (requested: number): number => {
 		const allocated = Math.max(0, Math.min(requested, remaining));
@@ -45,7 +45,7 @@ export const getPingBudget = (packets: number, timeout: number, intervalOverride
 
 	let dnsHeadroom = take(minimumDnsHeadroom);
 	let responseTimeout = take(minimumResponseTimeout);
-	const preferredDnsHeadroom = Math.max(preferredDnsHeadroomFloor, timeout * dnsHeadroomShare);
+	const preferredDnsHeadroom = Math.max(preferredDnsHeadroomFloor, timeoutSeconds * dnsHeadroomShare);
 	dnsHeadroom += take(preferredDnsHeadroom - dnsHeadroom);
 	responseTimeout += take(preferredResponseTimeout - responseTimeout);
 
@@ -87,6 +87,18 @@ export const getMtrBudget = (packets: number, remaining: number): MtrBudget => {
 	return { interval, grace, nativeTimeout };
 };
 
-export const getProcessTimeout = (timeout: number, grace = processGrace): number => {
-	return Math.round((timeout + grace) * 1000);
+export const getProcessTimeout = (timeoutSeconds: number, graceSeconds = processGrace): number => {
+	return Math.round((timeoutSeconds + graceSeconds) * 1000);
+};
+
+export const createMeasurementDeadline = (timeoutSeconds: number) => {
+	const deadline = Date.now() + timeoutSeconds * 1000;
+	const remainingMs = () => Math.max(deadline - Date.now(), 0);
+
+	return {
+		remainingMs,
+		signal: () => AbortSignal.timeout(remainingMs()),
+		signalFor: (timeoutSeconds: number) => AbortSignal.timeout(timeoutSeconds * 1000),
+		processTimeout: () => getProcessTimeout(remainingMs() / 1000),
+	};
 };

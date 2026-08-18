@@ -39,23 +39,18 @@ export default function parse (rawOutput: string): PingParseOutput {
 		return { status: 'failed', rawOutput };
 	}
 
-	const header = /^PING\s(?<host>[^()\s]*?)\s?\((?:[^()\s]+\s?\()?(?<addr>[^()\s]+?)\)/.exec(lines[0] ?? '');
+	const hasHeader = /^PING\s[^()\s]*?\s?\((?:[^()\s]+\s?\()?(?:[^()\s]+?)\)/.test(lines[0] ?? '');
 
-	if (!header) {
+	if (!hasHeader) {
 		return { status: 'failed', rawOutput };
 	}
 
-	const resolvedAddress = String(header?.groups?.['addr']);
 	const timeLines = lines.slice(1).map(l => parseStatsLine(l)).filter(is.truthy);
-
-	const resolvedHostname = (/(?<=from\s).*?(?=\s\(|:\s)/i.exec((lines[1] ?? '')))?.[0];
 	const summaryHeaderIndex = lines.findIndex(l => /^---\s(.*)\sstatistics ---/.test(l));
 	const summary = parseSummary(lines.slice(summaryHeaderIndex + 1));
 
 	return {
 		status: 'finished',
-		resolvedAddress,
-		resolvedHostname: resolvedHostname ?? '',
 		timings: timeLines,
 		stats: summary,
 		rawOutput,

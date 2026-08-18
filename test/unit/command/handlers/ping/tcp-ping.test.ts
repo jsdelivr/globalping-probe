@@ -2,8 +2,6 @@ import net from 'node:net';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import * as td from 'testdouble';
-import { InternalError } from '../../../../../src/lib/internal-error.js';
-import type { cachedDnsLookup } from '../../../../../src/lib/dns.js';
 
 // This must remain type-only
 import type * as tcpPingModule from '../../../../../src/command/handlers/ping/tcp-ping.js';
@@ -239,7 +237,8 @@ describe('tcp-ping', () => {
 	describe('tcpPing', () => {
 		it('should successfully ping a fast server multiple times', async () => {
 			const options = {
-				target: HOST,
+				address: HOST,
+				hostname: HOST,
 				port: openPort,
 				packets: PACKETS,
 				timeout: TIMEOUT,
@@ -273,7 +272,8 @@ describe('tcp-ping', () => {
 			setServerDelay(40);
 
 			const options = {
-				target: HOST,
+				address: HOST,
+				hostname: HOST,
 				port: openPort,
 				packets: PACKETS,
 				timeout: 100,
@@ -311,7 +311,8 @@ describe('tcp-ping', () => {
 			setServerDelay(() => delayCalls++ % 2 ? 40 : 0);
 
 			const options = {
-				target: HOST,
+				address: HOST,
+				hostname: HOST,
 				port: openPort,
 				packets: PACKETS,
 				timeout: 100,
@@ -346,7 +347,8 @@ describe('tcp-ping', () => {
 			setServerDelay(() => delayCalls++ % 2 ? 150 : 0);
 
 			const options = {
-				target: HOST,
+				address: HOST,
+				hostname: HOST,
 				port: openPort,
 				packets: PACKETS,
 				timeout: TIMEOUT,
@@ -380,7 +382,8 @@ describe('tcp-ping', () => {
 			setServerDelay(100);
 
 			const options = {
-				target: HOST,
+				address: HOST,
+				hostname: HOST,
 				port: openPort,
 				packets: PACKETS,
 				timeout: TIMEOUT,
@@ -413,7 +416,8 @@ describe('tcp-ping', () => {
 
 		it('should handle connection refused', async () => {
 			const options = {
-				target: HOST,
+				address: HOST,
+				hostname: HOST,
 				port: refusedPort,
 				packets: PACKETS,
 				timeout: TIMEOUT,
@@ -441,9 +445,10 @@ describe('tcp-ping', () => {
 			}
 		});
 
-		it('should handle IP address targets without DNS resolution', async () => {
+		it('should use the provided hostname with a numeric target', async () => {
 			const options = {
-				target: HOST,
+				address: HOST,
+				hostname: 'example.com',
 				port: openPort,
 				packets: 1,
 				timeout: TIMEOUT,
@@ -451,101 +456,15 @@ describe('tcp-ping', () => {
 				ipVersion: 4 as const,
 			};
 
-			const resolver = sandbox.stub();
-			const results = await tcpPing(options, () => {}, resolver);
+			const results = await tcpPing(options);
+			const start = results.find(result => result.type === 'start');
 
-			expect(resolver.callCount).to.equal(0);
-
-			const errorData = results.find(r => r.type === 'error');
-			expect(errorData).to.not.exist;
-		});
-
-		it('should resolve hostnames using a DNS lookup and fail on private IPs', async () => {
-			const options = {
-				target: 'example.com',
+			expect(start).to.deep.equal({
+				type: 'start',
+				address: HOST,
+				hostname: 'example.com',
 				port: openPort,
-				packets: 1,
-				timeout: TIMEOUT,
-				interval: INTERVAL,
-				ipVersion: 4 as const,
-			};
-
-			const resolver = sandbox.stub().rejects(new InternalError('Private IP ranges are not allowed.', true, 'target'));
-			const results = await tcpPing(options, () => {}, resolver);
-
-			expect(resolver.callCount).to.equal(1);
-
-			const errorData = results.find(r => r.type === 'error');
-
-			expect(errorData).to.deep.equal({
-				type: 'error',
-				message: 'Private IP ranges are not allowed.',
-				failureSource: 'target',
 			});
-		});
-
-		it('should preserve target DNS failure classification', async () => {
-			const options = {
-				target: 'missing.example',
-				port: openPort,
-				packets: 1,
-				timeout: TIMEOUT,
-				interval: INTERVAL,
-				ipVersion: 4 as const,
-			};
-			const resolver = sandbox.stub().rejects(new InternalError('ENOTFOUND missing.example', true, 'target'));
-
-			const results = await tcpPing(options, () => {}, resolver);
-
-			expect(results).to.deep.equal([{
-				type: 'error',
-				message: 'ENOTFOUND missing.example',
-				failureSource: 'target',
-			}]);
-		});
-
-		it('should preserve resolver failure classification', async () => {
-			const options = {
-				target: 'example.com',
-				port: openPort,
-				packets: 1,
-				timeout: TIMEOUT,
-				interval: INTERVAL,
-				ipVersion: 4 as const,
-			};
-			const resolver = sandbox.stub().rejects(new InternalError('queryA ETIMEOUT example.com', true, 'resolver'));
-
-			const results = await tcpPing(options, () => {}, resolver);
-
-			expect(results).to.deep.equal([{
-				type: 'error',
-				message: 'queryA ETIMEOUT example.com',
-				failureSource: 'resolver',
-			}]);
-		});
-
-		it('should classify a DNS deadline as resolver', async () => {
-			const controller = new AbortController();
-			sandbox.stub(AbortSignal, 'timeout').returns(controller.signal);
-			const resolver = ((_hostname: string, options: any) => new Promise((_resolve, reject) => {
-				options.signal.addEventListener('abort', () => reject(options.signal.reason), { once: true });
-			})) as typeof cachedDnsLookup;
-			const promise = tcpPing({
-				target: 'example.com',
-				port: openPort,
-				packets: 1,
-				timeout: TIMEOUT,
-				interval: INTERVAL,
-				ipVersion: 4,
-			}, () => {}, resolver);
-
-			controller.abort();
-
-			expect(await promise).to.deep.equal([{
-				type: 'error',
-				message: 'This operation was aborted',
-				failureSource: 'resolver',
-			}]);
 		});
 	});
 

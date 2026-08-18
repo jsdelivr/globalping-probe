@@ -4,6 +4,9 @@ import type { ExecaChildProcess } from 'execa';
 import parse from '../command/handlers/ping/parse.js';
 import { tcpPing } from '../command/handlers/ping/tcp-ping.js';
 import type { PingOptions } from '../command/ping-command.js';
+import { getPingBudget } from '../helper/timeout.js';
+import { resolveCommandTarget, type CommandTargetLookup } from '../helper/resolve-command-target.js';
+import { cachedDnsLookup } from '../lib/dns.js';
 import { scopedLogger } from '../lib/logger.js';
 
 const logger = scopedLogger('status-manager');
@@ -20,6 +23,7 @@ export class IcmpTcpTest {
 		socket: Socket,
 		private readonly pingCmd: (options: PingOptions) => ExecaChildProcess,
 		private readonly runTcpPing: typeof tcpPing,
+		private readonly lookup: CommandTargetLookup = cachedDnsLookup,
 	) {
 		socket.on('api:connect:isProxy', async ({ isProxy }: { isProxy: boolean }) => {
 			this.isProxy = isProxy;
@@ -91,9 +95,19 @@ export class IcmpTcpTest {
 	// Returns icmpAvg - tcpAvg for a single target, or null on any error (treated as pass).
 	private async measureDiff (target: string, ipVersion: 4 | 6): Promise<number | null> {
 		try {
+			const timeout = 10;
+			const packets = 3;
+			const interval = 1;
+			const { dnsHeadroom } = getPingBudget(packets, timeout, interval);
+			const resolvedTarget = await resolveCommandTarget(
+				target,
+				ipVersion,
+				AbortSignal.timeout(dnsHeadroom * 1000),
+				this.lookup,
+			);
 			const [ icmpResult, tcpResults ] = await Promise.all([
-				this.pingCmd({ type: 'ping', timeout: 10, ipVersion, target, packets: 3, protocol: 'ICMP', port: 80, inProgressUpdates: false }),
-				this.runTcpPing({ target, port: 443, packets: 3, timeout: 10_000, interval: 500, ipVersion }),
+				this.pingCmd({ type: 'ping', timeout, ipVersion, target: resolvedTarget.address, packets, protocol: 'ICMP', port: 80, inProgressUpdates: false }),
+				this.runTcpPing({ address: resolvedTarget.address, hostname: resolvedTarget.hostname, port: 443, packets, timeout: timeout * 1000, interval: 500, ipVersion }),
 			]);
 
 			const icmpAvg = parse(icmpResult.stdout).stats?.avg ?? null;
@@ -145,8 +159,9 @@ export const initIcmpTcpTest = (
 	socket: Socket,
 	pingCmd: (options: PingOptions) => ExecaChildProcess,
 	runTcpPing: typeof tcpPing = tcpPing,
+	lookup: CommandTargetLookup = cachedDnsLookup,
 ) => {
-	icmpTcpTest = new IcmpTcpTest(updateStatus, socket, pingCmd, runTcpPing);
+	icmpTcpTest = new IcmpTcpTest(updateStatus, socket, pingCmd, runTcpPing, lookup);
 	return icmpTcpTest;
 };
 

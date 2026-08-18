@@ -7,7 +7,7 @@ import { InternalError } from './internal-error.js';
 export type IpFamily = 4 | 6;
 
 export type LookupOptions = { family: IpFamily; server?: string; allowPrivate?: boolean; signal?: AbortSignal };
-export type RecordOptions = { rrtype: 'TXT'; server?: string; signal?: AbortSignal };
+export type RecordOptions = { rrtype: 'TXT' | 'PTR'; server?: string; signal?: AbortSignal };
 type Options = LookupOptions | RecordOptions;
 
 type ResolvedRecords = { records: string[]; ttl: number };
@@ -49,9 +49,10 @@ const resolveRecords = async (hostname: string, options: Options): Promise<Resol
 
 		try {
 			if ('rrtype' in options) {
-				// Only TXT records are supported as other RRtypes have different TS return types.
-				const records = (await resolver.resolveTxt(hostname)).map(record => record.join(''));
-				// TXT records carry no TTL here, so they use a fixed cache TTL.
+				const records = options.rrtype === 'PTR'
+					? await resolver.reverse(hostname)
+					: (await resolver.resolveTxt(hostname)).map(record => record.join(''));
+				// TXT and PTR records carry no TTL here, so they use a fixed cache TTL.
 				return { records, ttl: DNS_CACHE_TXT_TTL };
 			}
 
