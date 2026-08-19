@@ -5,7 +5,7 @@ import tldts from 'tldts';
 import type { CommandInterface, FailureSource } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { byLine } from '../lib/by-line.js';
-import { isIpPrivate } from '../lib/ip.js';
+import { isIpPrivateTarget } from '../lib/ip.js';
 import { isExposed } from '../lib/internal-error.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { scopedLogger } from '../lib/logger.js';
@@ -234,10 +234,10 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 		if (isTrace(result)) {
 			privateResults = result.hops
 				.flatMap((result: DnsParseLoopResponse) => result.answers)
-				.filter((answer: unknown) => isDnsSection(answer) ? isIpPrivate(answer.value) : false);
+				.filter((answer: unknown) => isDnsSection(answer) ? isIpPrivateTarget(answer.value) : false);
 		} else {
 			privateResults = result.answers
-				.filter((answer: unknown) => isDnsSection(answer) ? isIpPrivate(answer.value) : false);
+				.filter((answer: unknown) => isDnsSection(answer) ? isIpPrivateTarget(answer.value) : false);
 		}
 
 		if (privateResults.length > 0 && !(tldts.parse(target).isIcann)) {

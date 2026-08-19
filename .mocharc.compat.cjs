@@ -1,0 +1,14 @@
+module.exports = {
+	'timeout': 30000,
+	'extension': [
+		'ts',
+	],
+	'node-option': [
+		'experimental-specifier-resolution=node',
+		'loader=ts-node/esm',
+		'loader=testdouble',
+	],
+	'spec': [
+		'test/compat/**/*.test.ts',
+	],
+};

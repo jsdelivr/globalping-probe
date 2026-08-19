@@ -5,7 +5,7 @@ import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface, FailureSource } from '../types.js';
 import { byLine } from '../lib/by-line.js';
-import { ipEquals, joiValidateIp, isIpPrivate } from '../lib/ip.js';
+import { ipEquals, joiValidateIp, isIpPrivate, isIpPrivateTarget } from '../lib/ip.js';
 import { cachedDnsLookup, type IpFamily } from '../lib/dns.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
@@ -289,7 +289,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 	private async resolveTarget (options: MtrOptions, signal?: AbortSignal): Promise<string> {
 		if (isIP(options.target) !== 0) {
-			if (isIpPrivate(options.target)) {
+			if (isIpPrivateTarget(options.target)) {
 				throw new InternalError('Private IP ranges are not allowed.', true, 'target');
 			}
 

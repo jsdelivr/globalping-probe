@@ -4,7 +4,7 @@ import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface, FailureSource, TestStatus } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
-import { joiValidateIp, isIpPrivate } from '../lib/ip.js';
+import { joiValidateIp, isIpPrivateTarget } from '../lib/ip.js';
 import { scopedLogger } from '../lib/logger.js';
 import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
@@ -169,7 +169,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 				result.failureSource = 'internal';
 			}
 
-			if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
+			if (isIpPrivateTarget(parseResult.resolvedAddress ?? '')) {
 				isResultPrivate = true;
 			}
 		} catch (error: unknown) {
@@ -231,7 +231,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 	}
 
 	private validatePartialResult (parsedOutput: PingParseOutput, cmd: ExecaChildProcess): boolean {
-		if (isIpPrivate(parsedOutput.resolvedAddress ?? '')) {
+		if (isIpPrivateTarget(parsedOutput.resolvedAddress ?? '')) {
 			cmd.kill('SIGKILL');
 			return false;
 		}

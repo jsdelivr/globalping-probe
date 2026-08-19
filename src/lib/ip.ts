@@ -76,6 +76,14 @@ export const isIpPrivate = (ip: string) => {
 	return false;
 };
 
+export const isIpPrivateTarget = (ip: string): boolean => {
+	if (process.env['NODE_ENV'] === 'test' && process.env['GP_TEST_ALLOW_PRIVATE_TARGETS'] === '1') {
+		return false;
+	}
+
+	return isIpPrivate(ip);
+};
+
 let localIps: Set<string> | null = null;
 
 export const getLocalIps = (refresh = false) => {
@@ -98,7 +106,7 @@ export const getLocalIps = (refresh = false) => {
 };
 
 export const joiValidateIp = (value: string, helpers: Joi.CustomHelpers): string | Joi.ErrorReport => {
-	if (isIpPrivate(value)) {
+	if (isIpPrivateTarget(value)) {
 		return helpers.error('ip.private');
 	}
 
