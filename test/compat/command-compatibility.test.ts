@@ -137,22 +137,43 @@ describe('native command compatibility', () => {
 	});
 
 	describe('DNS', () => {
-		let ipv4Server: DnsServer;
-		let ipv6Server: DnsServer;
+		let ipv4Server: DnsServer | undefined;
+		let ipv6Server: DnsServer | undefined;
+		let startupError: unknown;
 
 		before(async () => {
-			ipv4Server = await DnsServer.start('127.0.0.1');
-			ipv6Server = await DnsServer.start('::1');
+			try {
+				ipv4Server = await DnsServer.start('127.0.0.1');
+				ipv6Server = await DnsServer.start('::1');
+			} catch (error) {
+				startupError = error;
+				throw error;
+			}
 		});
 
 		after(async () => {
-			await Promise.all([ ipv4Server.close(), ipv6Server.close() ]);
+			const results = await Promise.allSettled([ ipv4Server, ipv6Server ]
+				.filter((server): server is DnsServer => server !== undefined)
+				.map(server => server.close()));
+			const closeFailure = results.find((result): result is PromiseRejectedResult => result.status === 'rejected');
+
+			if (!startupError && closeFailure) {
+				throw closeFailure.reason;
+			}
+		});
+
+		it('starts and closes DNS servers repeatedly', async () => {
+			for (let index = 0; index < 20; index++) {
+				const server = await DnsServer.start('127.0.0.1');
+				await server.close();
+			}
 		});
 
 		it('runs MTR against a hostname resolving to loopback', async () => {
+			const server = ipv4Server!;
 			const lookup = ((hostname: string, options: any) => cachedDnsLookup(hostname, {
 				...options,
-				server: `${ipv4Server.host}:${ipv4Server.port}`,
+				server: `${server.host}:${server.port}`,
 			})) as typeof cachedDnsLookup;
 			const result = await runCommand(new MtrCommand(mtrCmd, lookup), {
 				type: 'mtr',
@@ -177,7 +198,7 @@ describe('native command compatibility', () => {
 			{ server: 'ipv6', protocol: 'TCP', queryType: 'AAAA', target: 'ipv6.compat.test', expected: '::1' },
 		] as const) {
 			it(`queries ${queryType} over ${protocol} using the ${server} resolver`, async () => {
-				const dnsServer = server === 'ipv4' ? ipv4Server : ipv6Server;
+				const dnsServer = server === 'ipv4' ? ipv4Server! : ipv6Server!;
 				const options: DnsOptions = {
 					type: 'dns',
 					inProgressUpdates: false,
@@ -209,8 +230,8 @@ describe('native command compatibility', () => {
 					inProgressUpdates: false,
 					target,
 					protocol: 'UDP',
-					port: ipv4Server.port,
-					resolver: ipv4Server.host,
+					port: ipv4Server!.port,
+					resolver: ipv4Server!.host,
 					trace: false,
 					query: { type: 'A' },
 					ipVersion: 4,
@@ -251,8 +272,8 @@ describe('native command compatibility', () => {
 				inProgressUpdates: false,
 				target: 'silent.compat.test',
 				protocol: 'UDP',
-				port: ipv4Server.port,
-				resolver: ipv4Server.host,
+				port: ipv4Server!.port,
+				resolver: ipv4Server!.host,
 				trace: false,
 				query: { type: 'A' },
 				ipVersion: 4,

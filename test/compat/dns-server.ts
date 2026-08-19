@@ -12,6 +12,8 @@ const responses: Record<string, DnsResponse> = {
 	'silent.compat.test': 'silent',
 };
 
+const maximumStartAttempts = 3;
+
 const listen = (server: TcpServer, port: number, host: string): Promise<void> => new Promise((resolve, reject) => {
 	server.once('error', reject);
 
@@ -37,6 +39,14 @@ const closeTcp = (server: TcpServer): Promise<void> => new Promise((resolve, rej
 const closeUdp = (socket: UdpSocket): Promise<void> => new Promise((resolve) => {
 	socket.close(resolve);
 });
+
+const closeQuietly = async (close: () => Promise<void>): Promise<void> => {
+	try {
+		await close();
+	} catch {}
+};
+
+const isAddressInUse = (error: unknown): boolean => (error as NodeJS.ErrnoException).code === 'EADDRINUSE';
 
 const readName = (packet: Buffer, offset: number): { name: string; end: number } => {
 	const labels = [];
@@ -99,21 +109,40 @@ export class DnsServer {
 	) {}
 
 	static async start (host: string): Promise<DnsServer> {
-		const udp = createSocket(host.includes(':') ? 'udp6' : 'udp4');
-		await bind(udp, 0, host);
-		const port = (udp.address() as { port: number }).port;
-		const tcp = createTcpServer(socket => this.handleTcp(socket));
-		await listen(tcp, port, host);
+		for (let attempt = 0; attempt < maximumStartAttempts; attempt++) {
+			const udp = createSocket(host.includes(':') ? 'udp6' : 'udp4');
+			let tcp: TcpServer | undefined;
 
-		udp.on('message', (query, remote) => {
-			const response = buildResponse(query);
+			try {
+				await bind(udp, 0, host);
+				const port = (udp.address() as { port: number }).port;
+				tcp = createTcpServer(socket => this.handleTcp(socket));
+				await listen(tcp, port, host);
 
-			if (response) {
-				udp.send(response, remote.port, remote.address);
+				udp.on('message', (query, remote) => {
+					const response = buildResponse(query);
+
+					if (response) {
+						udp.send(response, remote.port, remote.address);
+					}
+				});
+
+				return new DnsServer(udp, tcp, host, port);
+			} catch (error) {
+				await Promise.all([
+					closeQuietly(() => closeUdp(udp)),
+					...(tcp ? [ closeQuietly(() => closeTcp(tcp)) ] : []),
+				]);
+
+				if (tcp && isAddressInUse(error) && attempt < maximumStartAttempts - 1) {
+					continue;
+				}
+
+				throw error;
 			}
-		});
+		}
 
-		return new DnsServer(udp, tcp, host, port);
+		throw new Error('Unable to start DNS server.');
 	}
 
 	static async getUnusedPort (host: string): Promise<number> {
