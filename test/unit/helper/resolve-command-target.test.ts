@@ -28,6 +28,18 @@ describe('resolveCommandTarget', () => {
 		expect(lookup.calledOnceWithExactly('1.1.1.1', { rrtype: 'PTR', signal })).to.be.true;
 	});
 
+	it('normalizes IPv6 targets without changing their address family', async () => {
+		const signal = new AbortController().signal;
+		const lookup = sinon.stub().resolves('example.com');
+
+		expect(await resolveCommandTarget('::ffff:101:101', 6, signal, lookup)).to.deep.equal({
+			address: '::ffff:1.1.1.1',
+			hostname: 'example.com',
+		});
+
+		expect(lookup.calledOnceWithExactly('::ffff:1.1.1.1', { rrtype: 'PTR', signal })).to.be.true;
+	});
+
 	it('classifies an aborted forward lookup as resolver', async () => {
 		const controller = new AbortController();
 		controller.abort();

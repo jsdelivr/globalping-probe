@@ -1,7 +1,7 @@
 import { isIP } from 'node:net';
 import { cachedDnsLookupOne, type IpFamily, type LookupOptions, type RecordOptions } from '../lib/dns.js';
 import { InternalError } from '../lib/internal-error.js';
-import { isIpPrivate } from '../lib/ip.js';
+import { isIpPrivate, normalizeIp } from '../lib/ip.js';
 
 export type CommandTargetLookup = {
 	(hostname: string, options: LookupOptions): Promise<string>;
@@ -27,7 +27,7 @@ export const resolveCommandTarget = async (
 
 	if (!targetIsIp) {
 		try {
-			const address = await lookup(target, { family, signal });
+			const address = normalizeIp(await lookup(target, { family, signal }));
 			return { address, hostname: target };
 		} catch (error: unknown) {
 			if (signal.aborted) {
@@ -38,13 +38,14 @@ export const resolveCommandTarget = async (
 		}
 	}
 
-	let hostname = target;
+	const address = normalizeIp(target);
+	let hostname = address;
 
 	try {
-		hostname = await lookup(target, { rrtype: 'PTR', signal }) ?? hostname;
+		hostname = await lookup(address, { rrtype: 'PTR', signal }) ?? hostname;
 	} catch {
 		// Reverse DNS only enriches output and never changes measurement attribution.
 	}
 
-	return { address: target, hostname };
+	return { address, hostname };
 };

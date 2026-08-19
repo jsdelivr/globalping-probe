@@ -7,6 +7,18 @@ import Joi from 'joi';
 
 const privateBlockList = new BlockList();
 
+export const normalizeIp = (ip: string): string => {
+	const scopeIndex = ip.indexOf('%');
+	const address = scopeIndex === -1 ? ip : ip.slice(0, scopeIndex);
+	const scopeId = scopeIndex === -1 ? '' : ip.slice(scopeIndex);
+	const parsedAddress = ipaddr.parse(address);
+	const normalizedAddress = parsedAddress instanceof ipaddr.IPv6 && parsedAddress.isIPv4MappedAddress()
+		? `::ffff:${parsedAddress.toIPv4Address().toString()}`
+		: parsedAddress.toString();
+
+	return `${normalizedAddress}${scopeId}`;
+};
+
 export const ipEquals = (first: string, second: string): boolean => {
 	const ipVersion = isIP(first);
 

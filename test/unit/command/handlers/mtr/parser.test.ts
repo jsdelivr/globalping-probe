@@ -12,6 +12,12 @@ type MockResult = {
 
 describe('mtr parser helper', () => {
 	describe('rawParse', () => {
+		it('normalizes alternate IPv6 representations without changing their address family', () => {
+			const hops = MtrParser.rawParse('h 0 ::ffff:7f00:1', true);
+
+			expect(hops[0]?.resolvedAddress).to.equal('::ffff:127.0.0.1');
+		});
+
 		it('should transform raw inputs (progress)', () => {
 			const testCase = 'mtr-success-raw-helper-progress';
 			const expectedResult = (getCmdMockResult(testCase) as MockResult);

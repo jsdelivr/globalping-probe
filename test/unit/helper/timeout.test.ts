@@ -45,9 +45,9 @@ describe('command timeout helpers', () => {
 				const deadline = createMeasurementDeadline(10);
 				clock.tick(3000);
 
-				expect(deadline.signalFor(4)).to.equal(fixedSignal);
+				expect(deadline.signalFor(2.01)).to.equal(fixedSignal);
 				expect(deadline.signal()).to.equal(deadlineSignal);
-				expect(timeout.firstCall.args).to.deep.equal([ 4000 ]);
+				expect(timeout.firstCall.args).to.deep.equal([ 2010 ]);
 				expect(timeout.secondCall.args).to.deep.equal([ 7000 ]);
 			} finally {
 				timeout.restore();

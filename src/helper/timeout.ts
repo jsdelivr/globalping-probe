@@ -121,7 +121,7 @@ export const createMeasurementDeadline = (timeoutSeconds: number) => {
 	return {
 		remainingMs,
 		signal: () => AbortSignal.timeout(remainingMs()),
-		signalFor: (timeoutSeconds: number) => AbortSignal.timeout(timeoutSeconds * 1000),
+		signalFor: (timeoutSeconds: number) => AbortSignal.timeout(Math.round(timeoutSeconds * 1000)),
 		processTimeout: () => getProcessTimeout(remainingMs() / 1000),
 	};
 };

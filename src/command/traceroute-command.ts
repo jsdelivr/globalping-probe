@@ -5,7 +5,7 @@ import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface, FailureSource } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
-import { ipEquals, joiValidateIp, isIpPrivate } from '../lib/ip.js';
+import { ipEquals, joiValidateIp, isIpPrivate, normalizeIp } from '../lib/ip.js';
 import { scopedLogger } from '../lib/logger.js';
 import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
@@ -17,8 +17,9 @@ import { AsyncLookupMap } from '../helper/async-lookup-map.js';
 import { getFailureSource, isExposed } from '../lib/internal-error.js';
 import type { IpFamily } from '../lib/dns.js';
 
-const reHost = /(\S+?)(%\w+)?(\s+)\(((?:\d+\.){3}\d+|[\da-fA-F:]+)(%\w+)?\)/;
-const reAddress = /(?:^|\s)((?:\d+\.){3}\d+|[\da-fA-F]*:[\da-fA-F:]+)(%\w+)?(?=\s|$)/g;
+const ipAddressPattern = String.raw`(?:\d+\.){3}\d+|[\da-fA-F]*:[\da-fA-F:.]+`;
+const reHost = new RegExp(String.raw`(\S+?)(%\w+)?(\s+)\((${ipAddressPattern})(%\w+)?\)`);
+const reAddress = new RegExp(String.raw`(^|\s)(${ipAddressPattern})(%\w+)?(?=\s|$)`, 'g');
 const reRtt = /(\d+(?:\.?\d+)?)\s+ms(!\S*)?/g;
 const traceroutePackets = 2;
 
@@ -41,6 +42,7 @@ type ParsedHop = {
 };
 
 type ParsedLineOutput = {
+	rawOutput: string;
 	hop: ParsedHop;
 	responderAddresses: string[];
 };
@@ -352,7 +354,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 
 		return {
 			hops: parsedLines.map(line => line.hop),
-			rawOutput: lines.join('\n'),
+			rawOutput: [ lines[0], ...parsedLines.map(line => line.rawOutput) ].join('\n'),
 			responderAddresses: parsedLines.flatMap(line => line.responderAddresses),
 		};
 	}
@@ -372,8 +374,13 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 	}
 
 	private parseLine (line: string): ParsedLineOutput {
-		const hostMatch = reHost.exec(line);
-		const responderAddresses = Array.from(line.matchAll(reAddress), match => match[1]!);
+		const responderAddresses: string[] = [];
+		const rawOutput = line.replace(reAddress, (_match, prefix: string, address: string, scopeId: string | undefined) => {
+			const normalizedAddress = normalizeIp(address);
+			responderAddresses.push(normalizedAddress);
+			return `${prefix}${normalizedAddress}${scopeId ?? ''}`;
+		});
+		const hostMatch = reHost.exec(rawOutput);
 		const address = hostMatch?.[4] ?? responderAddresses[0];
 		const rttList = Array.from(line.matchAll(reRtt), m => Number.parseFloat(m[1]!));
 
@@ -384,6 +391,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 				timings: rttList.map(rtt => ({ rtt })),
 			},
 			responderAddresses,
+			rawOutput,
 		};
 	}
 }

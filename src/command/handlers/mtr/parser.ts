@@ -1,6 +1,6 @@
 import is from '@sindresorhus/is';
 import _ from 'lodash';
-import { ipEquals } from '../../../lib/ip.js';
+import { ipEquals, normalizeIp } from '../../../lib/ip.js';
 import type {
 	HopStatsType,
 	HopType,
@@ -139,12 +139,14 @@ export const MtrParser = {
 
 			switch (action) {
 				case 'h': {
-					const [ resolvedAddress ] = value;
-					const previousHostMatch = hops.find((h: HopType, hIndex: number) => h.resolvedAddress === resolvedAddress && hIndex < Number(index));
+					const [ rawResolvedAddress ] = value;
 
-					if (!resolvedAddress) {
+					if (!rawResolvedAddress) {
 						break;
 					}
+
+					const resolvedAddress = normalizeIp(rawResolvedAddress);
+					const previousHostMatch = hops.find((h: HopType, hIndex: number) => h.resolvedAddress === resolvedAddress && hIndex < Number(index));
 
 					entry.resolvedAddress = resolvedAddress;
 					entry.duplicate = Boolean(previousHostMatch);
