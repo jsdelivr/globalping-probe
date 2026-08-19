@@ -19,6 +19,7 @@ type MtrBudget = {
 	interval: number;
 	grace: number;
 	nativeTimeout: number;
+	dnsHeadroom: number;
 };
 
 const roundDown = (value: number, places = 2): number => {
@@ -76,16 +77,37 @@ export const getTracerouteBudget = (timeoutSeconds: number, packets: number): Tr
 	return { wait, dnsHeadroom: roundDown(timeoutSeconds - packets * wait) };
 };
 
-export const getMtrBudget = (packets: number, remaining: number): MtrBudget => {
-	const minimumGrace = 1;
-	const maximumGrace = 3;
-	const minimumNativeTimeout = 1;
-	const grace = Math.min(maximumGrace, Math.max(minimumGrace, Math.floor(remaining - packets * mtrConfig.minInterval)));
-	const calculatedInterval = Math.min(mtrConfig.interval, Math.max(mtrConfig.minInterval, (remaining - grace) / packets));
-	const interval = roundDown(calculatedInterval);
-	const nativeTimeout = Math.max(minimumNativeTimeout, Math.floor(remaining - packets * interval));
+export const getMtrBudget = (packets: number, timeoutSeconds: number): MtrBudget => {
+	const minimumResponseTimeout = 1;
+	const preferredResponseTimeout = 3;
+	const maximumResponseTimeout = 5;
+	const preferredDnsHeadroomFloor = 2;
+	const dnsHeadroomShare = 0.2;
+	const packetGaps = packets - 1;
+	let interval = packetGaps === 0 ? mtrConfig.interval : mtrConfig.minInterval;
+	let responseTimeout = minimumResponseTimeout;
+	let remaining = timeoutSeconds - packetGaps * interval - responseTimeout;
 
-	return { interval, grace, nativeTimeout };
+	const take = (requested: number): number => {
+		const allocated = Math.max(0, Math.min(requested, remaining));
+		remaining -= allocated;
+		return allocated;
+	};
+
+	take(Math.max(preferredDnsHeadroomFloor, timeoutSeconds * dnsHeadroomShare));
+	responseTimeout += take(preferredResponseTimeout - responseTimeout);
+
+	const intervalUpgrade = mtrConfig.interval - interval;
+	interval += take(packetGaps * intervalUpgrade) / Math.max(packetGaps, 1);
+	responseTimeout += take(maximumResponseTimeout - responseTimeout);
+
+	interval = roundDown(interval);
+	responseTimeout = roundDown(responseTimeout);
+	const grace = roundDown(responseTimeout - interval);
+	const nativeTimeout = Math.ceil(responseTimeout);
+	const dnsHeadroom = roundDown(timeoutSeconds - packets * interval - grace);
+
+	return { interval, grace, nativeTimeout, dnsHeadroom };
 };
 
 export const getProcessTimeout = (timeoutSeconds: number, graceSeconds = processGrace): number => {
