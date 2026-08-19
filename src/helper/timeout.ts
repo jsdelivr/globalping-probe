@@ -12,6 +12,7 @@ type PingBudget = {
 
 type TracerouteBudget = {
 	wait: number;
+	dnsHeadroom: number;
 };
 
 type MtrBudget = {
@@ -67,12 +68,12 @@ export const getPingBudget = (packets: number, timeoutSeconds: number, intervalO
 	};
 };
 
-export const getTracerouteBudget = (timeout: number, packets: number): TracerouteBudget => {
+export const getTracerouteBudget = (timeoutSeconds: number, packets: number): TracerouteBudget => {
 	const maximumWait = 5;
 	const probeTimeoutShare = 0.6;
-	const wait = Math.min(maximumWait, roundDown(timeout * probeTimeoutShare / packets));
+	const wait = Math.min(maximumWait, roundDown(timeoutSeconds * probeTimeoutShare / packets));
 
-	return { wait };
+	return { wait, dnsHeadroom: roundDown(timeoutSeconds - packets * wait) };
 };
 
 export const getMtrBudget = (packets: number, remaining: number): MtrBudget => {

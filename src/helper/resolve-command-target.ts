@@ -8,7 +8,7 @@ export type CommandTargetLookup = {
 	(hostname: string, options: RecordOptions): Promise<string | undefined>;
 };
 
-type ResolvedCommandTarget = {
+export type ResolvedCommandTarget = {
 	address: string;
 	hostname: string;
 };

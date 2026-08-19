@@ -91,13 +91,13 @@ describe('command timeout helpers', () => {
 
 	describe('traceroute budget', () => {
 		for (const { timeout, probeWaves, expected } of [
-			{ timeout: 5, probeWaves: 2, expected: { wait: 1.5 } },
-			{ timeout: 5, probeWaves: 4, expected: { wait: 0.75 } },
-			{ timeout: 10, probeWaves: 2, expected: { wait: 3 } },
-			{ timeout: 10, probeWaves: 3, expected: { wait: 2 } },
-			{ timeout: 16, probeWaves: 2, expected: { wait: 4.8 } },
-			{ timeout: 17, probeWaves: 2, expected: { wait: 5 } },
-			{ timeout: 30, probeWaves: 2, expected: { wait: 5 } },
+			{ timeout: 5, probeWaves: 2, expected: { wait: 1.5, dnsHeadroom: 2 } },
+			{ timeout: 5, probeWaves: 4, expected: { wait: 0.75, dnsHeadroom: 2 } },
+			{ timeout: 10, probeWaves: 2, expected: { wait: 3, dnsHeadroom: 4 } },
+			{ timeout: 10, probeWaves: 3, expected: { wait: 2, dnsHeadroom: 4 } },
+			{ timeout: 16, probeWaves: 2, expected: { wait: 4.8, dnsHeadroom: 6.4 } },
+			{ timeout: 17, probeWaves: 2, expected: { wait: 5, dnsHeadroom: 7 } },
+			{ timeout: 30, probeWaves: 2, expected: { wait: 5, dnsHeadroom: 20 } },
 		]) {
 			it(`should allocate ${probeWaves} probe waves within ${timeout} seconds`, () => {
 				expect(getTracerouteBudget(timeout, probeWaves)).to.deep.equal(expected);
@@ -106,11 +106,12 @@ describe('command timeout helpers', () => {
 
 		it('should keep two probe waves within the supported timeout range', () => {
 			for (let timeout = 5; timeout <= 30; timeout++) {
-				const { wait } = getTracerouteBudget(timeout, 2);
+				const { wait, dnsHeadroom } = getTracerouteBudget(timeout, 2);
 
 				expect(wait).to.be.at.most(5);
 				expect(2 * wait).to.be.at.most(10);
 				expect(2 * wait).to.be.at.most(timeout * 0.6 + 1e-9);
+				expect(2 * wait + dnsHeadroom).to.be.at.most(timeout + 1e-9);
 			}
 		});
 	});
