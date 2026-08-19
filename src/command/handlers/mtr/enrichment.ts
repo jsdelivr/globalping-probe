@@ -1,4 +1,5 @@
 import { isIP } from 'node:net';
+import ipaddr from 'ipaddr.js';
 import { AsyncLookupMap } from '../../../helper/async-lookup-map.js';
 import type { CommandTargetLookup, ResolvedCommandTarget } from '../../../helper/resolve-command-target.js';
 import { isIpPrivate } from '../../../lib/ip.js';
@@ -15,36 +16,17 @@ export class MtrHopEnrichment {
 		}));
 
 		this.asns = new AsyncLookupMap(async (address) => {
+			const asnAddress = ipaddr.process(address.replace(/%.*$/, ''));
 			let asnHostname: string;
 
-			if (isIP(address) === 4) {
-				asnHostname = `${address.split('.').reverse().join('.')}.origin.asn.cymru.com`;
+			if (asnAddress.kind() === 'ipv4') {
+				asnHostname = `${asnAddress.toByteArray().reverse().join('.')}.origin.asn.cymru.com`;
 			} else {
-				let normalizedAddress = address.toLowerCase();
-				const lastGroup = normalizedAddress.slice(normalizedAddress.lastIndexOf(':') + 1);
-
-				if (lastGroup.includes('.')) {
-					const [ first = 0, second = 0, third = 0, fourth = 0 ] = lastGroup.split('.').map(Number);
-					const ipv4Groups = [ first * 256 + second, third * 256 + fourth ].map(group => group.toString(16));
-					normalizedAddress = `${normalizedAddress.slice(0, normalizedAddress.lastIndexOf(':') + 1)}${ipv4Groups.join(':')}`;
-				}
-
-				const [ head = '', tail = '' ] = normalizedAddress.split('::');
-				const headGroups = head ? head.split(':') : [];
-				const tailGroups = tail ? tail.split(':') : [];
-				const omittedGroups = Array.from({ length: 8 - headGroups.length - tailGroups.length }, () => '0');
-				const groups = [ ...headGroups, ...omittedGroups, ...tailGroups ]
-					.map(group => group.padStart(4, '0'));
-				const isIpv4Mapped = groups.slice(0, 5).every(group => group === '0000') && groups[5] === 'ffff';
-
-				if (isIpv4Mapped) {
-					const ipv4Hex = groups.slice(6).join('');
-					const ipv4Address = Array.from({ length: 4 }, (_, index) => Number.parseInt(ipv4Hex.slice(index * 2, index * 2 + 2), 16));
-					asnHostname = `${ipv4Address.reverse().join('.')}.origin.asn.cymru.com`;
-				} else {
-					const reversedNibbles = groups.join('').split('').reverse().join('.');
-					asnHostname = `${reversedNibbles}.origin6.asn.cymru.com`;
-				}
+				const reversedNibbles = asnAddress.toByteArray()
+					.flatMap(byte => byte.toString(16).padStart(2, '0').split(''))
+					.reverse()
+					.join('.');
+				asnHostname = `${reversedNibbles}.origin6.asn.cymru.com`;
 			}
 
 			const record = await lookup(asnHostname, {

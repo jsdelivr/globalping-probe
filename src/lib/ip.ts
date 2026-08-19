@@ -2,6 +2,7 @@ import { isIP, BlockList } from 'node:net';
 import os from 'node:os';
 import _ from 'lodash';
 import is from '@sindresorhus/is';
+import ipaddr from 'ipaddr.js';
 import Joi from 'joi';
 
 const privateBlockList = new BlockList();
@@ -13,11 +14,10 @@ export const ipEquals = (first: string, second: string): boolean => {
 		return false;
 	}
 
-	const family = ipVersion === 4 ? 'ipv4' : 'ipv6';
-	const blockList = new BlockList();
-	blockList.addAddress(first, family);
+	const firstBytes = ipaddr.parse(first.replace(/%.*$/, '')).toByteArray();
+	const secondBytes = ipaddr.parse(second.replace(/%.*$/, '')).toByteArray();
 
-	return blockList.check(second, family);
+	return _.isEqual(firstBytes, secondBytes);
 };
 
 // https://en.wikipedia.org/wiki/Reserved_IP_addresses

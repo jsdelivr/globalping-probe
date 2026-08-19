@@ -1,5 +1,22 @@
 import { expect } from 'chai';
-import { isIpPrivate } from '../../../src/lib/ip.js';
+import { ipEquals, isIpPrivate } from '../../../src/lib/ip.js';
+
+describe('ip equality', () => {
+	it('should compare normalized IP addresses', () => {
+		expect(ipEquals('1.1.1.1', '1.1.1.1')).to.be.true;
+		expect(ipEquals('1.1.1.1', '1.1.1.2')).to.be.false;
+		expect(ipEquals('2001:db8::1', '2001:0db8:0:0:0:0:0:1')).to.be.true;
+	});
+
+	it('should ignore IPv6 scope IDs', () => {
+		expect(ipEquals('fe80::1%eth0', 'fe80::1%eth1')).to.be.true;
+	});
+
+	it('should not match different address families or invalid values', () => {
+		expect(ipEquals('::ffff:1.2.3.4', '1.2.3.4')).to.be.false;
+		expect(ipEquals('invalid', 'invalid')).to.be.false;
+	});
+});
 
 describe('private ip validator', async () => {
 	it('should pass ipv4', () => {
