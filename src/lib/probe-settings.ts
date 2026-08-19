@@ -1,9 +1,13 @@
 import fs from 'node:fs';
+import cluster from 'node:cluster';
 import Joi from 'joi';
 import type { ProbeSettings } from '../types.js';
 import { scopedLogger } from './logger.js';
 
-const PROBE_SETTINGS_FILE = '/.PROBE-SETTINGS';
+const PROBE_SETTINGS_FILE = process.env['NODE_ENV'] === 'development'
+	? `/.PROBE-SETTINGS-${cluster.worker?.id ?? 'primary'}`
+	: '/.PROBE-SETTINGS';
+
 const DEFAULT_PROBE_SETTINGS: ProbeSettings = { meteredConnection: false };
 const logger = scopedLogger('probe-settings');
 
