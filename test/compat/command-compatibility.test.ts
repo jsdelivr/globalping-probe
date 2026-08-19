@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { EventEmitter } from 'node:events';
 import { ipEquals } from '../../src/lib/ip.js';
+import { cachedDnsLookup } from '../../src/lib/dns.js';
 import { PingCommand, type PingOptions } from '../../src/command/ping-command.js';
 import { TracerouteCommand, traceCmd, type TraceOptions } from '../../src/command/traceroute-command.js';
 import { MtrCommand, mtrCmd, type MtrOptions } from '../../src/command/mtr-command.js';
@@ -146,6 +147,27 @@ describe('native command compatibility', () => {
 
 		after(async () => {
 			await Promise.all([ ipv4Server.close(), ipv6Server.close() ]);
+		});
+
+		it('runs MTR against a hostname resolving to loopback', async () => {
+			const lookup = ((hostname: string, options: any) => cachedDnsLookup(hostname, {
+				...options,
+				server: `${ipv4Server.host}:${ipv4Server.port}`,
+			})) as typeof cachedDnsLookup;
+			const result = await runCommand(new MtrCommand(mtrCmd, lookup), {
+				type: 'mtr',
+				inProgressUpdates: false,
+				target: 'mtr.compat.test',
+				protocol: 'icmp',
+				port: 80,
+				packets: 1,
+				ipVersion: 4,
+				timeout: 5,
+			} satisfies MtrOptions);
+
+			expect(result.status).to.equal('finished');
+			expect(result.resolvedAddress).to.equal('127.0.0.1');
+			expectFiniteNumbers(result);
 		});
 
 		for (const { server, protocol, queryType, target, expected } of [

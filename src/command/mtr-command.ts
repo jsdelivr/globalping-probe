@@ -298,6 +298,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 		const [ address ] = await this.lookup(options.target, {
 			family: options.ipVersion as IpFamily,
+			allowPrivateTarget: true,
 			...(signal ? { signal } : {}),
 		});
 

@@ -6,6 +6,7 @@ type DnsResponse = 'a' | 'aaaa' | 'nxdomain' | 'servfail' | 'silent';
 const responses: Record<string, DnsResponse> = {
 	'ipv4.compat.test': 'a',
 	'ipv6.compat.test': 'aaaa',
+	'mtr.compat.test': 'a',
 	'nxdomain.compat.test': 'nxdomain',
 	'servfail.compat.test': 'servfail',
 	'silent.compat.test': 'silent',
