@@ -33,21 +33,28 @@ export class MtrHopEnrichment {
 				const headGroups = head ? head.split(':') : [];
 				const tailGroups = tail ? tail.split(':') : [];
 				const omittedGroups = Array.from({ length: 8 - headGroups.length - tailGroups.length }, () => '0');
-				const reversedNibbles = [ ...headGroups, ...omittedGroups, ...tailGroups ]
-					.map(group => group.padStart(4, '0'))
-					.join('')
-					.split('')
-					.reverse()
-					.join('.');
+				const groups = [ ...headGroups, ...omittedGroups, ...tailGroups ]
+					.map(group => group.padStart(4, '0'));
+				const isIpv4Mapped = groups.slice(0, 5).every(group => group === '0000') && groups[5] === 'ffff';
 
-				asnHostname = `${reversedNibbles}.origin6.asn.cymru.com`;
+				if (isIpv4Mapped) {
+					const ipv4Hex = groups.slice(6).join('');
+					const ipv4Address = Array.from({ length: 4 }, (_, index) => Number.parseInt(ipv4Hex.slice(index * 2, index * 2 + 2), 16));
+					asnHostname = `${ipv4Address.reverse().join('.')}.origin.asn.cymru.com`;
+				} else {
+					const reversedNibbles = groups.join('').split('').reverse().join('.');
+					asnHostname = `${reversedNibbles}.origin6.asn.cymru.com`;
+				}
 			}
 
 			const record = await lookup(asnHostname, {
 				rrtype: 'TXT',
 				signal,
 			});
-			const asns = record?.split('|')[0]?.trim().split(/\s+/).map(Number).filter(Number.isFinite) ?? [];
+			const asns = record?.split('|')[0]?.trim().split(/\s+/)
+				.filter(value => /^\d+$/.test(value))
+				.map(Number)
+				.filter(value => Number.isInteger(value) && value > 0) ?? [];
 
 			return asns.length > 0 ? asns : undefined;
 		});
