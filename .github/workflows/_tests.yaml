@@ -46,7 +46,7 @@ jobs:
       - name: Install native command tools
         run: |
           apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y git expect iputils-ping traceroute dnsutils mtr-tiny
+          DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y git ca-certificates expect iputils-ping traceroute dnsutils mtr-tiny
       - uses: actions/checkout@v7
       - name: Install dependencies
         run: npm ci
@@ -55,7 +55,7 @@ jobs:
           cat /etc/os-release
           node --version
           npm --version
-          dpkg-query --show --showformat='${Package} ${Version}\n' expect iputils-ping traceroute dnsutils bind9-dnsutils mtr-tiny
+          dpkg-query --show --showformat='${Package} ${Version}\n' ca-certificates expect iputils-ping traceroute dnsutils bind9-dnsutils mtr-tiny
           expect -v
           ping -V
           traceroute --version

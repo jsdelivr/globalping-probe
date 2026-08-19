@@ -8,7 +8,7 @@ The tests require Linux and the same packages installed by CI:
 
 ```sh
 apt-get update
-apt-get install --no-install-recommends -y expect iputils-ping traceroute dnsutils mtr-tiny
+apt-get install --no-install-recommends -y git ca-certificates expect iputils-ping traceroute dnsutils mtr-tiny
 NODE_ENV=test GP_TEST_ALLOW_PRIVATE_TARGETS=1 npm run test:compat
 ```
 
@@ -16,7 +16,7 @@ To reproduce a CI image exactly, run it in the floating official image. Mount th
 
 ```sh
 docker run --rm -it -v "$PWD:/workspace" -w /workspace node:22-slim bash -lc \
-  'apt-get update && apt-get install --no-install-recommends -y expect iputils-ping traceroute dnsutils mtr-tiny && npm ci && NODE_ENV=test GP_TEST_ALLOW_PRIVATE_TARGETS=1 npm run test:compat'
+  'apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y git ca-certificates expect iputils-ping traceroute dnsutils mtr-tiny && npm ci && NODE_ENV=test GP_TEST_ALLOW_PRIVATE_TARGETS=1 npm run test:compat'
 ```
 
 ## Scope and safety
