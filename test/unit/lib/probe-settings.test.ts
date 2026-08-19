@@ -54,13 +54,34 @@ describe('probe settings', () => {
 		expect(fs.existsSync(settingsFile)).to.be.false;
 	});
 
-	it('should persist updated settings', () => {
+	it('should persist updated settings', async () => {
 		const store = new ProbeSettingsStore(settingsFile);
 
-		store.update({ meteredConnection: true });
+		await store.update({ meteredConnection: true });
 
 		expect(store.get()).to.deep.equal({ meteredConnection: true });
 		expect(JSON.parse(fs.readFileSync(settingsFile, 'utf8'))).to.deep.equal({ meteredConnection: true });
+	});
+
+	it('should serialize consecutive settings writes', async () => {
+		const store = new ProbeSettingsStore(settingsFile);
+		const firstWrite = sinon.promise<void>();
+		const writeFileStub = sandbox.stub(fs.promises, 'writeFile');
+		writeFileStub.onFirstCall().returns(firstWrite);
+		writeFileStub.onSecondCall().returns(Promise.resolve());
+
+		const firstUpdate = store.update({ meteredConnection: true });
+		const secondUpdate = store.update({ meteredConnection: false });
+		await Promise.resolve();
+
+		expect(writeFileStub.calledOnce).to.be.true;
+		expect(writeFileStub.firstCall.args).to.deep.equal([ settingsFile, JSON.stringify({ meteredConnection: true }), 'utf8' ]);
+
+		firstWrite.resolve(undefined);
+		await Promise.all([ firstUpdate, secondUpdate ]);
+
+		expect(writeFileStub.calledTwice).to.be.true;
+		expect(writeFileStub.secondCall.args).to.deep.equal([ settingsFile, JSON.stringify({ meteredConnection: false }), 'utf8' ]);
 	});
 
 	it('should not expose mutable settings', () => {
@@ -72,28 +93,28 @@ describe('probe settings', () => {
 		expect(store.get()).to.deep.equal({ meteredConnection: false });
 	});
 
-	it('should update in-memory settings when persistence fails', () => {
+	it('should update in-memory settings when persistence fails', async () => {
 		const store = new ProbeSettingsStore(settingsFile);
 		fs.mkdirSync(settingsFile);
 
-		store.update({ meteredConnection: true });
+		await store.update({ meteredConnection: true });
 
 		expect(store.get()).to.deep.equal({ meteredConnection: true });
 	});
 
-	it('should reject updates with invalid values', () => {
+	it('should reject updates with invalid values', async () => {
 		const store = new ProbeSettingsStore(settingsFile);
 
-		store.update({ meteredConnection: 'true' } as unknown as Partial<ProbeSettings>);
+		await store.update({ meteredConnection: 'true' } as unknown as Partial<ProbeSettings>);
 
 		expect(store.get()).to.deep.equal({ meteredConnection: false });
 		expect(fs.existsSync(settingsFile)).to.be.false;
 	});
 
-	it('should reject updates with unknown properties', () => {
+	it('should reject updates with unknown properties', async () => {
 		const store = new ProbeSettingsStore(settingsFile);
 
-		store.update({ unknown: true } as unknown as Partial<ProbeSettings>);
+		await store.update({ unknown: true } as unknown as Partial<ProbeSettings>);
 
 		expect(store.get()).to.deep.equal({ meteredConnection: false });
 		expect(fs.existsSync(settingsFile)).to.be.false;

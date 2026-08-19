@@ -19,6 +19,7 @@ const removeInvalidSettingsFile = (file: string): void => {
 
 export class ProbeSettingsStore {
 	private settings: ProbeSettings;
+	private writeQueue: Promise<void> = Promise.resolve();
 
 	constructor (private readonly file = PROBE_SETTINGS_FILE) {
 		this.settings = { ...DEFAULT_PROBE_SETTINGS };
@@ -53,25 +54,29 @@ export class ProbeSettingsStore {
 		return { ...this.settings };
 	}
 
-	public update (settings: Partial<ProbeSettings>): void {
+	public update (settings: Partial<ProbeSettings>): Promise<void> {
 		const result = probeSettingsSchema.validate(settings, { convert: false });
 
 		if (result.error) {
 			logger.error('Invalid probe settings received:', result.error);
-			return;
+			return Promise.resolve();
 		}
 
 		const updatedSettings = { ...this.settings, ...result.value };
 		this.settings = updatedSettings;
 
-		try {
-			fs.writeFileSync(this.file, JSON.stringify(updatedSettings), 'utf8');
-		} catch (error: unknown) {
-			logger.error('Probe settings updated in memory, but failed to persist them:', { settings: this.get(), error });
-			return;
-		}
+		const write = this.writeQueue.then(() => fs.promises.writeFile(this.file, JSON.stringify(updatedSettings), 'utf8'));
 
-		logger.info('Probe settings updated.', { settings: this.get() });
+		this.writeQueue = write.then(
+			() => {
+				logger.info('Probe settings updated.', { settings: updatedSettings });
+			},
+			(error: unknown) => {
+				logger.error('Probe settings updated in memory, but failed to persist them:', { settings: updatedSettings, error });
+			},
+		);
+
+		return this.writeQueue;
 	}
 }
 
@@ -79,6 +84,6 @@ const probeSettingsStore = new ProbeSettingsStore();
 
 export const getProbeSettings = (): Readonly<ProbeSettings> => probeSettingsStore.get();
 
-export const updateProbeSettings = (settings: Partial<ProbeSettings>): void => {
+export const updateProbeSettings = (settings: Partial<ProbeSettings>): Promise<void> => {
 	return probeSettingsStore.update(settings);
 };
