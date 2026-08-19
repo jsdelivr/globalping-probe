@@ -1,4 +1,3 @@
-import { updateProbeSettings } from './lib/probe-settings.js';
 import config from 'config';
 import os from 'node:os';
 import net from 'node:net';
@@ -26,6 +25,7 @@ import { HttpCommand } from './command/http-command.js';
 import { FakePingCommand } from './command/fake/fake-ping-command.js';
 import { FakeMtrCommand } from './command/fake/fake-mtr-command.js';
 import { run as runStatsAgent } from './lib/stats/client.js';
+import { updateProbeSettings } from './lib/probe-settings.js';
 import { initStatusManager } from './status-manager/status-manager.js';
 import { logAdoptionCode } from './lib/log-adoption-code.js';
 import { getAvailableDiskSpace, getTotalDiskSize, looksLikeV1HardwareDevice } from './lib/util.js';

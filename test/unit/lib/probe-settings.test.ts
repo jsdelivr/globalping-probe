@@ -75,13 +75,13 @@ describe('probe settings', () => {
 		await Promise.resolve();
 
 		expect(writeFileStub.calledOnce).to.be.true;
-		expect(writeFileStub.firstCall.args).to.deep.equal([ settingsFile, JSON.stringify({ meteredConnection: true }), 'utf8' ]);
+		expect(writeFileStub.firstCall.args).to.deep.equal([ settingsFile, JSON.stringify({ meteredConnection: true }, null, '\t'), 'utf8' ]);
 
 		firstWrite.resolve(undefined);
 		await Promise.all([ firstUpdate, secondUpdate ]);
 
 		expect(writeFileStub.calledTwice).to.be.true;
-		expect(writeFileStub.secondCall.args).to.deep.equal([ settingsFile, JSON.stringify({ meteredConnection: false }), 'utf8' ]);
+		expect(writeFileStub.secondCall.args).to.deep.equal([ settingsFile, JSON.stringify({ meteredConnection: false }, null, '\t'), 'utf8' ]);
 	});
 
 	it('should not expose mutable settings', () => {

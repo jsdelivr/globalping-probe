@@ -7,8 +7,8 @@ import type { ProbeSettings } from '../types.js';
 import { scopedLogger } from './logger.js';
 
 const PROBE_SETTINGS_FILE = process.env['NODE_ENV'] === 'development'
-	? path.join(os.tmpdir(), `.PROBE-SETTINGS-${cluster.worker?.id ?? 'primary'}`)
-	: '/.PROBE-SETTINGS';
+	? path.join(os.tmpdir(), `.globalping-probe-${cluster.worker?.id ?? 'primary'}.json`)
+	: '/.globalping-probe.json';
 
 const DEFAULT_PROBE_SETTINGS: ProbeSettings = { meteredConnection: false };
 const logger = scopedLogger('probe-settings');
@@ -60,27 +60,27 @@ export class ProbeSettingsStore {
 		return { ...this.settings };
 	}
 
-	public update (settings: Partial<ProbeSettings>): Promise<void> {
+	public async update (settings: Partial<ProbeSettings>): Promise<void> {
 		const result = probeSettingsSchema.validate(settings, { convert: false });
 
 		if (result.error) {
 			logger.error('Invalid probe settings received:', result.error);
-			return Promise.resolve();
+			return;
 		}
 
 		const updatedSettings = { ...this.settings, ...result.value };
 		this.settings = updatedSettings;
 
-		const write = this.writeQueue.then(() => fs.promises.writeFile(this.file, JSON.stringify(updatedSettings), 'utf8'));
-
-		this.writeQueue = write.then(
-			() => {
-				logger.info('Probe settings updated.', { settings: updatedSettings });
-			},
-			(error: unknown) => {
-				logger.error('Probe settings updated in memory, but failed to persist them:', { settings: updatedSettings, error });
-			},
-		);
+		this.writeQueue = this.writeQueue
+			.then(() => fs.promises.writeFile(this.file, JSON.stringify(updatedSettings, null, '\t'), 'utf8'))
+			.then(
+				() => {
+					logger.info('Probe settings updated.', { settings: updatedSettings });
+				},
+				(error: unknown) => {
+					logger.error('Probe settings updated in memory, but failed to save:', { settings: updatedSettings, error });
+				},
+			);
 
 		return this.writeQueue;
 	}
