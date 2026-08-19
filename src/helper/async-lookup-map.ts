@@ -9,15 +9,7 @@ export class AsyncLookupMap<Key, Value> {
 			return;
 		}
 
-		let lookup: Promise<Value | undefined>;
-
-		try {
-			lookup = this.lookup(key);
-		} catch (error: unknown) {
-			lookup = Promise.reject(error instanceof Error ? error : new Error(String(error)));
-		}
-
-		const pending = lookup
+		const pending = this.lookup(key)
 			.then((value) => {
 				if (value !== undefined && !this.values.has(key)) {
 					this.values.set(key, value);

@@ -117,29 +117,29 @@ describe('command timeout helpers', () => {
 	});
 
 	describe('mtr budget', () => {
-		for (const { packets, remaining, expected } of [
-			{ packets: 3, remaining: 4.5, expected: { interval: 0.5, grace: 3, nativeTimeout: 3 } },
-			{ packets: 16, remaining: 11, expected: { interval: 0.5, grace: 3, nativeTimeout: 3 } },
-			{ packets: 16, remaining: 6.8, expected: { interval: 0.23, grace: 3, nativeTimeout: 3 } },
-			{ packets: 16, remaining: 4.2, expected: { interval: 0.2, grace: 1, nativeTimeout: 1 } },
+		for (const { packets, timeout, expected } of [
+			{ packets: 3, timeout: 5, expected: { interval: 0.2, grace: 2.4, nativeTimeout: 3, dnsHeadroom: 2 } },
+			{ packets: 3, timeout: 10, expected: { interval: 0.5, grace: 4.5, nativeTimeout: 5, dnsHeadroom: 4 } },
+			{ packets: 16, timeout: 5, expected: { interval: 0.2, grace: 0.8, nativeTimeout: 1, dnsHeadroom: 1 } },
+			{ packets: 16, timeout: 10, expected: { interval: 0.33, grace: 2.67, nativeTimeout: 3, dnsHeadroom: 2.05 } },
+			{ packets: 16, timeout: 16, expected: { interval: 0.5, grace: 4.5, nativeTimeout: 5, dnsHeadroom: 3.5 } },
 		]) {
-			it(`should allocate ${packets} packets within ${remaining} seconds`, () => {
-				expect(getMtrBudget(packets, remaining)).to.deep.equal(expected);
+			it(`should allocate ${packets} packets within ${timeout} seconds`, () => {
+				expect(getMtrBudget(packets, timeout)).to.deep.equal(expected);
 			});
 		}
 
-		it('should keep viable fractional budgets within native limits', () => {
-			for (let packets = 1; packets <= 16; packets++) {
-				const minimumRuntime = packets * 0.2 + 1;
-
-				for (const remaining of [ minimumRuntime, minimumRuntime + 0.37, minimumRuntime + 2.91, 30 ]) {
-					const { interval, grace, nativeTimeout } = getMtrBudget(packets, remaining);
+		it('should keep every supported packet and timeout combination within budget', () => {
+			for (let timeout = 5; timeout <= 30; timeout++) {
+				for (let packets = 1; packets <= 16; packets++) {
+					const { interval, grace, nativeTimeout, dnsHeadroom } = getMtrBudget(packets, timeout);
 
 					expect(interval).to.be.within(0.2, 1);
-					expect(grace).to.be.oneOf([ 1, 2, 3 ]);
+					expect(grace).to.be.within(0.5, 5);
 					expect(Number.isInteger(nativeTimeout)).to.equal(true);
 					expect(nativeTimeout).to.be.at.least(1);
-					expect(packets * interval + grace).to.be.at.most(remaining + 1e-9);
+					expect(dnsHeadroom).to.be.at.least(1);
+					expect(packets * interval + grace + dnsHeadroom).to.be.at.most(timeout + 1e-9);
 				}
 			}
 		});

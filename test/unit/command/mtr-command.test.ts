@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { Socket } from 'socket.io-client';
 import { type ExecaError } from 'execa';
 import { chunkOutput, getCmdMock, getCmdMockResult, getExecaMock } from '../../utils.js';
-import { clearDnsCache, cachedDnsLookup } from '../../../src/lib/dns.js';
+import { clearDnsCache, cachedDnsLookupOne } from '../../../src/lib/dns.js';
 import { InternalError } from '../../../src/lib/internal-error.js';
 import {
 	MtrCommand,
@@ -12,17 +12,21 @@ import {
 } from '../../../src/command/mtr-command.js';
 import MtrParser from '../../../src/command/handlers/mtr/parser.js';
 
-const dnsResolver = (result?: string | Error): typeof cachedDnsLookup => (async (_hostname: string, options: any) => {
-	if (options.rrtype) {
-		return [ '123 | abc | abc' ];
+const dnsResolver = (result?: string | Error): typeof cachedDnsLookupOne => (async (_hostname: string, options: any) => {
+	if (options.rrtype === 'PTR') {
+		throw new Error('ENODATA');
+	}
+
+	if (options.rrtype === 'TXT') {
+		return '123 | abc | abc';
 	}
 
 	if (result instanceof Error) {
 		throw result;
 	}
 
-	return [ result, options.family ];
-}) as typeof cachedDnsLookup;
+	return result;
+}) as typeof cachedDnsLookupOne;
 
 describe('mtr command executor', () => {
 	describe('argument builder', () => {
@@ -33,7 +37,7 @@ describe('mtr command executor', () => {
 				target: 'google.com',
 				protocol: 'tcp',
 				port: 80,
-				packets: 1,
+				packets: 3,
 				inProgressUpdates: false,
 				ipVersion: 4,
 			};
@@ -41,23 +45,23 @@ describe('mtr command executor', () => {
 			const args = argBuilder(options);
 			const joinedArgs = args.join(' ');
 
-			expect(args[0]).to.equal('-4');
+			expect(args).to.contain('-4');
 			expect(args[args.length - 1]).to.equal(options.target);
 			expect(args).to.contain('--tcp');
 			expect(args).to.contain('--raw');
-			expect(joinedArgs).to.contain('--interval 1');
-			expect(joinedArgs).to.contain('--gracetime 3');
+			expect(args).to.contain('-n');
+			expect(joinedArgs).to.contain('--interval 0.2');
+			expect(joinedArgs).to.contain('--gracetime 2.4');
 			expect(joinedArgs).to.contain('--max-ttl 30');
 			expect(joinedArgs).to.contain(`-c ${options.packets}`);
 			expect(joinedArgs).to.contain(`-P ${options.port}`);
 		});
 
 		for (const { packets, timeout, interval, grace, remaining } of [
-			{ packets: 5, timeout: 5, interval: 0.4, grace: 3, remaining: 3 },
-			{ packets: 16, timeout: 5, interval: 0.25, grace: 1, remaining: 1 },
-			{ packets: 16, timeout: 11, interval: 0.5, grace: 3, remaining: 3 },
-			{ packets: 16, timeout: 6.8, interval: 0.23, grace: 3, remaining: 3 },
-			{ packets: 16, timeout: 4.2, interval: 0.2, grace: 1, remaining: 1 },
+			{ packets: 3, timeout: 10, interval: 0.5, grace: 4.5, remaining: 5 },
+			{ packets: 16, timeout: 5, interval: 0.2, grace: 0.8, remaining: 1 },
+			{ packets: 16, timeout: 10, interval: 0.33, grace: 2.67, remaining: 3 },
+			{ packets: 16, timeout: 16, interval: 0.5, grace: 4.5, remaining: 5 },
 		]) {
 			it(`should fit ${packets} packets into a ${timeout} second budget`, () => {
 				const args = argBuilder({
@@ -95,7 +99,7 @@ describe('mtr command executor', () => {
 					const remaining = Number(args[args.indexOf('--timeout') + 1]);
 
 					expect(interval).to.be.within(0.2, 1);
-					expect(grace).to.be.oneOf([ 1, 2, 3 ]);
+					expect(grace).to.be.within(0.5, 5);
 					expect(remaining).to.be.at.least(1);
 					expect(Number.isInteger(remaining)).to.equal(true);
 					expect(packets * interval + grace).to.be.at.most(timeout + 1e-9);
@@ -117,7 +121,7 @@ describe('mtr command executor', () => {
 				};
 
 				const args = argBuilder(options);
-				expect(args[0]).to.equal('-4');
+				expect(args).to.contain('-4');
 			});
 
 			it('should set -6 flag', () => {
@@ -133,7 +137,7 @@ describe('mtr command executor', () => {
 				};
 
 				const args = argBuilder(options);
-				expect(args[0]).to.equal('-6');
+				expect(args).to.contain('-6');
 			});
 		});
 
@@ -254,39 +258,17 @@ describe('mtr command executor', () => {
 			clearDnsCache();
 		});
 
-		it('should classify a deadline before target lookup as internal', async () => {
-			const clock = sandbox.useFakeTimers();
-			const timeoutStub = sandbox.stub(AbortSignal, 'timeout').callsFake(() => {
-				clock.tick(1000);
-				return new AbortController().signal;
-			});
-			const cmdFn = sandbox.spy((): any => getExecaMock());
-			const lookup = sandbox.stub();
-			const mtr = new MtrCommand(cmdFn, lookup as unknown as typeof cachedDnsLookup);
-
-			const result = await mtr.run(mockedSocket as any, 'measurement', 'test', {
-				type: 'mtr', timeout: 5, target: 'jsdelivr.net', protocol: 'icmp', port: 80, packets: 16, inProgressUpdates: false, ipVersion: 4,
-			}) as any;
-
-			timeoutStub.restore();
-			clock.restore();
-
-			expect(result.failureSource).to.equal('internal');
-			expect(cmdFn.notCalled).to.be.true;
-			expect(lookup.notCalled).to.be.true;
-		});
-
-		it('should stop target lookup when only the minimum MTR runtime remains', async () => {
+		it('should stop target lookup at the static DNS deadline', async () => {
 			const clock = sandbox.useFakeTimers();
 			const lookupController = new AbortController();
 			const timeoutStub = sandbox.stub(AbortSignal, 'timeout').returns(lookupController.signal);
 			const cmdFn = sandbox.spy((): any => getExecaMock());
 			const lookup = ((_hostname: string, options: any) => new Promise((_resolve, reject) => {
 				options.signal.addEventListener('abort', () => reject(options.signal.reason), { once: true });
-			})) as typeof cachedDnsLookup;
+			})) as typeof cachedDnsLookupOne;
 			const mtr = new MtrCommand(cmdFn, lookup);
 			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', {
-				type: 'mtr', timeout: 5, target: 'jsdelivr.net', protocol: 'icmp', port: 80, packets: 7, inProgressUpdates: false, ipVersion: 4,
+				type: 'mtr', timeout: 10, target: 'jsdelivr.net', protocol: 'icmp', port: 80, packets: 3, inProgressUpdates: false, ipVersion: 4,
 			});
 
 			await clock.tickAsync(0);
@@ -294,9 +276,13 @@ describe('mtr command executor', () => {
 
 			lookupController.abort();
 			await runPromise;
+			const usedStaticDeadline = timeoutStub.calledWith(4000);
+			const commandWasNotCalled = cmdFn.notCalled;
+			timeoutStub.restore();
+			clock.restore();
 
-			expect(timeoutStub.calledWith(2600)).to.be.true;
-			expect(cmdFn.notCalled).to.be.true;
+			expect(usedStaticDeadline).to.be.true;
+			expect(commandWasNotCalled).to.be.true;
 			expect(mockedSocket.emit.calledOnce).to.be.true;
 
 			expect((mockedSocket.emit.firstCall.args[1] as any).result).to.include({
@@ -304,12 +290,9 @@ describe('mtr command executor', () => {
 				failureSource: 'resolver',
 				rawOutput: 'The measurement command timed out.',
 			});
-
-			timeoutStub.restore();
-			clock.restore();
 		});
 
-		it('should derive MTR arguments from the exact remaining budget', async () => {
+		it('should preserve static MTR arguments after target lookup', async () => {
 			const clock = sandbox.useFakeTimers();
 			const mockCmd = getExecaMock();
 			let passedArgs: string[] = [];
@@ -321,56 +304,95 @@ describe('mtr command executor', () => {
 			};
 			const lookup = (async (_hostname: string, options: any) => {
 				if (options.rrtype) {
-					return [ '123 | abc | abc' ];
+					return '123 | abc | abc';
 				}
 
-				return new Promise(resolve => setTimeout(() => resolve([ '1.1.1.1', options.family ]), 2900));
-			}) as typeof cachedDnsLookup;
+				return new Promise(resolve => setTimeout(() => resolve('1.1.1.1'), 2900));
+			}) as typeof cachedDnsLookupOne;
 			const mtr = new MtrCommand(cmdFn, lookup);
 			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', {
-				type: 'mtr', timeout: 5, target: 'jsdelivr.net', protocol: 'icmp', port: 80, packets: 3, inProgressUpdates: false, ipVersion: 4,
+				type: 'mtr', timeout: 10, target: 'jsdelivr.net', protocol: 'icmp', port: 80, packets: 3, inProgressUpdates: false, ipVersion: 4,
 			});
 
 			await clock.tickAsync(2900);
 
-			expect(passedArgs[passedArgs.indexOf('--interval') + 1]).to.equal('0.36');
-			expect(passedProcessTimeout).to.equal(4100);
+			expect(passedArgs[passedArgs.indexOf('--interval') + 1]).to.equal('0.5');
+			expect(passedArgs[passedArgs.indexOf('--gracetime') + 1]).to.equal('4.5');
+			expect(passedProcessTimeout).to.equal(9100);
 
 			mockCmd.resolve({ stdout: '' });
 			await runPromise;
 			clock.restore();
 		});
 
-		it('should not start MTR when successful target lookup leaves less than the minimum runtime', async () => {
-			const clock = sandbox.useFakeTimers();
-			const timeoutStub = sandbox.stub(AbortSignal, 'timeout').returns(new AbortController().signal);
+		it('should enrich progress with ready values without waiting and wait for final enrichment', async () => {
+			const rawOutput = getCmdMock('mtr-success-raw').split('\n').filter(line => !line.startsWith('d ')).join('\n');
 			const mockCmd = getExecaMock();
-			const cmdFn = sandbox.spy((): any => mockCmd);
-			const lookup = (async (_hostname: string, options: any) => {
-				if (options.rrtype) {
-					return [ '123 | abc | abc' ];
+			const lookup = sandbox.stub();
+			let resolvePtr!: (record: string) => void;
+			let resolveAsn!: (record: string) => void;
+			const ptrResult = new Promise<string>((resolve) => {
+				resolvePtr = resolve;
+			});
+			const asnResult = new Promise<string>((resolve) => {
+				resolveAsn = resolve;
+			});
+			lookup.callsFake((_hostname: string, options: any) => {
+				if (!options.rrtype) {
+					return Promise.resolve('142.250.179.238');
 				}
 
-				return new Promise(resolve => setTimeout(() => resolve([ '1.1.1.1', options.family ]), 2700));
-			}) as typeof cachedDnsLookup;
-			const mtr = new MtrCommand(cmdFn, lookup);
+				if (options.rrtype === 'PTR') {
+					return ptrResult;
+				}
+
+				return asnResult;
+			});
+
+			const mtr = new MtrCommand((): any => mockCmd, lookup as typeof cachedDnsLookupOne);
 			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', {
-				type: 'mtr', timeout: 5, target: 'jsdelivr.net', protocol: 'icmp', port: 80, packets: 7, inProgressUpdates: false, ipVersion: 4,
+				type: 'mtr', timeout: 10, target: 'example.com', protocol: 'icmp', port: 80, packets: 3, inProgressUpdates: true, ipVersion: 4,
 			});
-			mockCmd.resolve({ stdout: '' });
 
-			await clock.tickAsync(2700);
-			await runPromise;
-			timeoutStub.restore();
-			clock.restore();
+			await new Promise(resolve => setImmediate(resolve));
+			mockCmd.stdout.write('x 0 0\nx 1 33000\nh 1 62.252.67.181\n');
+			await new Promise(resolve => setTimeout(resolve, 150));
+			const startedPtr = lookup.calledWithMatch('62.252.67.181', { rrtype: 'PTR' });
+			const startedAsn = lookup.calledWithMatch('181.67.252.62.origin.asn.cymru.com', { rrtype: 'TXT' });
+			const unresolvedProgress = (mockedSocket.emit.lastCall.args[1] as any).result.rawOutput;
+			const progressCount = mockedSocket.emit.callCount;
 
-			expect(cmdFn.notCalled).to.be.true;
+			resolvePtr('ptr.example');
+			await new Promise(resolve => setTimeout(resolve, 150));
 
-			expect((mockedSocket.emit.firstCall.args[1] as any).result).to.include({
-				status: 'failed',
-				failureSource: 'internal',
-				rawOutput: 'The measurement command timed out.',
+			expect(mockedSocket.emit.callCount).to.equal(progressCount);
+
+			mockCmd.stdout.write('p 1 10000 33000\n');
+			await new Promise(resolve => setTimeout(resolve, 150));
+			const partiallyEnrichedProgress = (mockedSocket.emit.lastCall.args[1] as any).result.rawOutput;
+			let finished = false;
+			void runPromise.then(() => {
+				finished = true;
 			});
+
+			mockCmd.stdout.end(rawOutput);
+			mockCmd.resolve({ stdout: rawOutput });
+			await new Promise(resolve => setImmediate(resolve));
+
+			expect(finished).to.be.false;
+
+			resolveAsn('64500 64501 | example | example');
+			const result = await runPromise as any;
+
+			expect(startedPtr).to.be.true;
+			expect(startedAsn).to.be.true;
+			expect(unresolvedProgress).to.include('62.252.67.181 (62.252.67.181)');
+			expect(unresolvedProgress).not.to.include('ptr.example');
+			expect(partiallyEnrichedProgress).to.include('ptr.example (62.252.67.181)');
+			expect(partiallyEnrichedProgress).to.include('AS???');
+			expect(result.status).to.equal('finished');
+			expect(result.hops.some((hop: any) => hop.resolvedHostname === 'ptr.example')).to.be.true;
+			expect(result.hops.some((hop: any) => hop.asn.includes(64500) && hop.asn.includes(64501))).to.be.true;
 		});
 
 		it('should run and parse mtr with progress messages', async () => {
@@ -383,7 +405,9 @@ describe('mtr command executor', () => {
 				ipVersion: 4,
 			};
 
-			const expectedResult = getCmdMockResult(testCase);
+			const expectedResult = getCmdMockResult(testCase) as any;
+			expectedResult.result.resolvedHostname = options.target;
+			expectedResult.result.hops[0].resolvedHostname = '_gateway';
 			const rawOutput = getCmdMock(testCase);
 			const mockCmd = getExecaMock();
 
@@ -423,7 +447,7 @@ describe('mtr command executor', () => {
 			expect(mockedSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
-		it('should run and parse mtr', async () => {
+		it('should use the resolved target hostname when MTR does not reach the target', async () => {
 			const testCase = 'mtr-success-raw';
 			const options = {
 				type: 'mtr' as const,
@@ -433,7 +457,9 @@ describe('mtr command executor', () => {
 				ipVersion: 4,
 			};
 
-			const expectedResult = getCmdMockResult(testCase);
+			const expectedResult = getCmdMockResult(testCase) as any;
+			expectedResult.result.resolvedHostname = options.target;
+			expectedResult.result.hops[0].resolvedHostname = '_gateway';
 			const rawOutput = getCmdMock(testCase);
 			const mockCmd = getExecaMock();
 
@@ -450,6 +476,23 @@ describe('mtr command executor', () => {
 			expect(mockedSocket.emit.firstCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
 
+		it('should label the first responding hop as _gateway in raw and structured output', async () => {
+			const rawOutput = getCmdMock('mtr-success-raw');
+			const mockCmd = getExecaMock();
+			const mtr = new MtrCommand((): any => mockCmd, dnsResolver('1.1.1.1'));
+			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', {
+				type: 'mtr', timeout: 5, target: 'jsdelivr.net', protocol: 'icmp', port: 80, packets: 3, inProgressUpdates: false, ipVersion: 4,
+			});
+
+			await new Promise(resolve => setImmediate(resolve));
+			mockCmd.stdout.end(rawOutput);
+			mockCmd.resolve({ stdout: rawOutput });
+			const result = await runPromise as any;
+
+			expect(result.rawOutput).to.include('_gateway (192.168.0.1)');
+			expect(result.hops[0].resolvedHostname).to.equal('_gateway');
+		});
+
 		it('should pass the deadline signal to final ASN lookup', async () => {
 			const rawOutput = getCmdMock('mtr-success-raw');
 			const mockCmd = getExecaMock();
@@ -460,8 +503,8 @@ describe('mtr command executor', () => {
 					throw new Error('ASN lookup failed.');
 				}
 
-				return [ '1.1.1.1', options.family ];
-			}) as typeof cachedDnsLookup;
+				return '1.1.1.1';
+			}) as typeof cachedDnsLookupOne;
 			const mtr = new MtrCommand((): any => mockCmd, lookup);
 			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', {
 				type: 'mtr', timeout: 5, target: 'jsdelivr.net', protocol: 'icmp', port: 80, packets: 3, inProgressUpdates: false, ipVersion: 4,
@@ -477,23 +520,40 @@ describe('mtr command executor', () => {
 			expect(result.rawOutput).to.contain('Host');
 		});
 
-		it('should stop ASN lookup at the deadline while parsing progress', async () => {
-			const controller = new AbortController();
-			let receivedSignal = false;
+		it('should emit progress without waiting for enrichment', async () => {
+			const mockCmd = getExecaMock();
+			let resolvePtr!: (record: string) => void;
+			let resolveAsn!: (record: string) => void;
+			const ptrResult = new Promise<string>((resolve) => {
+				resolvePtr = resolve;
+			});
+			const asnResult = new Promise<string>((resolve) => {
+				resolveAsn = resolve;
+			});
 			const lookup = (async (_hostname: string, options: any) => {
-				receivedSignal = options.signal instanceof AbortSignal;
-				return new Promise((_resolve, reject) => {
-					options.signal.addEventListener('abort', () => reject(options.signal.reason), { once: true });
-				});
-			}) as typeof cachedDnsLookup;
-			const mtr = new MtrCommand((): any => getExecaMock(), lookup);
-			const parsePromise = mtr.parseResult(getCmdMock('mtr-success-raw').split('\n'), false, controller.signal);
+				if (!options.rrtype) {
+					return '1.1.1.1';
+				}
 
-			controller.abort();
-			const result = await parsePromise;
+				return options.rrtype === 'PTR' ? ptrResult : asnResult;
+			}) as typeof cachedDnsLookupOne;
+			const mtr = new MtrCommand((): any => mockCmd, lookup);
+			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', {
+				type: 'mtr', timeout: 5, target: 'example.com', protocol: 'icmp', port: 80, packets: 3, inProgressUpdates: true, ipVersion: 4,
+			});
 
-			expect(receivedSignal).to.be.true;
-			expect(result.hops).not.to.be.empty;
+			await new Promise(resolve => setImmediate(resolve));
+			mockCmd.stdout.write('h 0 2.2.2.2\n');
+			await new Promise(resolve => setImmediate(resolve));
+
+			expect(mockedSocket.emit.calledWithMatch('probe:measurement:progress')).to.be.true;
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput).to.include('_gateway (2.2.2.2)');
+
+			resolvePtr('ptr.example');
+			resolveAsn('64500 | example | example');
+			mockCmd.stdout.end();
+			mockCmd.resolve({ stdout: 'h 0 2.2.2.2\n' });
+			await runPromise;
 		});
 
 		it('should run and parse mtr - ipv6-mtr-success-raw', async () => {
@@ -506,7 +566,11 @@ describe('mtr command executor', () => {
 				ipVersion: 6,
 			};
 
-			const expectedResult = getCmdMockResult(testCase);
+			const expectedResult = getCmdMockResult(testCase) as any;
+			expectedResult.result.resolvedHostname = options.target;
+			expectedResult.result.hops.at(-1).resolvedHostname = options.target;
+			expectedResult.result.rawOutput = MtrParser.outputBuilder(expectedResult.result.hops);
+			expectedResult.result.hops[0].resolvedHostname = '_gateway';
 			const rawOutput = getCmdMock(testCase);
 			const mockCmd = getExecaMock();
 
@@ -533,7 +597,9 @@ describe('mtr command executor', () => {
 				ipVersion: 6,
 			};
 
-			const expectedResult = getCmdMockResult(testCase);
+			const expectedResult = getCmdMockResult(testCase) as any;
+			expectedResult.result.resolvedHostname = options.target;
+			expectedResult.result.hops[0].resolvedHostname = '_gateway';
 			const rawOutput = getCmdMock(testCase);
 			const mockCmd = getExecaMock();
 
@@ -726,7 +792,14 @@ describe('mtr command executor', () => {
 				ipVersion: 6,
 			};
 			const mockCmd = getExecaMock();
-			const mtr = new MtrCommand((): any => mockCmd);
+			let commandStarted!: () => void;
+			const commandStart = new Promise<void>((resolve) => {
+				commandStarted = resolve;
+			});
+			const mtr = new MtrCommand((() => {
+				commandStarted();
+				return mockCmd;
+			}) as any);
 			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
 			const timeoutError = new Error('Timeout') as ExecaError;
 			timeoutError.stderr = '';
@@ -738,6 +811,7 @@ describe('mtr command executor', () => {
 				+ 'p 0 7990 33000\n'
 				+ 'x 1 33001';
 
+			await commandStart;
 			mockCmd.reject(timeoutError);
 
 			await runPromise;
@@ -770,7 +844,7 @@ describe('mtr command executor', () => {
 			}
 
 			const result = (mockedSocket.emit.lastCall.args[1] as any).result;
-			expect(result.failureSource).to.equal('target');
+			expect(result.failureSource).to.equal('internal');
 			expect(result.rawOutput).to.equal('invalid partial output\n\nThe measurement command timed out.');
 		});
 
@@ -793,6 +867,7 @@ describe('mtr command executor', () => {
 
 			await runPromise;
 
+			expect((mockedSocket.emit.lastCall.args[1] as any).result.failureSource).to.equal('internal');
 			expect((mockedSocket.emit.lastCall.args[1] as any).result.rawOutput).to.equal('The measurement command timed out.');
 		});
 
