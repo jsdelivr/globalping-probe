@@ -284,6 +284,37 @@ describe('trace command', () => {
 			expect(result.resolvedHostname).to.equal('example.com');
 		});
 
+		it('normalizes responder addresses before enrichment', async () => {
+			const targetAddress = '2606:4700:4700::1111';
+			const routerAddress = '2606:4700:4700::1001';
+			const lookup = sandbox.stub().callsFake(async (target: string, options: { rrtype?: string }) => {
+				if (!options.rrtype) {
+					return targetAddress;
+				}
+
+				if (target === routerAddress) {
+					return 'router.example';
+				}
+
+				throw new Error('ENODATA');
+			});
+			const mockCmd = getExecaMock();
+			const command = new TracerouteCommand((): any => mockCmd, lookup);
+			const runPromise = command.run(mockSocket as any, 'measurement', 'test', {
+				type: 'traceroute', timeout: 5, target: 'example.com', port: 53, protocol: 'UDP', inProgressUpdates: false, ipVersion: 6,
+			});
+			const rawOutput = `traceroute to ${targetAddress} (${targetAddress}), 20 hops max, 60 byte packets\n`
+				+ ' 1  192.168.0.1  0.25 ms  0.50 ms\n'
+				+ ' 2  2606:4700:4700:0000:0000:0000:0000:1001  1.25 ms  1.50 ms\n'
+				+ ` 3  ${targetAddress}  4.25 ms  4.50 ms`;
+
+			mockCmd.resolve({ stdout: rawOutput });
+			const result = await runPromise as any;
+
+			expect(result.rawOutput).to.include(`router.example (${routerAddress})`);
+			expect(result.hops[1].resolvedAddress).to.equal(routerAddress);
+		});
+
 		it('starts hop lookups while traceroute runs and waits for them only for the final result', async () => {
 			const options = {
 				type: 'traceroute' as TraceOptions['type'],

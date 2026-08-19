@@ -1,5 +1,12 @@
 import { expect } from 'chai';
-import { ipEquals, isIpPrivate } from '../../../src/lib/ip.js';
+import { ipEquals, isIpPrivate, normalizeIp } from '../../../src/lib/ip.js';
+
+describe('ip normalization', () => {
+	it('should use compact notation without changing the address family', () => {
+		expect(normalizeIp('2001:0db8:0000:0000:0000:0000:0000:0001')).to.equal('2001:db8::1');
+		expect(normalizeIp('::ffff:7f00:1')).to.equal('::ffff:127.0.0.1');
+	});
+});
 
 describe('ip equality', () => {
 	it('should compare normalized IP addresses', () => {
