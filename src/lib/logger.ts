@@ -60,7 +60,7 @@ export const scopedLogger = (scope: string): winston.Logger => logger.child({ sc
 apiLogsTransport.setLogger(scopedLogger('api-logs-transport'));
 
 function getConsoleLogLevel () {
-	const logLevel = process.env['GP_LOG_LEVEL']?.toLowerCase();
+	const logLevel = (process.env['GP_LOG_LEVEL'] ?? process.env['LOG_LEVEL'])?.toLowerCase();
 
 	if (logLevel && Object.keys(winston.config.npm.levels).includes(logLevel)) {
 		return logLevel;
