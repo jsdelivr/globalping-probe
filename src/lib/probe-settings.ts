@@ -60,12 +60,12 @@ export class ProbeSettingsStore {
 		return { ...this.settings };
 	}
 
-	public async update (settings: Partial<ProbeSettings>): Promise<void> {
+	public async update (settings: Partial<ProbeSettings>): Promise<boolean> {
 		const result = probeSettingsSchema.validate(settings, { convert: false });
 
 		if (result.error) {
 			logger.error('Invalid probe settings received:', result.error);
-			return;
+			return false;
 		}
 
 		const updatedSettings = { ...this.settings, ...result.value };
@@ -82,7 +82,8 @@ export class ProbeSettingsStore {
 				},
 			);
 
-		return this.writeQueue;
+		await this.writeQueue;
+		return true;
 	}
 }
 
@@ -90,6 +91,6 @@ const probeSettingsStore = new ProbeSettingsStore();
 
 export const getProbeSettings = (): Readonly<ProbeSettings> => probeSettingsStore.get();
 
-export const updateProbeSettings = (settings: Partial<ProbeSettings>): Promise<void> => {
+export const updateProbeSettings = (settings: Partial<ProbeSettings>): Promise<boolean> => {
 	return probeSettingsStore.update(settings);
 };
