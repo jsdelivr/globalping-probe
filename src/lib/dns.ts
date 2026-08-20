@@ -139,9 +139,7 @@ const toResult = (records: string[], hostname: string, options: Options): [strin
 		throw new InternalError(`ENODATA ${hostname}`, true, 'target');
 	}
 
-	const address = options.allowPrivate
-		? records[0]
-		: records.find(ip => !isIpPrivate(ip));
+	const address = options.allowPrivate ? records[0] : records.find(ip => !isIpPrivate(ip));
 
 	if (!address) {
 		throw new InternalError('Private IP ranges are not allowed.', true, 'target');

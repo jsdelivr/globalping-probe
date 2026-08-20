@@ -8,6 +8,9 @@ module.exports = {
 		'loader=ts-node/esm',
 		'loader=testdouble',
 	],
+	'require': [
+		'./test/compat/hooks.ts',
+	],
 	'spec': [
 		'test/compat/**/*.test.ts',
 	],

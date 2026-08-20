@@ -54,10 +54,6 @@ privateBlockList.addSubnet('fe80::', 10, 'ipv6');
 privateBlockList.addSubnet('ff00::', 8, 'ipv6');
 
 export const isIpPrivate = (ip: string) => {
-	if (process.env['NODE_ENV'] === 'test' && process.env['GP_TEST_ALLOW_PRIVATE_TARGETS'] === '1') {
-		return false;
-	}
-
 	const ipVersion = isIP(ip);
 
 	if (ipVersion === 0) {

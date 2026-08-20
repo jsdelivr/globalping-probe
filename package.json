@@ -86,7 +86,7 @@
 		"test": "npm run lint:js && npm run test:mocha",
 		"test:dist": "node test/dist.js",
 		"test:mocha": "NODE_ENV=test TS_NODE_PROJECT=test/tsconfig.json mocha",
-		"test:compat": "NODE_ENV=test GP_TEST_ALLOW_PRIVATE_TARGETS=1 TS_NODE_PROJECT=test/tsconfig.json mocha --config .mocharc.compat.cjs",
+		"test:compat": "NODE_ENV=test TS_NODE_PROJECT=test/tsconfig.json mocha --config .mocharc.compat.cjs",
 		"test:mocha:dev": "SNAPSHOT_RESPONSES=1 TS_NODE_TRANSPILE_ONLY=true NODE_ENV=test mocha",
 		"test:mocha:dev:prune": "PRUNE_OLD_SNAPSHOTS=1 npm run test:mocha:dev",
 		"test:mocha:dev:update": "PRUNE_OLD_SNAPSHOTS=1 UPDATE_EXISTING_SNAPSHOTS=1 npm run test:mocha:dev",

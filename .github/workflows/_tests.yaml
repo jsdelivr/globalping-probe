@@ -62,9 +62,6 @@ jobs:
           dig -v
           mtr --version
       - name: Test native command compatibility
-        env:
-          NODE_ENV: test
-          GP_TEST_ALLOW_PRIVATE_TARGETS: 1
         run: npm run test:compat
 
   e2etest:
