@@ -6,6 +6,20 @@ import { expectFiniteNumbers, loopbackTargets, runCommand } from './command-test
 import { DnsServer } from './dns-server.js';
 
 describe('native MTR command compatibility', () => {
+	let dnsServer: DnsServer | undefined;
+	const lookup = ((hostname: string, options: any) => cachedDnsLookup(hostname, {
+		...options,
+		server: `${dnsServer!.host}:${dnsServer!.port}`,
+	})) as typeof cachedDnsLookup;
+
+	before(async () => {
+		dnsServer = await DnsServer.start('127.0.0.1');
+	});
+
+	after(async () => {
+		await dnsServer?.close();
+	});
+
 	for (const { target, ipVersion } of loopbackTargets) {
 		it(`runs MTR against IPv${ipVersion} loopback`, async () => {
 			const options: MtrOptions = {
@@ -18,7 +32,7 @@ describe('native MTR command compatibility', () => {
 				ipVersion,
 				timeout: 5,
 			};
-			const result = await runCommand(new MtrCommand(mtrCmd), options);
+			const result = await runCommand(new MtrCommand(mtrCmd, lookup), options);
 
 			expect(result.status).to.equal('finished');
 			expect(ipEquals(result.resolvedAddress, target)).to.equal(true);
@@ -28,22 +42,7 @@ describe('native MTR command compatibility', () => {
 	}
 
 	describe('hostname target', () => {
-		let dnsServer: DnsServer | undefined;
-
-		before(async () => {
-			dnsServer = await DnsServer.start('127.0.0.1');
-		});
-
-		after(async () => {
-			await dnsServer?.close();
-		});
-
 		it('runs MTR against a hostname resolving to loopback', async () => {
-			const server = dnsServer!;
-			const lookup = ((hostname: string, options: any) => cachedDnsLookup(hostname, {
-				...options,
-				server: `${server.host}:${server.port}`,
-			})) as typeof cachedDnsLookup;
 			const result = await runCommand(new MtrCommand(mtrCmd, lookup), {
 				type: 'mtr',
 				inProgressUpdates: false,

@@ -1,12 +1,12 @@
 import dns from 'node:dns';
 import { isIPv6 } from 'node:net';
 import { TTLCache } from '@isaacs/ttlcache';
-import { isIpPrivate, isIpPrivateTarget } from './ip.js';
+import { isIpPrivate } from './ip.js';
 import { InternalError } from './internal-error.js';
 
 export type IpFamily = 4 | 6;
 
-export type LookupOptions = { family: IpFamily; server?: string; allowPrivate?: boolean; allowPrivateTarget?: boolean; signal?: AbortSignal };
+export type LookupOptions = { family: IpFamily; server?: string; allowPrivate?: boolean; signal?: AbortSignal };
 export type RecordOptions = { rrtype: 'TXT'; server?: string; signal?: AbortSignal };
 type Options = LookupOptions | RecordOptions;
 
@@ -141,7 +141,7 @@ const toResult = (records: string[], hostname: string, options: Options): [strin
 
 	const address = options.allowPrivate
 		? records[0]
-		: records.find(ip => !isIpPrivate(ip)) ?? (options.allowPrivateTarget ? records.find(ip => !isIpPrivateTarget(ip)) : undefined);
+		: records.find(ip => !isIpPrivate(ip));
 
 	if (!address) {
 		throw new InternalError('Private IP ranges are not allowed.', true, 'target');

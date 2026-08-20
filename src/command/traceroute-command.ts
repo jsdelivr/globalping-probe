@@ -4,7 +4,7 @@ import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface, FailureSource, TestStatus } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
-import { ipEquals, joiValidateIp, isIpPrivateTarget } from '../lib/ip.js';
+import { ipEquals, joiValidateIp, isIpPrivate } from '../lib/ip.js';
 import { scopedLogger } from '../lib/logger.js';
 import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
@@ -174,7 +174,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 			const parseResult = this.parse(cmdResult.stdout.trim());
 			result = this.toJsonOutput(parseResult);
 
-			if (isIpPrivateTarget(parseResult.resolvedAddress ?? '')) {
+			if (isIpPrivate(parseResult.resolvedAddress ?? '')) {
 				isResultPrivate = true;
 			}
 		} catch (error: unknown) {
@@ -223,7 +223,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 	}
 
 	private validatePartialResult (parsedOutput: ParsedOutput, cmd: ExecaChildProcess): boolean {
-		if (isIpPrivateTarget(parsedOutput.resolvedAddress ?? '')) {
+		if (isIpPrivate(parsedOutput.resolvedAddress ?? '')) {
 			cmd.kill('SIGKILL');
 			return false;
 		}

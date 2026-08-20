@@ -54,6 +54,10 @@ privateBlockList.addSubnet('fe80::', 10, 'ipv6');
 privateBlockList.addSubnet('ff00::', 8, 'ipv6');
 
 export const isIpPrivate = (ip: string) => {
+	if (process.env['NODE_ENV'] === 'test' && process.env['GP_TEST_ALLOW_PRIVATE_TARGETS'] === '1') {
+		return false;
+	}
+
 	const ipVersion = isIP(ip);
 
 	if (ipVersion === 0) {
@@ -74,14 +78,6 @@ export const isIpPrivate = (ip: string) => {
 
 	// Not a valid IP
 	return false;
-};
-
-export const isIpPrivateTarget = (ip: string): boolean => {
-	if (process.env['NODE_ENV'] === 'test' && process.env['GP_TEST_ALLOW_PRIVATE_TARGETS'] === '1') {
-		return false;
-	}
-
-	return isIpPrivate(ip);
 };
 
 let localIps: Set<string> | null = null;
@@ -106,7 +102,7 @@ export const getLocalIps = (refresh = false) => {
 };
 
 export const joiValidateIp = (value: string, helpers: Joi.CustomHelpers): string | Joi.ErrorReport => {
-	if (isIpPrivateTarget(value)) {
+	if (isIpPrivate(value)) {
 		return helpers.error('ip.private');
 	}
 

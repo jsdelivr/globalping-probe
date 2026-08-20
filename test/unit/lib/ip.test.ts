@@ -1,8 +1,8 @@
 import { expect } from 'chai';
-import { isIpPrivate, isIpPrivateTarget } from '../../../src/lib/ip.js';
+import { isIpPrivate } from '../../../src/lib/ip.js';
 
 describe('private ip validator', async () => {
-	it('should allow private targets only when both test gates are active', () => {
+	it('should allow private addresses only when both test gates are active', () => {
 		const environmentCases = [
 			{ nodeEnv: 'production', allowPrivateTargets: '1', expected: true },
 			{ nodeEnv: 'test', allowPrivateTargets: undefined, expected: true },
@@ -22,7 +22,7 @@ describe('private ip validator', async () => {
 					process.env['GP_TEST_ALLOW_PRIVATE_TARGETS'] = allowPrivateTargets;
 				}
 
-				expect(isIpPrivateTarget('127.0.0.1')).to.equal(expected);
+				expect(isIpPrivate('127.0.0.1')).to.equal(expected);
 			} finally {
 				if (originalNodeEnv === undefined) {
 					delete process.env['NODE_ENV'];
