@@ -21,7 +21,7 @@ describe('mtr compatibility', () => {
 	});
 
 	for (const { target, ipVersion } of loopbackTargets) {
-		it(`runs MTR against IPv${ipVersion} loopback`, async () => {
+		it(`runs mtr against IPv${ipVersion} loopback`, async () => {
 			const options: MtrOptions = {
 				type: 'mtr',
 				inProgressUpdates: false,
@@ -42,7 +42,7 @@ describe('mtr compatibility', () => {
 	}
 
 	describe('hostname target', () => {
-		it('runs MTR against a hostname resolving to loopback', async () => {
+		it('runs mtr against a hostname resolving to loopback', async () => {
 			const result = await runCommand(new MtrCommand(mtrCmd, lookup), {
 				type: 'mtr',
 				inProgressUpdates: false,
