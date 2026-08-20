@@ -3,7 +3,7 @@ import { ipEquals } from '../../src/lib/ip.js';
 import { PingCommand, type PingOptions } from '../../src/command/ping-command.js';
 import { expectFiniteNumbers, loopbackTargets, runCommand } from './command-test-helpers.js';
 
-describe('native ping command compatibility', () => {
+describe('ping compatibility', () => {
 	for (const { target, ipVersion } of loopbackTargets) {
 		it(`runs ping against IPv${ipVersion} loopback`, async () => {
 			const options: PingOptions = {
@@ -25,7 +25,7 @@ describe('native ping command compatibility', () => {
 		});
 	}
 
-	it('classifies a native ping name-resolution failure', async () => {
+	it('classifies a ping name-resolution failure', async () => {
 		const options: PingOptions = {
 			type: 'ping',
 			inProgressUpdates: false,

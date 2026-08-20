@@ -4,7 +4,7 @@ import { DnsCommand, dnsCmd, type DnsOptions } from '../../src/command/dns-comma
 import { expectFiniteNumbers, runCommand } from './command-test-helpers.js';
 import { DnsServer } from './dns-server.js';
 
-describe('native DNS command compatibility', () => {
+describe('dig compatibility', () => {
 	let ipv4Server: DnsServer | undefined;
 	let ipv6Server: DnsServer | undefined;
 	let startupError: unknown;

@@ -34,7 +34,7 @@ jobs:
           npm run test:dist
 
   commandtest:
-    name: Native command compatibility (Node ${{ matrix.node-version }})
+    name: Command compatibility (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     container: node:${{ matrix.node-version }}-slim
     strategy:
@@ -43,7 +43,7 @@ jobs:
       fail-fast: false
 
     steps:
-      - name: Install native command tools
+      - name: Install command-line tools
         run: |
           apt-get update
           DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y git ca-certificates expect iputils-ping traceroute dnsutils mtr-tiny
@@ -61,7 +61,7 @@ jobs:
           traceroute --version
           dig -v
           mtr --version
-      - name: Test native command compatibility
+      - name: Test command compatibility
         run: npm run test:compat
 
   e2etest:

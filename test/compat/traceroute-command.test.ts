@@ -3,7 +3,7 @@ import { ipEquals } from '../../src/lib/ip.js';
 import { TracerouteCommand, traceCmd, type TraceOptions } from '../../src/command/traceroute-command.js';
 import { expectFiniteNumbers, loopbackTargets, runCommand } from './command-test-helpers.js';
 
-describe('native traceroute command compatibility', () => {
+describe('traceroute compatibility', () => {
 	for (const { target, ipVersion } of loopbackTargets) {
 		it(`runs traceroute against IPv${ipVersion} loopback`, async () => {
 			const options: TraceOptions = {

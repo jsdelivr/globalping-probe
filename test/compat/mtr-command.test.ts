@@ -5,7 +5,7 @@ import { MtrCommand, mtrCmd, type MtrOptions } from '../../src/command/mtr-comma
 import { expectFiniteNumbers, loopbackTargets, runCommand } from './command-test-helpers.js';
 import { DnsServer } from './dns-server.js';
 
-describe('native MTR command compatibility', () => {
+describe('mtr compatibility', () => {
 	let dnsServer: DnsServer | undefined;
 	const lookup = ((hostname: string, options: any) => cachedDnsLookup(hostname, {
 		...options,
