@@ -46,7 +46,7 @@ jobs:
       - name: Install command-line tools
         run: |
           apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y git ca-certificates expect iputils-ping traceroute dnsutils mtr-tiny
+          apt-get install --no-install-recommends -y git ca-certificates expect iputils-ping traceroute dnsutils mtr-tiny
       - uses: actions/checkout@v7
       - name: Install dependencies
         run: npm ci
