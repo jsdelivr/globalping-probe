@@ -9,5 +9,8 @@ await td.replaceEsm(path.resolve('src/lib/ip.ts'), {
 });
 
 export const mochaHooks = {
+	beforeAll: () => {
+		console.log('Prerequisite for non-root traceroute tests: sudo setcap cap_net_raw+ep "$(readlink -f "$(command -v traceroute)")"');
+	},
 	afterAll: () => td.reset(),
 };

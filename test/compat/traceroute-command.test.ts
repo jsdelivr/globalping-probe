@@ -17,7 +17,7 @@ describe('traceroute compatibility', () => {
 			};
 			const result = await runCommand(new TracerouteCommand(traceCmd), options);
 
-			expect(result.status).to.equal('finished');
+			expect(result.status, result.rawOutput).to.equal('finished');
 			expect(ipEquals(result.resolvedAddress, target)).to.equal(true);
 			expect(result.hops.some((hop: { resolvedAddress: string | null; timings: unknown[] }) => hop.resolvedAddress && ipEquals(hop.resolvedAddress, target) && hop.timings.length > 0)).to.equal(true);
 			expectFiniteNumbers(result);

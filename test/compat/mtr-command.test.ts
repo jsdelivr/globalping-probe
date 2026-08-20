@@ -34,7 +34,7 @@ describe('mtr compatibility', () => {
 			};
 			const result = await runCommand(new MtrCommand(mtrCmd, lookup), options);
 
-			expect(result.status).to.equal('finished');
+			expect(result.status, result.rawOutput).to.equal('finished');
 			expect(ipEquals(result.resolvedAddress, target)).to.equal(true);
 			expect(result.hops.some((hop: { resolvedAddress: string | null; timings: unknown[] }) => hop.resolvedAddress && ipEquals(hop.resolvedAddress, target) && hop.timings.length > 0)).to.equal(true);
 			expectFiniteNumbers(result);
@@ -54,7 +54,7 @@ describe('mtr compatibility', () => {
 				timeout: 5,
 			} satisfies MtrOptions);
 
-			expect(result.status).to.equal('finished');
+			expect(result.status, result.rawOutput).to.equal('finished');
 			expect(result.resolvedAddress).to.equal('127.0.0.1');
 			expectFiniteNumbers(result);
 		});

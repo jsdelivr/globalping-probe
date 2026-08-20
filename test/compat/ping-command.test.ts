@@ -18,7 +18,7 @@ describe('ping compatibility', () => {
 			};
 			const result = await runCommand(new PingCommand(), options);
 
-			expect(result.status).to.equal('finished');
+			expect(result.status, result.rawOutput).to.equal('finished');
 			expect(ipEquals(result.resolvedAddress, target)).to.equal(true);
 			expect(result.timings).to.have.length.greaterThan(0);
 			expectFiniteNumbers(result);

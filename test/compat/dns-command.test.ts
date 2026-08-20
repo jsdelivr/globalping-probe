@@ -59,7 +59,7 @@ describe('dig compatibility', () => {
 			};
 			const result = await runCommand(new DnsCommand(dnsCmd), options);
 
-			expect(result.status).to.equal('finished');
+			expect(result.status, result.rawOutput).to.equal('finished');
 			expect(result.statusCode).to.equal(0);
 			expect(result.answers.some((answer: { value: string }) => ipEquals(answer.value, expected))).to.equal(true);
 			expectFiniteNumbers(result);
@@ -85,7 +85,7 @@ describe('dig compatibility', () => {
 			};
 			const result = await runCommand(new DnsCommand(dnsCmd), options);
 
-			expect(result.status).to.equal('finished');
+			expect(result.status, result.rawOutput).to.equal('finished');
 			expect(result.statusCode).to.equal(statusCode);
 			expectFiniteNumbers(result);
 		});
