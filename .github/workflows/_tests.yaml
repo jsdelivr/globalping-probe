@@ -33,8 +33,8 @@ jobs:
           npm ci --omit=dev
           npm run test:dist
 
-  commandtest:
-    name: Command compatibility (Node ${{ matrix.node-version }})
+  commpattest:
+    name: Run command compatibility tests
     runs-on: ubuntu-latest
     container: node:${{ matrix.node-version }}-slim
     strategy:
