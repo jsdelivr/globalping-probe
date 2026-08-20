@@ -2,9 +2,22 @@ import { isIP, BlockList } from 'node:net';
 import os from 'node:os';
 import _ from 'lodash';
 import is from '@sindresorhus/is';
+import ipaddr from 'ipaddr.js';
 import Joi from 'joi';
 
 const privateBlockList = new BlockList();
+
+export const normalizeIp = (ip: string): string => {
+	const scopeIndex = ip.indexOf('%');
+	const address = scopeIndex === -1 ? ip : ip.slice(0, scopeIndex);
+	const scopeId = scopeIndex === -1 ? '' : ip.slice(scopeIndex);
+	const parsedAddress = ipaddr.parse(address);
+	const normalizedAddress = parsedAddress instanceof ipaddr.IPv6 && parsedAddress.isIPv4MappedAddress()
+		? `::ffff:${parsedAddress.toIPv4Address().toString()}`
+		: parsedAddress.toString();
+
+	return `${normalizedAddress}${scopeId}`;
+};
 
 export const ipEquals = (first: string, second: string): boolean => {
 	const ipVersion = isIP(first);
@@ -13,11 +26,10 @@ export const ipEquals = (first: string, second: string): boolean => {
 		return false;
 	}
 
-	const family = ipVersion === 4 ? 'ipv4' : 'ipv6';
-	const blockList = new BlockList();
-	blockList.addAddress(first, family);
+	const firstBytes = ipaddr.parse(first.replace(/%.*$/, '')).toByteArray();
+	const secondBytes = ipaddr.parse(second.replace(/%.*$/, '')).toByteArray();
 
-	return blockList.check(second, family);
+	return _.isEqual(firstBytes, secondBytes);
 };
 
 // https://en.wikipedia.org/wiki/Reserved_IP_addresses

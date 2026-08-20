@@ -7,7 +7,7 @@ import { InternalError } from './internal-error.js';
 export type IpFamily = 4 | 6;
 
 export type LookupOptions = { family: IpFamily; server?: string; allowPrivate?: boolean; signal?: AbortSignal };
-export type RecordOptions = { rrtype: 'TXT'; server?: string; signal?: AbortSignal };
+export type RecordOptions = { rrtype: 'TXT' | 'PTR'; server?: string; signal?: AbortSignal };
 type Options = LookupOptions | RecordOptions;
 
 type ResolvedRecords = { records: string[]; ttl: number };
@@ -34,6 +34,7 @@ export const getDnsServers = (getServers: () => string[] = dns.getServers): stri
 };
 
 const resolveRecords = async (hostname: string, options: Options): Promise<ResolvedRecords> => {
+	options.signal?.throwIfAborted();
 	const resolver = new dns.promises.Resolver();
 	const servers: Array<string | undefined> = options.server ? [ options.server ] : resolver.getServers();
 
@@ -49,9 +50,10 @@ const resolveRecords = async (hostname: string, options: Options): Promise<Resol
 
 		try {
 			if ('rrtype' in options) {
-				// Only TXT records are supported as other RRtypes have different TS return types.
-				const records = (await resolver.resolveTxt(hostname)).map(record => record.join(''));
-				// TXT records carry no TTL here, so they use a fixed cache TTL.
+				const records = options.rrtype === 'PTR'
+					? await resolver.reverse(hostname)
+					: (await resolver.resolveTxt(hostname)).map(record => record.join(''));
+				// TXT and PTR records carry no TTL here, so they use a fixed cache TTL.
 				return { records, ttl: DNS_CACHE_TXT_TTL };
 			}
 
@@ -111,6 +113,13 @@ const waitForRecords = async (promise: Promise<string[]>, signal?: AbortSignal):
 		return promise;
 	}
 
+	const pending = Symbol('pending');
+	const result = await Promise.race([ promise, pending ] as const);
+
+	if (result !== pending) {
+		return result;
+	}
+
 	const abortError = () => signal.reason instanceof Error ? signal.reason : new Error('DNS lookup aborted.');
 
 	if (signal.aborted) {
@@ -156,9 +165,31 @@ export async function dnsLookup (hostname: string, options: Options): Promise<[s
 	return toResult(await waitForRecords(records, options.signal), hostname, options);
 }
 
+export function dnsLookupOne (hostname: string, options: LookupOptions): Promise<string>;
+export function dnsLookupOne (hostname: string, options: RecordOptions): Promise<string | undefined>;
+
+export async function dnsLookupOne (hostname: string, options: Options): Promise<string | undefined> {
+	if ('rrtype' in options) {
+		return (await dnsLookup(hostname, options))[0];
+	}
+
+	return (await dnsLookup(hostname, options))[0];
+}
+
 export function cachedDnsLookup (hostname: string, options: LookupOptions): Promise<[string, IpFamily]>;
 export function cachedDnsLookup (hostname: string, options: RecordOptions): Promise<string[]>;
 
 export async function cachedDnsLookup (hostname: string, options: Options): Promise<[string, IpFamily] | string[]> {
 	return toResult(await waitForRecords(cachedResolveRecords(hostname, options), options.signal), hostname, options);
+}
+
+export function cachedDnsLookupOne (hostname: string, options: LookupOptions): Promise<string>;
+export function cachedDnsLookupOne (hostname: string, options: RecordOptions): Promise<string | undefined>;
+
+export async function cachedDnsLookupOne (hostname: string, options: Options): Promise<string | undefined> {
+	if ('rrtype' in options) {
+		return (await cachedDnsLookup(hostname, options))[0];
+	}
+
+	return (await cachedDnsLookup(hostname, options))[0];
 }

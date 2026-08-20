@@ -1,14 +1,12 @@
-import { isIP } from 'node:net';
 import { Socket } from 'node:net';
 import { performance } from 'node:perf_hooks';
 import { setTimeout as delay } from 'node:timers/promises';
-import { cachedDnsLookup } from '../../../lib/dns.js';
-import { getFailureSource } from '../../../lib/internal-error.js';
 import type { FailureSource } from '../../../types.js';
 import type { PingParseOutput } from './parse.js';
 
 export type InternalTcpPingOptions = {
-	target: string;
+	address: string;
+	hostname: string;
 	port: number;
 	packets: number;
 	timeout: number;
@@ -120,33 +118,20 @@ export async function tcpPingSingle (hostname: string, address: string, port: nu
  * Performs multiple TCP pings to the specified target and port
  * @param options The TCP ping options
  * @param onProgress Optional callback for progress updates
- * @param lookup DNS lookup function (overridden in tests)
  * @returns A promise that resolves with the TCP ping results
  */
 export async function tcpPing (
 	options: InternalTcpPingOptions,
 	onProgress?: (result: TcpPingData) => void,
-	lookup = cachedDnsLookup,
 ): Promise<Array<TcpPingData>> {
-	const { target, port, packets, timeout, interval, ipVersion } = options;
+	const { address, hostname, port, packets, timeout, interval, ipVersion } = options;
 	const startTime = performance.now();
 	const results: Array<TcpPingData> = [];
 	const successTimings: Array<TcpPingSuccessProbeData> = [];
 	const deadline = Date.now() + timeout;
 	const signal = AbortSignal.timeout(timeout);
-	let address: string;
 
-	if (isIP(target)) {
-		address = target;
-	} else {
-		try {
-			[ address ] = await lookup(target, { family: ipVersion, signal });
-		} catch (e) {
-			return [{ type: 'error', message: (e as Error).message || '', failureSource: signal.aborted ? 'resolver' : getFailureSource(e, 'internal') }];
-		}
-	}
-
-	const start = { type: 'start' as const, address, hostname: target, port };
+	const start = { type: 'start' as const, address, hostname, port };
 	results.push(start);
 
 	if (onProgress) {
@@ -157,9 +142,9 @@ export async function tcpPing (
 		try {
 			await delay(i * interval, undefined, { signal });
 			const remaining = Math.max(0, deadline - Date.now());
-			return await tcpPingSingle(target, address, port, ipVersion, remaining, signal);
+			return await tcpPingSingle(hostname, address, port, ipVersion, remaining, signal);
 		} catch {
-			return { type: 'probe', address, hostname: target, port, success: false };
+			return { type: 'probe', address, hostname, port, success: false };
 		}
 	});
 
@@ -188,7 +173,7 @@ export async function tcpPing (
 
 	results.push({
 		type: 'statistics',
-		hostname: target,
+		hostname,
 		address,
 		port,
 		min,

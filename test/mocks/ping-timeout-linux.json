@@ -4,7 +4,7 @@
 	"result": {
 		"status": "finished",
 		"resolvedAddress": "123.21.43.124",
-		"resolvedHostname": null,
+		"resolvedHostname": "123.21.43.124",
 		"timings": [],
 		"stats": {
 			"min": null,

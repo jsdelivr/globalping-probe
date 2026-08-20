@@ -19,12 +19,18 @@ const makeTcpResult = (avg: number) => [
 	{ type: 'statistics', avg, min: avg, max: avg, mdev: 0, total: 3, rcv: 3, drop: 0, loss: 0, time: 1000, address: '1.2.3.4', hostname: 'test.host', port: 443 },
 ];
 
+const getResolvedTarget = (target: string, family: 4 | 6) => {
+	const index = config.get<string[]>('status.icmpTcpTargets').indexOf(target) + 1;
+	return family === 4 ? `1.1.1.${index}` : `2606:4700:4700::${index}`;
+};
+
 describe('IcmpTcpTest', () => {
 	let sandbox: sinon.SinonSandbox;
 	let socketEvents: EventEmitter;
 	let socket: { on: EventEmitter['on']; emit: sinon.SinonStub };
 	let updateStatus: sinon.SinonStub;
 	let pingCmd: sinon.SinonStub;
+	let lookup: sinon.SinonStub;
 	const tcpPingStub = sinon.stub();
 
 	const emitIsProxy = async (isProxy: boolean | null) => {
@@ -43,6 +49,8 @@ describe('IcmpTcpTest', () => {
 		updateStatus = sandbox.stub();
 		pingCmd = sandbox.stub();
 
+		lookup = sandbox.stub().callsFake(async (target: string, options: { family: 4 | 6 }) => getResolvedTarget(target, options.family));
+
 		// Default: ICMP avg=20, TCP avg=10 → diff=10 (below all thresholds)
 		pingCmd.resolves({ stdout: makeIcmpOutput(20) });
 		tcpPingStub.resolves(makeTcpResult(10));
@@ -55,7 +63,7 @@ describe('IcmpTcpTest', () => {
 	});
 
 	it('should pass and call updateStatus(false) when diffs are below all thresholds', async () => {
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await emitIsProxy(false);
 		await test.start();
 
@@ -68,10 +76,10 @@ describe('IcmpTcpTest', () => {
 	it('should pass when one diff >= 60 but isProxy is false', async () => {
 		const [ highDiffTarget ] = config.get<string[]>('status.icmpTcpTargets');
 		pingCmd.callsFake(async (opts: PingOptions) => ({
-			stdout: makeIcmpOutput(opts.target === highDiffTarget ? 70 : 20),
+			stdout: makeIcmpOutput(opts.target === getResolvedTarget(highDiffTarget!, 4) ? 70 : 20),
 		}));
 
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await emitIsProxy(false);
 		await test.start();
 
@@ -80,7 +88,7 @@ describe('IcmpTcpTest', () => {
 
 	it('should pass when all measurements fail (null diffs)', async () => {
 		pingCmd.rejects(new Error('unreachable'));
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await emitIsProxy(false);
 		await test.start();
 
@@ -89,7 +97,7 @@ describe('IcmpTcpTest', () => {
 
 	it('should fail when one diff >= 100 (rule 1), confirmed on second run', async () => {
 		pingCmd.resolves({ stdout: makeIcmpOutput(110) }); // diff = 100
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await emitIsProxy(false);
 		await test.start();
 
@@ -100,7 +108,7 @@ describe('IcmpTcpTest', () => {
 
 	it('should fail when two or more diffs >= 60 (rule 2), confirmed on second run', async () => {
 		pingCmd.resolves({ stdout: makeIcmpOutput(70) }); // diff = 60 across all 3 locations
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await emitIsProxy(false);
 		await test.start();
 
@@ -109,7 +117,7 @@ describe('IcmpTcpTest', () => {
 
 	it('should fail when one diff >= 60 and isProxy is true (rule 3), confirmed on second run', async () => {
 		pingCmd.resolves({ stdout: makeIcmpOutput(75) }); // diff = 65
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await emitIsProxy(true);
 		await test.start();
 
@@ -121,7 +129,7 @@ describe('IcmpTcpTest', () => {
 			stdout: makeIcmpOutput(opts.ipVersion === 6 ? 70 : 20),
 		}));
 
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await emitIsProxy(false);
 		await test.start();
 
@@ -133,7 +141,7 @@ describe('IcmpTcpTest', () => {
 			stdout: makeIcmpOutput(opts.ipVersion === 4 ? 70 : 20),
 		}));
 
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await emitIsProxy(false);
 		await test.start();
 
@@ -141,7 +149,7 @@ describe('IcmpTcpTest', () => {
 	});
 
 	it('should pass ipVersion 4 then 6 to pingCmd and tcpPing for each target', async () => {
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await emitIsProxy(false);
 		await test.start();
 
@@ -154,9 +162,24 @@ describe('IcmpTcpTest', () => {
 		expect(tcpIpVersions.slice(3, 6)).to.deep.equal([ 6, 6, 6 ]);
 	});
 
+	it('should resolve once and pass the same numeric target to ICMP and TCP', async () => {
+		const [ firstTarget ] = config.get<string[]>('status.icmpTcpTargets');
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
+		await emitIsProxy(false);
+		await test.start();
+
+		expect(lookup.callCount).to.equal(6);
+		expect(pingCmd.firstCall.args[0].target).to.equal(getResolvedTarget(firstTarget!, 4));
+
+		expect(tcpPingStub.firstCall.args[0]).to.deep.include({
+			address: getResolvedTarget(firstTarget!, 4),
+			hostname: firstTarget,
+		});
+	});
+
 	it('should pass when TCP ping has no statistics row (null diffs)', async () => {
 		tcpPingStub.resolves([{ type: 'start', address: '1.2.3.4', hostname: 'h', port: 443 }]);
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await emitIsProxy(false);
 		await test.start();
 
@@ -165,7 +188,7 @@ describe('IcmpTcpTest', () => {
 
 	it('should pass when tcpPing rejects (null diffs)', async () => {
 		tcpPingStub.rejects(new Error('tcp down'));
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await emitIsProxy(false);
 		await test.start();
 
@@ -175,10 +198,10 @@ describe('IcmpTcpTest', () => {
 	it('should fail when isProxy becomes true after pass with one borderline IPv4 diff', async () => {
 		const [ firstTarget ] = config.get<string[]>('status.icmpTcpTargets');
 		pingCmd.callsFake(async (opts: PingOptions) => ({
-			stdout: makeIcmpOutput(opts.target === firstTarget && opts.ipVersion === 4 ? 75 : 20),
+			stdout: makeIcmpOutput(opts.target === getResolvedTarget(firstTarget!, 4) && opts.ipVersion === 4 ? 75 : 20),
 		}));
 
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await test.start();
 		expect(updateStatus.callCount).to.equal(0);
 
@@ -196,7 +219,7 @@ describe('IcmpTcpTest', () => {
 			return { stdout: makeIcmpOutput(icmpCallNum++ < 6 ? 110 : 20) };
 		});
 
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await emitIsProxy(false);
 		await test.start();
 
@@ -204,7 +227,7 @@ describe('IcmpTcpTest', () => {
 	});
 
 	it('should run measure cycle again on interval', async () => {
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await emitIsProxy(false);
 		await test.start();
 
@@ -218,7 +241,7 @@ describe('IcmpTcpTest', () => {
 	});
 
 	it('should stop interval checks after stop call', async () => {
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await emitIsProxy(false);
 		await test.start();
 		test.stop();
@@ -233,7 +256,7 @@ describe('IcmpTcpTest', () => {
 			queueMicrotask(() => resolve({ stdout: makeIcmpOutput(20) }));
 		}));
 
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await emitIsProxy(false);
 		const p = test.start();
 		test.stop();
@@ -245,7 +268,7 @@ describe('IcmpTcpTest', () => {
 	});
 
 	it('should wait for isProxy before calling updateStatus when isProxy arrives after start()', async () => {
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await test.start();
 
 		expect(updateStatus.callCount).to.equal(0);
@@ -257,7 +280,7 @@ describe('IcmpTcpTest', () => {
 	});
 
 	it('should call updateStatus immediately after start() when isProxy arrived before start()', async () => {
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await emitIsProxy(false);
 
 		expect(updateStatus.callCount).to.equal(0);
@@ -269,14 +292,14 @@ describe('IcmpTcpTest', () => {
 	});
 
 	it('should never call updateStatus if isProxy never arrives', async () => {
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		await test.start();
 
 		expect(updateStatus.callCount).to.equal(0);
 	});
 
 	it('should allow start() to run normally after stop()', async () => {
-		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = new IcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		test.stop();
 		await emitIsProxy(false);
 		await test.start();
@@ -286,7 +309,7 @@ describe('IcmpTcpTest', () => {
 	});
 
 	it('should return same instance for initIcmpTcpTest and getIcmpTcpTest', () => {
-		const test = initIcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub);
+		const test = initIcmpTcpTest(updateStatus, socket as never, pingCmd, tcpPingStub, lookup);
 		expect(test).to.equal(getIcmpTcpTest());
 	});
 });

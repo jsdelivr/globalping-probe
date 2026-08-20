@@ -82,27 +82,21 @@ describe('adoption-server', () => {
 		it('should return 405 for non-GET/OPTIONS requests', async () => {
 			await startLocalAdoptionServer();
 
-			try {
-				await got(baseUrl, { method: 'POST' });
-				expect.fail('Should have thrown HTTPError');
-			} catch (error) {
-				expect(error.response.statusCode).to.equal(405);
+			const response = await got(baseUrl, { method: 'POST', throwHttpErrors: false });
 
-				expect(error.response.headers).to.include({
-					'access-control-allow-origin': '*',
-				});
-			}
+			expect(response.statusCode).to.equal(405);
+
+			expect(response.headers).to.include({
+				'access-control-allow-origin': '*',
+			});
 		});
 
 		it('should return 404 for unknown paths', async () => {
 			await startLocalAdoptionServer();
 
-			try {
-				await got(`${baseUrl}/unknown`);
-				expect.fail('Should have thrown HTTPError');
-			} catch (error) {
-				expect(error.response.statusCode).to.equal(404);
-			}
+			const response = await got(`${baseUrl}/unknown`, { throwHttpErrors: false });
+
+			expect(response.statusCode).to.equal(404);
 		});
 
 		it('should close the server automatically after lifetime', async () => {
