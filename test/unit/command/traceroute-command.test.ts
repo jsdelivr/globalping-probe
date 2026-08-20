@@ -315,14 +315,14 @@ describe('trace command', () => {
 			expect(result.hops[1].resolvedAddress).to.equal(routerAddress);
 		});
 
-		it('starts hop lookups while traceroute runs and waits for them only for the final result', async () => {
+		it('starts hop lookups during execution without progress updates', async () => {
 			const options = {
 				type: 'traceroute' as TraceOptions['type'],
 				timeout: 5,
 				target: 'example.com',
 				port: 53,
 				protocol: 'UDP',
-				inProgressUpdates: true,
+				inProgressUpdates: false,
 				ipVersion: 4,
 			};
 			let resolvePtr!: (record: string) => void;
@@ -361,6 +361,46 @@ describe('trace command', () => {
 
 			expect(startedBeforeCompletion).to.be.true;
 			expect(mockSocket.emit.getCalls().filter(call => call.args[0] === 'probe:measurement:progress')).to.have.length(progressCount);
+			expect((mockSocket.emit.lastCall.args[1] as any).result.rawOutput).to.include('dns.google (8.8.8.8)');
+		});
+
+		it('applies completed hop lookups to failed output', async () => {
+			const lookup = sandbox.stub().callsFake(async (target: string, lookupOptions: { rrtype?: string }) => {
+				if (!lookupOptions.rrtype) {
+					return '1.1.1.1';
+				}
+
+				if (target === '8.8.8.8') {
+					return 'dns.google';
+				}
+
+				throw new Error('ENODATA');
+			});
+			const mockCmd = getExecaMock();
+			const command = new TracerouteCommand((): any => mockCmd, lookup);
+			const runPromise = command.run(mockSocket as any, 'measurement', 'test', {
+				type: 'traceroute',
+				timeout: 5,
+				target: 'example.com',
+				port: 53,
+				protocol: 'UDP',
+				inProgressUpdates: true,
+				ipVersion: 4,
+			});
+			const rawOutput = 'traceroute to 1.1.1.1 (1.1.1.1), 20 hops max, 60 byte packets\n'
+				+ ' 1  192.168.0.1  0.25 ms  0.50 ms\n'
+				+ ' 2  8.8.8.8  1.25 ms  1.50 ms';
+			const error = new Error('Failed') as ExecaError;
+			error.stderr = '';
+			error.timedOut = false;
+			error.stdout = rawOutput;
+
+			await new Promise(resolve => setImmediate(resolve));
+			mockCmd.stdout.write(`${rawOutput}\n`);
+			await new Promise(resolve => setTimeout(resolve, 150));
+			mockCmd.reject(error);
+			await runPromise;
+
 			expect((mockSocket.emit.lastCall.args[1] as any).result.rawOutput).to.include('dns.google (8.8.8.8)');
 		});
 

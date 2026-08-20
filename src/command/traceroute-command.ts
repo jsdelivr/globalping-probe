@@ -214,6 +214,8 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 		const buffer = new ProgressBuffer(socket, testId, measurementId, 'diff');
 		const deadline = createMeasurementDeadline(cmdOptions.timeout);
 		const { dnsHeadroom } = getTracerouteBudget(cmdOptions.timeout, traceroutePackets);
+		const signal = deadline.signal();
+		const hostnames = new AsyncLookupMap<string, string>(address => this.lookup(address, { rrtype: 'PTR', signal }));
 		let result: TracerouteResult;
 		let target: ResolvedCommandTarget | undefined;
 
@@ -224,15 +226,13 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 
 			const commandOptions = { ...cmdOptions, target: resolvedTarget.address };
 			const cmd = this.cmd(commandOptions, deadline.processTimeout());
-			const signal = deadline.signal();
-			const hostnames = new AsyncLookupMap<string, string>(address => this.lookup(address, { rrtype: 'PTR', signal }));
 			hostnames.set(resolvedTarget.address, resolvedTarget.hostname);
 
 			const parseAndStartLookups = (output: string): ParsedOutput => {
 				const parsed = this.parse(output);
 
 				for (const address of parsed.responderAddresses) {
-					if (address !== resolvedTarget.address && !isIpPrivate(address)) {
+					if (!isIpPrivate(address)) {
 						hostnames.add(address);
 					}
 				}
@@ -269,13 +269,15 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 				};
 			};
 
-			if (cmd.stdout && cmdOptions.inProgressUpdates) {
+			if (cmd.stdout) {
 				const pStdout: string[] = [];
 				byLine(cmd.stdout, (data) => {
 					pStdout.push(data);
+					const parsed = parseAndStartLookups(pStdout.join(''));
 
-					const parsed = formatOutput(parseAndStartLookups(pStdout.join('')), targetHostnames);
-					buffer.pushProgress({ rawOutput: parsed.rawOutput });
+					if (cmdOptions.inProgressUpdates) {
+						buffer.pushProgress({ rawOutput: formatOutput(parsed, targetHostnames).rawOutput });
+					}
 				});
 			}
 
@@ -298,8 +300,14 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 				const parsed = this.parse(output.trim());
 
 				if (target) {
-					const targetHostnames = new Map([ [ target.address, target.hostname ] ]);
-					output = normalizeTracerouteOutput(output, target.address, target.hostname, parsed.responderAddresses, targetHostnames);
+					for (const address of parsed.responderAddresses) {
+						if (!isIpPrivate(address)) {
+							hostnames.add(address);
+						}
+					}
+
+					await hostnames.wait();
+					output = normalizeTracerouteOutput(output, target.address, target.hostname, parsed.responderAddresses, hostnames);
 				}
 
 				let targetResponded = false;

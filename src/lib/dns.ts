@@ -34,6 +34,7 @@ export const getDnsServers = (getServers: () => string[] = dns.getServers): stri
 };
 
 const resolveRecords = async (hostname: string, options: Options): Promise<ResolvedRecords> => {
+	options.signal?.throwIfAborted();
 	const resolver = new dns.promises.Resolver();
 	const servers: Array<string | undefined> = options.server ? [ options.server ] : resolver.getServers();
 
@@ -110,6 +111,13 @@ const cachedResolveRecords = (hostname: string, options: Options): Promise<strin
 const waitForRecords = async (promise: Promise<string[]>, signal?: AbortSignal): Promise<string[]> => {
 	if (!signal) {
 		return promise;
+	}
+
+	const pending = Symbol('pending');
+	const result = await Promise.race([ promise, pending ] as const);
+
+	if (result !== pending) {
+		return result;
 	}
 
 	const abortError = () => signal.reason instanceof Error ? signal.reason : new Error('DNS lookup aborted.');
