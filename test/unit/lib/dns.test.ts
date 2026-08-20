@@ -372,6 +372,45 @@ describe('dnsLookup / cachedDnsLookup', () => {
 		expect(resolve4.callCount).to.equal(1);
 	});
 
+	it('does not start an uncached lookup with an already-aborted signal', async () => {
+		const controller = new AbortController();
+		controller.abort(new Error('Measurement timeout.'));
+		let error;
+
+		try {
+			await dnsLookup('example.com', { family: 4, signal: controller.signal });
+		} catch (caughtError) {
+			error = caughtError;
+		}
+
+		expect(error).to.equal(controller.signal.reason);
+		expect(resolve4.notCalled).to.be.true;
+	});
+
+	it('does not start a cached lookup with an already-aborted signal', async () => {
+		const controller = new AbortController();
+		controller.abort(new Error('Measurement timeout.'));
+		let error;
+
+		try {
+			await cachedDnsLookup('example.com', { family: 4, signal: controller.signal });
+		} catch (caughtError) {
+			error = caughtError;
+		}
+
+		expect(error).to.equal(controller.signal.reason);
+		expect(resolve4.notCalled).to.be.true;
+	});
+
+	it('returns a completed cached lookup with an already-aborted signal', async () => {
+		await cachedDnsLookup('example.com', { family: 4 });
+		const controller = new AbortController();
+		controller.abort(new Error('Measurement timeout.'));
+
+		expect(await cachedDnsLookup('example.com', { family: 4, signal: controller.signal })).to.deep.equal([ '1.1.1.1', 4 ]);
+		expect(resolve4.calledOnce).to.be.true;
+	});
+
 	it('resolves IPv6 via resolve6', async () => {
 		const resolve6 = sandbox.stub(dns.promises.Resolver.prototype, 'resolve6').resolves([{ address: '2606:4700:4700::1111', ttl: 300 }]);
 

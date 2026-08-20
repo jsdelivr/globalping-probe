@@ -742,12 +742,10 @@ describe('mtr command executor', () => {
 
 			timeoutError.stdout = 'x 0 33000\n'
 				+ 'h 0 192.168.0.1\n'
-				+ 'd 0 192.168.0.1\n'
 				+ 'p 0 0 33000\n'
 				+ 'x 1 33001\n'
 				+ 'x 2 33002\n'
 				+ 'h 2 62.252.67.181\n'
-				+ 'd 2 62.252.67.181\n'
 				+ 'p 2 10000 33002';
 
 			mockCmd.reject(timeoutError);
@@ -766,12 +764,10 @@ describe('mtr command executor', () => {
 						failureSource: 'target',
 						rawOutput: 'x 0 33000\n'
 							+ 'h 0 192.168.0.1\n'
-							+ 'd 0 192.168.0.1\n'
 							+ 'p 0 0 33000\n'
 							+ 'x 1 33001\n'
 							+ 'x 2 33002\n'
 							+ 'h 2 62.252.67.181\n'
-							+ 'd 2 62.252.67.181\n'
 							+ 'p 2 10000 33002\n'
 							+ '\n'
 							+ 'The measurement command timed out.',
@@ -807,7 +803,6 @@ describe('mtr command executor', () => {
 
 			timeoutError.stdout = 'x 0 33000\n'
 				+ 'h 0 2606:4700:4700::1111\n'
-				+ 'd 0 one.one.one.one\n'
 				+ 'p 0 7990 33000\n'
 				+ 'x 1 33001';
 
