@@ -31,7 +31,8 @@ describe('index module', () => {
 	statusManagerStub.getStatus.returns('ready');
 	const initStatusManagerStub = sinon.stub().returns(statusManagerStub);
 	const getStatusManagerStub = sinon.stub().returns(statusManagerStub);
-	const updateProbeSettingsStub = sinon.stub();
+	const updateProbeSettingsHandlerStub = sinon.stub();
+	const updateProbeSettingsStub = sinon.stub().returns(updateProbeSettingsHandlerStub);
 
 	const mockSocket = new MockSocket();
 	const handlers = {
@@ -83,7 +84,7 @@ describe('index module', () => {
 
 		connectStub.reset();
 		disconnectStub.reset();
-		updateProbeSettingsStub.reset();
+		updateProbeSettingsHandlerStub.reset();
 		sandbox.restore();
 	});
 
@@ -137,54 +138,11 @@ describe('index module', () => {
 	it('should update probe settings received from the API', async () => {
 		await import('../../src/probe.js');
 		const settings = { meteredConnection: true };
-		updateProbeSettingsStub.resolves(true);
 
 		mockSocket.emit('api:settings:update', settings);
-		await Promise.resolve();
 
-		expect(updateProbeSettingsStub.calledOnceWithExactly(settings)).to.be.true;
-		expect(handlers['probe:settings:update'].calledOnceWithExactly(settings)).to.be.true;
-	});
-
-	it('should not acknowledge rejected probe settings', async () => {
-		await import('../../src/probe.js');
-		const settings = { meteredConnection: true };
-		updateProbeSettingsStub.resolves(false);
-
-		mockSocket.emit('api:settings:update', settings);
-		await Promise.resolve();
-
-		expect(updateProbeSettingsStub.calledOnceWithExactly(settings)).to.be.true;
-		expect(handlers['probe:settings:update'].notCalled).to.be.true;
-	});
-
-	it('should acknowledge probe settings in update order', async () => {
-		await import('../../src/probe.js');
-		const firstSettings = { meteredConnection: true };
-		const secondSettings = { meteredConnection: false };
-		const firstUpdate = sinon.promise<boolean>();
-		const secondUpdate = sinon.promise<boolean>();
-		updateProbeSettingsStub.onFirstCall().returns(firstUpdate);
-		updateProbeSettingsStub.onSecondCall().returns(secondUpdate);
-
-		mockSocket.emit('api:settings:update', firstSettings);
-		mockSocket.emit('api:settings:update', secondSettings);
-		await Promise.resolve();
-
-		expect(handlers['probe:settings:update'].notCalled).to.be.true;
-
-		firstUpdate.resolve(true);
-		await Promise.resolve();
-
-		expect(handlers['probe:settings:update'].calledOnceWithExactly(firstSettings)).to.be.true;
-
-		secondUpdate.resolve(true);
-		await Promise.resolve();
-
-		expect(handlers['probe:settings:update'].args).to.deep.equal([
-			[ firstSettings ],
-			[ secondSettings ],
-		]);
+		expect(updateProbeSettingsStub.calledOnceWithExactly(mockSocket)).to.be.true;
+		expect(updateProbeSettingsHandlerStub.calledOnceWithExactly(settings)).to.be.true;
 	});
 
 	it('should disconnect on "connect_error"', async () => {

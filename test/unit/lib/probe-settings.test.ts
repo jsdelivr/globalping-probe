@@ -3,18 +3,21 @@ import os from 'node:os';
 import path from 'node:path';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { ProbeSettingsStore } from '../../../src/lib/probe-settings.js';
+import { Socket } from 'socket.io-client';
+import { ProbeSettingsStore, updateProbeSettings } from '../../../src/lib/probe-settings.js';
 import type { ProbeSettings } from '../../../src/types.js';
 
 describe('probe settings', () => {
 	let directory: string;
 	let settingsFile: string;
 	let sandbox: sinon.SinonSandbox;
+	let socket: sinon.SinonStubbedInstance<Socket>;
 
 	beforeEach(() => {
 		sandbox = sinon.createSandbox();
 		directory = fs.mkdtempSync(path.join(os.tmpdir(), 'globalping-probe-settings-'));
 		settingsFile = path.join(directory, '.PROBE-SETTINGS');
+		socket = sandbox.createStubInstance(Socket) as sinon.SinonStubbedInstance<Socket>;
 	});
 
 	afterEach(() => {
@@ -84,6 +87,47 @@ describe('probe settings', () => {
 		expect(results).to.deep.equal([ true, true ]);
 		expect(writeFileStub.calledTwice).to.be.true;
 		expect(writeFileStub.secondCall.args).to.deep.equal([ settingsFile, JSON.stringify({ meteredConnection: false }, null, '\t'), 'utf8' ]);
+	});
+
+	it('should acknowledge only updated probe settings', async () => {
+		sandbox.stub(fs.promises, 'writeFile').resolves();
+		const settings = { meteredConnection: true };
+		const invalidSettings = { meteredConnection: 'true' } as unknown as Partial<ProbeSettings>;
+
+		await updateProbeSettings(socket)(settings);
+		await updateProbeSettings(socket)(invalidSettings);
+
+		expect(socket.emit.calledOnceWithExactly('probe:settings:update', settings)).to.be.true;
+	});
+
+	it('should acknowledge probe settings in update order', async () => {
+		const firstSettings = { meteredConnection: true };
+		const secondSettings = { meteredConnection: false };
+		const firstWrite = sinon.promise<void>();
+		const secondWrite = sinon.promise<void>();
+		const writeFileStub = sandbox.stub(fs.promises, 'writeFile');
+		writeFileStub.onFirstCall().returns(firstWrite);
+		writeFileStub.onSecondCall().returns(secondWrite);
+		const handler = updateProbeSettings(socket);
+
+		const firstUpdate = handler(firstSettings);
+		const secondUpdate = handler(secondSettings);
+		await Promise.resolve();
+
+		expect(socket.emit.notCalled).to.be.true;
+
+		firstWrite.resolve(undefined);
+		await firstUpdate;
+
+		expect(socket.emit.calledOnceWithExactly('probe:settings:update', firstSettings)).to.be.true;
+
+		secondWrite.resolve(undefined);
+		await secondUpdate;
+
+		expect(socket.emit.args).to.deep.equal([
+			[ 'probe:settings:update', firstSettings ],
+			[ 'probe:settings:update', secondSettings ],
+		]);
 	});
 
 	it('should not expose mutable settings', () => {

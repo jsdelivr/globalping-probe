@@ -3,6 +3,7 @@ import cluster from 'node:cluster';
 import os from 'node:os';
 import path from 'node:path';
 import Joi from 'joi';
+import type { Socket } from 'socket.io-client';
 import type { ProbeSettings } from '../types.js';
 import { scopedLogger } from './logger.js';
 
@@ -91,6 +92,10 @@ const probeSettingsStore = new ProbeSettingsStore();
 
 export const getProbeSettings = (): Readonly<ProbeSettings> => probeSettingsStore.get();
 
-export const updateProbeSettings = (settings: Partial<ProbeSettings>): Promise<boolean> => {
-	return probeSettingsStore.update(settings);
+export const updateProbeSettings = (socket: Socket) => async (settings: Partial<ProbeSettings>): Promise<void> => {
+	const success = await probeSettingsStore.update(settings);
+
+	if (success) {
+		socket.emit('probe:settings:update', settings);
+	}
 };
