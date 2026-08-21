@@ -31,11 +31,14 @@ describe('index module', () => {
 	statusManagerStub.getStatus.returns('ready');
 	const initStatusManagerStub = sinon.stub().returns(statusManagerStub);
 	const getStatusManagerStub = sinon.stub().returns(statusManagerStub);
+	const updateProbeSettingsHandlerStub = sinon.stub();
+	const updateProbeSettingsStub = sinon.stub().returns(updateProbeSettingsHandlerStub);
 
 	const mockSocket = new MockSocket();
 	const handlers = {
 		'probe:status:update': sinon.stub(),
 		'probe:dns:update': sinon.stub(),
+		'probe:settings:update': sinon.stub(),
 		'probe:measurement:request': sinon.stub(),
 		'probe:measurement:ack': sinon.stub(),
 		'connect_error': sinon.stub(),
@@ -56,6 +59,7 @@ describe('index module', () => {
 		await td.replaceEsm('socket.io-client', { io: ioStub });
 		await td.replaceEsm('../../src/command/ping-command.ts', { PingCommand: PingCommandStub, pingCmd: pingCmdStub });
 		await td.replaceEsm('../../src/status-manager/status-manager.ts', { initStatusManager: initStatusManagerStub, getStatusManager: getStatusManagerStub });
+		await td.replaceEsm('../../src/lib/probe-settings.ts', { updateProbeSettings: updateProbeSettingsStub });
 		process.env['GP_HOST_HW'] = 'true';
 		process.env['GP_HOST_DEVICE'] = 'v1';
 	});
@@ -80,6 +84,7 @@ describe('index module', () => {
 
 		connectStub.reset();
 		disconnectStub.reset();
+		updateProbeSettingsHandlerStub.reset();
 		sandbox.restore();
 	});
 
@@ -128,6 +133,16 @@ describe('index module', () => {
 		expect(initStatusManagerStub.callCount).to.equal(1);
 		expect(initStatusManagerStub.firstCall.args).to.deep.equal([ mockSocket, pingCmdStub ]);
 		expect(handlers['probe:dns:update'].calledOnce).to.be.true;
+	});
+
+	it('should update probe settings received from the API', async () => {
+		await import('../../src/probe.js');
+		const settings = { meteredConnection: true };
+
+		mockSocket.emit('api:settings:update', settings);
+
+		expect(updateProbeSettingsStub.calledOnceWithExactly(mockSocket)).to.be.true;
+		expect(updateProbeSettingsHandlerStub.calledOnceWithExactly(settings)).to.be.true;
 	});
 
 	it('should disconnect on "connect_error"', async () => {
