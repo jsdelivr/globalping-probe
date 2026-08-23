@@ -3,6 +3,7 @@ import cluster from 'node:cluster';
 import os from 'node:os';
 import path from 'node:path';
 import Joi from 'joi';
+import _ from 'lodash';
 import type { Socket } from 'socket.io-client';
 import type { ProbeSettings } from '../types.js';
 import { scopedLogger } from './logger.js';
@@ -70,6 +71,12 @@ export class ProbeSettingsStore {
 		}
 
 		const updatedSettings = { ...this.settings, ...result.value };
+
+		if (_.isEqual(this.settings, updatedSettings)) {
+			await this.writeQueue;
+			return true;
+		}
+
 		this.settings = updatedSettings;
 
 		this.writeQueue = this.writeQueue

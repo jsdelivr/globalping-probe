@@ -57,12 +57,16 @@ describe('probe settings', () => {
 		expect(fs.existsSync(settingsFile)).to.be.true;
 	});
 
-	it('should persist updated settings', async () => {
+	it('should persist only changed settings', async () => {
 		const store = new ProbeSettingsStore(settingsFile);
+		const writeFileSpy = sandbox.spy(fs.promises, 'writeFile');
 
-		const success = await store.update({ meteredConnection: true });
+		const firstSuccess = await store.update({ meteredConnection: true });
+		const secondSuccess = await store.update({ meteredConnection: true });
 
-		expect(success).to.be.true;
+		expect(firstSuccess).to.be.true;
+		expect(secondSuccess).to.be.true;
+		expect(writeFileSpy.calledOnce).to.be.true;
 		expect(store.get()).to.deep.equal({ meteredConnection: true });
 		expect(JSON.parse(fs.readFileSync(settingsFile, 'utf8'))).to.deep.equal({ meteredConnection: true });
 	});
