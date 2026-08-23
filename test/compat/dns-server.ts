@@ -1,11 +1,13 @@
 import { createServer as createTcpServer, type Server as TcpServer, type Socket } from 'node:net';
 import { createSocket, type Socket as UdpSocket } from 'node:dgram';
 
-type DnsResponse = 'a' | 'aaaa' | 'nxdomain' | 'servfail' | 'silent';
+type DnsResponse = 'a' | 'aaaa' | 'txt' | 'nxdomain' | 'servfail' | 'silent';
 
 const responses: Record<string, DnsResponse> = {
 	'ipv4.compat.test': 'a',
 	'ipv6.compat.test': 'aaaa',
+	'txt.compat.test': 'txt',
+	'trace.compat.test': 'a',
 	'mtr.compat.test': 'a',
 	'nxdomain.compat.test': 'nxdomain',
 	'servfail.compat.test': 'servfail',
@@ -61,6 +63,40 @@ const readName = (packet: Buffer, offset: number): { name: string; end: number }
 	return { name: labels.join('.').toLowerCase(), end: offset + 1 };
 };
 
+const encodeName = (name: string): Buffer => Buffer.concat([
+	...name.split('.').filter(Boolean).map((label) => {
+		const value = Buffer.from(label, 'ascii');
+		return Buffer.concat([ Buffer.from([ value.length ]), value ]);
+	}),
+	Buffer.from([ 0 ]),
+]);
+
+const buildRecord = (name: Buffer, type: number, value: Buffer): Buffer => {
+	const record = Buffer.alloc(name.length + 10 + value.length);
+	name.copy(record, 0);
+	record.writeUInt16BE(type, name.length);
+	record.writeUInt16BE(1, name.length + 2);
+	record.writeUInt32BE(60, name.length + 4);
+	record.writeUInt16BE(value.length, name.length + 8);
+	value.copy(record, name.length + 10);
+	return record;
+};
+
+const buildRootReferral = (query: Buffer, questionEnd: number): Buffer => {
+	const header = Buffer.alloc(12);
+	header.writeUInt16BE(query.readUInt16BE(0), 0);
+	header.writeUInt16BE(0x8400, 2);
+	header.writeUInt16BE(1, 4);
+	header.writeUInt16BE(1, 6);
+	header.writeUInt16BE(1, 10);
+
+	const nameServer = encodeName('127.0.0.1');
+	const answer = buildRecord(Buffer.from([ 0xc0, 0x0c ]), 2, nameServer);
+	const additional = buildRecord(nameServer, 1, Buffer.from([ 127, 0, 0, 1 ]));
+
+	return Buffer.concat([ header, query.subarray(12, questionEnd), answer, additional ]);
+};
+
 const buildResponse = (query: Buffer): Buffer | undefined => {
 	if (query.length < 17) {
 		return;
@@ -69,6 +105,11 @@ const buildResponse = (query: Buffer): Buffer | undefined => {
 	const { name, end } = readName(query, 12);
 	const queryType = query.readUInt16BE(end);
 	const questionEnd = end + 4;
+
+	if (name === '' && queryType === 2) {
+		return buildRootReferral(query, questionEnd);
+	}
+
 	const response = responses[name] ?? 'nxdomain';
 
 	if (response === 'silent') {
@@ -76,26 +117,21 @@ const buildResponse = (query: Buffer): Buffer | undefined => {
 	}
 
 	const rcode = response === 'nxdomain' ? 3 : response === 'servfail' ? 2 : 0;
-	const answerAddress = response === 'a' ? Buffer.from([ 127, 0, 0, 1 ]) : response === 'aaaa'
+	const answerValue = response === 'a' ? Buffer.from([ 127, 0, 0, 1 ]) : response === 'aaaa'
 		? Buffer.from([ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 ])
-		: undefined;
+		: response === 'txt' ? Buffer.concat([ Buffer.from([ 20 ]), Buffer.from('compatibility output', 'ascii') ])
+			: undefined;
 	const header = Buffer.alloc(12);
 	header.writeUInt16BE(query.readUInt16BE(0), 0);
-	header.writeUInt16BE(0x8180 + rcode, 2);
+	header.writeUInt16BE(name === 'trace.compat.test' ? 0x8400 : 0x8180 + rcode, 2);
 	header.writeUInt16BE(1, 4);
-	header.writeUInt16BE(answerAddress ? 1 : 0, 6);
+	header.writeUInt16BE(answerValue ? 1 : 0, 6);
 
-	if (!answerAddress) {
+	if (!answerValue) {
 		return Buffer.concat([ header, query.subarray(12, questionEnd) ]);
 	}
 
-	const answer = Buffer.alloc(12 + answerAddress.length);
-	answer.writeUInt16BE(0xc00c, 0);
-	answer.writeUInt16BE(queryType, 2);
-	answer.writeUInt16BE(1, 4);
-	answer.writeUInt32BE(60, 6);
-	answer.writeUInt16BE(answerAddress.length, 10);
-	answerAddress.copy(answer, 12);
+	const answer = buildRecord(Buffer.from([ 0xc0, 0x0c ]), queryType, answerValue);
 
 	return Buffer.concat([ header, query.subarray(12, questionEnd), answer ]);
 };

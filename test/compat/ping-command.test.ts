@@ -20,7 +20,18 @@ describe('ping compatibility', () => {
 
 			expect(result.status, result.rawOutput).to.equal('finished');
 			expect(ipEquals(result.resolvedAddress, target)).to.equal(true);
-			expect(result.timings).to.have.length.greaterThan(0);
+			expect(result.timings).to.have.length(1);
+
+			expect(result.stats).to.deep.include({
+				total: 1,
+				rcv: 1,
+				drop: 0,
+				loss: 0,
+			});
+
+			expect(result.stats.min).to.be.a('number');
+			expect(result.stats.avg).to.be.a('number');
+			expect(result.stats.max).to.be.a('number');
 			expectFiniteNumbers(result);
 		});
 	}

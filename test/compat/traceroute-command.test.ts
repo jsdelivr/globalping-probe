@@ -4,13 +4,17 @@ import { TracerouteCommand, traceCmd, type TraceOptions } from '../../src/comman
 import { expectFiniteNumbers, loopbackTargets, runCommand } from './command-test-helpers.js';
 
 describe('traceroute compatibility', () => {
-	for (const { target, ipVersion } of loopbackTargets) {
-		it(`runs traceroute against IPv${ipVersion} loopback`, async () => {
+	for (const { target, ipVersion, protocol } of [
+		...loopbackTargets.map(target => ({ ...target, protocol: 'ICMP' })),
+		{ target: '127.0.0.1', ipVersion: 4 as const, protocol: 'TCP' },
+		{ target: '127.0.0.1', ipVersion: 4 as const, protocol: 'UDP' },
+	]) {
+		it(`runs ${protocol.toLowerCase()} traceroute against IPv${ipVersion} loopback`, async () => {
 			const options: TraceOptions = {
 				type: 'traceroute',
 				inProgressUpdates: false,
 				target,
-				protocol: 'ICMP',
+				protocol,
 				port: 80,
 				ipVersion,
 				timeout: 5,
