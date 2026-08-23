@@ -12,12 +12,14 @@ describe('probe settings', () => {
 	let settingsFile: string;
 	let sandbox: sinon.SinonSandbox;
 	let socket: sinon.SinonStubbedInstance<Socket>;
+	let store: ProbeSettingsStore;
 
 	beforeEach(() => {
 		sandbox = sinon.createSandbox();
 		directory = fs.mkdtempSync(path.join(os.tmpdir(), 'globalping-probe-settings-'));
 		settingsFile = path.join(directory, '.PROBE-SETTINGS');
 		socket = sandbox.createStubInstance(Socket) as sinon.SinonStubbedInstance<Socket>;
+		store = new ProbeSettingsStore(settingsFile);
 	});
 
 	afterEach(() => {
@@ -26,15 +28,13 @@ describe('probe settings', () => {
 	});
 
 	it('should use defaults when the settings file does not exist', () => {
-		const store = new ProbeSettingsStore(settingsFile);
-
 		expect(store.get()).to.deep.equal({ meteredConnection: false });
 	});
 
 	it('should load settings from the settings file', () => {
 		fs.writeFileSync(settingsFile, JSON.stringify({ meteredConnection: true }));
 
-		const store = new ProbeSettingsStore(settingsFile);
+		store = new ProbeSettingsStore(settingsFile);
 
 		expect(store.get()).to.deep.equal({ meteredConnection: true });
 	});
@@ -42,7 +42,7 @@ describe('probe settings', () => {
 	it('should remove settings with invalid values and use defaults', () => {
 		fs.writeFileSync(settingsFile, JSON.stringify({ meteredConnection: 'true' }));
 
-		const store = new ProbeSettingsStore(settingsFile);
+		store = new ProbeSettingsStore(settingsFile);
 
 		expect(store.get()).to.deep.equal({ meteredConnection: false });
 		expect(fs.existsSync(settingsFile)).to.be.false;
@@ -51,14 +51,13 @@ describe('probe settings', () => {
 	it('should preserve unknown settings from the settings file', () => {
 		fs.writeFileSync(settingsFile, JSON.stringify({ meteredConnection: true, unknown: true }));
 
-		const store = new ProbeSettingsStore(settingsFile);
+		store = new ProbeSettingsStore(settingsFile);
 
 		expect(store.get()).to.deep.equal({ meteredConnection: true, unknown: true });
 		expect(fs.existsSync(settingsFile)).to.be.true;
 	});
 
 	it('should persist only changed settings', async () => {
-		const store = new ProbeSettingsStore(settingsFile);
 		const writeFileSpy = sandbox.spy(fs.promises, 'writeFile');
 
 		const firstSuccess = await store.update({ meteredConnection: true });
@@ -72,7 +71,6 @@ describe('probe settings', () => {
 	});
 
 	it('should serialize consecutive settings writes', async () => {
-		const store = new ProbeSettingsStore(settingsFile);
 		const firstWrite = sinon.promise<void>();
 		const writeFileStub = sandbox.stub(fs.promises, 'writeFile');
 		writeFileStub.onFirstCall().returns(firstWrite);
@@ -98,8 +96,8 @@ describe('probe settings', () => {
 		const settings = { meteredConnection: true };
 		const invalidSettings = { meteredConnection: 'true' } as unknown as Partial<ProbeSettings>;
 
-		await updateProbeSettings(socket)(settings);
-		await updateProbeSettings(socket)(invalidSettings);
+		await updateProbeSettings(socket, store)(settings);
+		await updateProbeSettings(socket, store)(invalidSettings);
 
 		expect(socket.emit.calledOnceWithExactly('probe:settings:update', settings)).to.be.true;
 	});
@@ -112,7 +110,7 @@ describe('probe settings', () => {
 		const writeFileStub = sandbox.stub(fs.promises, 'writeFile');
 		writeFileStub.onFirstCall().returns(firstWrite);
 		writeFileStub.onSecondCall().returns(secondWrite);
-		const handler = updateProbeSettings(socket);
+		const handler = updateProbeSettings(socket, store);
 
 		const firstUpdate = handler(firstSettings);
 		const secondUpdate = handler(secondSettings);
@@ -135,7 +133,6 @@ describe('probe settings', () => {
 	});
 
 	it('should not expose mutable settings', () => {
-		const store = new ProbeSettingsStore(settingsFile);
 		const settings = store.get() as ProbeSettings;
 
 		settings.meteredConnection = true;
@@ -144,7 +141,6 @@ describe('probe settings', () => {
 	});
 
 	it('should update in-memory settings when persistence fails', async () => {
-		const store = new ProbeSettingsStore(settingsFile);
 		fs.mkdirSync(settingsFile);
 
 		const success = await store.update({ meteredConnection: true });
@@ -154,8 +150,6 @@ describe('probe settings', () => {
 	});
 
 	it('should reject updates with invalid values', async () => {
-		const store = new ProbeSettingsStore(settingsFile);
-
 		const success = await store.update({ meteredConnection: 'true' } as unknown as Partial<ProbeSettings>);
 
 		expect(success).to.be.false;
@@ -164,8 +158,6 @@ describe('probe settings', () => {
 	});
 
 	it('should accept and persist updates with unknown properties', async () => {
-		const store = new ProbeSettingsStore(settingsFile);
-
 		const success = await store.update({ unknown: true } as unknown as Partial<ProbeSettings>);
 
 		expect(success).to.be.true;
@@ -176,7 +168,7 @@ describe('probe settings', () => {
 	it('should remove invalid settings and use defaults', () => {
 		fs.writeFileSync(settingsFile, '{');
 
-		const store = new ProbeSettingsStore(settingsFile);
+		store = new ProbeSettingsStore(settingsFile);
 
 		expect(store.get()).to.deep.equal({ meteredConnection: false });
 		expect(fs.existsSync(settingsFile)).to.be.false;
@@ -185,7 +177,7 @@ describe('probe settings', () => {
 	it('should preserve the settings path when it cannot be read', () => {
 		fs.mkdirSync(settingsFile);
 
-		const store = new ProbeSettingsStore(settingsFile);
+		store = new ProbeSettingsStore(settingsFile);
 
 		expect(store.get()).to.deep.equal({ meteredConnection: false });
 		expect(fs.existsSync(settingsFile)).to.be.true;
@@ -197,7 +189,7 @@ describe('probe settings', () => {
 		const rmStub = sandbox.spy(fs, 'rmSync');
 		sandbox.stub(fs, 'readFileSync').throws(readError);
 
-		const store = new ProbeSettingsStore(settingsFile);
+		store = new ProbeSettingsStore(settingsFile);
 
 		expect(store.get()).to.deep.equal({ meteredConnection: false });
 		expect(rmStub.notCalled).to.be.true;

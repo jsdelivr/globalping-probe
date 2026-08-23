@@ -99,8 +99,8 @@ const probeSettingsStore = new ProbeSettingsStore();
 
 export const getProbeSettings = (): Readonly<ProbeSettings> => probeSettingsStore.get();
 
-export const updateProbeSettings = (socket: Socket) => async (settings: Partial<ProbeSettings>): Promise<void> => {
-	const success = await probeSettingsStore.update(settings);
+export const updateProbeSettings = (socket: Socket, store = probeSettingsStore) => async (settings: Partial<ProbeSettings>): Promise<void> => {
+	const success = await store.update(settings);
 
 	if (success) {
 		socket.emit('probe:settings:update', settings);
