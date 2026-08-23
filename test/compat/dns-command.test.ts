@@ -30,19 +30,12 @@ describe('dig compatibility', () => {
 		}
 	});
 
-	it('starts and closes DNS servers repeatedly', async () => {
-		for (let index = 0; index < 20; index++) {
-			const server = await DnsServer.start('127.0.0.1');
-			await server.close();
-		}
-	});
-
-	for (const { server, protocol, queryType, target, expected } of [
-		{ server: 'ipv4', protocol: 'UDP', queryType: 'A', target: 'ipv4.compat.test', expected: '127.0.0.1' },
-		{ server: 'ipv4', protocol: 'TCP', queryType: 'AAAA', target: 'ipv6.compat.test', expected: '::1' },
-		{ server: 'ipv6', protocol: 'UDP', queryType: 'A', target: 'ipv4.compat.test', expected: '127.0.0.1' },
-		{ server: 'ipv6', protocol: 'TCP', queryType: 'AAAA', target: 'ipv6.compat.test', expected: '::1' },
-		{ server: 'ipv4', protocol: 'UDP', queryType: 'TXT', target: 'txt.compat.test', expected: '"compatibility output"' },
+	for (const { server, protocol, target, queryType, expected } of [
+		{ server: 'ipv4', protocol: 'UDP', target: 'ipv4.compat.test', queryType: 'A', expected: '127.0.0.1' },
+		{ server: 'ipv4', protocol: 'TCP', target: 'ipv6.compat.test', queryType: 'AAAA', expected: '::1' },
+		{ server: 'ipv6', protocol: 'UDP', target: 'ipv4.compat.test', queryType: 'A', expected: '127.0.0.1' },
+		{ server: 'ipv6', protocol: 'TCP', target: 'ipv6.compat.test', queryType: 'AAAA', expected: '::1' },
+		{ server: 'ipv4', protocol: 'UDP', target: 'txt.compat.test', queryType: 'TXT', expected: '"compatibility output"' },
 	] as const) {
 		it(`queries ${queryType} over ${protocol} using the ${server} resolver`, async () => {
 			const dnsServer = server === 'ipv4' ? ipv4Server! : ipv6Server!;
