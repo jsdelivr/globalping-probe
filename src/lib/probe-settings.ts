@@ -16,7 +16,7 @@ const logger = scopedLogger('probe-settings');
 
 const probeSettingsSchema = Joi.object<Partial<ProbeSettings>>({
 	meteredConnection: Joi.boolean(),
-}).unknown(false).required();
+}).unknown(true).required();
 
 const removeInvalidSettingsFile = (file: string): void => {
 	try {

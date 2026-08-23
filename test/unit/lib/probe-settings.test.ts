@@ -48,13 +48,13 @@ describe('probe settings', () => {
 		expect(fs.existsSync(settingsFile)).to.be.false;
 	});
 
-	it('should remove settings with unknown properties and use defaults', () => {
-		fs.writeFileSync(settingsFile, JSON.stringify({ unknown: true }));
+	it('should preserve unknown settings from the settings file', () => {
+		fs.writeFileSync(settingsFile, JSON.stringify({ meteredConnection: true, unknown: true }));
 
 		const store = new ProbeSettingsStore(settingsFile);
 
-		expect(store.get()).to.deep.equal({ meteredConnection: false });
-		expect(fs.existsSync(settingsFile)).to.be.false;
+		expect(store.get()).to.deep.equal({ meteredConnection: true, unknown: true });
+		expect(fs.existsSync(settingsFile)).to.be.true;
 	});
 
 	it('should persist updated settings', async () => {
@@ -159,14 +159,14 @@ describe('probe settings', () => {
 		expect(fs.existsSync(settingsFile)).to.be.false;
 	});
 
-	it('should reject updates with unknown properties', async () => {
+	it('should accept and persist updates with unknown properties', async () => {
 		const store = new ProbeSettingsStore(settingsFile);
 
 		const success = await store.update({ unknown: true } as unknown as Partial<ProbeSettings>);
 
-		expect(success).to.be.false;
-		expect(store.get()).to.deep.equal({ meteredConnection: false });
-		expect(fs.existsSync(settingsFile)).to.be.false;
+		expect(success).to.be.true;
+		expect(store.get()).to.deep.equal({ meteredConnection: false, unknown: true });
+		expect(JSON.parse(fs.readFileSync(settingsFile, 'utf8'))).to.deep.equal({ meteredConnection: false, unknown: true });
 	});
 
 	it('should remove invalid settings and use defaults', () => {
