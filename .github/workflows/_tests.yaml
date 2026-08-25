@@ -34,7 +34,7 @@ jobs:
           npm run test:dist
 
   commpattest:
-    name: Run compat tests
+    name: Run compat tests (${{ matrix.node-version }}.x)
     runs-on: ubuntu-latest
     container: node:${{ matrix.node-version }}-slim
     strategy:
