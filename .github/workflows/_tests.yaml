@@ -39,7 +39,7 @@ jobs:
     container: node:${{ matrix.node-version }}-slim
     strategy:
       matrix:
-        node-version: [ 18, 20, 22, 24, 26 ]
+        node-version: [ 22, 24, 26 ]
       fail-fast: false
 
     steps:

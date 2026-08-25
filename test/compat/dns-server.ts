@@ -1,5 +1,12 @@
-import { createServer as createTcpServer, type Server as TcpServer, type Socket } from 'node:net';
-import { createSocket, type Socket as UdpSocket } from 'node:dgram';
+import { createServer as createTcpServer, type Server as TcpServer } from 'node:net';
+import {
+	createTCPServer,
+	createUDPServer,
+	Packet,
+	type DnsHandler,
+	type TCPServer as DnsTcpServer,
+	type UDPServer as DnsUdpServer,
+} from 'dns2';
 
 type DnsResponse = 'a' | 'aaaa' | 'txt' | 'nxdomain' | 'servfail' | 'silent';
 
@@ -25,7 +32,7 @@ const listen = (server: TcpServer, port: number, host: string): Promise<void> =>
 	});
 });
 
-const bind = (socket: UdpSocket, port: number, host: string): Promise<void> => new Promise((resolve, reject) => {
+const bind = (socket: DnsUdpServer, port: number, host: string): Promise<void> => new Promise((resolve, reject) => {
 	socket.once('error', reject);
 
 	socket.bind(port, host, () => {
@@ -38,7 +45,7 @@ const closeTcp = (server: TcpServer): Promise<void> => new Promise((resolve, rej
 	server.close(error => error ? reject(error) : resolve());
 });
 
-const closeUdp = (socket: UdpSocket): Promise<void> => new Promise((resolve) => {
+const closeUdp = (socket: DnsUdpServer): Promise<void> => new Promise((resolve) => {
 	socket.close(resolve);
 });
 
@@ -50,118 +57,103 @@ const closeQuietly = async (close: () => Promise<void>): Promise<void> => {
 
 const isAddressInUse = (error: unknown): boolean => (error as NodeJS.ErrnoException).code === 'EADDRINUSE';
 
-const readName = (packet: Buffer, offset: number): { name: string; end: number } => {
-	const labels = [];
+const buildRootReferral = (request: Packet): Packet => {
+	const response = Packet.createResponseFromRequest(request);
 
-	while (packet[offset] !== 0) {
-		const length = packet[offset]!;
-		offset += 1;
-		labels.push(packet.subarray(offset, offset + length).toString('ascii'));
-		offset += length;
-	}
+	response.header.aa = 1;
 
-	return { name: labels.join('.').toLowerCase(), end: offset + 1 };
+	response.answers.push(new Packet.Resource({
+		name: '',
+		type: Packet.TYPE.NS,
+		class: Packet.CLASS.IN,
+		ttl: 60,
+		ns: '127.0.0.1',
+	}));
+
+	response.additionals.push(new Packet.Resource({
+		name: '127.0.0.1',
+		type: Packet.TYPE.A,
+		class: Packet.CLASS.IN,
+		ttl: 60,
+		address: '127.0.0.1',
+	}));
+
+	return response;
 };
 
-const encodeName = (name: string): Buffer => Buffer.concat([
-	...name.split('.').filter(Boolean).map((label) => {
-		const value = Buffer.from(label, 'ascii');
-		return Buffer.concat([ Buffer.from([ value.length ]), value ]);
-	}),
-	Buffer.from([ 0 ]),
-]);
+const buildResponse = (request: Packet): Packet | undefined => {
+	const [ question ] = request.questions;
 
-const buildRecord = (name: Buffer, type: number, value: Buffer): Buffer => {
-	const record = Buffer.alloc(name.length + 10 + value.length);
-	name.copy(record, 0);
-	record.writeUInt16BE(type, name.length);
-	record.writeUInt16BE(1, name.length + 2);
-	record.writeUInt32BE(60, name.length + 4);
-	record.writeUInt16BE(value.length, name.length + 8);
-	value.copy(record, name.length + 10);
-	return record;
-};
-
-const buildRootReferral = (query: Buffer, questionEnd: number): Buffer => {
-	const header = Buffer.alloc(12);
-	header.writeUInt16BE(query.readUInt16BE(0), 0);
-	header.writeUInt16BE(0x8400, 2);
-	header.writeUInt16BE(1, 4);
-	header.writeUInt16BE(1, 6);
-	header.writeUInt16BE(1, 10);
-
-	const nameServer = encodeName('127.0.0.1');
-	const answer = buildRecord(Buffer.from([ 0xc0, 0x0c ]), 2, nameServer);
-	const additional = buildRecord(nameServer, 1, Buffer.from([ 127, 0, 0, 1 ]));
-
-	return Buffer.concat([ header, query.subarray(12, questionEnd), answer, additional ]);
-};
-
-const buildResponse = (query: Buffer): Buffer | undefined => {
-	if (query.length < 17) {
+	if (!question) {
 		return;
 	}
 
-	const { name, end } = readName(query, 12);
-	const queryType = query.readUInt16BE(end);
-	const questionEnd = end + 4;
+	const name = question.name.toLowerCase();
 
-	if (name === '' && queryType === 2) {
-		return buildRootReferral(query, questionEnd);
+	if (name === '' && question.type === Packet.TYPE.NS) {
+		return buildRootReferral(request);
 	}
 
-	const response = responses[name] ?? 'nxdomain';
+	const responseType = responses[name] ?? 'nxdomain';
 
-	if (response === 'silent') {
+	if (responseType === 'silent') {
 		return;
 	}
 
-	const rcode = response === 'nxdomain' ? 3 : response === 'servfail' ? 2 : 0;
-	const answerValue = response === 'a' ? Buffer.from([ 127, 0, 0, 1 ]) : response === 'aaaa'
-		? Buffer.from([ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 ])
-		: response === 'txt' ? Buffer.concat([ Buffer.from([ 20 ]), Buffer.from('compatibility output', 'ascii') ])
-			: undefined;
-	const header = Buffer.alloc(12);
-	header.writeUInt16BE(query.readUInt16BE(0), 0);
-	header.writeUInt16BE(name === 'trace.compat.test' ? 0x8400 : 0x8180 + rcode, 2);
-	header.writeUInt16BE(1, 4);
-	header.writeUInt16BE(answerValue ? 1 : 0, 6);
+	const response = Packet.createResponseFromRequest(request);
+	response.header.rcode = responseType === 'nxdomain' ? Packet.RCODE.NXDOMAIN
+		: responseType === 'servfail' ? Packet.RCODE.SERVFAIL
+			: Packet.RCODE.NOERROR;
 
-	if (!answerValue) {
-		return Buffer.concat([ header, query.subarray(12, questionEnd) ]);
+	if (name === 'trace.compat.test') {
+		response.header.aa = 1;
+	} else {
+		response.header.ra = 1;
 	}
 
-	const answer = buildRecord(Buffer.from([ 0xc0, 0x0c ]), queryType, answerValue);
+	const answer = Packet.createResourceFromQuestion(question, { ttl: 60 });
 
-	return Buffer.concat([ header, query.subarray(12, questionEnd), answer ]);
+	if (responseType === 'a') {
+		answer.address = '127.0.0.1';
+	} else if (responseType === 'aaaa') {
+		answer.address = '::1';
+	} else if (responseType === 'txt') {
+		answer.data = 'compatibility output';
+	} else {
+		return response;
+	}
+
+	response.answers.push(answer);
+	return response;
+};
+
+const handleRequest: DnsHandler = (request, send) => {
+	const response = buildResponse(request);
+
+	if (response) {
+		Promise.resolve(send(response)).catch(() => {});
+	}
 };
 
 export class DnsServer {
 	private constructor (
-		private readonly udp: UdpSocket,
-		private readonly tcp: TcpServer,
+		private readonly udp: DnsUdpServer,
+		private readonly tcp: DnsTcpServer,
 		readonly host: string,
 		readonly port: number,
 	) {}
 
 	static async start (host: string): Promise<DnsServer> {
 		for (let attempt = 0; attempt < maximumStartAttempts; attempt++) {
-			const udp = createSocket(host.includes(':') ? 'udp6' : 'udp4');
-			let tcp: TcpServer | undefined;
+			const udp = createUDPServer({ type: host.includes(':') ? 'udp6' : 'udp4' });
+			let tcp: DnsTcpServer | undefined;
 
 			try {
+				udp.on('request', handleRequest);
 				await bind(udp, 0, host);
 				const port = (udp.address() as { port: number }).port;
-				tcp = createTcpServer(socket => this.handleTcp(socket));
+				tcp = createTCPServer(handleRequest);
 				await listen(tcp, port, host);
-
-				udp.on('message', (query, remote) => {
-					const response = buildResponse(query);
-
-					if (response) {
-						udp.send(response, remote.port, remote.address);
-					}
-				});
 
 				return new DnsServer(udp, tcp, host, port);
 			} catch (error) {
@@ -191,31 +183,5 @@ export class DnsServer {
 
 	async close (): Promise<void> {
 		await Promise.all([ closeUdp(this.udp), closeTcp(this.tcp) ]);
-	}
-
-	private static handleTcp (socket: Socket) {
-		let buffer = Buffer.alloc(0);
-
-		socket.on('data', (chunk: Buffer) => {
-			buffer = Buffer.concat([ buffer, chunk ]);
-
-			while (buffer.length >= 2) {
-				const queryLength = buffer.readUInt16BE(0);
-
-				if (buffer.length < queryLength + 2) {
-					return;
-				}
-
-				const response = buildResponse(buffer.subarray(2, queryLength + 2));
-				buffer = buffer.subarray(queryLength + 2);
-
-				if (response) {
-					const frame = Buffer.alloc(response.length + 2);
-					frame.writeUInt16BE(response.length, 0);
-					response.copy(frame, 2);
-					socket.write(frame);
-				}
-			}
-		});
 	}
 }
