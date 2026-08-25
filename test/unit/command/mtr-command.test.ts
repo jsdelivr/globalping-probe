@@ -58,10 +58,10 @@ describe('mtr command executor', () => {
 		});
 
 		for (const { packets, timeout, interval, grace, remaining } of [
-			{ packets: 3, timeout: 10, interval: 0.5, grace: 4.5, remaining: 5 },
+			{ packets: 3, timeout: 10, interval: 1, grace: 4, remaining: 5 },
 			{ packets: 16, timeout: 5, interval: 0.2, grace: 0.8, remaining: 1 },
 			{ packets: 16, timeout: 10, interval: 0.33, grace: 2.67, remaining: 3 },
-			{ packets: 16, timeout: 16, interval: 0.5, grace: 4.5, remaining: 5 },
+			{ packets: 16, timeout: 16, interval: 0.65, grace: 2.35, remaining: 3 },
 		]) {
 			it(`should fit ${packets} packets into a ${timeout} second budget`, () => {
 				const args = argBuilder({
@@ -276,7 +276,7 @@ describe('mtr command executor', () => {
 
 			lookupController.abort();
 			await runPromise;
-			const usedStaticDeadline = timeoutStub.calledWith(4000);
+			const usedStaticDeadline = timeoutStub.calledWith(3000);
 			const commandWasNotCalled = cmdFn.notCalled;
 			timeoutStub.restore();
 			clock.restore();
@@ -316,8 +316,8 @@ describe('mtr command executor', () => {
 
 			await clock.tickAsync(2900);
 
-			expect(passedArgs[passedArgs.indexOf('--interval') + 1]).to.equal('0.5');
-			expect(passedArgs[passedArgs.indexOf('--gracetime') + 1]).to.equal('4.5');
+			expect(passedArgs[passedArgs.indexOf('--interval') + 1]).to.equal('1');
+			expect(passedArgs[passedArgs.indexOf('--gracetime') + 1]).to.equal('4');
 			expect(passedProcessTimeout).to.equal(9100);
 
 			mockCmd.resolve({ stdout: '' });
@@ -795,7 +795,7 @@ describe('mtr command executor', () => {
 			const mtr = new MtrCommand((() => {
 				commandStarted();
 				return mockCmd;
-			}) as any);
+			}) as any, dnsResolver());
 			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', options as MtrOptions);
 			const timeoutError = new Error('Timeout') as ExecaError;
 			timeoutError.stderr = '';

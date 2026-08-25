@@ -119,10 +119,10 @@ describe('command timeout helpers', () => {
 	describe('mtr budget', () => {
 		for (const { packets, timeout, expected } of [
 			{ packets: 3, timeout: 5, expected: { interval: 0.2, grace: 2.4, nativeTimeout: 3, dnsHeadroom: 2 } },
-			{ packets: 3, timeout: 10, expected: { interval: 0.5, grace: 4.5, nativeTimeout: 5, dnsHeadroom: 4 } },
+			{ packets: 3, timeout: 10, expected: { interval: 1, grace: 4, nativeTimeout: 5, dnsHeadroom: 3 } },
 			{ packets: 16, timeout: 5, expected: { interval: 0.2, grace: 0.8, nativeTimeout: 1, dnsHeadroom: 1 } },
 			{ packets: 16, timeout: 10, expected: { interval: 0.33, grace: 2.67, nativeTimeout: 3, dnsHeadroom: 2.05 } },
-			{ packets: 16, timeout: 16, expected: { interval: 0.5, grace: 4.5, nativeTimeout: 5, dnsHeadroom: 3.5 } },
+			{ packets: 16, timeout: 16, expected: { interval: 0.65, grace: 2.35, nativeTimeout: 3, dnsHeadroom: 3.25 } },
 		]) {
 			it(`should allocate ${packets} packets within ${timeout} seconds`, () => {
 				expect(getMtrBudget(packets, timeout)).to.deep.equal(expected);

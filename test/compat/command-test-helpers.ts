@@ -2,8 +2,8 @@ import { expect } from 'chai';
 import { EventEmitter } from 'node:events';
 
 export const loopbackTargets = [
-	{ target: '127.0.0.1', ipVersion: 4 as const },
-	{ target: '0:0:0:0:0:0:0:1', ipVersion: 6 as const },
+	{ target: '127.0.0.2', ipVersion: 4 as const, resolvedHostname: 'ipv4-loopback.compat.test', asn: 64512 },
+	{ target: '0:0:0:0:0:0:0:1', ipVersion: 6 as const, asn: 64513 },
 ];
 
 const finiteNumbers = (value: unknown): number[] => {
