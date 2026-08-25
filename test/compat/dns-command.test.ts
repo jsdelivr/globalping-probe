@@ -125,11 +125,19 @@ describe('dig compatibility', () => {
 		const targetHop = result.hops.find((hop: { answers: Array<{ name: string; type: string }> }) => hop.answers.some(answer => answer.name === 'trace.compat.test.' && answer.type === 'A'));
 
 		expect(rootHop, 'root referral').to.not.equal(undefined);
-		expect(rootHop.resolver).to.equal(ipv4Server!.host);
+		expect(rootHop.resolver).to.be.oneOf([ ipv4Server!.host, 'localhost' ]);
 		expect(rootHop.timings.total).to.be.a('number').and.at.least(0);
 		expect(targetHop, 'authoritative target answer').to.not.equal(undefined);
-		expect(targetHop.resolver).to.equal(ipv4Server!.host);
+		expect(targetHop.resolver).to.be.oneOf([ ipv4Server!.host, 'localhost' ]);
 		expect(targetHop.timings.total).to.be.a('number').and.at.least(0);
+
+		expect(rootHop.answers).to.deep.include({
+			name: '.',
+			type: 'NS',
+			ttl: 60,
+			class: 'IN',
+			value: 'localhost.',
+		});
 
 		expect(targetHop.answers).to.deep.include({
 			name: 'trace.compat.test.',
@@ -163,14 +171,14 @@ describe('dig compatibility', () => {
 		expect(result.rawOutput).to.be.a('string').and.not.empty;
 	});
 
-	it('classifies an invalid resolver hostname', async () => {
+	it('classifies an unresolvable resolver hostname', async () => {
 		const options: DnsOptions = {
 			type: 'dns',
 			inProgressUpdates: false,
 			target: 'ipv4.compat.test',
 			protocol: 'UDP',
 			port: 53,
-			resolver: 'invalid resolver',
+			resolver: 'nonexistent.invalid',
 			trace: false,
 			query: { type: 'A' },
 			ipVersion: 4,

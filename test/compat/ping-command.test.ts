@@ -36,11 +36,11 @@ describe('ping compatibility', () => {
 		});
 	}
 
-	it('classifies a ping name-resolution failure', async () => {
+	it('classifies an unresolvable hostname', async () => {
 		const options: PingOptions = {
 			type: 'ping',
 			inProgressUpdates: false,
-			target: 'invalid hostname',
+			target: 'nonexistent.invalid',
 			packets: 1,
 			protocol: 'ICMP',
 			port: 80,

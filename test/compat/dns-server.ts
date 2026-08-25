@@ -67,11 +67,11 @@ const buildRootReferral = (request: Packet): Packet => {
 		type: Packet.TYPE.NS,
 		class: Packet.CLASS.IN,
 		ttl: 60,
-		ns: '127.0.0.1',
+		ns: 'localhost',
 	}));
 
 	response.additionals.push(new Packet.Resource({
-		name: '127.0.0.1',
+		name: 'localhost',
 		type: Packet.TYPE.A,
 		class: Packet.CLASS.IN,
 		ttl: 60,
