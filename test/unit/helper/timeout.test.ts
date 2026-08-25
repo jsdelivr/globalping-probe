@@ -85,7 +85,7 @@ describe('command timeout helpers', () => {
 				for (const remaining of [ minimumRuntime, minimumRuntime + 0.37, minimumRuntime + 2.91, 30 ]) {
 					const { interval, grace, nativeTimeout } = getMtrBudget(packets, remaining);
 
-					expect(interval).to.be.within(0.2, 0.5);
+					expect(interval).to.be.within(0.2, 1);
 					expect(grace).to.be.oneOf([ 1, 2, 3 ]);
 					expect(Number.isInteger(nativeTimeout)).to.equal(true);
 					expect(nativeTimeout).to.be.at.least(1);

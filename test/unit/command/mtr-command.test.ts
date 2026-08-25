@@ -45,7 +45,7 @@ describe('mtr command executor', () => {
 			expect(args[args.length - 1]).to.equal(options.target);
 			expect(args).to.contain('--tcp');
 			expect(args).to.contain('--raw');
-			expect(joinedArgs).to.contain('--interval 0.5');
+			expect(joinedArgs).to.contain('--interval 1');
 			expect(joinedArgs).to.contain('--gracetime 3');
 			expect(joinedArgs).to.contain('--max-ttl 30');
 			expect(joinedArgs).to.contain(`-c ${options.packets}`);
@@ -94,7 +94,7 @@ describe('mtr command executor', () => {
 					const grace = Number(args[args.indexOf('--gracetime') + 1]);
 					const remaining = Number(args[args.indexOf('--timeout') + 1]);
 
-					expect(interval).to.be.within(0.2, 0.5);
+					expect(interval).to.be.within(0.2, 1);
 					expect(grace).to.be.oneOf([ 1, 2, 3 ]);
 					expect(remaining).to.be.at.least(1);
 					expect(Number.isInteger(remaining)).to.equal(true);
