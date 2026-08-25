@@ -32,6 +32,38 @@ jobs:
           rm -rf node_modules
           npm ci --omit=dev
           npm run test:dist
+
+  commpattest:
+    name: Run compat tests (${{ matrix.node-version }}.x)
+    runs-on: ubuntu-latest
+    container: node:${{ matrix.node-version }}-slim
+    strategy:
+      matrix:
+        node-version: [ 22, 24, 26 ]
+      fail-fast: false
+
+    steps:
+      - name: Install command-line tools
+        run: |
+          apt-get update
+          apt-get install --no-install-recommends -y git ca-certificates expect iputils-ping traceroute dnsutils mtr-tiny
+      - uses: actions/checkout@v7
+      - name: Install dependencies
+        run: npm ci
+      - name: Log compatibility environment
+        run: |
+          cat /etc/os-release
+          node --version
+          npm --version
+          dpkg-query --show --showformat='${Package} ${Version}\n' ca-certificates expect iputils-ping traceroute dnsutils bind9-dnsutils mtr-tiny
+          expect -v
+          ping -V
+          traceroute --version
+          dig -v
+          mtr --version
+      - name: Test command compatibility
+        run: npm run test:compat
+
   e2etest:
     name: Run e2e tests
     runs-on: ubicloud-standard-4
