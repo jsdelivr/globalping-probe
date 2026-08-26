@@ -58,8 +58,8 @@ export const MtrParser = {
 		const rawOutput = [];
 		const asnLabels = hops.map(hop => hop.asn.length > 0 ? `AS${hop.asn.join(' ')}` : 'AS???');
 		const hostLabels = hops.map((hop, i) => {
-			const hostnameAlias = i === 0 ? '_gateway' : hop.resolvedHostname ?? hop.resolvedAddress;
-			return hop.resolvedAddress ? `${hostnameAlias ?? ''} (${hop.resolvedAddress})` : '(waiting for reply)';
+			const hostnameAlias = i === 0 ? '_gateway' : hop.resolvedHostname ?? hop.displayAddress ?? hop.resolvedAddress;
+			return hop.resolvedAddress ? `${hostnameAlias ?? ''} (${hop.displayAddress ?? hop.resolvedAddress})` : '(waiting for reply)';
 		});
 
 		const spacings = {
@@ -145,10 +145,16 @@ export const MtrParser = {
 						break;
 					}
 
+					const scopeIndex = rawResolvedAddress.indexOf('%');
 					const resolvedAddress = normalizeIp(rawResolvedAddress);
 					const previousHostMatch = hops.find((h: HopType, hIndex: number) => h.resolvedAddress === resolvedAddress && hIndex < Number(index));
 
 					entry.resolvedAddress = resolvedAddress;
+
+					if (scopeIndex !== -1) {
+						entry.displayAddress = `${resolvedAddress}${rawResolvedAddress.slice(scopeIndex)}`;
+					}
+
 					entry.duplicate = Boolean(previousHostMatch);
 					break;
 				}

@@ -16,7 +16,7 @@ export class MtrHopEnrichment {
 		}));
 
 		this.asns = new AsyncLookupMap(async (address) => {
-			const asnAddress = ipaddr.process(address.replace(/%.*$/, ''));
+			const asnAddress = ipaddr.process(address);
 			let asnHostname: string;
 
 			if (asnAddress.kind() === 'ipv4') {
@@ -33,6 +33,7 @@ export class MtrHopEnrichment {
 				rrtype: 'TXT',
 				signal,
 			});
+
 			const asns = record?.split('|')[0]?.trim().split(/\s+/)
 				.filter(value => /^\d+$/.test(value))
 				.map(Number)

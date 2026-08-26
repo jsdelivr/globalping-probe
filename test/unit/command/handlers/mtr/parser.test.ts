@@ -18,6 +18,20 @@ describe('mtr parser helper', () => {
 			expect(hops[0]?.resolvedAddress).to.equal('::ffff:127.0.0.1');
 		});
 
+		it('keeps IPv6 scope IDs only in formatted raw output', () => {
+			const hops = MtrParser.rawParse([
+				'x 0 33000',
+				'h 0 192.168.0.1',
+				'p 0 1000 33000',
+				'x 1 33001',
+				'h 1 fe80::1%eth0',
+				'p 1 2000 33001',
+			].join('\n'), true);
+
+			expect(hops[1]?.resolvedAddress).to.equal('fe80::1');
+			expect(MtrParser.outputBuilder(hops)).to.include('fe80::1%eth0 (fe80::1%eth0)');
+		});
+
 		it('should transform raw inputs (progress)', () => {
 			const testCase = 'mtr-success-raw-helper-progress';
 			const expectedResult = (getCmdMockResult(testCase) as MockResult);

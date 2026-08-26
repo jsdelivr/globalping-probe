@@ -6,6 +6,10 @@ describe('ip normalization', () => {
 		expect(normalizeIp('2001:0db8:0000:0000:0000:0000:0000:0001')).to.equal('2001:db8::1');
 		expect(normalizeIp('::ffff:7f00:1')).to.equal('::ffff:127.0.0.1');
 	});
+
+	it('should remove IPv6 scope IDs', () => {
+		expect(normalizeIp('fe80::1%eth0')).to.equal('fe80::1');
+	});
 });
 
 describe('ip equality', () => {
@@ -13,10 +17,6 @@ describe('ip equality', () => {
 		expect(ipEquals('1.1.1.1', '1.1.1.1')).to.be.true;
 		expect(ipEquals('1.1.1.1', '1.1.1.2')).to.be.false;
 		expect(ipEquals('2001:db8::1', '2001:0db8:0:0:0:0:0:1')).to.be.true;
-	});
-
-	it('should ignore IPv6 scope IDs', () => {
-		expect(ipEquals('fe80::1%eth0', 'fe80::1%eth1')).to.be.true;
 	});
 
 	it('should not match different address families or invalid values', () => {

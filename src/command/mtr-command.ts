@@ -216,9 +216,11 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			resolvedAddress: input.resolvedAddress ? String(input.resolvedAddress) : null,
 			resolvedHostname: input.resolvedHostname ? String(input.resolvedHostname) : null,
 			hops: input.hops ? input.hops.map(h => ({
-				...h,
+				asn: h.asn,
 				resolvedAddress: h.resolvedAddress ? h.resolvedAddress : null,
 				resolvedHostname: h.resolvedHostname ? h.resolvedHostname : null,
+				stats: h.stats,
+				timings: h.timings,
 			})) : [],
 		};
 	}
