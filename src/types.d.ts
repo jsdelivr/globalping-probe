@@ -14,6 +14,10 @@ type MeasurementRequest = {
 	measurement: PingOptions | DnsOptions | TraceOptions | MtrOptions | HttpOptions;
 };
 
+type ProbeSettings = {
+	meteredConnection: boolean;
+};
+
 interface CommandInterface<OPT> {
 	run(socket: Socket, measurementId: string, testId: string, options: OPT): Promise<unknown>;
 }
