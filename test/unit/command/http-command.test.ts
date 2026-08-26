@@ -1053,7 +1053,16 @@ describe(`.run() method`, () => {
 
 		expect(result.status).to.equal('failed');
 		expect(result.failureSource).to.equal('resolver');
-		expect(result.rawOutput).to.equal('Request timeout.');
+		expect(result.rawOutput).to.equal('Request timed out during DNS lookup.');
+
+		expect(result.timings).to.deep.equal({
+			total: 5000,
+			download: null,
+			firstByte: null,
+			dns: null,
+			tls: null,
+			tcp: null,
+		});
 	});
 
 	it('should classify a timeout for an IP target as target', async () => {
@@ -1084,7 +1093,74 @@ describe(`.run() method`, () => {
 
 		expect(result.status).to.equal('failed');
 		expect(result.failureSource).to.equal('target');
-		expect(result.rawOutput).to.equal('Request timeout.');
+		expect(result.rawOutput).to.equal('Request timed out while establishing the TCP connection.');
+
+		expect(result.timings).to.deep.equal({
+			total: 5000,
+			download: null,
+			firstByte: null,
+			dns: null,
+			tls: null,
+			tcp: null,
+		});
+	});
+
+	it('should report a timeout during the TLS handshake and preserve completed timings', async () => {
+		const tcpSocket = new Duplex({
+			read () {},
+			write (_chunk, _encoding, callback) {
+				callback();
+			},
+		});
+		(tcpSocket as any).remoteAddress = '93.184.216.34';
+
+		netConnectStub.callsFake(() => {
+			process.nextTick(() => {
+				tcpSocket.emit('lookup', null, '93.184.216.34', 4, 'example.com');
+				sandbox.clock.tick(10);
+				tcpSocket.emit('connect');
+			});
+
+			return tcpSocket as any;
+		});
+
+		const tlsSocket = new Duplex({
+			read () {},
+			write (_chunk, _encoding, callback) {
+				callback();
+			},
+		});
+		sandbox.stub(tls, 'connect').returns(tlsSocket as any);
+
+		const promise = new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http' as const,
+			timeout: 5,
+			target: 'example.com',
+			inProgressUpdates: false,
+			protocol: 'HTTPS',
+			request: { method: 'GET', path: '/timeout', query: '' },
+			ipVersion: 4,
+		});
+
+		await new Promise(resolve => process.nextTick(resolve));
+		sandbox.clock.tick(5_001);
+
+		await promise;
+
+		const result = mockedSocket.emit.firstCall.args[1].result;
+
+		expect(result.status).to.equal('failed');
+		expect(result.failureSource).to.equal('target');
+		expect(result.rawOutput).to.equal('Request timed out during the TLS handshake.');
+
+		expect(result.timings).to.deep.equal({
+			total: 5000,
+			download: null,
+			firstByte: null,
+			dns: 0,
+			tls: null,
+			tcp: 10,
+		});
 	});
 
 	it('should use the requested timeout', async () => {
@@ -1124,8 +1200,69 @@ describe(`.run() method`, () => {
 
 		expect(result.status).to.equal('failed');
 		expect(result.failureSource).to.equal('target');
-		expect(result.rawOutput).to.equal('Request timeout.');
-		expect(result.timings.total).to.be.null;
+		expect(result.rawOutput).to.equal('Request timed out while waiting for the first response byte.');
+
+		expect(result.timings).to.deep.equal({
+			total: 5000,
+			download: null,
+			firstByte: null,
+			dns: 0,
+			tls: null,
+			tcp: 0,
+		});
+	});
+
+	it('should report a timeout during response download and preserve completed timings', async () => {
+		const fakeSocket = new Duplex({
+			read () {},
+			write (_chunk, _encoding, callback) {
+				callback();
+			},
+		});
+		(fakeSocket as any).remoteAddress = '93.184.216.34';
+
+		netConnectStub.callsFake(() => {
+			process.nextTick(() => {
+				fakeSocket.emit('lookup', null, '93.184.216.34', 4, 'google.com');
+				sandbox.clock.tick(10);
+				fakeSocket.emit('connect');
+				sandbox.clock.tick(15);
+				fakeSocket.push('HTTP/1.1 200 OK\r\nContent-Length: 10\r\n\r\npart');
+			});
+
+			return fakeSocket as any;
+		});
+
+		const promise = new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http' as const,
+			timeout: 5,
+			target: 'google.com',
+			inProgressUpdates: false,
+			protocol: 'HTTP',
+			request: { method: 'GET', path: '/timeout', query: '' },
+			ipVersion: 4,
+		});
+
+		await new Promise(resolve => process.nextTick(resolve));
+		await new Promise(resolve => process.nextTick(resolve));
+		sandbox.clock.tick(5_001);
+
+		await promise;
+
+		const result = mockedSocket.emit.firstCall.args[1].result;
+
+		expect(result.status).to.equal('failed');
+		expect(result.failureSource).to.equal('target');
+		expect(result.rawOutput).to.equal('Request timed out while downloading the response.');
+
+		expect(result.timings).to.deep.equal({
+			total: 5000,
+			download: null,
+			firstByte: 15,
+			dns: 0,
+			tls: null,
+			tcp: 10,
+		});
 	});
 
 	it('should decompress gzip response', async () => {
