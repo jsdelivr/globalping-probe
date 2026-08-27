@@ -32,6 +32,15 @@ describe('mtr parser helper', () => {
 			expect(MtrParser.outputBuilder(hops)).to.include('fe80::1%eth0 (fe80::1%eth0)');
 		});
 
+		it('keeps identical link-local addresses on different scopes as separate hops', () => {
+			const hops = MtrParser.rawParse([
+				'h 0 fe80::1%eth0',
+				'h 1 fe80::1%eth1',
+			].join('\n'), true);
+
+			expect(hops.map(hop => hop.resolvedAddress)).to.deep.equal([ 'fe80::1', 'fe80::1' ]);
+		});
+
 		it('should transform raw inputs (progress)', () => {
 			const testCase = 'mtr-success-raw-helper-progress';
 			const expectedResult = (getCmdMockResult(testCase) as MockResult);

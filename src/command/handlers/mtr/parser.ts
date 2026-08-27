@@ -147,12 +147,13 @@ export const MtrParser = {
 
 					const scopeIndex = rawResolvedAddress.indexOf('%');
 					const resolvedAddress = normalizeIp(rawResolvedAddress);
-					const previousHostMatch = hops.find((h: HopType, hIndex: number) => h.resolvedAddress === resolvedAddress && hIndex < Number(index));
+					const displayAddress = scopeIndex === -1 ? undefined : `${resolvedAddress}${rawResolvedAddress.slice(scopeIndex)}`;
+					const previousHostMatch = hops.find((h: HopType, hIndex: number) => h.resolvedAddress === resolvedAddress && h.displayAddress === displayAddress && hIndex < Number(index));
 
 					entry.resolvedAddress = resolvedAddress;
 
-					if (scopeIndex !== -1) {
-						entry.displayAddress = `${resolvedAddress}${rawResolvedAddress.slice(scopeIndex)}`;
+					if (displayAddress) {
+						entry.displayAddress = displayAddress;
 					}
 
 					entry.duplicate = Boolean(previousHostMatch);
