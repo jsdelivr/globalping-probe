@@ -530,20 +530,26 @@ export class HttpHandler {
 		this.sendResult();
 	};
 
-	private handleError = (error: Error | string, fallbackSource: FailureSource, preserveTimings = false) => {
+	private handleError = (error: Error | string, fallbackSource: FailureSource, preserveCompletedState = false) => {
 		if (this.done) {
 			return;
 		}
 
 		const message = error instanceof Error ? error.message : error;
 		this.done = true;
-		Object.assign(this.result, this.getInitialResult());
+
+		if (preserveCompletedState) {
+			this.result.rawBody = '';
+		} else {
+			Object.assign(this.result, this.getInitialResult());
+		}
+
 		this.result.status = 'failed';
 		const codeFallback = isInternalHttpErrorCode(getErrorCode(error)) ? 'internal' : fallbackSource;
 		this.result.failureSource = getFailureSource(error, codeFallback);
 		this.result.rawOutput = message;
 
-		if (preserveTimings && this.timings.start !== null) {
+		if (preserveCompletedState && this.timings.start !== null) {
 			this.timings.total = Date.now() - this.timings.start;
 		} else {
 			for (const key of Object.keys(this.timings) as (keyof Timings)[]) {
