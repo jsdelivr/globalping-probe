@@ -6,6 +6,11 @@ export const loopbackTargets = [
 	{ target: '0:0:0:0:0:0:0:1', ipVersion: 6 as const, asn: 64513 },
 ];
 
+export const hostnameTargets = [
+	{ target: 'ipv4.compat.test', address: '127.0.0.1', ipVersion: 4 as const },
+	{ target: 'ipv6.compat.test', address: '::1', ipVersion: 6 as const },
+];
+
 const finiteNumbers = (value: unknown): number[] => {
 	if (typeof value === 'number') {
 		return [ value ];

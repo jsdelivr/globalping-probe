@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { ipEquals } from '../../src/lib/ip.js';
 import { cachedDnsLookupOne } from '../../src/lib/dns.js';
 import { TracerouteCommand, traceCmd, type TraceOptions } from '../../src/command/traceroute-command.js';
-import { expectFiniteNumbers, loopbackTargets, runCommand } from './command-test-helpers.js';
+import { expectFiniteNumbers, hostnameTargets, loopbackTargets, runCommand } from './command-test-helpers.js';
 import { DnsServer } from './dns-server.js';
 
 describe('traceroute compatibility', () => {
@@ -56,6 +56,30 @@ describe('traceroute compatibility', () => {
 			}
 
 			expectFiniteNumbers(result);
+		});
+	}
+
+	for (const { target, address, ipVersion } of hostnameTargets) {
+		it(`rewrites IPv${ipVersion} traceroute output for a hostname target`, async () => {
+			const result = await runCommand(new TracerouteCommand(traceCmd, lookup), {
+				type: 'traceroute',
+				inProgressUpdates: false,
+				target,
+				protocol: 'ICMP',
+				port: 80,
+				ipVersion,
+				timeout: 5,
+			} satisfies TraceOptions);
+
+			expect(result.status, result.rawOutput).to.equal('finished');
+			expect(ipEquals(result.resolvedAddress, address)).to.equal(true);
+			expect(result.resolvedHostname).to.equal(target);
+			expect(result.rawOutput).to.include(`traceroute to ${target} (${result.resolvedAddress})`);
+
+			const targetHop = result.hops.find((hop: { resolvedAddress: string | null }) => hop.resolvedAddress && ipEquals(hop.resolvedAddress, address));
+			expect(targetHop, 'responding target hop').to.not.equal(undefined);
+			expect(targetHop.resolvedHostname).to.equal('_gateway');
+			expect(result.rawOutput).to.include(`_gateway (${targetHop.resolvedAddress})`);
 		});
 	}
 });

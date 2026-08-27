@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { ipEquals } from '../../src/lib/ip.js';
 import { cachedDnsLookupOne } from '../../src/lib/dns.js';
 import { PingCommand, pingCmd, type PingOptions } from '../../src/command/ping-command.js';
-import { expectFiniteNumbers, loopbackTargets, runCommand } from './command-test-helpers.js';
+import { expectFiniteNumbers, hostnameTargets, loopbackTargets, runCommand } from './command-test-helpers.js';
 import { DnsServer } from './dns-server.js';
 
 describe('ping compatibility', () => {
@@ -57,6 +57,28 @@ describe('ping compatibility', () => {
 			expect(result.stats.avg).to.be.a('number');
 			expect(result.stats.max).to.be.a('number');
 			expectFiniteNumbers(result);
+		});
+	}
+
+	for (const { target, address, ipVersion } of hostnameTargets) {
+		it(`rewrites IPv${ipVersion} ping output for a hostname target`, async () => {
+			const result = await runCommand(new PingCommand(pingCmd, lookup), {
+				type: 'ping',
+				inProgressUpdates: false,
+				target,
+				packets: 1,
+				protocol: 'ICMP',
+				port: 80,
+				ipVersion,
+				timeout: 5,
+			} satisfies PingOptions);
+
+			expect(result.status, result.rawOutput).to.equal('finished');
+			expect(ipEquals(result.resolvedAddress, address)).to.equal(true);
+			expect(result.resolvedHostname).to.equal(target);
+			expect(result.rawOutput).to.include(`PING ${target} (${result.resolvedAddress})`);
+			expect(result.rawOutput).to.include(` bytes from ${target} (${result.resolvedAddress}):`);
+			expect(result.rawOutput).to.include(`--- ${target} ping statistics ---`);
 		});
 	}
 
