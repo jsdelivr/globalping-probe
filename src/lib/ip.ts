@@ -10,12 +10,15 @@ const privateBlockList = new BlockList();
 export const normalizeIp = (ip: string): string => {
 	const scopeIndex = ip.indexOf('%');
 	const address = scopeIndex === -1 ? ip : ip.slice(0, scopeIndex);
-	const parsedAddress = ipaddr.parse(address);
-	const normalizedAddress = parsedAddress instanceof ipaddr.IPv6 && parsedAddress.isIPv4MappedAddress()
-		? `::ffff:${parsedAddress.toIPv4Address().toString()}`
-		: parsedAddress.toString();
 
-	return normalizedAddress;
+	try {
+		const parsedAddress = ipaddr.parse(address);
+		return parsedAddress instanceof ipaddr.IPv6 && parsedAddress.isIPv4MappedAddress()
+			? `::ffff:${parsedAddress.toIPv4Address().toString()}`
+			: parsedAddress.toString();
+	} catch {
+		return address;
+	}
 };
 
 export const ipEquals = (first: string, second: string): boolean => {

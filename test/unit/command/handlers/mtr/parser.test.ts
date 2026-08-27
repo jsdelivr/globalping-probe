@@ -18,6 +18,16 @@ describe('mtr parser helper', () => {
 			expect(hops[0]?.resolvedAddress).to.equal('::ffff:127.0.0.1');
 		});
 
+		it('keeps malformed responder addresses without throwing', () => {
+			let hops: HopType[] = [];
+
+			expect(() => {
+				hops = MtrParser.rawParse('h 0 ::::', true);
+			}).not.to.throw();
+
+			expect(hops[0]?.resolvedAddress).to.equal('::::');
+		});
+
 		it('keeps IPv6 scope IDs only in formatted raw output', () => {
 			const hops = MtrParser.rawParse([
 				'x 0 33000',
