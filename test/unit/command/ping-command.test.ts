@@ -171,6 +171,13 @@ describe('ping command executor', () => {
 			expect(normalizePingOutput(output, '1.1.1.1', 'one.one.one.one')).to.equal(expected);
 		});
 
+		it('normalizes IPv6 header whitespace before the address', () => {
+			const expected = 'PING ipv6.compat.test (::1) 56 data bytes';
+
+			expect(normalizePingOutput('PING ::1(::1) 56 data bytes', '::1', 'ipv6.compat.test')).to.equal(expected);
+			expect(normalizePingOutput('PING ::1   (::1) 56 data bytes', '::1', 'ipv6.compat.test')).to.equal(expected);
+		});
+
 		it('restores the target hostname in target-originated errors only', () => {
 			const output = 'From 1.1.1.1 icmp_seq=1 Destination Host Unreachable\n'
 				+ 'From 10.0.0.1 icmp_seq=2 Destination Host Unreachable';

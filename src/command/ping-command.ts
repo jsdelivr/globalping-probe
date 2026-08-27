@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import _ from 'lodash';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface, FailureSource, TestStatus } from '../types.js';
@@ -97,9 +98,12 @@ export const normalizePingOutput = (output: string, address: string, hostname: s
 		return output;
 	}
 
+	const escapedAddress = _.escapeRegExp(address);
+	const headerPattern = new RegExp(`^PING ${escapedAddress}\\s*\\(${escapedAddress}\\)`);
+
 	return output.split('\n').map((line) => {
-		if (line.startsWith(`PING ${address} (${address})`)) {
-			return line.replace(`PING ${address} (${address})`, `PING ${hostname} (${address})`);
+		if (headerPattern.test(line)) {
+			return line.replace(headerPattern, `PING ${hostname} (${address})`);
 		}
 
 		if (line.includes(` bytes from ${address}:`)) {
