@@ -417,7 +417,9 @@ describe('trace command', () => {
 			mockCmd.reject(error);
 			await runPromise;
 
-			expect((mockSocket.emit.lastCall.args[1] as any).result.rawOutput).to.include('dns.google (8.8.8.8)');
+			const failedOutput = (mockSocket.emit.lastCall.args[1] as any).result.rawOutput;
+			expect(failedOutput).to.include('_gateway (192.168.0.1)');
+			expect(failedOutput).to.include('dns.google (8.8.8.8)');
 		});
 
 		it('uses the resolved target for top-level metadata when the last hop differs', async () => {
@@ -664,7 +666,7 @@ describe('trace command', () => {
 							status: 'failed',
 							failureSource: 'internal',
 							rawOutput: 'traceroute to hello.com (216.239.38.21), 20 hops max, 60 byte packets\n'
-								+ ' 1  intermediate.example (192.0.2.1)  7.99 ms  8.12 ms\n'
+								+ ' 1  _gateway (192.0.2.1)  7.99 ms  8.12 ms\n'
 								+ '\n'
 								+ 'The measurement command timed out.',
 						},

@@ -307,7 +307,8 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 					}
 
 					await hostnames.wait();
-					output = normalizeTracerouteOutput(output, target.address, target.hostname, parsed.responderAddresses, hostnames);
+
+					output = normalizeTracerouteOutput(output, target.address, target.hostname, parsed.responderAddresses, hostnames, { hideGatewayHostname: true });
 				}
 
 				let targetResponded = false;
