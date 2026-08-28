@@ -180,7 +180,12 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 			if (isExecaError(error)) {
 				result.rawOutput = error.stdout.toString();
-				error.timedOut && (result.rawOutput += `${result.rawOutput ? '\n\n' : ''}The measurement command timed out.`);
+
+				if (error.timedOut) {
+					result.rawOutput += `${result.rawOutput ? '\n\n' : ''}The measurement command timed out.`;
+				} else {
+					logger.error(error.shortMessage);
+				}
 			} else {
 				cmd?.kill('SIGKILL');
 
