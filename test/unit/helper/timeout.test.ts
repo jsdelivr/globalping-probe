@@ -99,6 +99,13 @@ describe('command timeout helpers', () => {
 		expect(getProcessTimeout(5, 2)).to.equal(7000);
 	});
 
+	it('should return integer milliseconds for a fractional process timeout', () => {
+		const timeout = getProcessTimeout(14.999, 2);
+
+		expect(timeout).to.equal(16999);
+		expect(Number.isInteger(timeout)).to.equal(true);
+	});
+
 	it('should use the configured process grace by default', () => {
 		expect(getProcessTimeout(5)).to.equal(7000);
 	});

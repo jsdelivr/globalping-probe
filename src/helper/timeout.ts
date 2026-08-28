@@ -88,5 +88,5 @@ export const getMtrBudget = (packets: number, remaining: number): MtrBudget => {
 };
 
 export const getProcessTimeout = (timeout: number, grace = processGrace): number => {
-	return (timeout + grace) * 1000;
+	return Math.round((timeout + grace) * 1000);
 };
