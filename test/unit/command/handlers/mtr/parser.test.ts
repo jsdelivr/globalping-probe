@@ -51,6 +51,15 @@ describe('mtr parser helper', () => {
 			expect(hops.map(hop => hop.resolvedAddress)).to.deep.equal([ 'fe80::1', 'fe80::1' ]);
 		});
 
+		it('ignores native hostname records', () => {
+			const hops = MtrParser.rawParse([
+				'h 0 192.0.2.1',
+				'd 0 router.example',
+			].join('\n'), true);
+
+			expect(hops[0]?.resolvedHostname).to.equal(undefined);
+		});
+
 		it('should transform raw inputs (progress)', () => {
 			const testCase = 'mtr-success-raw-helper-progress';
 			const expectedResult = (getCmdMockResult(testCase) as MockResult);
@@ -188,15 +197,14 @@ describe('mtr parser helper', () => {
 				'p 0 200 33000',
 				'x 1 33001',
 				'h 1 2001:db8::1234',
-				'd 1 x',
 				'p 1 2200 33001',
 				'x 2 33002',
 				'h 2 1.1.1.1',
-				'd 2 long-hostname.example',
 				'p 2 2300 33002',
 			].join('\n');
 
 			const hops = MtrParser.rawParse(rawOutput, true);
+			hops[2]!.resolvedHostname = 'long-hostname.example';
 
 			for (const hop of hops) {
 				hop.asn = [ 123 ];

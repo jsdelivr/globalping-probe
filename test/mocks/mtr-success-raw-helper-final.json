@@ -23,8 +23,7 @@
 						"rtt": 2.27
 					}
 				],
-				"resolvedAddress": "192.168.0.1",
-				"resolvedHostname": "192.168.0.1"
+				"resolvedAddress": "192.168.0.1"
 			},
 			{
 				"stats": {
@@ -69,8 +68,7 @@
 						"rtt": 11.276
 					}
 				],
-				"resolvedAddress": "62.252.67.181",
-				"resolvedHostname": "62.252.67.181"
+				"resolvedAddress": "62.252.67.181"
 			},
 			{
 				"stats": {
@@ -115,8 +113,7 @@
 						"rtt": 11.638
 					}
 				],
-				"resolvedAddress": "62.254.59.130",
-				"resolvedHostname": "62.254.59.130"
+				"resolvedAddress": "62.254.59.130"
 			},
 			{
 				"stats": {
@@ -144,8 +141,7 @@
 						"rtt": 11.393
 					}
 				],
-				"resolvedAddress": "142.250.160.116",
-				"resolvedHostname": "142.250.160.116"
+				"resolvedAddress": "142.250.160.116"
 			},
 			{
 				"stats": {
@@ -173,8 +169,7 @@
 						"rtt": 15.144
 					}
 				],
-				"resolvedAddress": "216.239.41.193",
-				"resolvedHostname": "216.239.41.193"
+				"resolvedAddress": "216.239.41.193"
 			},
 			{
 				"stats": {
@@ -202,8 +197,7 @@
 						"rtt": 12.872
 					}
 				],
-				"resolvedAddress": "142.251.54.27",
-				"resolvedHostname": "142.251.54.27"
+				"resolvedAddress": "142.251.54.27"
 			},
 			{
 				"stats": {
@@ -231,10 +225,9 @@
 						"rtt": 11.215
 					}
 				],
-				"resolvedAddress": "142.250.179.238",
-				"resolvedHostname": "lhr25s31-in-f14.1e100.net"
+				"resolvedAddress": "142.250.179.238"
 			}
 		],
-		"rawOutput": "Host                                                   Loss% Drop Rcv  Avg  StDev  Javg \n1. AS??? _gateway (192.168.0.1)                        66.7%    2   1  2.3    0.0   2.3\n2. AS??? (waiting for reply)                         \n3. AS??? 62.252.67.181 (62.252.67.181)                  0.0%    0   3 10.3    0.8   6.2\n4. AS??? (waiting for reply)                         \n5. AS??? 62.254.59.130 (62.254.59.130)                  0.0%    0   3 11.5    0.5   6.5\n6. AS??? 142.250.160.116 (142.250.160.116)              0.0%    0   3 11.3    0.3   6.0\n7. AS??? 216.239.41.193 (216.239.41.193)                0.0%    0   3 15.9    0.6   8.0\n8. AS??? 142.251.54.27 (142.251.54.27)                  0.0%    0   3 13.6    1.5   8.2\n9. AS??? lhr25s31-in-f14.1e100.net (142.250.179.238)    0.0%    0   3 11.0    0.7   6.4\n"
+		"rawOutput": "Host                                         Loss% Drop Rcv  Avg  StDev  Javg \n1. AS??? _gateway (192.168.0.1)              66.7%    2   1  2.3    0.0   2.3\n2. AS??? (waiting for reply)               \n3. AS??? 62.252.67.181 (62.252.67.181)        0.0%    0   3 10.3    0.8   6.2\n4. AS??? (waiting for reply)               \n5. AS??? 62.254.59.130 (62.254.59.130)        0.0%    0   3 11.5    0.5   6.5\n6. AS??? 142.250.160.116 (142.250.160.116)    0.0%    0   3 11.3    0.3   6.0\n7. AS??? 216.239.41.193 (216.239.41.193)      0.0%    0   3 15.9    0.6   8.0\n8. AS??? 142.251.54.27 (142.251.54.27)        0.0%    0   3 13.6    1.5   8.2\n9. AS??? 142.250.179.238 (142.250.179.238)    0.0%    0   3 11.0    0.7   6.4\n"
 	}
 }

@@ -64,8 +64,7 @@
 				"rtt": 10.933
 			}
 		],
-		"resolvedAddress": "62.252.67.181",
-		"resolvedHostname": "lutn-core-2a-xe-7114-0.network.virginmedia.net"
+		"resolvedAddress": "62.252.67.181"
 	},
 	{
 		"stats": {
@@ -110,8 +109,7 @@
 				"rtt": 12.855
 			}
 		],
-		"resolvedAddress": "62.253.175.34",
-		"resolvedHostname": "tele-ic-7-ae2-0.network.virginmedia.net"
+		"resolvedAddress": "62.253.175.34"
 	},
 	{
 		"stats": {
@@ -139,8 +137,7 @@
 				"rtt": 10.649
 			}
 		],
-		"resolvedAddress": "80.255.14.105",
-		"resolvedHostname": "ae15-0.lon10.core-backbone.com"
+		"resolvedAddress": "80.255.14.105"
 	},
 	{
 		"stats": {
@@ -168,8 +165,7 @@
 				"rtt": 28.409
 			}
 		],
-		"resolvedAddress": "81.95.15.118",
-		"resolvedHostname": "ae1-2053.prg10.core-backbone.com"
+		"resolvedAddress": "81.95.15.118"
 	},
 	{
 		"stats": {
@@ -197,8 +193,7 @@
 				"rtt": 33.42
 			}
 		],
-		"resolvedAddress": "5.56.17.18",
-		"resolvedHostname": "core-backbone.cdn77.com"
+		"resolvedAddress": "5.56.17.18"
 	},
 	{
 		"stats": {
@@ -226,8 +221,7 @@
 				"rtt": 28.426
 			}
 		],
-		"resolvedAddress": "138.199.0.157",
-		"resolvedHostname": "vl246.prg-ttc2-cdn77-dist-1.cdn77.com"
+		"resolvedAddress": "138.199.0.157"
 	},
 	{
 		"stats": {
@@ -255,7 +249,6 @@
 				"rtt": 31.345
 			}
 		],
-		"resolvedAddress": "185.180.14.250",
-		"resolvedHostname": "edge-595.bunnyinfra.net"
+		"resolvedAddress": "185.180.14.250"
 	}
 ]

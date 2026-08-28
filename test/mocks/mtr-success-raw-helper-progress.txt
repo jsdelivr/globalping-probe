@@ -39,26 +39,19 @@ p 10 29687 33010
 x 0 33011
 x 1 33012
 x 2 33013
-d 2 lutn-core-2a-xe-7114-0.network.virginmedia.net
 p 2 10111 33013
 x 3 33014
 x 4 33015
-d 4 tele-ic-7-ae2-0.network.virginmedia.net
 p 4 11758 33015
 x 5 33016
-d 5 ae15-0.lon10.core-backbone.com
 p 5 13611 33016
 x 6 33017
-d 6 ae1-2053.prg10.core-backbone.com
 p 6 28570 33017
 x 7 33018
-d 7 core-backbone.cdn77.com
 p 7 37643 33018
 x 8 33019
-d 8 vl246.prg-ttc2-cdn77-dist-1.cdn77.com
 p 8 29334 33019
 x 9 33020
-d 9 edge-595.bunnyinfra.net
 p 9 36344 33020
 x 0 33021
 x 1 33022

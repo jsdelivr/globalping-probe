@@ -123,7 +123,6 @@ export const MtrParser = {
 		const sData = data.split(NEW_LINE_REG_EXP);
 
 		let hops = [];
-		const addressToHostname = new Map<string, string>();
 
 		for (const row of sData) {
 			const [ action, index, ...value ] = row.split(' ');
@@ -157,22 +156,6 @@ export const MtrParser = {
 					}
 
 					entry.duplicate = Boolean(previousHostMatch);
-					break;
-				}
-
-				case 'd': {
-					const [ resolvedHostname ] = value;
-
-					if (!resolvedHostname) {
-						break;
-					}
-
-					entry.resolvedHostname = resolvedHostname;
-
-					if (entry.resolvedAddress) {
-						addressToHostname.set(entry.resolvedAddress, resolvedHostname);
-					}
-
 					break;
 				}
 
@@ -212,8 +195,6 @@ export const MtrParser = {
 
 		hops = MtrParser.trimHops(hops, target);
 
-		hops = MtrParser.fulfillMissingHostnames(addressToHostname, hops);
-
 		return MtrParser.hopFinalParse(hops);
 	},
 
@@ -239,20 +220,6 @@ export const MtrParser = {
 		}
 
 		return filteredHops;
-	},
-
-	fulfillMissingHostnames (addressToHostname: Map<string, string>, hops: HopType[]): HopType[] {
-		for (const hop of hops) {
-			if (!hop.resolvedHostname || hop.resolvedHostname === hop.resolvedAddress) {
-				const sameAddressHostname = addressToHostname.get(hop.resolvedAddress!);
-
-				if (sameAddressHostname) {
-					hop.resolvedHostname = sameAddressHostname;
-				}
-			}
-		}
-
-		return hops;
 	},
 
 	hopFinalParse (hops: HopType[]): HopType[] {
