@@ -16,7 +16,7 @@ describe('mtr hop enrichment', () => {
 		const enrichment = new MtrHopEnrichment(lookup, { address, hostname: address }, new AbortController().signal);
 		const hops = [{ resolvedAddress: address, asn: [] }] as HopType[];
 
-		enrichment.add(hops);
+		enrichment.add(address);
 		await enrichment.wait();
 
 		expect(enrichment.apply(hops)[0]!.asn).to.deep.equal([ 24_940 ]);
@@ -33,7 +33,7 @@ describe('mtr hop enrichment', () => {
 		const enrichment = new MtrHopEnrichment(lookup, { address, hostname: address }, new AbortController().signal);
 		const hops = [{ resolvedAddress: address, asn: [] }] as HopType[];
 
-		enrichment.add(hops);
+		enrichment.add(address);
 		await enrichment.wait();
 
 		expect(enrichment.apply(hops)[0]!.asn).to.deep.equal([ 64_500 ]);
@@ -61,7 +61,8 @@ describe('mtr hop enrichment', () => {
 			{ resolvedAddress: '5.6.7.8', asn: [] },
 		] as HopType[];
 
-		enrichment.add(hops);
+		enrichment.add('1.2.3.4');
+		enrichment.add('5.6.7.8');
 		await enrichment.wait();
 
 		const enrichedHops = enrichment.apply(hops);
@@ -73,7 +74,7 @@ describe('mtr hop enrichment', () => {
 		const lookup = sinon.stub().resolves(undefined);
 		const enrichment = new MtrHopEnrichment(lookup as CommandTargetLookup, { address: '1.1.1.1', hostname: '1.1.1.1' }, new AbortController().signal);
 
-		enrichment.add([{ resolvedAddress: 'invalid', asn: [] }] as HopType[]);
+		enrichment.add('invalid');
 		await enrichment.wait();
 
 		expect(lookup.notCalled).to.be.true;

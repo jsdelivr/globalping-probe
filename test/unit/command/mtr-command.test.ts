@@ -395,6 +395,28 @@ describe('mtr command executor', () => {
 			expect(result.hops.some((hop: any) => hop.asn.includes(64500) && hop.asn.includes(64501))).to.be.true;
 		});
 
+		it('should parse accumulated output only when emitting progress', async () => {
+			const mockCmd = getExecaMock();
+			const parseSpy = sandbox.spy(MtrParser, 'rawParse');
+			const mtr = new MtrCommand((): any => mockCmd, dnsResolver('1.1.1.1'));
+			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', {
+				type: 'mtr', timeout: 5, target: 'jsdelivr.net', protocol: 'icmp', port: 80, packets: 3, inProgressUpdates: true, ipVersion: 4,
+			});
+
+			await new Promise(resolve => setImmediate(resolve));
+			mockCmd.stdout.write('h 0 2.2.2.2\nx 0 33000\np 0 10000 33000\n');
+			await new Promise(resolve => setImmediate(resolve));
+
+			expect(parseSpy.callCount).to.equal(1);
+
+			mockCmd.stdout.end();
+			mockCmd.resolve({ stdout: 'h 0 2.2.2.2\nx 0 33000\np 0 10000 33000\n' });
+			await runPromise;
+
+			expect(parseSpy.callCount).to.equal(2);
+			parseSpy.restore();
+		});
+
 		it('should run and parse mtr with progress messages', async () => {
 			const testCase = 'mtr-success-raw';
 			const options = {

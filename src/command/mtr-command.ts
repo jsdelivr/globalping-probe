@@ -3,7 +3,7 @@ import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
 import type { CommandInterface, FailureSource } from '../types.js';
 import { byLine } from '../lib/by-line.js';
-import { ipEquals, joiValidateIp } from '../lib/ip.js';
+import { ipEquals, joiValidateIp, normalizeIp } from '../lib/ip.js';
 import { cachedDnsLookupOne, type IpFamily } from '../lib/dns.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
@@ -15,11 +15,10 @@ import { resolveCommandTarget, type CommandTargetLookup, type ResolvedCommandTar
 import { validateCommandOptions } from '../helper/validate-command-options.js';
 
 import type {
-	HopType,
 	ResultType,
 	ResultTypeJson,
 } from './handlers/mtr/types.js';
-import MtrParser, { NEW_LINE_REG_EXP } from './handlers/mtr/parser.js';
+import MtrParser from './handlers/mtr/parser.js';
 import { MtrHopEnrichment } from './handlers/mtr/enrichment.js';
 
 export type MtrOptions = {
@@ -109,7 +108,6 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			const resolvedTarget = target;
 			const enrichment = new MtrHopEnrichment(this.lookup, resolvedTarget, deadline.signal());
 			const runningCommand = this.cmd({ ...cmdOptions, target: resolvedTarget.address }, deadline.processTimeout());
-			let latestHops: HopType[] = [];
 			cmd = runningCommand;
 
 			if (runningCommand.stdout) {
@@ -119,28 +117,25 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 						return;
 					}
 
-					for (const line of data.split(NEW_LINE_REG_EXP)) {
-						if (!line) {
-							continue;
-						}
+					result.data.push(data);
+					const rawAddress = /^h\s+\d+\s+(\S+)/.exec(data)?.[1];
 
-						result.data.push(line);
+					if (rawAddress) {
+						enrichment.add(normalizeIp(rawAddress));
 					}
 
-					latestHops = MtrParser.rawParse(result.data.join('\n'), false, resolvedTarget.address);
-					enrichment.add(latestHops);
-
 					if (cmdOptions.inProgressUpdates) {
-						buffer.pushLazyProgress(() => ({
-							rawOutput: MtrParser.outputBuilder(enrichment.apply(latestHops)),
-						}));
+						buffer.pushLazyProgress(() => {
+							const hops = MtrParser.rawParse(result.data.join(''), false, resolvedTarget.address);
+
+							return { rawOutput: MtrParser.outputBuilder(enrichment.apply(hops)) };
+						});
 					}
 				});
 			}
 
 			await runningCommand;
-			let hops = MtrParser.rawParse(result.data.join('\n'), true, resolvedTarget.address);
-			enrichment.add(hops);
+			let hops = MtrParser.rawParse(result.data.join(''), true, resolvedTarget.address);
 
 			await enrichment.wait();
 			hops = enrichment.apply(hops);

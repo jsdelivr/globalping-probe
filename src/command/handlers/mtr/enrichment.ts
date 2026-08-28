@@ -47,29 +47,13 @@ export class MtrHopEnrichment {
 		}
 	}
 
-	add (hops: HopType[]): void {
-		for (const hop of hops) {
-			const address = hop.resolvedAddress;
-
-			if (!address) {
-				continue;
-			}
-
-			if (hop.resolvedHostname && hop.resolvedHostname !== address && !this.hostnames.get(address)) {
-				this.hostnames.set(address, hop.resolvedHostname);
-			}
-
-			if (hop.asn.length > 0 && !this.asns.get(address)) {
-				this.asns.set(address, hop.asn);
-			}
-
-			if (isIP(address) === 0 || isIpPrivate(address)) {
-				continue;
-			}
-
-			this.hostnames.add(address);
-			this.asns.add(address);
+	add (address: string): void {
+		if (isIP(address) === 0 || isIpPrivate(address)) {
+			return;
 		}
+
+		this.hostnames.add(address);
+		this.asns.add(address);
 	}
 
 	apply (hops: HopType[]): HopType[] {
