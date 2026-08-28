@@ -11,7 +11,6 @@ import { byLine } from '../lib/by-line.js';
 import { InvalidOptionsException } from './exception/invalid-options-exception.js';
 import { createMeasurementDeadline, getProcessTimeout, getTracerouteBudget } from '../helper/timeout.js';
 import { validateCommandOptions } from '../helper/validate-command-options.js';
-import { getNativeNameResolutionFailureSource } from '../helper/native-name-resolution-failure.js';
 import { resolveCommandTarget, type CommandTargetLookup, ResolvedCommandTarget } from '../helper/resolve-command-target.js';
 import { AsyncLookupMap } from '../helper/async-lookup-map.js';
 import { getFailureSource, isExposed } from '../lib/internal-error.js';
@@ -130,12 +129,6 @@ const classifyTracerouteFailure = (
 	output: string,
 	targetResponded: boolean,
 ): FailureSource => {
-	const nameResolutionSource = getNativeNameResolutionFailureSource(output);
-
-	if (nameResolutionSource) {
-		return nameResolutionSource;
-	}
-
 	if (isExecaError(error) && error.timedOut) {
 		if (targetResponded) {
 			return 'internal';
