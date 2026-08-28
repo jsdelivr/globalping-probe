@@ -176,7 +176,8 @@ export class PingCommand implements CommandInterface<PingOptions> {
 			result = { status: 'failed', failureSource: 'internal', rawOutput: 'Test failed. Please try again.' };
 
 			if (isExecaError(error)) {
-				result = parse(error.stdout.toString());
+				const stdout = error.stdout.toString();
+				result = parse(stdout);
 
 				result.failureSource = classifyIcmpFailure(
 					error,
@@ -188,6 +189,8 @@ export class PingCommand implements CommandInterface<PingOptions> {
 				if (error.timedOut) {
 					result.status = 'failed';
 					result.rawOutput += `${result.rawOutput ? '\n\n' : ''}The measurement command timed out.`;
+				} else if (!stdout) {
+					logger.error(error.shortMessage);
 				}
 
 				!result.rawOutput && (result.rawOutput = 'Test failed. Please try again.');

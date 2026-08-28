@@ -198,6 +198,8 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 					} catch {}
 
 					output += `${output ? '\n\n' : ''}The measurement command timed out.`;
+				} else if (!output) {
+					logger.error(error.shortMessage);
 				}
 			} else {
 				logger.error(error);
