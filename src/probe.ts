@@ -118,27 +118,29 @@ function connect (workerId?: number) {
 
 		const closeTimeout = setTimeout(() => {
 			logger.warn(timeoutMessage);
-			void forceCloseProcess(true);
+			void closeProcess();
 		}, timeout);
 
 		const closeInterval = setInterval(() => {
 			if (worker.jobs.size === 0) {
 				clearTimeout(closeTimeout);
-				void forceCloseProcess();
+				void closeProcess();
 			}
 		}, 100);
 
-		const forceCloseProcess = async (force = false) => {
+		const closeProcess = async () => {
 			clearInterval(closeInterval);
 			clearInterval(worker.jobsInterval);
 
 			logger.debug('Exiting probe process.');
+			const forceExitTimeout = setTimeout(() => process.exit(0), 10_000);
 
-			if (!force) {
+			try {
 				await apiLogsTransport.flush();
+			} finally {
+				clearTimeout(forceExitTimeout);
+				process.exit(0);
 			}
-
-			process.exit(0);
 		};
 	};
 
