@@ -259,7 +259,7 @@ describe('ping command executor', () => {
 				type: 'ping', timeout: 5, target: 'example.com', packets: 3, protocol: 'ICMP', port: 80, inProgressUpdates: false, ipVersion: 4,
 			});
 			const rawOutput = 'PING 1.1.1.1 (1.1.1.1) 56(84) bytes of data.\n'
-				+ 'From router.example (192.0.2.1) icmp_seq=1 Destination Host Unreachable\n'
+				+ 'From 192.0.2.1 icmp_seq=1 Destination Host Unreachable\n'
 				+ '\n--- 1.1.1.1 ping statistics ---\n'
 				+ '1 packets transmitted, 0 received, +1 errors, 100% packet loss';
 
@@ -320,10 +320,10 @@ describe('ping command executor', () => {
 		}
 
 		const successfulCommands = [
-			{ command: 'ping-success-linux', address: '172.217.20.206', hostname: 'lhr25s33-in-f14.1e100.net' },
+			{ command: 'ping-success-linux', address: '172.217.20.206', hostname: 'google.com' },
 			{ command: 'ping-success-linux-no-domain', address: '1.1.1.1', hostname: '1.1.1.1' },
-			{ command: 'ping-no-source-ip-linux', address: '172.217.20.206', hostname: 'lhr25s33-in-f14.1e100.net' },
-			{ command: 'ping-unreachable-linux', address: '104.18.186.31', hostname: 'eth2-1109-fsn-lf-e03.productsup.int' },
+			{ command: 'ping-no-source-ip-linux', address: '172.217.20.206', hostname: 'google.com' },
+			{ command: 'ping-unreachable-linux', address: '104.18.186.31', hostname: '104.18.186.31' },
 		];
 
 		for (const { command, address, hostname } of successfulCommands) {
@@ -347,14 +347,14 @@ describe('ping command executor', () => {
 
 				const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options, hostname);
 
-				const { emitChunks, verifyChunks } = chunkOutput(rawOutput);
+				const { lines, emitChunks, verifyChunks } = chunkOutput(rawOutput);
 
 				await emitChunks(mockedCmd.stdout);
 
 				mockedCmd.resolve({ stdout: rawOutput });
 				await runPromise;
 
-				verifyChunks(mockedSocket);
+				verifyChunks(mockedSocket, lines.map(line => normalizePingOutput(line, address, hostname)));
 
 				expect(mockedSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 			});
@@ -499,7 +499,7 @@ describe('ping command executor', () => {
 
 			const ping = new PingCommand();
 
-			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options, 'hem08s10-in-x0e.1e100.net');
+			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options, 'google.com');
 
 			const { emitChunks } = chunkOutput(rawOutput);
 
@@ -648,7 +648,7 @@ describe('ping command executor', () => {
 			const mockedCmd = getExecaMock();
 
 			const ping = new PingCommand();
-			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
+			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options, 'google.com');
 			mockedCmd.reject(execaError);
 			await runPromise;
 
@@ -709,9 +709,9 @@ describe('ping command executor', () => {
 			timeoutError.stderr = '';
 			timeoutError.timedOut = true;
 
-			timeoutError.stdout = 'PING google.com (172.217.20.206) 56(84) bytes of data.\n'
-				+ '64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=1 ttl=37 time=7.99 ms\n'
-				+ '64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=2 ttl=37 time=8.12 ms';
+			timeoutError.stdout = 'PING 172.217.20.206 (172.217.20.206) 56(84) bytes of data.\n'
+				+ '64 bytes from 172.217.20.206: icmp_seq=1 ttl=37 time=7.99 ms\n'
+				+ '64 bytes from 172.217.20.206: icmp_seq=2 ttl=37 time=8.12 ms';
 
 			mockedCmd.reject(timeoutError);
 			await runPromise;
@@ -724,7 +724,7 @@ describe('ping command executor', () => {
 					result: {
 						status: 'failed',
 						failureSource: 'internal',
-						rawOutput: 'PING google.com (172.217.20.206) 56(84) bytes of data.\n'
+						rawOutput: 'PING lhr25s33-in-f14.1e100.net (172.217.20.206) 56(84) bytes of data.\n'
 							+ '64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=1 ttl=37 time=7.99 ms\n'
 							+ '64 bytes from lhr25s33-in-f14.1e100.net (172.217.20.206): icmp_seq=2 ttl=37 time=8.12 ms\n'
 							+ '\n'
@@ -762,7 +762,7 @@ describe('ping command executor', () => {
 			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
 			const timeoutError = new Error('Timeout') as ExecaError;
 			timeoutError.stderr = '';
-			timeoutError.stdout = 'PING google.com (172.217.20.206) 56(84) bytes of data.';
+			timeoutError.stdout = 'PING 172.217.20.206 (172.217.20.206) 56(84) bytes of data.';
 			timeoutError.timedOut = true;
 			mockedCmd.reject(timeoutError);
 
@@ -789,7 +789,7 @@ describe('ping command executor', () => {
 			const runPromise = ping.runIcmp((): any => mockedCmd, mockedSocket as any, 'measurement', 'test', options);
 			const timeoutError = new Error('Timeout') as ExecaError;
 			timeoutError.stderr = '';
-			timeoutError.stdout = 'PING google.com (172.217.20.206) 56(84) bytes of data.\nno answer yet for icmp_seq=1';
+			timeoutError.stdout = 'PING 172.217.20.206 (172.217.20.206) 56(84) bytes of data.\nno answer yet for icmp_seq=1';
 			timeoutError.timedOut = true;
 			mockedCmd.reject(timeoutError);
 

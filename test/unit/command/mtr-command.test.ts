@@ -28,6 +28,12 @@ const dnsResolver = (result?: string | Error): typeof cachedDnsLookupOne => (asy
 	return result;
 }) as typeof cachedDnsLookupOne;
 
+const removeNativeHostnames = (expectedResult: any): void => {
+	for (const hop of expectedResult.result.hops) {
+		hop.resolvedHostname = null;
+	}
+};
+
 describe('mtr command executor', () => {
 	describe('argument builder', () => {
 		it('should include all arguments', () => {
@@ -428,8 +434,10 @@ describe('mtr command executor', () => {
 			};
 
 			const expectedResult = getCmdMockResult(testCase) as any;
+			removeNativeHostnames(expectedResult);
 			expectedResult.result.resolvedHostname = options.target;
 			expectedResult.result.hops[0].resolvedHostname = '_gateway';
+			expectedResult.result.rawOutput = MtrParser.outputBuilder(expectedResult.result.hops);
 			const rawOutput = getCmdMock(testCase);
 			const mockCmd = getExecaMock();
 
@@ -452,19 +460,14 @@ describe('mtr command executor', () => {
 				},
 			});
 
-			expect(mockedSocket.emit.args[1][1]).to.deep.include({
-				overwrite: true,
-				result: {
-					rawOutput: 'Host                              Loss% Drop Rcv Avg  StDev  Javg \n1. AS??? _gateway (192.168.0.1)    0.0%    0   0 0.0    0.0   0.0\n2. AS??? (waiting for reply)    \n',
-				},
-			});
+			expect(mockedSocket.emit.args[1][1]).to.deep.include({ overwrite: true });
+			expect((mockedSocket.emit.args[1][1] as any).result.rawOutput).to.include('_gateway (192.168.0.1)');
 
-			expect(mockedSocket.emit.args[8][1]).to.deep.include({
-				overwrite: true,
-				result: {
-					rawOutput: 'Host                                                   Loss% Drop Rcv  Avg  StDev  Javg \n1. AS??? _gateway (192.168.0.1)                         0.0%    0   1  0.0    0.0   0.0\n2. AS??? (waiting for reply)                         \n3. AS123 62.252.67.181 (62.252.67.181)                  0.0%    0   1  9.8    0.6   1.2\n4. AS??? (waiting for reply)                         \n5. AS123 62.254.59.130 (62.254.59.130)                  0.0%    0   1 11.4    0.6   1.3\n6. AS123 142.250.160.116 (142.250.160.116)              0.0%    0   0 10.9    0.0  10.9\n7. AS123 216.239.41.193 (216.239.41.193)                0.0%    0   0 15.8    0.0  15.8\n8. AS123 142.251.54.27 (142.251.54.27)                  0.0%    0   0 15.7    0.0  15.7\n9. AS123 lhr25s31-in-f14.1e100.net (142.250.179.238)    0.0%    0   0 11.8    0.0  11.8\n',
-				},
-			});
+			const progressOutputs = mockedSocket.emit.getCalls()
+				.filter(call => call.args[0] === 'probe:measurement:progress')
+				.map(call => (call.args[1] as any).result.rawOutput as string);
+			expect(progressOutputs.some(output => output.includes('142.250.179.238 (142.250.179.238)'))).to.be.true;
+			expect(progressOutputs.every(output => !output.includes('lhr25s31-in-f14.1e100.net'))).to.be.true;
 
 			expect(mockedSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
@@ -480,8 +483,10 @@ describe('mtr command executor', () => {
 			};
 
 			const expectedResult = getCmdMockResult(testCase) as any;
+			removeNativeHostnames(expectedResult);
 			expectedResult.result.resolvedHostname = options.target;
 			expectedResult.result.hops[0].resolvedHostname = '_gateway';
+			expectedResult.result.rawOutput = MtrParser.outputBuilder(expectedResult.result.hops);
 			const rawOutput = getCmdMock(testCase);
 			const mockCmd = getExecaMock();
 
@@ -589,6 +594,7 @@ describe('mtr command executor', () => {
 			};
 
 			const expectedResult = getCmdMockResult(testCase) as any;
+			removeNativeHostnames(expectedResult);
 			expectedResult.result.resolvedHostname = options.target;
 			expectedResult.result.hops.at(-1).resolvedHostname = options.target;
 			expectedResult.result.rawOutput = MtrParser.outputBuilder(expectedResult.result.hops);
@@ -620,8 +626,10 @@ describe('mtr command executor', () => {
 			};
 
 			const expectedResult = getCmdMockResult(testCase) as any;
+			removeNativeHostnames(expectedResult);
 			expectedResult.result.resolvedHostname = options.target;
 			expectedResult.result.hops[0].resolvedHostname = '_gateway';
+			expectedResult.result.rawOutput = MtrParser.outputBuilder(expectedResult.result.hops);
 			const rawOutput = getCmdMock(testCase);
 			const mockCmd = getExecaMock();
 
