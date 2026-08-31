@@ -119,6 +119,7 @@ describe('index module', () => {
 
 		expect(ioStub.firstCall.args[1]).to.deep.include({
 			transports: [ 'websocket' ],
+			ackTimeout: 60_000,
 			reconnectionDelay: 4000,
 			reconnectionDelayMax: 8000,
 			randomizationFactor: 0.5,

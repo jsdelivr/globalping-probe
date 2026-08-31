@@ -120,15 +120,13 @@ describe('apiConnectAltIpsHandler', async () => {
 			addedAltIps: [ '2.2.2.2', '3.3.3.3', '44::44:44' ],
 			rejectedIpsToReasons: {},
 		});
-		const timeout = sinon.stub().returns({ emitWithAck });
-		const altIpsClient = new AltIpsClient({ volatile: { emit, timeout } } as unknown as Socket, '1.1.1.1');
+		const altIpsClient = new AltIpsClient({ volatile: { emit, emitWithAck } } as unknown as Socket, '1.1.1.1');
 		await altIpsClient.refreshAltIps();
 
 		expect(reqs.length).to.equal(3);
 		expect(reqs[0].options.localAddress).to.equal('1.0.1.0');
 		expect(reqs[1].options.localAddress).to.equal('172.31.43.80');
 		expect(reqs[2].options.localAddress).to.equal('2a05:d016:174:7b28:f47b:e6:3307:fab6');
-		expect(timeout.calledOnceWithExactly(60_000)).to.be.true;
 		expect(emitWithAck.callCount).to.equal(1);
 		expect(emitWithAck.firstCall.args[0]).to.equal('probe:alt-ips');
 

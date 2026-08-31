@@ -79,7 +79,7 @@ export class AltIpsClient {
 			return;
 		}
 
-		const response: unknown = await this.socket.volatile.timeout(60_000).emitWithAck('probe:alt-ips', ipsToTokens);
+		const response: unknown = await this.socket.volatile.emitWithAck('probe:alt-ips', ipsToTokens);
 		const { addedAltIps, rejectedIpsToReasons } = response as { addedAltIps: string[]; rejectedIpsToReasons: Record<string, string> };
 
 		if (lifecycleId !== this.lifecycleId) {
