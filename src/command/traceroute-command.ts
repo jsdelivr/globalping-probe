@@ -148,7 +148,7 @@ const traceOptionsSchema = Joi.object<TraceOptions>({
 	inProgressUpdates: Joi.boolean(),
 	target: Joi.string().custom(joiValidateIp).required(),
 	protocol: Joi.string(),
-	port: Joi.number(),
+	port: Joi.number().port(),
 	ipVersion: Joi.when(Joi.ref('target'), {
 		is: Joi.string().ip({ version: [ 'ipv4' ], cidr: 'forbidden' }).required(),
 		then: Joi.valid(4).default(4),

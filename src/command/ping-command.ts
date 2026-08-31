@@ -39,9 +39,9 @@ const pingOptionsSchema = Joi.object<PingOptions>({
 	type: Joi.string().valid('ping'),
 	inProgressUpdates: Joi.boolean(),
 	target: Joi.string().custom(joiValidateIp).required(),
-	packets: Joi.number().min(1).max(16).default(3),
+	packets: Joi.number().integer().min(1).max(16).default(3),
 	protocol: Joi.string().default('ICMP'),
-	port: Joi.number().default(80),
+	port: Joi.number().port().default(80),
 	ipVersion: Joi.when(Joi.ref('target'), {
 		is: Joi.string().ip({ version: [ 'ipv4' ], cidr: 'forbidden' }).required(),
 		then: Joi.valid(4).default(4),
