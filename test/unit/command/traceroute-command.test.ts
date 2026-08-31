@@ -380,13 +380,13 @@ describe('trace command', () => {
 			expect((mockSocket.emit.lastCall.args[1] as any).result.rawOutput).to.include('dns.google (8.8.8.8)');
 		});
 
-		it('applies completed hop lookups to failed output', async () => {
+		it('applies completed hop lookups to normalized failed output', async () => {
 			const lookup = sandbox.stub().callsFake(async (target: string, lookupOptions: { rrtype?: string }) => {
 				if (!lookupOptions.rrtype) {
-					return '1.1.1.1';
+					return '2606:4700:4700::1111';
 				}
 
-				if (target === '8.8.8.8') {
+				if (target === '2001:4860:4860::8888') {
 					return 'dns.google';
 				}
 
@@ -401,11 +401,11 @@ describe('trace command', () => {
 				port: 53,
 				protocol: 'UDP',
 				inProgressUpdates: true,
-				ipVersion: 4,
+				ipVersion: 6,
 			});
-			const rawOutput = 'traceroute to 1.1.1.1 (1.1.1.1), 20 hops max, 60 byte packets\n'
+			const rawOutput = 'traceroute to 2606:4700:4700::1111 (2606:4700:4700::1111), 20 hops max, 80 byte packets\n'
 				+ ' 1  192.168.0.1  0.25 ms  0.50 ms\n'
-				+ ' 2  8.8.8.8  1.25 ms  1.50 ms';
+				+ ' 2  2001:4860:4860:0:0:0:0:8888  1.25 ms  1.50 ms';
 			const error = new Error('Failed') as ExecaError;
 			error.stderr = '';
 			error.timedOut = false;
@@ -419,7 +419,7 @@ describe('trace command', () => {
 
 			const failedOutput = (mockSocket.emit.lastCall.args[1] as any).result.rawOutput;
 			expect(failedOutput).to.include('_gateway (192.168.0.1)');
-			expect(failedOutput).to.include('dns.google (8.8.8.8)');
+			expect(failedOutput).to.include('dns.google (2001:4860:4860::8888)');
 		});
 
 		it('uses the resolved target for top-level metadata when the last hop differs', async () => {
