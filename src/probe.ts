@@ -165,7 +165,7 @@ function connect (workerId?: number) {
 		.on('api:connect:adoption', adoptionStatusHandler(socket))
 		.on('api:connect:ip', ipHandler(socket))
 		.on('api:settings:update', updateProbeSettings(socket))
-		.on('probe:measurement:request', (data: MeasurementRequest) => {
+		.on('probe:measurement:request', async (data: MeasurementRequest) => {
 			const status = statusManager.getStatus();
 
 			if (status !== 'ready') {
@@ -178,25 +178,23 @@ function connect (workerId?: number) {
 			logger.debug(`${measurement.type} request ${measurementId} received.`);
 			worker.jobs.set(measurementId, Date.now());
 
-			socket.emit('probe:measurement:ack', null, async () => {
-				const handler = handlersMap.get(measurement.type);
+			const handler = handlersMap.get(measurement.type);
 
-				if (!handler) {
-					worker.jobs.delete(measurementId);
-					return;
-				}
+			if (!handler) {
+				worker.jobs.delete(measurementId);
+				return;
+			}
 
-				worker.jobs.set(measurementId, Date.now());
+			worker.jobs.set(measurementId, Date.now());
 
-				try {
-					const out = await handler.run(socket, measurementId, testId, measurement);
-					logMeasurementResults && logger.silly(`${measurement.type} request ${measurementId} result: ${JSON.stringify(out)}`);
-				} catch (error: unknown) {
-					handleTestError(error, socket, measurementId, testId);
-				} finally {
-					worker.jobs.delete(measurementId);
-				}
-			});
+			try {
+				const out = await handler.run(socket, measurementId, testId, measurement);
+				logMeasurementResults && logger.silly(`${measurement.type} request ${measurementId} result: ${JSON.stringify(out)}`);
+			} catch (error: unknown) {
+				handleTestError(error, socket, measurementId, testId);
+			} finally {
+				worker.jobs.delete(measurementId);
+			}
 		})
 		.on('probe:adoption:code', logAdoptionCode)
 		.on('api:logs-transport:set', (data: ApiTransportSettings) => apiLogsTransport.updateSettings(data));
