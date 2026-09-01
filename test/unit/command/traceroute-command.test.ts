@@ -463,7 +463,9 @@ describe('trace command', () => {
 			});
 
 			expect(cmd.notCalled).to.be.true;
-			expect((mockSocket.emit.lastCall.args[1] as any).result.failureSource).to.equal('resolver');
+			const result = (mockSocket.emit.lastCall.args[1] as any).result;
+			expect(result.failureSource).to.equal('resolver');
+			expect(result.rawOutput).to.equal('The measurement timed out during DNS resolution.');
 		});
 
 		describe('mock', () => {

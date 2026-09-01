@@ -6,6 +6,8 @@ import { InternalError } from './internal-error.js';
 
 export type IpFamily = 4 | 6;
 
+const DNS_RESOLUTION_TIMEOUT_MESSAGE = 'DNS resolution timed out.';
+
 export type LookupOptions = { family: IpFamily; server?: string; allowPrivate?: boolean; signal?: AbortSignal };
 export type RecordOptions = { rrtype: 'TXT' | 'PTR'; server?: string; signal?: AbortSignal };
 type Options = LookupOptions | RecordOptions;
@@ -77,7 +79,10 @@ const resolveRecords = async (hostname: string, options: Options): Promise<Resol
 				continue;
 			}
 
-			throw new InternalError((error as Error).message, true, isTargetFailure ? 'target' : 'resolver');
+			const message = code === 'ETIMEOUT' ? DNS_RESOLUTION_TIMEOUT_MESSAGE : (error as Error).message;
+			const internalError = new InternalError(message, true, isTargetFailure ? 'target' : 'resolver');
+
+			throw code === 'ETIMEOUT' ? Object.assign(internalError, { code }) : internalError;
 		}
 	}
 

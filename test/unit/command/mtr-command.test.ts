@@ -294,7 +294,7 @@ describe('mtr command executor', () => {
 			expect((mockedSocket.emit.firstCall.args[1] as any).result).to.include({
 				status: 'failed',
 				failureSource: 'resolver',
-				rawOutput: 'The measurement command timed out.',
+				rawOutput: 'The measurement timed out during DNS resolution.',
 			});
 		});
 

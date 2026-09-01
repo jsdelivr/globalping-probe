@@ -1,7 +1,9 @@
 import { isIP } from 'node:net';
 import { cachedDnsLookupOne, type IpFamily, type LookupOptions, type RecordOptions } from '../lib/dns.js';
+import { getErrorCode } from '../lib/error-code.js';
 import { InternalError } from '../lib/internal-error.js';
 import { isIpPrivate, normalizeIp } from '../lib/ip.js';
+import { MEASUREMENT_DNS_RESOLUTION_TIMEOUT_MESSAGE } from './timeout.js';
 
 export type CommandTargetLookup = {
 	(hostname: string, options: LookupOptions): Promise<string>;
@@ -30,8 +32,8 @@ export const resolveCommandTarget = async (
 			const address = normalizeIp(await lookup(target, { family, signal }));
 			return { address, hostname: target };
 		} catch (error: unknown) {
-			if (signal.aborted) {
-				throw new InternalError('The measurement command timed out.', true, 'resolver');
+			if (signal.aborted || getErrorCode(error) === 'ETIMEOUT') {
+				throw new InternalError(MEASUREMENT_DNS_RESOLUTION_TIMEOUT_MESSAGE, true, 'resolver');
 			}
 
 			throw error;
