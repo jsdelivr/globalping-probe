@@ -116,22 +116,37 @@ describe('apiConnectAltIpsHandler', async () => {
 			});
 
 		const emit = sinon.stub();
-		const altIpsClient = new AltIpsClient({ volatile: { emit } } as unknown as Socket, '1.1.1.1');
+		const emitWithAck = sinon.stub().resolves({
+			addedAltIps: [ '2.2.2.2', '3.3.3.3', '44::44:44' ],
+			rejectedIpsToReasons: {},
+		});
+		const altIpsClient = new AltIpsClient({ volatile: { emit, emitWithAck } } as unknown as Socket, '1.1.1.1');
 		await altIpsClient.refreshAltIps();
 
 		expect(reqs.length).to.equal(3);
 		expect(reqs[0].options.localAddress).to.equal('1.0.1.0');
 		expect(reqs[1].options.localAddress).to.equal('172.31.43.80');
 		expect(reqs[2].options.localAddress).to.equal('2a05:d016:174:7b28:f47b:e6:3307:fab6');
-		expect(emit.callCount).to.equal(1);
-		expect(emit.firstCall.args[0]).to.equal('probe:alt-ips');
+		expect(emitWithAck.callCount).to.equal(1);
+		expect(emitWithAck.firstCall.args[0]).to.equal('probe:alt-ips');
 
-		expect(emit.firstCall.args[1]).to.deep.equal([
+		expect(emitWithAck.firstCall.args[1]).to.deep.equal([
 			[ '2.2.2.2', 'token-2.2.2.2' ],
 			[ '3.3.3.3', 'token-3.3.3.3' ],
 			[ '44::44:44', 'token-44::44:44' ],
 		]);
 
 		expect(nock.isDone()).to.equal(true);
+	});
+
+	it('should reject an empty alt IP acknowledgment', async () => {
+		networkInterfaces.returns({});
+
+		const emitWithAck = sinon.stub().resolves(null);
+		const altIpsClient = new AltIpsClient({ volatile: { emitWithAck } } as unknown as Socket, '1.1.1.1');
+		const error = await altIpsClient.refreshAltIps().catch((error: unknown) => error);
+
+		expect(error).to.be.instanceof(Error);
+		expect((error as Error).message).to.equal('The API failed to process the alternative IP update.');
 	});
 });

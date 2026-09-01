@@ -88,6 +88,7 @@ function connect (workerId?: number) {
 
 	const socket = io(`${config.get<string>('api.host')}/probes`, {
 		transports: [ 'websocket' ],
+		ackTimeout: 60_000,
 		reconnectionDelay: 4000,
 		reconnectionDelayMax: 8000,
 		randomizationFactor: 0.5,
@@ -118,27 +119,29 @@ function connect (workerId?: number) {
 
 		const closeTimeout = setTimeout(() => {
 			logger.warn(timeoutMessage);
-			void forceCloseProcess(true);
+			void closeProcess();
 		}, timeout);
 
 		const closeInterval = setInterval(() => {
 			if (worker.jobs.size === 0) {
 				clearTimeout(closeTimeout);
-				void forceCloseProcess();
+				void closeProcess();
 			}
 		}, 100);
 
-		const forceCloseProcess = async (force = false) => {
+		const closeProcess = async () => {
 			clearInterval(closeInterval);
 			clearInterval(worker.jobsInterval);
 
 			logger.debug('Exiting probe process.');
+			const forceExitTimeout = setTimeout(() => process.exit(0), 10_000);
 
-			if (!force) {
+			try {
 				await apiLogsTransport.flush();
+			} finally {
+				clearTimeout(forceExitTimeout);
+				process.exit(0);
 			}
-
-			process.exit(0);
 		};
 	};
 
@@ -163,7 +166,7 @@ function connect (workerId?: number) {
 		.on('api:connect:adoption', adoptionStatusHandler(socket))
 		.on('api:connect:ip', ipHandler(socket))
 		.on('api:settings:update', updateProbeSettings(socket))
-		.on('probe:measurement:request', (data: MeasurementRequest) => {
+		.on('probe:measurement:request', async (data: MeasurementRequest) => {
 			const status = statusManager.getStatus();
 
 			if (status !== 'ready') {
@@ -174,27 +177,23 @@ function connect (workerId?: number) {
 			const { measurementId, testId, measurement } = data;
 
 			logger.debug(`${measurement.type} request ${measurementId} received.`);
+
+			const handler = handlersMap.get(measurement.type);
+
+			if (!handler) {
+				return;
+			}
+
 			worker.jobs.set(measurementId, Date.now());
 
-			socket.emit('probe:measurement:ack', null, async () => {
-				const handler = handlersMap.get(measurement.type);
-
-				if (!handler) {
-					worker.jobs.delete(measurementId);
-					return;
-				}
-
-				worker.jobs.set(measurementId, Date.now());
-
-				try {
-					const out = await handler.run(socket, measurementId, testId, measurement);
-					logMeasurementResults && logger.silly(`${measurement.type} request ${measurementId} result: ${JSON.stringify(out)}`);
-				} catch (error: unknown) {
-					handleTestError(error, socket, measurementId, testId);
-				} finally {
-					worker.jobs.delete(measurementId);
-				}
-			});
+			try {
+				const out = await handler.run(socket, measurementId, testId, measurement);
+				logMeasurementResults && logger.silly(`${measurement.type} request ${measurementId} result: ${JSON.stringify(out)}`);
+			} catch (error: unknown) {
+				handleTestError(error, socket, measurementId, testId);
+			} finally {
+				worker.jobs.delete(measurementId);
+			}
 		})
 		.on('probe:adoption:code', logAdoptionCode)
 		.on('api:logs-transport:set', (data: ApiTransportSettings) => apiLogsTransport.updateSettings(data));
