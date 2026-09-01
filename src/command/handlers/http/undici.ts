@@ -81,9 +81,18 @@ export type OutputJson = {
 };
 
 type Decompressor = zlib.Gunzip | zlib.Inflate | zlib.BrotliDecompress;
-type ConnectionState = { isResolving: boolean };
+type RequestPhase = 'dns' | 'tcp' | 'tls' | 'firstByte' | 'download';
+type RequestState = { phase: RequestPhase };
 
 const lowerCaseKeys = (obj: Record<string, string>) => _.mapKeys(obj, (_value, key) => _.toLower(key)) as Record<string, string>;
+
+const timeoutMessages: Record<RequestPhase, string> = {
+	dns: 'Request timed out during DNS lookup.',
+	tcp: 'Request timed out while establishing the TCP connection.',
+	tls: 'Request timed out during the TLS handshake.',
+	firstByte: 'Request timed out while waiting for the first response byte.',
+	download: 'Request timed out while downloading the response.',
+};
 
 const internalHttpErrorCodes = new Set([
 	'EMFILE',
@@ -154,11 +163,11 @@ function getConnector (
 	dnsResolver: LookupFunction,
 	result: Omit<Result, 'timings'>,
 	timings: Timings,
-	connectionState: ConnectionState,
+	requestState: RequestState,
 ): buildConnector.connector {
 	return (connectorOptions, callback) => {
 		timings.start = Date.now();
-		connectionState.isResolving = isIP(connectorOptions.hostname) === 0;
+		requestState.phase = isIP(connectorOptions.hostname) === 0 ? 'dns' : 'tcp';
 
 		const tcpSocket = net.connect({
 			host: connectorOptions.hostname,
@@ -169,12 +178,12 @@ function getConnector (
 		});
 
 		tcpSocket.on('lookup', (error, address) => {
-			connectionState.isResolving = false;
-
 			if (error) {
 				// Handled in onError().
 				return;
 			}
+
+			requestState.phase = 'tcp';
 
 			if (isIpPrivate(address)) {
 				tcpSocket.destroy();
@@ -202,6 +211,7 @@ function getConnector (
 			}
 
 			timings.tcp = Date.now() - timings.start! - (timings.dns ?? 0);
+			requestState.phase = isHttps ? 'tls' : 'firstByte';
 
 			if (!result.resolvedAddress && tcpSocket.remoteAddress) {
 				result.resolvedAddress = tcpSocket.remoteAddress;
@@ -240,6 +250,7 @@ function getConnector (
 
 			tlsSocket.on('secureConnect', () => {
 				timings.tls = Date.now() - timings.start! - (timings.dns ?? 0) - (timings.tcp ?? 0);
+				requestState.phase = 'firstByte';
 				const cert = tlsSocket.getPeerCertificate();
 				const alpn = tlsSocket.alpnProtocol;
 
@@ -323,12 +334,12 @@ export class HttpHandler {
 			...(server ? { server } : {}),
 		}), true);
 		const allowH2 = this.options.protocol === 'HTTP2';
-		const connectionState: ConnectionState = { isResolving: false };
-		const connector = getConnector(this.options, this.port, this.isHttps, dnsResolver, this.result, this.timings, connectionState);
+		const requestState: RequestState = { phase: isIP(this.options.target) === 0 ? 'dns' : 'tcp' };
+		const connector = getConnector(this.options, this.port, this.isHttps, dnsResolver, this.result, this.timings, requestState);
 		this.undiciClient = new Client(this.url.origin, { connect: connector, allowH2 });
 
 		this.timeoutTimer = setTimeout(
-			() => this.handleError('Request timeout.', connectionState.isResolving ? 'resolver' : 'target'),
+			() => this.handleError(timeoutMessages[requestState.phase], requestState.phase === 'dns' ? 'resolver' : 'target', true),
 			this.options.timeout * 1000,
 		);
 
@@ -349,6 +360,7 @@ export class HttpHandler {
 				this.timings.firstByte = Date.now() - this.timings.start! - (this.timings.dns ?? 0) - (this.timings.tcp ?? 0) - (this.timings.tls ?? 0);
 				this.result.statusCode = statusCode;
 				this.result.statusCodeName = statusText;
+				requestState.phase = 'download';
 
 				const rawHeaderPairs = [];
 
@@ -518,21 +530,31 @@ export class HttpHandler {
 		this.sendResult();
 	};
 
-	private handleError = (error: Error | string, fallbackSource: FailureSource) => {
+	private handleError = (error: Error | string, fallbackSource: FailureSource, preserveCompletedState = false) => {
 		if (this.done) {
 			return;
 		}
 
 		const message = error instanceof Error ? error.message : error;
 		this.done = true;
-		Object.assign(this.result, this.getInitialResult());
+
+		if (preserveCompletedState) {
+			this.result.rawBody = '';
+		} else {
+			Object.assign(this.result, this.getInitialResult());
+		}
+
 		this.result.status = 'failed';
 		const codeFallback = isInternalHttpErrorCode(getErrorCode(error)) ? 'internal' : fallbackSource;
 		this.result.failureSource = getFailureSource(error, codeFallback);
 		this.result.rawOutput = message;
 
-		for (const key of Object.keys(this.timings) as (keyof Timings)[]) {
-			this.timings[key] = null;
+		if (preserveCompletedState && this.timings.start !== null) {
+			this.timings.total = Date.now() - this.timings.start;
+		} else {
+			for (const key of Object.keys(this.timings) as (keyof Timings)[]) {
+				this.timings[key] = null;
+			}
 		}
 
 		this.cleanup();
