@@ -4,7 +4,7 @@ import { expect } from 'chai';
 import { getCmdMock, useSandboxWithFakeTimers } from '../../utils.js';
 import { PingTest, initPingTest, getPingTest } from '../../../src/status-manager/ping-test.js';
 
-const pingSuccess = getCmdMock('ping-success-linux');
+const pingSuccess = getCmdMock('ping-success-linux-status');
 const pingPacketLoss = getCmdMock('ping-packet-loss-linux');
 
 describe('PingTest', () => {

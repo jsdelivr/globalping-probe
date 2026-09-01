@@ -19,6 +19,7 @@
 		"got": "^12.6.1",
 		"http2-wrapper": "^2.2.1",
 		"ip-regex": "^5.0.0",
+		"ipaddr.js": "^2.5.0",
 		"joi": "^17.13.3",
 		"lodash": "^4.17.21",
 		"nvm": "github:nvm-sh/nvm",

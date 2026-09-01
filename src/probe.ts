@@ -30,6 +30,7 @@ import { initStatusManager } from './status-manager/status-manager.js';
 import { logAdoptionCode } from './lib/log-adoption-code.js';
 import { getAvailableDiskSpace, getTotalDiskSize, looksLikeV1HardwareDevice } from './lib/util.js';
 import { VERSION } from './constants.js';
+import { cachedDnsLookupOne } from './lib/dns.js';
 
 dns.setDefaultResultOrder('ipv4first');
 
@@ -63,7 +64,7 @@ const logMeasurementResults = process.env['GP_LOG_MEASUREMENT_RESULTS'] === 'tru
 
 handlersMap.set('ping', process.env['FAKE_COMMANDS'] ? new FakePingCommand() : new PingCommand());
 handlersMap.set('mtr', process.env['FAKE_COMMANDS'] ? new FakeMtrCommand() : new MtrCommand(mtrCmd));
-handlersMap.set('traceroute', new TracerouteCommand(traceCmd));
+handlersMap.set('traceroute', new TracerouteCommand(traceCmd, cachedDnsLookupOne));
 handlersMap.set('dns', new DnsCommand(dnsCmd));
 handlersMap.set('http', new HttpCommand());
 

@@ -1,6 +1,6 @@
 import is from '@sindresorhus/is';
 import _ from 'lodash';
-import { ipEquals } from '../../../lib/ip.js';
+import { ipEquals, normalizeIp } from '../../../lib/ip.js';
 import type {
 	HopStatsType,
 	HopType,
@@ -58,8 +58,8 @@ export const MtrParser = {
 		const rawOutput = [];
 		const asnLabels = hops.map(hop => hop.asn.length > 0 ? `AS${hop.asn.join(' ')}` : 'AS???');
 		const hostLabels = hops.map((hop, i) => {
-			const hostnameAlias = i === 0 ? '_gateway' : hop.resolvedHostname ?? hop.resolvedAddress;
-			return hop.resolvedAddress ? `${hostnameAlias ?? ''} (${hop.resolvedAddress})` : '(waiting for reply)';
+			const hostnameAlias = i === 0 ? '_gateway' : hop.resolvedHostname ?? hop.displayAddress ?? hop.resolvedAddress;
+			return hop.resolvedAddress ? `${hostnameAlias ?? ''} (${hop.displayAddress ?? hop.resolvedAddress})` : '(waiting for reply)';
 		});
 
 		const spacings = {
@@ -123,7 +123,6 @@ export const MtrParser = {
 		const sData = data.split(NEW_LINE_REG_EXP);
 
 		let hops = [];
-		const addressToHostname = new Map<string, string>();
 
 		for (const row of sData) {
 			const [ action, index, ...value ] = row.split(' ');
@@ -139,31 +138,24 @@ export const MtrParser = {
 
 			switch (action) {
 				case 'h': {
-					const [ resolvedAddress ] = value;
-					const previousHostMatch = hops.find((h: HopType, hIndex: number) => h.resolvedAddress === resolvedAddress && hIndex < Number(index));
+					const [ rawResolvedAddress ] = value;
 
-					if (!resolvedAddress) {
+					if (!rawResolvedAddress) {
 						break;
 					}
+
+					const scopeIndex = rawResolvedAddress.indexOf('%');
+					const resolvedAddress = normalizeIp(rawResolvedAddress);
+					const displayAddress = scopeIndex === -1 ? undefined : `${resolvedAddress}${rawResolvedAddress.slice(scopeIndex)}`;
+					const previousHostMatch = hops.find((h: HopType, hIndex: number) => h.resolvedAddress === resolvedAddress && h.displayAddress === displayAddress && hIndex < Number(index));
 
 					entry.resolvedAddress = resolvedAddress;
+
+					if (displayAddress) {
+						entry.displayAddress = displayAddress;
+					}
+
 					entry.duplicate = Boolean(previousHostMatch);
-					break;
-				}
-
-				case 'd': {
-					const [ resolvedHostname ] = value;
-
-					if (!resolvedHostname) {
-						break;
-					}
-
-					entry.resolvedHostname = resolvedHostname;
-
-					if (entry.resolvedAddress) {
-						addressToHostname.set(entry.resolvedAddress, resolvedHostname);
-					}
-
 					break;
 				}
 
@@ -203,8 +195,6 @@ export const MtrParser = {
 
 		hops = MtrParser.trimHops(hops, target);
 
-		hops = MtrParser.fulfillMissingHostnames(addressToHostname, hops);
-
 		return MtrParser.hopFinalParse(hops);
 	},
 
@@ -230,20 +220,6 @@ export const MtrParser = {
 		}
 
 		return filteredHops;
-	},
-
-	fulfillMissingHostnames (addressToHostname: Map<string, string>, hops: HopType[]): HopType[] {
-		for (const hop of hops) {
-			if (!hop.resolvedHostname || hop.resolvedHostname === hop.resolvedAddress) {
-				const sameAddressHostname = addressToHostname.get(hop.resolvedAddress!);
-
-				if (sameAddressHostname) {
-					hop.resolvedHostname = sameAddressHostname;
-				}
-			}
-		}
-
-		return hops;
 	},
 
 	hopFinalParse (hops: HopType[]): HopType[] {

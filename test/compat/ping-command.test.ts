@@ -1,10 +1,26 @@
 import { expect } from 'chai';
 import { ipEquals } from '../../src/lib/ip.js';
-import { PingCommand, type PingOptions } from '../../src/command/ping-command.js';
-import { expectFiniteNumbers, loopbackTargets, runCommand } from './command-test-helpers.js';
+import { cachedDnsLookupOne } from '../../src/lib/dns.js';
+import { PingCommand, pingCmd, type PingOptions } from '../../src/command/ping-command.js';
+import { expectFiniteNumbers, hostnameTargets, loopbackTargets, runCommand } from './command-test-helpers.js';
+import { DnsServer } from './dns-server.js';
 
 describe('ping compatibility', () => {
-	for (const { target, ipVersion } of loopbackTargets) {
+	let dnsServer: DnsServer | undefined;
+	const lookup = ((hostname: string, options: any) => cachedDnsLookupOne(hostname, {
+		...options,
+		server: `${dnsServer!.host}:${dnsServer!.port}`,
+	})) as typeof cachedDnsLookupOne;
+
+	before(async () => {
+		dnsServer = await DnsServer.start('127.0.0.1');
+	});
+
+	after(async () => {
+		await dnsServer?.close();
+	});
+
+	for (const { target, ipVersion, resolvedHostname } of loopbackTargets) {
 		it(`runs ping against IPv${ipVersion} loopback`, async () => {
 			const options: PingOptions = {
 				type: 'ping',
@@ -16,11 +32,19 @@ describe('ping compatibility', () => {
 				ipVersion,
 				timeout: 5,
 			};
-			const result = await runCommand(new PingCommand(), options);
+			const result = await runCommand(new PingCommand(pingCmd, lookup), options);
 
 			expect(result.status, result.rawOutput).to.equal('finished');
 			expect(ipEquals(result.resolvedAddress, target)).to.equal(true);
+
+			if (resolvedHostname) {
+				expect(result.resolvedHostname).to.equal(resolvedHostname);
+				expect(result.rawOutput).to.include(`${resolvedHostname} (${result.resolvedAddress})`);
+			}
+
 			expect(result.timings).to.have.length(1);
+			expect(result.timings[0].rtt).to.be.a('number').and.to.be.at.least(0);
+			expect(result.timings[0].ttl).to.be.a('number').and.to.be.greaterThan(0);
 
 			expect(result.stats).to.deep.include({
 				total: 1,
@@ -36,6 +60,28 @@ describe('ping compatibility', () => {
 		});
 	}
 
+	for (const { target, address, ipVersion } of hostnameTargets) {
+		it(`rewrites IPv${ipVersion} ping output for a hostname target`, async () => {
+			const result = await runCommand(new PingCommand(pingCmd, lookup), {
+				type: 'ping',
+				inProgressUpdates: false,
+				target,
+				packets: 1,
+				protocol: 'ICMP',
+				port: 80,
+				ipVersion,
+				timeout: 5,
+			} satisfies PingOptions);
+
+			expect(result.status, result.rawOutput).to.equal('finished');
+			expect(ipEquals(result.resolvedAddress, address)).to.equal(true);
+			expect(result.resolvedHostname).to.equal(target);
+			expect(result.rawOutput).to.include(`PING ${target} (${result.resolvedAddress})`);
+			expect(result.rawOutput).to.include(` bytes from ${target} (${result.resolvedAddress}):`);
+			expect(result.rawOutput).to.include(`--- ${target} ping statistics ---`);
+		});
+	}
+
 	it('classifies an unresolvable hostname', async () => {
 		const options: PingOptions = {
 			type: 'ping',
@@ -47,7 +93,7 @@ describe('ping compatibility', () => {
 			ipVersion: 4,
 			timeout: 5,
 		};
-		const result = await runCommand(new PingCommand(), options);
+		const result = await runCommand(new PingCommand(pingCmd, lookup), options);
 
 		expect(result.status).to.equal('failed');
 		expect(result.failureSource).to.equal('target');

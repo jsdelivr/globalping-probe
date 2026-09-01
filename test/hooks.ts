@@ -1,3 +1,4 @@
+import http from 'node:http';
 import * as chai from 'chai';
 import nock from 'nock';
 
@@ -12,6 +13,8 @@ chai.use(global.chaiSnapshotInstance);
 
 export const mochaHooks = {
 	beforeAll () {
+		// Prevent socket reuse between unit tests.
+		http.globalAgent.maxFreeSockets = 0;
 		nock.disableNetConnect();
 		nock.enableNetConnect('127.0.0.1');
 	},
