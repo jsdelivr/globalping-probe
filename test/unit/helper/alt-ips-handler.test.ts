@@ -138,4 +138,15 @@ describe('apiConnectAltIpsHandler', async () => {
 
 		expect(nock.isDone()).to.equal(true);
 	});
+
+	it('should reject an empty alt IP acknowledgment', async () => {
+		networkInterfaces.returns({});
+
+		const emitWithAck = sinon.stub().resolves(null);
+		const altIpsClient = new AltIpsClient({ volatile: { emitWithAck } } as unknown as Socket, '1.1.1.1');
+		const error = await altIpsClient.refreshAltIps().catch((error: unknown) => error);
+
+		expect(error).to.be.instanceof(Error);
+		expect((error as Error).message).to.equal('The API failed to process the alternative IP update.');
+	});
 });

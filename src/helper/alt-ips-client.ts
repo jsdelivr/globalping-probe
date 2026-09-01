@@ -80,6 +80,11 @@ export class AltIpsClient {
 		}
 
 		const response: unknown = await this.socket.volatile.emitWithAck('probe:alt-ips', ipsToTokens);
+
+		if (!response) {
+			throw new Error('The API failed to process the alternative IP update.');
+		}
+
 		const { addedAltIps, rejectedIpsToReasons } = response as { addedAltIps: string[]; rejectedIpsToReasons: Record<string, string> };
 
 		if (lifecycleId !== this.lifecycleId) {
