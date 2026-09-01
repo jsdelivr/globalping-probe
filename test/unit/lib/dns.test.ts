@@ -3,6 +3,7 @@ import * as sinon from 'sinon';
 import dns from 'node:dns';
 import { performance } from 'node:perf_hooks';
 import { getDnsServers, dnsLookup, dnsLookupOne, cachedDnsLookup, cachedDnsLookupOne, clearDnsCache } from '../../../src/lib/dns.js';
+import { getErrorCode } from '../../../src/lib/error-code.js';
 import { getFailureSource } from '../../../src/lib/internal-error.js';
 import { callbackify } from '../../../src/lib/util.js';
 
@@ -235,19 +236,21 @@ describe('dnsLookup / cachedDnsLookup', () => {
 		expect(failureSource).to.equal('target');
 	});
 
-	it('classifies resolver failures as internal', async () => {
+	it('classifies and formats resolver timeouts', async () => {
 		const error = Object.assign(new Error('queryA ETIMEOUT example.com'), { code: 'ETIMEOUT' });
 		resolve4.rejects(error);
 
-		let failureSource;
+		let caughtError;
 
 		try {
 			await dnsLookup('example.com', { family: 4 });
-		} catch (error) {
-			failureSource = getFailureSource(error, 'target');
+		} catch (error: unknown) {
+			caughtError = error as Error;
 		}
 
-		expect(failureSource).to.equal('resolver');
+		expect(getFailureSource(caughtError, 'target')).to.equal('resolver');
+		expect(caughtError?.message).to.equal('DNS resolution timed out.');
+		expect(getErrorCode(caughtError)).to.equal('ETIMEOUT');
 	});
 
 	it('returns a private address when allowPrivate is set', async () => {

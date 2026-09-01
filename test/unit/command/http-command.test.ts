@@ -1066,7 +1066,7 @@ describe(`.run() method`, () => {
 		expect(completedWithinDnsBudget).to.equal(true);
 		expect(result.status).to.equal('failed');
 		expect(result.failureSource).to.equal('resolver');
-		expect(result.rawOutput).to.equal('Request timed out during DNS lookup.');
+		expect(result.rawOutput).to.equal('The measurement timed out during DNS resolution.');
 
 		expect(result.timings).to.deep.equal({
 			total: 6000,
@@ -1076,6 +1076,29 @@ describe(`.run() method`, () => {
 			tls: null,
 			tcp: null,
 		});
+	});
+
+	it('should format a resolver ETIMEOUT as a DNS resolution timeout', async () => {
+		const fakeSocket = new Duplex({ read () {}, write (_chunk, _encoding, callback) { callback(); } });
+		netConnectStub.callsFake(() => {
+			const error = Object.assign(new InternalError('DNS resolution timed out.', true, 'resolver'), { code: 'ETIMEOUT' });
+			process.nextTick(() => fakeSocket.emit('error', error));
+			return fakeSocket as any;
+		});
+
+		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http',
+			timeout: 5,
+			target: 'example.com',
+			inProgressUpdates: false,
+			protocol: 'HTTP',
+			request: { method: 'GET', path: '/', query: '' },
+			ipVersion: 4,
+		});
+
+		const result = mockedSocket.emit.lastCall.args[1].result;
+		expect(result.failureSource).to.equal('resolver');
+		expect(result.rawOutput).to.equal('The measurement timed out during DNS resolution.');
 	});
 
 	it('should classify a timeout for an IP target as target', async () => {

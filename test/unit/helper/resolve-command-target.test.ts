@@ -52,7 +52,25 @@ describe('resolveCommandTarget', () => {
 			expect(error).to.be.instanceOf(InternalError);
 
 			expect(error).to.include({
-				message: 'The measurement command timed out.',
+				message: 'The measurement timed out during DNS resolution.',
+				failureSource: 'resolver',
+			});
+		}
+	});
+
+	it('formats a resolver timeout as a measurement timeout', async () => {
+		const signal = new AbortController().signal;
+		const lookupError = Object.assign(new InternalError('DNS resolution timed out.', true, 'resolver'), { code: 'ETIMEOUT' });
+		const lookup = sinon.stub().rejects(lookupError);
+
+		try {
+			await resolveCommandTarget('example.com', 4, signal, lookup);
+			expect.fail('Expected target resolution to fail.');
+		} catch (error: unknown) {
+			expect(error).to.be.instanceOf(InternalError);
+
+			expect(error).to.include({
+				message: 'The measurement timed out during DNS resolution.',
 				failureSource: 'resolver',
 			});
 		}
