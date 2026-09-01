@@ -40,8 +40,8 @@ const mtrOptionsSchema = Joi.object<MtrOptions>({
 	inProgressUpdates: Joi.boolean(),
 	target: Joi.string().custom(joiValidateIp).required(),
 	protocol: Joi.string().lowercase().insensitive(),
-	packets: Joi.number().min(1).max(16).default(3),
-	port: Joi.number(),
+	packets: Joi.number().integer().min(1).max(16).default(3),
+	port: Joi.number().port(),
 	ipVersion: Joi.when(Joi.ref('target'), {
 		is: Joi.string().ip({ version: [ 'ipv4' ], cidr: 'forbidden' }).required(),
 		then: Joi.valid(4).default(4),
