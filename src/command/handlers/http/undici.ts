@@ -14,7 +14,7 @@ import type { FailureSource, TestStatus } from '../../../types.js';
 import { callbackify } from '../../../lib/util.js';
 import { isIpPrivate } from '../../../lib/ip.js';
 import { getErrorCode } from '../../../lib/error-code.js';
-import { createMeasurementDeadline, getHttpDnsTimeout } from '../../../helper/timeout.js';
+import { createMeasurementDeadline, getHttpDnsTimeout, MEASUREMENT_DNS_RESOLUTION_TIMEOUT_MESSAGE } from '../../../helper/timeout.js';
 import { truncateHeaderPairs } from './truncate-headers.js';
 import { truncateToWellFormedString } from './truncate-string.js';
 
@@ -88,7 +88,7 @@ type RequestState = { phase: RequestPhase };
 const lowerCaseKeys = (obj: Record<string, string>) => _.mapKeys(obj, (_value, key) => _.toLower(key)) as Record<string, string>;
 
 const timeoutMessages: Record<RequestPhase, string> = {
-	dns: 'Request timed out during DNS lookup.',
+	dns: MEASUREMENT_DNS_RESOLUTION_TIMEOUT_MESSAGE,
 	tcp: 'Request timed out while establishing the TCP connection.',
 	tls: 'Request timed out during the TLS handshake.',
 	firstByte: 'Request timed out while waiting for the first response byte.',
@@ -556,7 +556,6 @@ export class HttpHandler {
 			return;
 		}
 
-		const message = error instanceof Error ? error.message : error;
 		this.done = true;
 
 		if (preserveCompletedState) {
@@ -566,8 +565,13 @@ export class HttpHandler {
 		}
 
 		this.result.status = 'failed';
-		const codeFallback = isInternalHttpErrorCode(getErrorCode(error)) ? 'internal' : fallbackSource;
-		this.result.failureSource = getFailureSource(error, codeFallback);
+		const code = getErrorCode(error);
+		const codeFallback = isInternalHttpErrorCode(code) ? 'internal' : fallbackSource;
+		const failureSource = getFailureSource(error, codeFallback);
+		const message = code === 'ETIMEOUT' && failureSource === 'resolver'
+			? MEASUREMENT_DNS_RESOLUTION_TIMEOUT_MESSAGE
+			: error instanceof Error ? error.message : error;
+		this.result.failureSource = failureSource;
 		this.result.rawOutput = message;
 
 		if (preserveCompletedState && this.timings.start !== null) {

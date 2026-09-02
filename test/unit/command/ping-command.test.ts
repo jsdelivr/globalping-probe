@@ -315,7 +315,9 @@ describe('ping command executor', () => {
 				});
 
 				expect(cmd.notCalled).to.be.true;
-				expect((mockedSocket.emit.lastCall.args[1] as any).result.failureSource).to.equal('resolver');
+				const result = (mockedSocket.emit.lastCall.args[1] as any).result;
+				expect(result.failureSource).to.equal('resolver');
+				expect(result.rawOutput).to.equal('The measurement timed out during DNS resolution.');
 			});
 		}
 
