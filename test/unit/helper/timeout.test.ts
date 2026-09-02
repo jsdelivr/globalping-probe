@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import {
 	createMeasurementDeadline,
+	getHttpDnsTimeout,
 	getMtrBudget,
 	getPingBudget,
 	getProcessTimeout,
@@ -54,6 +55,19 @@ describe('command timeout helpers', () => {
 				clock.restore();
 			}
 		});
+	});
+
+	describe('HTTP DNS timeout', () => {
+		for (const { timeout, expected } of [
+			{ timeout: 5, expected: 2 },
+			{ timeout: 10, expected: 4 },
+			{ timeout: 15, expected: 6 },
+			{ timeout: 30, expected: 12 },
+		]) {
+			it(`should reserve ${expected} seconds of a ${timeout}-second measurement`, () => {
+				expect(getHttpDnsTimeout(timeout)).to.equal(expected);
+			});
+		}
 	});
 
 	describe('ping budget', () => {

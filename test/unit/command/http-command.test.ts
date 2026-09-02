@@ -379,6 +379,13 @@ describe(`.run() method`, () => {
 
 	beforeEach(() => {
 		sandbox = useSandboxWithFakeTimers({ useFakeTimers: { now: 0, shouldAdvanceTime: false } });
+
+		sandbox.stub(AbortSignal, 'timeout').callsFake((milliseconds) => {
+			const controller = new AbortController();
+			setTimeout(() => controller.abort(), milliseconds);
+			return controller.signal;
+		});
+
 		mockedSocket = sandbox.createStubInstance(Socket) as sinon.SinonStubbedInstance<Socket>;
 		netConnectStub = sandbox.stub(net, 'connect');
 	});
@@ -1028,7 +1035,7 @@ describe(`.run() method`, () => {
 		expect(result.rawOutput.length).to.equal(10_019); // 'HTTP/1.1 200' (12) + '\n' (1) + rawHeaders (10000) + '\n\n' (2) + 'body' (4)
 	});
 
-	it('should classify a timeout during DNS lookup as resolver', async () => {
+	it('should limit DNS lookup to 40% of the measurement timeout', async () => {
 		const fakeSocket = new Duplex({
 			read () {},
 			write (_chunk, _encoding, callback) {
@@ -1040,7 +1047,7 @@ describe(`.run() method`, () => {
 
 		const promise = new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
 			type: 'http' as const,
-			timeout: 5,
+			timeout: 15,
 			target: 'google.com',
 			inProgressUpdates: false,
 			protocol: 'HTTP',
@@ -1048,18 +1055,21 @@ describe(`.run() method`, () => {
 			ipVersion: 4,
 		});
 
-		sandbox.clock.tick(5_001);
+		sandbox.clock.tick(6_001);
+		const completedWithinDnsBudget = mockedSocket.emit.called;
+		sandbox.clock.tick(9_000);
 
 		await promise;
 
 		const result = mockedSocket.emit.firstCall.args[1].result;
 
+		expect(completedWithinDnsBudget).to.equal(true);
 		expect(result.status).to.equal('failed');
 		expect(result.failureSource).to.equal('resolver');
 		expect(result.rawOutput).to.equal('Request timed out during DNS lookup.');
 
 		expect(result.timings).to.deep.equal({
-			total: 5000,
+			total: 6000,
 			download: null,
 			firstByte: null,
 			dns: null,
