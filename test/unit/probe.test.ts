@@ -155,12 +155,18 @@ describe('index module', () => {
 		expect(reports()[0]!.args[1]).to.deep.equal([ ...registeredScopes ]);
 	});
 
-	it('keeps only the active connection\'s scheduled scope report', async () => {
+	it('keeps scope reports limited to active connections before shutdown', async () => {
 		const delay = 12_345;
-		sandbox.stub(_, 'random').returns(delay);
+		const randomStub = sandbox.stub(_, 'random').returns(delay);
+		const exitStub = sandbox.stub(process, 'exit');
+		statusManagerStub.stop.callsFake(() => {
+			statusManagerStub.getStatus.returns('sigterm');
+		});
+
 		await import('../../src/probe.js');
 		const emitSpy = sandbox.spy(mockSocket, 'emit');
 		const reports = () => emitSpy.getCalls().filter(call => call.args[0] === 'probe:log-scopes');
+		const reportDelays = () => randomStub.getCalls().filter(call => call.args[0] === 0 && call.args[1] === 60_000 && call.args[2] === undefined);
 
 		mockSocket.emit('connect');
 		mockSocket.emit('disconnect', 'client disconnect');
@@ -168,6 +174,15 @@ describe('index module', () => {
 		await sandbox.clock.tickAsync(delay);
 
 		expect(reports()).to.have.length(1);
+
+		mockSocket.emit('connect');
+		process.emit('SIGTERM');
+		mockSocket.emit('connect');
+		await sandbox.clock.tickAsync(delay);
+
+		expect(reportDelays()).to.have.length(3);
+		expect(reports()).to.have.length(1);
+		expect(exitStub.calledOnce).to.be.true;
 	});
 
 	it('should update probe settings received from the API', async () => {

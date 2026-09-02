@@ -163,9 +163,13 @@ function connect (workerId?: number) {
 			logger.debug('Connection to API established.');
 			clearTimeout(logScopesReportTimer);
 
-			logScopesReportTimer = setTimeout(() => {
-				socket.emit('probe:log-scopes', [ ...registeredScopes ]);
-			}, _.random(0, 60_000));
+			if (statusManager.getStatus() !== 'sigterm') {
+				logScopesReportTimer = setTimeout(() => {
+					if (statusManager.getStatus() !== 'sigterm') {
+						socket.emit('probe:log-scopes', [ ...registeredScopes ]);
+					}
+				}, _.random(0, 60_000));
+			}
 
 			statusManager.sendStatus();
 			await statusManager.start();
