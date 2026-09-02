@@ -27,6 +27,10 @@ const roundDown = (value: number, places = 2): number => {
 	return Math.floor((value + 1e-9) * scale) / scale;
 };
 
+export const getHttpDnsTimeout = (timeoutSeconds: number): number => {
+	return roundDown(Math.max(2, timeoutSeconds * 0.4));
+};
+
 export const getPingBudget = (packets: number, timeoutSeconds: number, intervalOverride?: number): PingBudget => {
 	const minimumDnsHeadroom = 1;
 	const minimumResponseTimeout = 1;

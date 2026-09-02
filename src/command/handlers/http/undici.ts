@@ -14,6 +14,7 @@ import type { FailureSource, TestStatus } from '../../../types.js';
 import { callbackify } from '../../../lib/util.js';
 import { isIpPrivate } from '../../../lib/ip.js';
 import { getErrorCode } from '../../../lib/error-code.js';
+import { createMeasurementDeadline, getHttpDnsTimeout } from '../../../helper/timeout.js';
 import { truncateHeaderPairs } from './truncate-headers.js';
 import { truncateToWellFormedString } from './truncate-string.js';
 
@@ -164,6 +165,7 @@ function getConnector (
 	result: Omit<Result, 'timings'>,
 	timings: Timings,
 	requestState: RequestState,
+	onDnsLookupComplete: () => void,
 ): buildConnector.connector {
 	return (connectorOptions, callback) => {
 		timings.start = Date.now();
@@ -178,6 +180,8 @@ function getConnector (
 		});
 
 		tcpSocket.on('lookup', (error, address) => {
+			onDnsLookupComplete();
+
 			if (error) {
 				// Handled in onError().
 				return;
@@ -312,6 +316,7 @@ export class HttpHandler {
 
 	private resolve!: (value: unknown) => void;
 	private timeoutTimer: NodeJS.Timeout | null = null;
+	private dnsTimeoutSignal: AbortSignal | null = null;
 	private decompressor: Decompressor | null = null;
 	private decompressorHasData = false;
 	private done = false;
@@ -329,18 +334,24 @@ export class HttpHandler {
 	public async run () {
 		const promise = new Promise((resolve) => { this.resolve = resolve; });
 		const server = this.options.resolver;
+		const targetIsHostname = isIP(this.options.target) === 0;
+		const deadline = createMeasurementDeadline(this.options.timeout);
+		this.dnsTimeoutSignal = targetIsHostname ? deadline.signalFor(getHttpDnsTimeout(this.options.timeout)) : null;
+		this.dnsTimeoutSignal?.addEventListener('abort', this.handleDnsTimeout, { once: true });
+
 		const dnsResolver = callbackify((hostname: string, options: { family: IpFamily }) => dnsLookup(hostname, {
 			family: options.family,
 			...(server ? { server } : {}),
+			...(this.dnsTimeoutSignal ? { signal: this.dnsTimeoutSignal } : {}),
 		}), true);
 		const allowH2 = this.options.protocol === 'HTTP2';
-		const requestState: RequestState = { phase: isIP(this.options.target) === 0 ? 'dns' : 'tcp' };
-		const connector = getConnector(this.options, this.port, this.isHttps, dnsResolver, this.result, this.timings, requestState);
+		const requestState: RequestState = { phase: targetIsHostname ? 'dns' : 'tcp' };
+		const connector = getConnector(this.options, this.port, this.isHttps, dnsResolver, this.result, this.timings, requestState, this.clearDnsTimeout);
 		this.undiciClient = new Client(this.url.origin, { connect: connector, allowH2 });
 
 		this.timeoutTimer = setTimeout(
 			() => this.handleError(timeoutMessages[requestState.phase], requestState.phase === 'dns' ? 'resolver' : 'target', true),
-			this.options.timeout * 1000,
+			deadline.remainingMs(),
 		);
 
 		this.undiciClient.dispatch({
@@ -506,9 +517,19 @@ export class HttpHandler {
 
 	private cleanup () {
 		clearTimeout(this.timeoutTimer!);
+		this.clearDnsTimeout();
 		this.decompressor?.destroy();
 		this.undiciClient.destroy().catch((error: Error) => console.error(error));
 	}
+
+	private clearDnsTimeout = () => {
+		this.dnsTimeoutSignal?.removeEventListener('abort', this.handleDnsTimeout);
+		this.dnsTimeoutSignal = null;
+	};
+
+	private handleDnsTimeout = () => {
+		this.handleError(new InternalError(timeoutMessages.dns, true, 'resolver'), 'resolver', true);
+	};
 
 	private handleSuccess = () => {
 		if (this.done) {
