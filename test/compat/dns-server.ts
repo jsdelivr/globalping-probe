@@ -8,14 +8,17 @@ import {
 	type UDPServer as DnsUdpServer,
 } from 'dns2';
 
-type DnsResponse = 'a' | 'aaaa' | 'txt' | 'nxdomain' | 'servfail' | 'silent';
+type DnsResponse = 'a' | 'a-loopback' | 'aaaa' | 'txt' | 'ptr4' | 'asn4' | 'asn6' | 'nxdomain' | 'servfail' | 'silent';
 
 const responses: Record<string, DnsResponse> = {
 	'ipv4.compat.test': 'a',
 	'ipv6.compat.test': 'aaaa',
 	'txt.compat.test': 'txt',
 	'trace.compat.test': 'a',
-	'mtr.compat.test': 'a',
+	'mtr.compat.test': 'a-loopback',
+	'2.0.0.127.in-addr.arpa': 'ptr4',
+	'2.0.0.127.origin.asn.cymru.com': 'asn4',
+	'1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.origin6.asn.cymru.com': 'asn6',
 	'nxdomain.compat.test': 'nxdomain',
 	'servfail.compat.test': 'servfail',
 	'silent.compat.test': 'silent',
@@ -115,10 +118,18 @@ const buildResponse = (request: Packet): Packet | undefined => {
 
 	if (responseType === 'a') {
 		answer.address = '127.0.0.1';
+	} else if (responseType === 'a-loopback') {
+		answer.address = '127.0.0.2';
 	} else if (responseType === 'aaaa') {
 		answer.address = '::1';
 	} else if (responseType === 'txt') {
 		answer.data = 'compatibility output';
+	} else if (responseType === 'ptr4') {
+		answer.domain = 'ipv4-loopback.compat.test';
+	} else if (responseType === 'asn4') {
+		answer.data = '64512 | 127.0.0.0/8 | ZZ | test | 1970-01-01';
+	} else if (responseType === 'asn6') {
+		answer.data = '64513 | ::1/128 | ZZ | test | 1970-01-01';
 	} else {
 		return response;
 	}

@@ -238,10 +238,10 @@ describe('ApiLogsTransport', () => {
 			expect(payload.skipped).to.equal(2);
 		});
 
-		it('should resend logs if emit ack fails until success', async () => {
+		it('should resend logs when the API requests a retry until success', async () => {
 			const { logger } = createTransportAndLogger({ isActive: true, sendInterval: 100, maxBufferSize: 2 });
 
-			setEmitWithAckResponse('error');
+			setEmitWithAckResponse('retry');
 
 			logger.info('test1');
 			logger.info('test2');
@@ -265,10 +265,10 @@ describe('ApiLogsTransport', () => {
 			expect(socket.emitWithAck.calledTwice).to.be.true;
 		});
 
-		it('should drop old logs when emit fails', async () => {
+		it('should drop old logs while the API requests retries', async () => {
 			const { logger } = createTransportAndLogger({ isActive: true, sendInterval: 100, maxBufferSize: 2 });
 
-			setEmitWithAckResponse('error');
+			setEmitWithAckResponse('retry');
 
 			logger.info('test1');
 			logger.info('test2');
@@ -294,6 +294,19 @@ describe('ApiLogsTransport', () => {
 			// no subsequent emits
 			await sandbox.clock.tickAsync(2000);
 			expect(socket.emitWithAck.calledThrice).to.be.true;
+		});
+
+		it('should discard logs when the API rejects them permanently', async () => {
+			const { logger } = createTransportAndLogger({ isActive: true, sendInterval: 100 });
+
+			setEmitWithAckResponse('discard');
+			logger.info('test');
+
+			await sandbox.clock.tickAsync(100 + ACK_DELAY);
+			expect(socket.emitWithAck.calledOnce).to.be.true;
+
+			await sandbox.clock.tickAsync(100 + ACK_DELAY);
+			expect(socket.emitWithAck.calledOnce).to.be.true;
 		});
 
 		it('should trim long messages', async () => {

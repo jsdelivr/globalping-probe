@@ -27,6 +27,7 @@ class ApiLogsTransport extends Transport {
 	private maxBufferSize: number;
 	private logBuffer: TransportInfo[] = [];
 	private droppedLogs: number = 0;
+	private hasLoggedDiscard = false;
 	private timer: NodeJS.Timeout | undefined = undefined;
 	private sendQueue: Promise<void> = Promise.resolve();
 
@@ -118,7 +119,7 @@ class ApiLogsTransport extends Transport {
 		try {
 			const response: unknown = await this.socket.emitWithAck('probe:logs', payload);
 
-			if (response === 'success') {
+			if (response === 'success' || response === 'discard') {
 				const droppedWhileAwaiting = this.droppedLogs - droppedInPayload;
 				const oldLogsRemaining = presentInPayload - droppedWhileAwaiting;
 
@@ -128,6 +129,13 @@ class ApiLogsTransport extends Transport {
 				} else {
 					this.droppedLogs = -oldLogsRemaining; // === droppedWhileAwaiting - presentInPayload
 				}
+			}
+
+			if (response === 'success') {
+				this.hasLoggedDiscard = false;
+			} else if (response === 'discard' && !this.hasLoggedDiscard) {
+				this.hasLoggedDiscard = true;
+				this.logger?.warn('The API discarded a log batch due to a schema validation failure.');
 			}
 		} catch (e) {
 			this.logger?.error('Failed to send logs to the API.', e);

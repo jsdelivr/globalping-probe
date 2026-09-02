@@ -62,7 +62,7 @@ const dnsOptionsSchema = Joi.object<DnsOptions>({
 	target: Joi.string().required(),
 	resolver: Joi.string().optional(),
 	protocol: Joi.string().valid(...allowedProtocols).optional().default('udp'),
-	port: Joi.number().optional().default('53'),
+	port: Joi.number().port().optional().default(53),
 	trace: Joi.boolean().optional().default(false),
 	query: Joi.object({
 		type: Joi.string().valid(...allowedTypes).optional().default('A'),

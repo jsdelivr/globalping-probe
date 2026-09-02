@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import dns from 'node:dns';
 import { performance } from 'node:perf_hooks';
-import { getDnsServers, dnsLookup, cachedDnsLookup, clearDnsCache } from '../../../src/lib/dns.js';
+import { getDnsServers, dnsLookup, dnsLookupOne, cachedDnsLookup, cachedDnsLookupOne, clearDnsCache } from '../../../src/lib/dns.js';
 import { getFailureSource } from '../../../src/lib/internal-error.js';
 import { callbackify } from '../../../src/lib/util.js';
 
@@ -126,6 +126,12 @@ describe('dnsLookup / cachedDnsLookup', () => {
 
 	it('returns the first public address with its family', async () => {
 		expect(await dnsLookup('example.com', { family: 4 })).to.deep.equal([ '1.1.1.1', 4 ]);
+	});
+
+	it('returns only the selected public address', async () => {
+		resolve4.resolves([{ address: '192.168.0.1', ttl: 300 }, { address: '1.1.1.1', ttl: 300 }]);
+
+		expect(await dnsLookupOne('example.com', { family: 4 })).to.equal('1.1.1.1');
 	});
 
 	it('tries the next configured resolver after SERVFAIL', async () => {
@@ -366,6 +372,45 @@ describe('dnsLookup / cachedDnsLookup', () => {
 		expect(resolve4.callCount).to.equal(1);
 	});
 
+	it('does not start an uncached lookup with an already-aborted signal', async () => {
+		const controller = new AbortController();
+		controller.abort(new Error('Measurement timeout.'));
+		let error;
+
+		try {
+			await dnsLookup('example.com', { family: 4, signal: controller.signal });
+		} catch (caughtError) {
+			error = caughtError;
+		}
+
+		expect(error).to.equal(controller.signal.reason);
+		expect(resolve4.notCalled).to.be.true;
+	});
+
+	it('does not start a cached lookup with an already-aborted signal', async () => {
+		const controller = new AbortController();
+		controller.abort(new Error('Measurement timeout.'));
+		let error;
+
+		try {
+			await cachedDnsLookup('example.com', { family: 4, signal: controller.signal });
+		} catch (caughtError) {
+			error = caughtError;
+		}
+
+		expect(error).to.equal(controller.signal.reason);
+		expect(resolve4.notCalled).to.be.true;
+	});
+
+	it('returns a completed cached lookup with an already-aborted signal', async () => {
+		await cachedDnsLookup('example.com', { family: 4 });
+		const controller = new AbortController();
+		controller.abort(new Error('Measurement timeout.'));
+
+		expect(await cachedDnsLookup('example.com', { family: 4, signal: controller.signal })).to.deep.equal([ '1.1.1.1', 4 ]);
+		expect(resolve4.calledOnce).to.be.true;
+	});
+
 	it('resolves IPv6 via resolve6', async () => {
 		const resolve6 = sandbox.stub(dns.promises.Resolver.prototype, 'resolve6').resolves([{ address: '2606:4700:4700::1111', ttl: 300 }]);
 
@@ -378,6 +423,21 @@ describe('dnsLookup / cachedDnsLookup', () => {
 
 		expect(await cachedDnsLookup('example.com', { rrtype: 'TXT' })).to.deep.equal([ 'AS123 | abc', 'AS456' ]);
 		expect(resolveTxt.callCount).to.equal(1);
+	});
+
+	it('returns only the first cached record without truncating the cache entry', async () => {
+		const resolveTxt = sandbox.stub(dns.promises.Resolver.prototype, 'resolveTxt').resolves([ [ 'AS123', ' | abc' ], [ 'AS456' ] ]);
+
+		expect(await cachedDnsLookupOne('example.com', { rrtype: 'TXT' })).to.equal('AS123 | abc');
+		expect(await cachedDnsLookup('example.com', { rrtype: 'TXT' })).to.deep.equal([ 'AS123 | abc', 'AS456' ]);
+		expect(resolveTxt.callCount).to.equal(1);
+	});
+
+	it('returns PTR records from a reverse lookup', async () => {
+		const reverse = sandbox.stub(dns.promises.Resolver.prototype, 'reverse').resolves([ 'one.one.one.one' ]);
+
+		expect(await cachedDnsLookup('1.1.1.1', { rrtype: 'PTR' })).to.deep.equal([ 'one.one.one.one' ]);
+		expect(reverse.calledOnceWithExactly('1.1.1.1')).to.be.true;
 	});
 });
 

@@ -21,6 +21,7 @@ export type HopStatsType = {
 
 export type HopType = {
 	asn: number[];
+	displayAddress?: string;
 	resolvedAddress?: string;
 	resolvedHostname?: string;
 	stats: HopStatsType;

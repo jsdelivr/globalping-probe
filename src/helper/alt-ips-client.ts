@@ -79,39 +79,45 @@ export class AltIpsClient {
 			return;
 		}
 
-		this.socket.volatile.emit('probe:alt-ips', ipsToTokens, ({ addedAltIps, rejectedIpsToReasons }: { addedAltIps: string[]; rejectedIpsToReasons: Record<string, string> }) => {
-			if (lifecycleId !== this.lifecycleId) {
-				return;
-			}
+		const response: unknown = await this.socket.volatile.emitWithAck('probe:alt-ips', ipsToTokens);
 
-			const uniqAcceptedIps = _.uniq([ this.ip, ...addedAltIps.sort() ]);
-			rejectedIps = { ...rejectedIps, ...rejectedIpsToReasons };
+		if (!response) {
+			throw new Error('The API failed to process the alternative IP update.');
+		}
 
-			uniqAcceptedIps.forEach((ip) => {
-				delete rejectedIps[ip];
-				delete failedIps[ip];
-			});
+		const { addedAltIps, rejectedIpsToReasons } = response as { addedAltIps: string[]; rejectedIpsToReasons: Record<string, string> };
 
-			const ipsChanged = !_.isEqual(uniqAcceptedIps, this.currentIps) || !_.isEqual(rejectedIps, this.currentRejectedIps) || !_.isEqual(failedIps, this.currentFailedIps);
+		if (lifecycleId !== this.lifecycleId) {
+			return;
+		}
 
-			this.currentIps = uniqAcceptedIps;
-			this.currentRejectedIps = rejectedIps;
-			this.currentFailedIps = failedIps;
+		const uniqAcceptedIps = _.uniq([ this.ip, ...addedAltIps.sort() ]);
+		rejectedIps = { ...rejectedIps, ...rejectedIpsToReasons };
 
-			if (ipsChanged) {
-				Object.entries(this.currentFailedIps).forEach(([ ip, error ]) => altIpsLogger.warn(`${error} (via ${ip}).`));
-				Object.entries(this.currentRejectedIps).forEach(([ ip, reason ]) => altIpsLogger.warn(`IP ${ip} rejected: ${reason}`));
-				mainLogger.info(`${pluralize('IP address', 'IP addresses', uniqAcceptedIps.length)} of the probe: ${uniqAcceptedIps.join(', ')}.`);
-			} else {
-				const groups = [
-					`Accepted: ${uniqAcceptedIps.join(', ')}.`,
-					Object.keys(rejectedIps).length ? `Rejected: ${Object.keys(rejectedIps).join(', ')}.` : '',
-					Object.keys(failedIps).length ? `Failed: ${Object.keys(failedIps).join(', ')}.` : '',
-				].filter(Boolean);
-
-				altIpsLogger.debug(`Alt IP status unchanged. ${groups.join(' ')}`);
-			}
+		uniqAcceptedIps.forEach((ip) => {
+			delete rejectedIps[ip];
+			delete failedIps[ip];
 		});
+
+		const ipsChanged = !_.isEqual(uniqAcceptedIps, this.currentIps) || !_.isEqual(rejectedIps, this.currentRejectedIps) || !_.isEqual(failedIps, this.currentFailedIps);
+
+		this.currentIps = uniqAcceptedIps;
+		this.currentRejectedIps = rejectedIps;
+		this.currentFailedIps = failedIps;
+
+		if (ipsChanged) {
+			Object.entries(this.currentFailedIps).forEach(([ ip, error ]) => altIpsLogger.warn(`${error} (via ${ip}).`));
+			Object.entries(this.currentRejectedIps).forEach(([ ip, reason ]) => altIpsLogger.warn(`IP ${ip} rejected: ${reason}`));
+			mainLogger.info(`${pluralize('IP address', 'IP addresses', uniqAcceptedIps.length)} of the probe: ${uniqAcceptedIps.join(', ')}.`);
+		} else {
+			const groups = [
+				`Accepted: ${uniqAcceptedIps.join(', ')}.`,
+				Object.keys(rejectedIps).length ? `Rejected: ${Object.keys(rejectedIps).join(', ')}.` : '',
+				Object.keys(failedIps).length ? `Failed: ${Object.keys(failedIps).join(', ')}.` : '',
+			].filter(Boolean);
+
+			altIpsLogger.debug(`Alt IP status unchanged. ${groups.join(' ')}`);
+		}
 	}
 
 	private async getAltIpToken (ip: string) {
