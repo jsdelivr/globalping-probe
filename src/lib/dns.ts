@@ -16,6 +16,7 @@ type ResolvedRecords = { records: string[]; ttl: number };
 
 const DNS_CACHE_MIN_TTL = 60 * 1000;
 const DNS_CACHE_TXT_TTL = 5 * 60 * 1000;
+const DNS_CACHE_RECORD_NEGATIVE_TTL = 5 * 60 * 1000;
 const DNS_CACHE_MAX_ENTRIES = 5000;
 
 const cache = new TTLCache<string, Promise<string[]>>({
@@ -23,7 +24,15 @@ const cache = new TTLCache<string, Promise<string[]>>({
 	ttl: DNS_CACHE_TXT_TTL,
 });
 
-export const clearDnsCache = () => cache.clear();
+const negativeRecordCache = new TTLCache<string, string>({
+	max: DNS_CACHE_MAX_ENTRIES,
+	ttl: DNS_CACHE_RECORD_NEGATIVE_TTL,
+});
+
+export const clearDnsCache = () => {
+	cache.clear();
+	negativeRecordCache.clear();
+};
 
 export const getDnsServers = (getServers: () => string[] = dns.getServers): string[] => {
 	return getServers()
@@ -90,21 +99,34 @@ const resolveRecords = async (hostname: string, options: Options): Promise<Resol
 };
 
 const cachedResolveRecords = (hostname: string, options: Options): Promise<string[]> => {
-	const key = `${'rrtype' in options ? options.rrtype : options.family}:${options.server ?? ''}:${hostname}`;
+	const key = `${'rrtype' in options ? options.rrtype : options.family}|${options.server ?? ''}|${hostname}`;
 	const cached = cache.get(key);
 
 	if (cached) {
 		return cached;
 	}
 
+	const negativeRecordResult = 'rrtype' in options ? negativeRecordCache.get(key) : undefined;
+
+	if (negativeRecordResult !== undefined) {
+		return Promise.reject(new InternalError(negativeRecordResult, true, 'target'));
+	}
+
 	const pending = resolveRecords(hostname, options).then(({ records, ttl }) => {
-		if (cache.has(key)) {
+		if (cache.get(key) === pending) {
 			cache.setTTL(key, ttl);
 		}
 
 		return records;
 	}).catch((error: unknown) => {
-		cache.delete(key);
+		if (cache.get(key) === pending) {
+			cache.delete(key);
+
+			if ('rrtype' in options && error instanceof InternalError && error.failureSource === 'target') {
+				negativeRecordCache.set(key, error.message);
+			}
+		}
+
 		throw error;
 	});
 
