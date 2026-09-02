@@ -5,6 +5,7 @@ import * as winston from 'winston';
 import ApiLogsTransport from './api-logs-transport.js';
 
 export const apiLogsTransport = new ApiLogsTransport({ level: 'debug' });
+export const registeredScopes = new Set<string>();
 const consoleLogLevel = getConsoleLogLevel();
 
 const objectFormatter = (object: Record<string, any>) => {
@@ -55,7 +56,10 @@ const logger = winston.createLogger({
 	],
 });
 
-export const scopedLogger = (scope: string): winston.Logger => logger.child({ scope });
+export const scopedLogger = (scope: string): winston.Logger => {
+	registeredScopes.add(scope);
+	return logger.child({ scope });
+};
 
 apiLogsTransport.setLogger(scopedLogger('api-logs-transport'));
 

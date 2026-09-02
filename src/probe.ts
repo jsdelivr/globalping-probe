@@ -6,11 +6,12 @@ import { randomUUID } from 'node:crypto';
 import process from 'node:process';
 import throng from 'throng';
 import { io } from 'socket.io-client';
+import _ from 'lodash';
 import physicalCpuCount from 'physical-cpu-count';
 import { getFakeIp } from './lib/fake-ip.js';
 import type { CommandInterface, MeasurementRequest } from './types.js';
 import { loadAll as loadAllDeps } from './lib/dependencies.js';
-import { apiLogsTransport, scopedLogger } from './lib/logger.js';
+import { apiLogsTransport, registeredScopes, scopedLogger } from './lib/logger.js';
 import { ApiTransportSettings } from './lib/api-logs-transport.js';
 import { initErrorHandler } from './helper/api-error-handler.js';
 import { handleTestError } from './helper/test-error-handler.js';
@@ -110,8 +111,11 @@ function connect (workerId?: number) {
 
 	const statusManager = initStatusManager(socket, pingCmd);
 	const errorHandler = initErrorHandler(socket);
+	let logScopesReportTimer: ReturnType<typeof setTimeout> | undefined;
+
 	const shutdownProbe = (message: string, timeoutMessage: string, timeout = 60_000) => {
 		logger.info(message);
+		clearTimeout(logScopesReportTimer);
 		statusManager.stop();
 		void apiLogsTransport.flush();
 
@@ -153,10 +157,19 @@ function connect (workerId?: number) {
 		})
 		.on('connect', async () => {
 			logger.debug('Connection to API established.');
+			clearTimeout(logScopesReportTimer);
+
+			logScopesReportTimer = setTimeout(() => {
+				socket.emit('probe:log-scopes', [ ...registeredScopes ]);
+			}, _.random(0, 60_000));
+
 			statusManager.sendStatus();
 			await statusManager.start();
 		})
-		.on('disconnect', errorHandler.handleDisconnect)
+		.on('disconnect', (reason) => {
+			clearTimeout(logScopesReportTimer);
+			errorHandler.handleDisconnect(reason);
+		})
 		.on('connect_error', errorHandler.connectError)
 		.on('api:connect:location', apiConnectLocationHandler(socket))
 		.on('api:connect:adoption', adoptionStatusHandler(socket))

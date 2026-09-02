@@ -1,6 +1,7 @@
 import config from 'config';
 import process from 'node:process';
 import { expect } from 'chai';
+import _ from 'lodash';
 import * as td from 'testdouble';
 import * as sinon from 'sinon';
 import { getCmdMock, MockSocket, useSandboxWithFakeTimers } from '../utils.js';
@@ -133,6 +134,39 @@ describe('index module', () => {
 		expect(initStatusManagerStub.callCount).to.equal(1);
 		expect(initStatusManagerStub.firstCall.args).to.deep.equal([ mockSocket, pingCmdStub ]);
 		expect(handlers['probe:dns:update'].calledOnce).to.be.true;
+	});
+
+	it('reports registered logger scopes after a randomized connection delay', async () => {
+		const delay = 12_345;
+		const randomStub = sandbox.stub(_, 'random').returns(delay);
+		await import('../../src/probe.js');
+		const { registeredScopes } = await import('../../src/lib/logger.js');
+		const emitSpy = sandbox.spy(mockSocket, 'emit');
+		const reports = () => emitSpy.getCalls().filter(call => call.args[0] === 'probe:log-scopes');
+
+		mockSocket.emit('connect');
+		expect(randomStub.calledOnce).to.equal(true);
+		expect(randomStub.firstCall.args).to.deep.equal([ 0, 60_000 ]);
+		expect(reports()).to.have.length(0);
+
+		await sandbox.clock.tickAsync(delay);
+		expect(reports()).to.have.length(1);
+		expect(reports()[0]!.args[1]).to.deep.equal([ ...registeredScopes ]);
+	});
+
+	it('keeps only the active connection\'s scheduled scope report', async () => {
+		const delay = 12_345;
+		sandbox.stub(_, 'random').returns(delay);
+		await import('../../src/probe.js');
+		const emitSpy = sandbox.spy(mockSocket, 'emit');
+		const reports = () => emitSpy.getCalls().filter(call => call.args[0] === 'probe:log-scopes');
+
+		mockSocket.emit('connect');
+		mockSocket.emit('disconnect', 'client disconnect');
+		mockSocket.emit('connect');
+		await sandbox.clock.tickAsync(delay);
+
+		expect(reports()).to.have.length(1);
 	});
 
 	it('should update probe settings received from the API', async () => {
