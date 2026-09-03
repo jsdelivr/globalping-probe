@@ -136,6 +136,46 @@ describe('index module', () => {
 		expect(handlers['probe:dns:update'].calledOnce).to.be.true;
 	});
 
+	it('reports registered logger scopes after a randomized connection delay', async () => {
+		await import('../../src/probe.js');
+		const { registeredScopes } = await import('../../src/lib/logger.js');
+		const emitSpy = sandbox.spy(mockSocket, 'emit');
+		const reports = () => emitSpy.getCalls().filter(call => call.args[0] === 'probe:log-scopes');
+
+		mockSocket.emit('connect');
+		expect(reports()).to.have.length(0);
+
+		await sandbox.clock.tickAsync(60_000);
+		expect(reports()).to.have.length(1);
+		expect(reports()[0]!.args[1]).to.deep.equal([ ...registeredScopes ]);
+	});
+
+	it('replaces pending scope reports on reconnect and prevents reports after shutdown', async () => {
+		const exitStub = sandbox.stub(process, 'exit');
+		statusManagerStub.stop.callsFake(() => {
+			statusManagerStub.getStatus.returns('sigterm');
+		});
+
+		await import('../../src/probe.js');
+		const emitSpy = sandbox.spy(mockSocket, 'emit');
+		const reports = () => emitSpy.getCalls().filter(call => call.args[0] === 'probe:log-scopes');
+
+		mockSocket.emit('connect');
+		mockSocket.emit('disconnect', 'client disconnect');
+		mockSocket.emit('connect');
+		await sandbox.clock.tickAsync(60_000);
+
+		expect(reports()).to.have.length(1);
+
+		mockSocket.emit('connect');
+		process.emit('SIGTERM');
+		mockSocket.emit('connect');
+		await sandbox.clock.tickAsync(60_000);
+
+		expect(reports()).to.have.length(1);
+		expect(exitStub.calledOnce).to.be.true;
+	});
+
 	it('should update probe settings received from the API', async () => {
 		await import('../../src/probe.js');
 		const settings = { meteredConnection: true };
