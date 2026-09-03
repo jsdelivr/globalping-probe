@@ -2,10 +2,13 @@
 import process from 'node:process';
 import { inspect } from 'node:util';
 import * as winston from 'winston';
+import _ from 'lodash';
+import type { Socket } from 'socket.io-client';
 import ApiLogsTransport from './api-logs-transport.js';
 
 export const apiLogsTransport = new ApiLogsTransport({ level: 'debug' });
 export const registeredScopes = new Set<string>();
+let logScopesReportTimer: ReturnType<typeof setTimeout> | undefined;
 const consoleLogLevel = getConsoleLogLevel();
 
 const objectFormatter = (object: Record<string, any>) => {
@@ -59,6 +62,15 @@ const logger = winston.createLogger({
 export const scopedLogger = (scope: string): winston.Logger => {
 	registeredScopes.add(scope);
 	return logger.child({ scope });
+};
+
+export const scheduleLogScopesReport = (socket: Socket) => {
+	cancelLogScopesReport();
+	logScopesReportTimer = setTimeout(() => socket.emit('probe:log-scopes', [ ...registeredScopes ]), _.random(0, 60_000));
+};
+
+export const cancelLogScopesReport = () => {
+	clearTimeout(logScopesReportTimer);
 };
 
 apiLogsTransport.setLogger(scopedLogger('api-logs-transport'));

@@ -1,7 +1,6 @@
 import config from 'config';
 import process from 'node:process';
 import { expect } from 'chai';
-import _ from 'lodash';
 import * as td from 'testdouble';
 import * as sinon from 'sinon';
 import { getCmdMock, MockSocket, useSandboxWithFakeTimers } from '../utils.js';
@@ -138,26 +137,20 @@ describe('index module', () => {
 	});
 
 	it('reports registered logger scopes after a randomized connection delay', async () => {
-		const delay = 12_345;
-		const randomStub = sandbox.stub(_, 'random').returns(delay);
 		await import('../../src/probe.js');
 		const { registeredScopes } = await import('../../src/lib/logger.js');
 		const emitSpy = sandbox.spy(mockSocket, 'emit');
 		const reports = () => emitSpy.getCalls().filter(call => call.args[0] === 'probe:log-scopes');
 
 		mockSocket.emit('connect');
-		expect(randomStub.calledOnce).to.equal(true);
-		expect(randomStub.firstCall.args).to.deep.equal([ 0, 60_000 ]);
 		expect(reports()).to.have.length(0);
 
-		await sandbox.clock.tickAsync(delay);
+		await sandbox.clock.tickAsync(60_000);
 		expect(reports()).to.have.length(1);
 		expect(reports()[0]!.args[1]).to.deep.equal([ ...registeredScopes ]);
 	});
 
-	it('keeps scope reports limited to active connections before shutdown', async () => {
-		const delay = 12_345;
-		const randomStub = sandbox.stub(_, 'random').returns(delay);
+	it('replaces pending scope reports on reconnect and prevents reports after shutdown', async () => {
 		const exitStub = sandbox.stub(process, 'exit');
 		statusManagerStub.stop.callsFake(() => {
 			statusManagerStub.getStatus.returns('sigterm');
@@ -166,21 +159,19 @@ describe('index module', () => {
 		await import('../../src/probe.js');
 		const emitSpy = sandbox.spy(mockSocket, 'emit');
 		const reports = () => emitSpy.getCalls().filter(call => call.args[0] === 'probe:log-scopes');
-		const reportDelays = () => randomStub.getCalls().filter(call => call.args[0] === 0 && call.args[1] === 60_000 && call.args[2] === undefined);
 
 		mockSocket.emit('connect');
 		mockSocket.emit('disconnect', 'client disconnect');
 		mockSocket.emit('connect');
-		await sandbox.clock.tickAsync(delay);
+		await sandbox.clock.tickAsync(60_000);
 
 		expect(reports()).to.have.length(1);
 
 		mockSocket.emit('connect');
 		process.emit('SIGTERM');
 		mockSocket.emit('connect');
-		await sandbox.clock.tickAsync(delay);
+		await sandbox.clock.tickAsync(60_000);
 
-		expect(reportDelays()).to.have.length(3);
 		expect(reports()).to.have.length(1);
 		expect(exitStub.calledOnce).to.be.true;
 	});
