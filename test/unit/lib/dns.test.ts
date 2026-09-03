@@ -269,6 +269,16 @@ describe('dnsLookup / cachedDnsLookup', () => {
 		expect(resolve4.callCount).to.equal(3);
 	});
 
+	it('keeps IPv6 resolver and PTR address cache keys distinct', async () => {
+		const reverse = sandbox.stub(dns.promises.Resolver.prototype, 'reverse');
+		reverse.onFirstCall().resolves([ 'router-one.example' ]);
+		reverse.onSecondCall().resolves([ 'router-two.example' ]);
+
+		expect(await cachedDnsLookupOne('2001:db8::2', { rrtype: 'PTR', server: '2001:db8::1' })).to.equal('router-one.example');
+		expect(await cachedDnsLookupOne('db8::2', { rrtype: 'PTR', server: '2001:db8::1:2001' })).to.equal('router-two.example');
+		expect(reverse.callCount).to.equal(2);
+	});
+
 	it('caches records for at least one minute', async () => {
 		let now = 0;
 		sandbox.stub(performance, 'now').callsFake(() => now);
@@ -323,8 +333,8 @@ describe('dnsLookup / cachedDnsLookup', () => {
 		expect(resolve4.callCount).to.equal(5002);
 	});
 
-	it('does not cache failures', async () => {
-		resolve4.onFirstCall().rejects(new Error('ENOTFOUND'));
+	it('does not cache missing address records', async () => {
+		resolve4.onFirstCall().rejects(Object.assign(new Error('queryA ENOTFOUND example.com'), { code: 'ENOTFOUND' }));
 		resolve4.onSecondCall().resolves([{ address: '1.1.1.1', ttl: 300 }]);
 
 		let threw = false;
@@ -347,6 +357,57 @@ describe('dnsLookup / cachedDnsLookup', () => {
 		]);
 
 		expect(resolve4.callCount).to.equal(1);
+	});
+
+	it('does not cache a late failure after the cache is cleared', async () => {
+		let rejectFirst!: (error: Error) => void;
+		const resolveTxt = sandbox.stub(dns.promises.Resolver.prototype, 'resolveTxt');
+		resolveTxt.onFirstCall().returns(new Promise((_resolve, reject) => {
+			rejectFirst = reject;
+		}));
+
+		resolveTxt.onSecondCall().resolves([ [ 'AS64500' ] ]);
+
+		const first = cachedDnsLookupOne('1.2.0.192.origin.asn.cymru.com', { rrtype: 'TXT' }).catch(error => error);
+		clearDnsCache();
+		const replacement = cachedDnsLookupOne('1.2.0.192.origin.asn.cymru.com', { rrtype: 'TXT' });
+		rejectFirst(Object.assign(new Error('queryTxt ENOTFOUND 1.2.0.192.origin.asn.cymru.com'), { code: 'ENOTFOUND' }));
+		await first;
+
+		expect(await replacement).to.equal('AS64500');
+		expect(await cachedDnsLookupOne('1.2.0.192.origin.asn.cymru.com', { rrtype: 'TXT' })).to.equal('AS64500');
+		expect(resolveTxt.callCount).to.equal(2);
+	});
+
+	it('does not let a late result change the replacement cache entry TTL', async () => {
+		let now = 0;
+		sandbox.stub(performance, 'now').callsFake(() => now);
+		const clock = sandbox.useFakeTimers({ toFake: [ 'setTimeout', 'clearTimeout' ] });
+		let resolveFirst!: (records: Array<{ address: string; ttl: number }>) => void;
+		let resolveReplacement!: (records: Array<{ address: string; ttl: number }>) => void;
+		resolve4.onFirstCall().returns(new Promise((resolve) => {
+			resolveFirst = resolve;
+		}));
+
+		resolve4.onSecondCall().returns(new Promise((resolve) => {
+			resolveReplacement = resolve;
+		}));
+
+		resolve4.onThirdCall().resolves([{ address: '3.3.3.3', ttl: 300 }]);
+
+		const first = cachedDnsLookup('example.com', { family: 4 });
+		clearDnsCache();
+		const replacement = cachedDnsLookup('example.com', { family: 4 });
+		resolveReplacement([{ address: '2.2.2.2', ttl: 300 }]);
+		await replacement;
+		resolveFirst([{ address: '1.1.1.1', ttl: 60 }]);
+		await first;
+
+		now = 60 * 1000;
+		await clock.tickAsync(60 * 1000);
+
+		expect(await cachedDnsLookup('example.com', { family: 4 })).to.deep.equal([ '2.2.2.2', 4 ]);
+		expect(resolve4.callCount).to.equal(2);
 	});
 
 	it('stops waiting on an aborted signal without cancelling the cached lookup', async () => {
@@ -441,6 +502,92 @@ describe('dnsLookup / cachedDnsLookup', () => {
 
 		expect(await cachedDnsLookup('1.1.1.1', { rrtype: 'PTR' })).to.deep.equal([ 'one.one.one.one' ]);
 		expect(reverse.calledOnceWithExactly('1.1.1.1')).to.be.true;
+	});
+
+	it('caches missing TXT records', async () => {
+		const resolveTxt = sandbox.stub(dns.promises.Resolver.prototype, 'resolveTxt')
+			.callsFake(async (hostname: string) => {
+				const code = hostname.startsWith('1.') ? 'ENOTFOUND' : 'ENODATA';
+
+				throw Object.assign(new Error(`queryTxt ${code} ${hostname}`), { code });
+			});
+		const errors: unknown[] = [];
+
+		for (const hostname of [ '1.2.0.192.origin.asn.cymru.com', '2.2.0.192.origin.asn.cymru.com' ]) {
+			for (let i = 0; i < 2; i++) {
+				try {
+					await cachedDnsLookupOne(hostname, { rrtype: 'TXT' });
+				} catch (error) {
+					errors.push(error);
+				}
+			}
+		}
+
+		expect(resolveTxt.callCount).to.equal(2);
+		expect(errors.map(error => getFailureSource(error, 'resolver'))).to.deep.equal([ 'target', 'target', 'target', 'target' ]);
+	});
+
+	it('does not cache transient TXT failures', async () => {
+		const resolveTxt = sandbox.stub(dns.promises.Resolver.prototype, 'resolveTxt');
+		resolveTxt.onFirstCall().rejects(Object.assign(new Error('queryTxt ESERVFAIL 1.2.0.192.origin.asn.cymru.com'), { code: 'ESERVFAIL' }));
+		resolveTxt.onSecondCall().resolves([ [ 'AS64500 | 192.0.2.0/24' ] ]);
+
+		try {
+			await cachedDnsLookupOne('1.2.0.192.origin.asn.cymru.com', { rrtype: 'TXT' });
+		} catch {}
+
+		expect(await cachedDnsLookupOne('1.2.0.192.origin.asn.cymru.com', { rrtype: 'TXT' })).to.equal('AS64500 | 192.0.2.0/24');
+		expect(resolveTxt.callCount).to.equal(2);
+	});
+
+	it('caches missing PTR records for five minutes', async () => {
+		let now = 0;
+		sandbox.stub(performance, 'now').callsFake(() => now);
+		const clock = sandbox.useFakeTimers({ toFake: [ 'setTimeout', 'clearTimeout' ] });
+		const reverse = sandbox.stub(dns.promises.Resolver.prototype, 'reverse')
+			.callsFake(async (address: string) => {
+				const code = address === '192.0.2.1' ? 'ENOTFOUND' : 'ENODATA';
+
+				throw Object.assign(new Error(`getHostByAddr ${code} ${address}`), { code });
+			});
+		const errors: unknown[] = [];
+
+		for (const address of [ '192.0.2.1', '192.0.2.2' ]) {
+			for (let i = 0; i < 2; i++) {
+				try {
+					await cachedDnsLookupOne(address, { rrtype: 'PTR' });
+				} catch (error) {
+					errors.push(error);
+				}
+			}
+		}
+
+		expect(reverse.callCount).to.equal(2);
+		expect(errors.map(error => getFailureSource(error, 'resolver'))).to.deep.equal([ 'target', 'target', 'target', 'target' ]);
+
+		now = 5 * 60 * 1000;
+		await clock.tickAsync(5 * 60 * 1000);
+
+		for (const address of [ '192.0.2.1', '192.0.2.2' ]) {
+			try {
+				await cachedDnsLookupOne(address, { rrtype: 'PTR' });
+			} catch {}
+		}
+
+		expect(reverse.callCount).to.equal(4);
+	});
+
+	it('does not cache transient PTR failures', async () => {
+		const reverse = sandbox.stub(dns.promises.Resolver.prototype, 'reverse');
+		reverse.onFirstCall().rejects(Object.assign(new Error('getHostByAddr ESERVFAIL 192.0.2.1'), { code: 'ESERVFAIL' }));
+		reverse.onSecondCall().resolves([ 'router.example' ]);
+
+		try {
+			await cachedDnsLookupOne('192.0.2.1', { rrtype: 'PTR', server: '1.1.1.1' });
+		} catch {}
+
+		expect(await cachedDnsLookupOne('192.0.2.1', { rrtype: 'PTR', server: '1.1.1.1' })).to.equal('router.example');
+		expect(reverse.callCount).to.equal(2);
 	});
 });
 
