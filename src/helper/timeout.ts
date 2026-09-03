@@ -1,5 +1,7 @@
 import config from 'config';
 
+export const MEASUREMENT_DNS_RESOLUTION_TIMEOUT_MESSAGE = 'The measurement timed out during DNS resolution.';
+
 const processGrace = config.get<number>('commands.processGrace');
 const pingConfig = config.get<{ interval: number; minInterval: number }>('commands.ping');
 const mtrConfig = config.get<{ interval: number; minInterval: number }>('commands.mtr');
