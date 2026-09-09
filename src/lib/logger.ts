@@ -65,12 +65,8 @@ export const scopedLogger = (scope: string): winston.Logger => {
 };
 
 export const scheduleLogScopesReport = (socket: Socket) => {
-	cancelLogScopesReport();
-	logScopesReportTimer = setTimeout(() => socket.emit('probe:log-scopes', [ ...registeredScopes ]), _.random(0, 60_000));
-};
-
-export const cancelLogScopesReport = () => {
 	clearTimeout(logScopesReportTimer);
+	logScopesReportTimer = setTimeout(() => socket.emit('probe:log-scopes', [ ...registeredScopes ]), _.random(0, 60_000));
 };
 
 apiLogsTransport.setLogger(scopedLogger('api-logs-transport'));

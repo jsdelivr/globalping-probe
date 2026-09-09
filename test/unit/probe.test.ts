@@ -150,12 +150,7 @@ describe('index module', () => {
 		expect(reports()[0]!.args[1]).to.deep.equal([ ...registeredScopes ]);
 	});
 
-	it('replaces pending scope reports on reconnect and prevents reports after shutdown', async () => {
-		const exitStub = sandbox.stub(process, 'exit');
-		statusManagerStub.stop.callsFake(() => {
-			statusManagerStub.getStatus.returns('sigterm');
-		});
-
+	it('replaces pending scope reports on reconnect', async () => {
 		await import('../../src/probe.js');
 		const emitSpy = sandbox.spy(mockSocket, 'emit');
 		const reports = () => emitSpy.getCalls().filter(call => call.args[0] === 'probe:log-scopes');
@@ -166,14 +161,6 @@ describe('index module', () => {
 		await sandbox.clock.tickAsync(60_000);
 
 		expect(reports()).to.have.length(1);
-
-		mockSocket.emit('connect');
-		process.emit('SIGTERM');
-		mockSocket.emit('connect');
-		await sandbox.clock.tickAsync(60_000);
-
-		expect(reports()).to.have.length(1);
-		expect(exitStub.calledOnce).to.be.true;
 	});
 
 	it('should update probe settings received from the API', async () => {
