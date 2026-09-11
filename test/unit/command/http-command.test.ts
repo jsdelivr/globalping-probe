@@ -457,6 +457,57 @@ describe(`.run() method`, () => {
 		}]);
 	});
 
+	it('should preserve and encode request target parts without path normalization', async () => {
+		const cases = [
+			{
+				path: '/a/../b/./%2e%2E/c',
+				query: '',
+				expected: 'GET /a/../b/./%2E%2E/c HTTP/1.1',
+			},
+			{
+				path: '//a///b\\..\\c',
+				query: '',
+				expected: 'GET //a///b\\..\\c HTTP/1.1',
+			},
+			{
+				path: '/a?b#c',
+				query: '?x=1?y=2#z',
+				expected: 'GET /a%3Fb%23c?x=1?y=2%23z HTTP/1.1',
+			},
+			{
+				path: '/café/雪 space/\u0001',
+				query: '',
+				expected: 'GET /caf%C3%A9/%E9%9B%AA%20space/%01 HTTP/1.1',
+			},
+			{
+				path: '/x/%2f/%GG/%2',
+				query: '',
+				expected: 'GET /x/%2F/%GG/%2 HTTP/1.1',
+			},
+		];
+
+		for (const { path, query, expected } of cases) {
+			const mock = mockHttpResponse([
+				'HTTP/1.1 200 OK',
+				'Content-Length: 0',
+				'',
+				'',
+			]);
+
+			await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+				type: 'http' as const,
+				timeout: 5,
+				target: 'google.com',
+				inProgressUpdates: false,
+				protocol: 'HTTP',
+				request: { method: 'GET', path, query },
+				ipVersion: 4,
+			});
+
+			expect(mock.getRequest().split('\r\n')[0], path).to.equal(expected);
+		}
+	});
+
 	it('should handle HEAD request without body', async () => {
 		const mock = mockHttpResponse([
 			'HTTP/1.1 200 OK',
