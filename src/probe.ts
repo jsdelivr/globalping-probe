@@ -10,7 +10,7 @@ import physicalCpuCount from 'physical-cpu-count';
 import { getFakeIp } from './lib/fake-ip.js';
 import type { CommandInterface, MeasurementRequest } from './types.js';
 import { loadAll as loadAllDeps } from './lib/dependencies.js';
-import { apiLogsTransport, scopedLogger } from './lib/logger.js';
+import { apiLogsTransport, scheduleLogScopesReport, scopedLogger } from './lib/logger.js';
 import { ApiTransportSettings } from './lib/api-logs-transport.js';
 import { initErrorHandler } from './helper/api-error-handler.js';
 import { handleTestError } from './helper/test-error-handler.js';
@@ -112,6 +112,7 @@ function connect (workerId?: number) {
 
 	const statusManager = initStatusManager(socket, pingCmd);
 	const errorHandler = initErrorHandler(socket);
+
 	const shutdownProbe = (message: string, timeoutMessage: string, timeout = 60_000) => {
 		logger.info(message);
 		statusManager.stop();
@@ -157,6 +158,8 @@ function connect (workerId?: number) {
 		})
 		.on('connect', async () => {
 			logger.debug('Connection to API established.');
+			scheduleLogScopesReport(socket);
+
 			statusManager.sendStatus();
 			await statusManager.start();
 		})
