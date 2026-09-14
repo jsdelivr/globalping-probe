@@ -1,6 +1,6 @@
 {
 	"name": "globalping-probe",
-	"version": "0.52.0",
+	"version": "0.52.1",
 	"description": "",
 	"type": "module",
 	"main": "dist/index.js",
