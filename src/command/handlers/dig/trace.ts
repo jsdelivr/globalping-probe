@@ -80,6 +80,10 @@ export const TraceDigParser = {
 				continue;
 			}
 
+			if (line.startsWith(';')) {
+				continue;
+			}
+
 			const answer = SharedDigParser.parseSection(line.split(/\s+/g));
 			groups[groupIndex]!.answers.push(answer);
 		}
