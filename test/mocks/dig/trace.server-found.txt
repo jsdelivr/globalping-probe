@@ -1,0 +1,9 @@
+
+; <<>> DiG 9.20.29-1~deb13u1-Debian <<>> -t A trace.compat.test @127.0.0.1 -p 42810 -4 +timeout=3 +tries=2 +nofail +nocookie +nosplit +nsid +trace
+; (1 server found)
+;; global options: +cmd
+.			60	IN	NS	localhost.
+;; Received 55 bytes from 127.0.0.1#42810(127.0.0.1) in 0 ms
+
+trace.compat.test.	60	IN	A	127.0.0.1
+;; Received 51 bytes from 127.0.0.1#42810(localhost) in 0 ms
