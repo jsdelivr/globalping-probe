@@ -87,6 +87,26 @@ type RequestState = { phase: RequestPhase };
 
 const lowerCaseKeys = (obj: Record<string, string>) => _.mapKeys(obj, (_value, key) => _.toLower(key)) as Record<string, string>;
 
+const percentEncode = (value: string): string => Array.from(
+	Buffer.from(value),
+	byte => `%${byte.toString(16).padStart(2, '0').toUpperCase()}`,
+).join('');
+
+const encodeRequestTargetPart = (value: string, delimiters: string): string => value.replace(
+	/%[\dA-Fa-f]{2}|[\u0000-\u0020\u007f-\u{10ffff}]|[?#]/gu,
+	(match) => {
+		if (match.startsWith('%')) {
+			return match.toUpperCase();
+		}
+
+		if ('?#'.includes(match) && !delimiters.includes(match)) {
+			return match;
+		}
+
+		return percentEncode(match);
+	},
+);
+
 const timeoutMessages: Record<RequestPhase, string> = {
 	dns: MEASUREMENT_DNS_RESOLUTION_TIMEOUT_MESSAGE,
 	tcp: 'Request timed out while establishing the TCP connection.',
@@ -299,7 +319,8 @@ function getConnector (
 
 export class HttpHandler {
 	private readonly DOWNLOAD_LIMIT: number = 10_000;
-	private readonly url: URL;
+	private readonly origin: string;
+	private readonly requestTarget: string;
 	private readonly port: number;
 	private readonly isHttps: boolean;
 	private undiciClient!: Client;
@@ -328,7 +349,13 @@ export class HttpHandler {
 		this.result = this.getInitialResult();
 		this.port = options.port ? options.port : (options.protocol === 'HTTP' ? 80 : 443);
 		this.isHttps = options.protocol !== 'HTTP';
-		this.url = new URL(this.urlBuilder());
+		this.origin = `${this.isHttps ? 'https' : 'http'}://${isIPv6(options.target) ? `[${options.target}]` : options.target}:${this.port}`;
+
+		const rawPath = options.request.path.startsWith('/') ? options.request.path : `/${options.request.path}`;
+		const path = encodeRequestTargetPart(rawPath, '?#');
+		const rawQuery = options.request.query.startsWith('?') ? options.request.query.slice(1) : options.request.query;
+		const query = options.request.query.length > 0 ? `?${encodeRequestTargetPart(rawQuery, '#')}` : '';
+		this.requestTarget = `${path}${query}`;
 	}
 
 	public async run () {
@@ -347,7 +374,7 @@ export class HttpHandler {
 		const allowH2 = this.options.protocol === 'HTTP2';
 		const requestState: RequestState = { phase: targetIsHostname ? 'dns' : 'tcp' };
 		const connector = getConnector(this.options, this.port, this.isHttps, dnsResolver, this.result, this.timings, requestState, this.clearDnsTimeout);
-		this.undiciClient = new Client(this.url.origin, { connect: connector, allowH2 });
+		this.undiciClient = new Client(this.origin, { connect: connector, allowH2 });
 
 		this.timeoutTimer = setTimeout(
 			() => this.handleError(timeoutMessages[requestState.phase], requestState.phase === 'dns' ? 'resolver' : 'target', true),
@@ -355,7 +382,7 @@ export class HttpHandler {
 		);
 
 		this.undiciClient.dispatch({
-			path: this.url.pathname + this.url.search,
+			path: this.requestTarget,
 			method: this.options.request.method as Dispatcher.HttpMethod,
 			headers: lowerCaseKeys({
 				'Accept-Encoding': `gzip, deflate, br`,
@@ -430,14 +457,7 @@ export class HttpHandler {
 	}
 
 	public urlBuilder (): string {
-		const options = this.options;
-		const protocolPrefix = this.isHttps ? 'https' : 'http';
-		const port = this.port;
-		const path = `/${options.request.path}`.replace(/^\/\//, '/');
-		const query = options.request.query.length > 0 ? `?${options.request.query}`.replace(/^\?\?/, '?') : '';
-		const url = `${protocolPrefix}://${isIPv6(options.target) ? `[${options.target}]` : options.target}:${port}${path}${query}`;
-
-		return url;
+		return `${this.origin}${this.requestTarget}`;
 	}
 
 	private setupDecompressor () {
