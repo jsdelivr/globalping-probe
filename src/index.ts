@@ -151,36 +151,18 @@ https://github.com/jsdelivr/globalping-hwprobe#download-the-latest-firmware
 	setTimeout(logUpdateFirmwareMessage, 10 * 60 * 1000);
 }
 
-function getLines (stats: ResourceStats) {
-	const lines = [];
-
-	if (!stats.hasMemory) {
-		lines.push(`  Memory: ${Math.round(stats.memory / 1e6)} MB is available to the probe. At least ${MIN_NODE_UPDATE_MEMORY / 1e6} MB is required.`);
-	}
-
-	if (!stats.hasDisk) {
-		lines.push(`  Disk: ${stats.disk} MB is available. At least ${MIN_NODE_UPDATE_DISK_SPACE_MB} MB is required.`);
-	}
-
-	return lines.join('\n');
-}
-
-function getResourceIncreaseText (stats: ResourceStats) {
-	return [
-		!stats.hasMemory && `RAM to at least ${(MIN_NODE_UPDATE_MEMORY / 1e6) * 2} MB`,
-		!stats.hasDisk && `disk space to at least ${MIN_NODE_UPDATE_DISK_SPACE_MB} MB`,
-	].filter(Boolean).join(' and ');
-}
-
 function logLowResourcesMessage (stats: ResourceStats) {
 	console.log(`
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @      WARNING: LOW RESOURCES, AUTO-UPDATES DISABLED      @
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 This probe does not meet the minimum resource requirements for automatic updates.
-It may stop working after a new version is released.
-${getLines(stats)}
-Please increase ${getResourceIncreaseText(stats)}.
+It may stop working after a new version is released:${!stats.hasMemory ? `
+- Memory available to the probe: ${Math.round(stats.memory / 1e6)} MB. Minimum required: ${MIN_NODE_UPDATE_MEMORY / 1e6} MB.` : ''}${!stats.hasDisk ? `
+- Available disk space: ${stats.disk} MB. Minimum required: ${MIN_NODE_UPDATE_DISK_SPACE_MB} MB.` : ''}
+
+Please increase the available resources to meet the minimum requirements.${!stats.hasMemory ? `
+For better stability, we recommend more than ${(MIN_NODE_UPDATE_MEMORY / 1e6) * 2} MB of RAM.` : ''}
 	`);
 
 	setTimeout(() => logLowResourcesMessage(stats), 10 * 60 * 1000);
@@ -191,11 +173,16 @@ function logUpdateContainerMessage (stats: ResourceStats) {
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @     WARNING: PROBE CONTAINER OUTDATED, PLEASE UPDATE    @
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-The current probe container is out of date, and it could not be updated automatically.
-${getLines(stats)}
+The current probe container is out of date, and it could not be updated automatically:${!stats.hasMemory ? `
+- Memory available to the probe: ${Math.round(stats.memory / 1e6)} MB. Minimum required: ${MIN_NODE_UPDATE_MEMORY / 1e6} MB.` : ''}${!stats.hasDisk ? `
+- Available disk space: ${stats.disk} MB. Minimum required: ${MIN_NODE_UPDATE_DISK_SPACE_MB} MB.` : ''}
+
 Please either:
-- update it manually: https://github.com/jsdelivr/globalping-probe#optional-container-update
-- increase ${getResourceIncreaseText(stats)}
+- Update the container manually:
+  https://github.com/jsdelivr/globalping-probe#optional-container-update
+- Increase the available resources to meet the minimum requirements.${!stats.hasMemory ? `
+
+For better stability, we recommend more than ${(MIN_NODE_UPDATE_MEMORY / 1e6) * 2} MB of RAM.` : ''}
 	`);
 
 	setTimeout(() => logUpdateContainerMessage(stats), 10 * 60 * 1000);
