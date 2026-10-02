@@ -591,11 +591,6 @@ export class HttpHandler {
 		const code = getErrorCode(error);
 		const codeFallback = isInternalHttpErrorCode(code) ? 'internal' : fallbackSource;
 		const failureSource = getFailureSource(error, codeFallback);
-
-		if (failureSource === 'internal') {
-			logger.error(error);
-		}
-
 		const message = code === 'ETIMEOUT' && failureSource === 'resolver'
 			? MEASUREMENT_DNS_RESOLUTION_TIMEOUT_MESSAGE
 			: error instanceof Error ? error.message : error;
