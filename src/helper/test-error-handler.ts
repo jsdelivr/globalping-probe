@@ -1,7 +1,7 @@
 import { type Socket } from 'socket.io-client';
 import { scopedLogger } from '../lib/logger.js';
 
-const logger = scopedLogger('test-error-handler');
+const logger = scopedLogger('general');
 
 export const handleTestError = (error: unknown, socket: Socket, measurementId: string, testId: string) => {
 	logger.error('Failed to run the measurement:', error);

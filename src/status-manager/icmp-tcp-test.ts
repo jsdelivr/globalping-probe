@@ -9,7 +9,7 @@ import { resolveCommandTarget, type CommandTargetLookup } from '../helper/resolv
 import { cachedDnsLookupOne } from '../lib/dns.js';
 import { scopedLogger } from '../lib/logger.js';
 
-const logger = scopedLogger('status-manager');
+const logger = scopedLogger('status:icmp-tcp');
 
 export class IcmpTcpTest {
 	private timer?: NodeJS.Timeout;

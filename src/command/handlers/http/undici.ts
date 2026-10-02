@@ -17,6 +17,9 @@ import { getErrorCode } from '../../../lib/error-code.js';
 import { createMeasurementDeadline, getHttpDnsTimeout, MEASUREMENT_DNS_RESOLUTION_TIMEOUT_MESSAGE } from '../../../helper/timeout.js';
 import { truncateHeaderPairs } from './truncate-headers.js';
 import { truncateToWellFormedString } from './truncate-string.js';
+import { scopedLogger } from '../../../lib/logger.js';
+
+const logger = scopedLogger('measurement:http');
 
 type TlsDetails = {
 	authorized: boolean;
@@ -539,7 +542,7 @@ export class HttpHandler {
 		clearTimeout(this.timeoutTimer!);
 		this.clearDnsTimeout();
 		this.decompressor?.destroy();
-		this.undiciClient.destroy().catch((error: Error) => console.error(error));
+		this.undiciClient.destroy().catch((error: Error) => logger.error(error));
 	}
 
 	private clearDnsTimeout = () => {
@@ -588,6 +591,11 @@ export class HttpHandler {
 		const code = getErrorCode(error);
 		const codeFallback = isInternalHttpErrorCode(code) ? 'internal' : fallbackSource;
 		const failureSource = getFailureSource(error, codeFallback);
+
+		if (failureSource === 'internal') {
+			logger.error(error);
+		}
+
 		const message = code === 'ETIMEOUT' && failureSource === 'resolver'
 			? MEASUREMENT_DNS_RESOLUTION_TIMEOUT_MESSAGE
 			: error instanceof Error ? error.message : error;

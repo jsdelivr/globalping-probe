@@ -3,7 +3,7 @@ import { startLocalAdoptionServer, stopLocalAdoptionServer } from '../lib/adopti
 import { getLocalIps } from '../lib/ip.js';
 import type { Socket } from 'socket.io-client';
 
-const logger = scopedLogger('api:connect:adoption');
+const logger = scopedLogger('adoption-status');
 
 export const adoptionStatusHandler = (socket: Socket) => async ({ message, adopted, level }: { message: string; adopted: boolean; level?: 'info' | 'warn' | 'error' }): Promise<void> => {
 	logger[level || 'info'](message);

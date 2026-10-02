@@ -7,7 +7,7 @@ import type { PingOptions } from '../command/ping-command.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { scopedLogger } from '../lib/logger.js';
 
-const logger = scopedLogger('status-manager');
+const logger = scopedLogger('status:ping');
 
 const PING_INTERVAL_TIME = 10 * 60 * 1000; // 10 mins
 

@@ -81,7 +81,7 @@ type NormalizeTracerouteOutputOptions = {
 	hideGatewayHostname?: boolean;
 };
 
-const logger = scopedLogger('traceroute-command');
+const logger = scopedLogger('measurement:traceroute');
 
 export const normalizeTracerouteOutput = (
 	output: string,

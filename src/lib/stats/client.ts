@@ -3,7 +3,7 @@ import type { Socket } from 'socket.io-client';
 import { scopedLogger } from '../logger.js';
 import { getCpuUsage } from './cpu.js';
 
-const logger = scopedLogger('probe:stats:report');
+const logger = scopedLogger('probe-stats-reporter');
 
 type Worker = {
 	jobs: Map<string, number>;
