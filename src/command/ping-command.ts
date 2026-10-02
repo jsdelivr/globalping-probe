@@ -75,7 +75,7 @@ export type PingParseOutputJson = {
 	};
 };
 
-const logger = scopedLogger('ping-command');
+const logger = scopedLogger('measurement:ping');
 
 const classifyIcmpFailure = (
 	error: unknown,

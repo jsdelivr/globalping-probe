@@ -9,7 +9,7 @@ type ReleaseInfo = {
 	version: string;
 };
 
-const logger = scopedLogger('self-update');
+const logger = scopedLogger('probe-self-update');
 const updateConfig = config.get<{ releaseUrl: string; interval: number; maxDeviation: number }>('update');
 const updateInterval = updateConfig.interval + _.random(0, updateConfig.maxDeviation);
 let lastSuccessfulCheck = Date.now();

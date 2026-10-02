@@ -2,7 +2,7 @@ import type { Socket } from 'socket.io-client';
 import { scopedLogger } from '../lib/logger.js';
 import { getDisconnectTest } from '../status-manager/disconnect-test.js';
 
-const logger = scopedLogger('api:error');
+const logger = scopedLogger('api-connection');
 
 const probeErrors = [
 	'ip limit',
