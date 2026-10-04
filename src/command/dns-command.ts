@@ -43,7 +43,7 @@ export type DnsOptions = {
 
 export type DnsParseResponseJson = DnsParseResponseClassicJson | DnsParseResponseTraceJson;
 
-const logger = scopedLogger('dns-command');
+const logger = scopedLogger('measurement:dns');
 const resolverFailurePattern = /couldn't get address for|got bad packet:|connection (?:refused|timed out)|communications error|no servers could be reached/i;
 
 const classifyDnsFailure = (error: unknown, output: string): FailureSource => {

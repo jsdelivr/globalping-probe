@@ -32,7 +32,7 @@ export type MtrOptions = {
 	timeout: number;
 };
 
-const logger = scopedLogger('mtr-command');
+const logger = scopedLogger('measurement:mtr');
 const allowedIpVersions = [ 4, 6 ];
 
 const mtrOptionsSchema = Joi.object<MtrOptions>({

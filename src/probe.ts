@@ -58,6 +58,7 @@ import './lib/restart.js';
 await loadAllDeps();
 
 const logger = scopedLogger('general');
+const connectionLogger = scopedLogger('api-connection');
 const handlersMap = new Map<string, CommandInterface<unknown>>();
 const probeUuid = process.env['GP_PROBE_UUID'] || randomUUID();
 const logMeasurementResults = process.env['GP_LOG_MEASUREMENT_RESULTS'] === 'true';
@@ -157,7 +158,7 @@ function connect (workerId?: number) {
 			);
 		})
 		.on('connect', async () => {
-			logger.debug('Connection to API established.');
+			connectionLogger.debug('Connection to API established.');
 			scheduleLogScopesReport(socket);
 
 			statusManager.sendStatus();

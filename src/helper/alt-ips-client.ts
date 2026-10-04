@@ -9,7 +9,7 @@ import { getLocalIps } from '../lib/ip.js';
 import { cachedDnsLookup } from '../lib/dns.js';
 
 const mainLogger = scopedLogger('general');
-const altIpsLogger = scopedLogger('api:connect:alt-ips-handler');
+const altIpsLogger = scopedLogger('probe-alt-ips');
 
 export class AltIpsClient {
 	private readonly INTERVAL_TIME = 10 * 60 * 1000;
