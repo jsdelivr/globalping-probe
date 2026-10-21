@@ -466,6 +466,17 @@ describe('trace command', () => {
 			const result = (mockSocket.emit.lastCall.args[1] as any).result;
 			expect(result.failureSource).to.equal('resolver');
 			expect(result.rawOutput).to.equal('The measurement timed out during DNS resolution.');
+			expect(result.resolvedAddress).to.equal(undefined);
+		});
+
+		it('preserves the resolved IP when traceroute setup throws', async () => {
+			const command = new TracerouteCommand(() => { throw new Error('Command setup failed'); }, dnsResolver('1.1.1.1'));
+			const result = await command.run(mockSocket as any, 'measurement', 'test', {
+				type: 'traceroute', timeout: 5, target: 'example.com', port: 53, protocol: 'UDP', inProgressUpdates: false, ipVersion: 4,
+			}) as any;
+
+			expect(result.status).to.equal('failed');
+			expect(result.resolvedAddress).to.equal('1.1.1.1');
 		});
 
 		describe('mock', () => {
@@ -667,6 +678,7 @@ describe('trace command', () => {
 						result: {
 							status: 'failed',
 							failureSource: 'internal',
+							resolvedAddress: '216.239.38.21',
 							rawOutput: 'traceroute to hello.com (216.239.38.21), 20 hops max, 60 byte packets\n'
 								+ ' 1  _gateway (192.0.2.1)  7.99 ms  8.12 ms\n'
 								+ '\n'

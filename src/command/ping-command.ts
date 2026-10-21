@@ -222,7 +222,7 @@ export class PingCommand implements CommandInterface<PingOptions> {
 				result.failureSource = 'internal';
 			}
 		} catch (error: unknown) {
-			result = { status: 'failed', failureSource: 'internal', rawOutput: 'Test failed. Please try again.' };
+			result = { status: 'failed', failureSource: 'internal', rawOutput: 'Test failed. Please try again.', resolvedAddress: cmdOptions.target };
 
 			if (isExecaError(error)) {
 				const stdout = error.stdout.toString();

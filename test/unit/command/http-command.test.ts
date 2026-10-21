@@ -374,7 +374,7 @@ describe(`.run() method`, () => {
 			return tlsSocket as any;
 		});
 
-		return { getRequest: () => request, tlsConnectStub };
+		return { getRequest: () => request, tlsConnectStub, tlsSocket };
 	};
 
 	beforeEach(() => {
@@ -779,6 +779,26 @@ describe(`.run() method`, () => {
 		expect(result.resolvedAddress).to.equal('2606:4700:4700::1111');
 	});
 
+	it('should normalize an IPv6 target before a connection succeeds', async () => {
+		const tcpSocket = new Duplex({ read () {}, write (_chunk, _encoding, callback) { callback(); } });
+		netConnectStub.callsFake(() => {
+			process.nextTick(() => {
+				sandbox.clock.tick(10);
+				tcpSocket.emit('error', Object.assign(new Error('Connection refused'), { code: 'ECONNREFUSED' }));
+			});
+
+			return tcpSocket as any;
+		});
+
+		const result = await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http', timeout: 5, target: '2606:4700:4700:0000:0000:0000:0000:1111', inProgressUpdates: false, protocol: 'HTTP', request: { method: 'GET', path: '/', query: '' }, ipVersion: 6,
+		}) as any;
+
+		expect(result.status).to.equal('failed');
+		expect(result.resolvedAddress).to.equal('2606:4700:4700::1111');
+		expect(result.timings).to.deep.equal({ total: 10, dns: null, tcp: null, tls: null, firstByte: null, download: null });
+	});
+
 	it('should handle HTTPS with TLS certificate', async () => {
 		const mock = mockHttpsResponse([
 			'HTTP/1.1 200 OK',
@@ -838,7 +858,9 @@ describe(`.run() method`, () => {
 
 		netConnectStub.callsFake(() => {
 			process.nextTick(() => {
+				sandbox.clock.tick(5);
 				tcpSocket.emit('lookup', null, '93.184.216.34', 4, 'example.com');
+				sandbox.clock.tick(10);
 				tcpSocket.emit('connect');
 			});
 
@@ -860,6 +882,7 @@ describe(`.run() method`, () => {
 			(tlsSocket as any).getPeerCertificate = () => ({});
 
 			process.nextTick(() => {
+				sandbox.clock.tick(15);
 				tlsSocket.emit('secureConnect');
 			});
 
@@ -885,7 +908,128 @@ describe(`.run() method`, () => {
 		expect(result.status).to.equal('failed');
 		expect(result.failureSource).to.equal('target');
 		expect(result.rawOutput).to.equal('HTTP/2 is not supported by the server.');
+		expect(result.resolvedAddress).to.equal('93.184.216.34');
+		expect(result.timings).to.deep.equal({ total: 30, dns: 5, tcp: 10, tls: 15, firstByte: null, download: null });
+		expect(result.tls).to.equal(null);
 	});
+
+	for (const { code, failureSource } of [
+		{ code: 'ECONNREFUSED', failureSource: 'target' },
+		{ code: 'ENETUNREACH', failureSource: 'target' },
+		{ code: 'EADDRNOTAVAIL', failureSource: 'internal' },
+	]) {
+		it(`should preserve the resolved IP and timings after ${code}`, async () => {
+			const tcpSocket = new Duplex({ read () {}, write (_chunk, _encoding, callback) { callback(); } });
+			netConnectStub.callsFake(() => {
+				process.nextTick(() => {
+					sandbox.clock.tick(5);
+					tcpSocket.emit('lookup', null, '93.184.216.34', 4, 'example.com');
+					sandbox.clock.tick(10);
+					tcpSocket.emit('error', Object.assign(new Error(code), { code }));
+				});
+
+				return tcpSocket as any;
+			});
+
+			const result = await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+				type: 'http',
+				timeout: 5,
+				target: 'example.com',
+				inProgressUpdates: false,
+				protocol: 'HTTP',
+				request: { method: 'GET', path: '/', query: '' },
+				ipVersion: 4,
+			}) as any;
+
+			expect(result.status).to.equal('failed');
+			expect(result.failureSource).to.equal(failureSource);
+			expect(result.resolvedAddress).to.equal('93.184.216.34');
+			expect(result.timings).to.deep.equal({ total: 15, dns: 5, tcp: null, tls: null, firstByte: null, download: null });
+		});
+	}
+
+	it('should preserve the resolved IP and completed timings after a TLS handshake error', async () => {
+		const tcpSocket = new Duplex({ read () {}, write (_chunk, _encoding, callback) { callback(); } });
+		(tcpSocket as any).remoteAddress = '93.184.216.34';
+
+		netConnectStub.callsFake(() => {
+			process.nextTick(() => {
+				sandbox.clock.tick(5);
+				tcpSocket.emit('lookup', null, '93.184.216.34', 4, 'example.com');
+				sandbox.clock.tick(10);
+				tcpSocket.emit('connect');
+			});
+
+			return tcpSocket as any;
+		});
+
+		const tlsSocket = new Duplex({ read () {}, write (_chunk, _encoding, callback) { callback(); } });
+		sandbox.stub(tls, 'connect').callsFake(() => {
+			process.nextTick(() => {
+				sandbox.clock.tick(15);
+				tlsSocket.emit('error', new Error('TLS handshake failed'));
+			});
+
+			return tlsSocket as any;
+		});
+
+		const result = await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http',
+			timeout: 5,
+			target: 'example.com',
+			inProgressUpdates: false,
+			protocol: 'HTTPS',
+			request: { method: 'GET', path: '/', query: '' },
+			ipVersion: 4,
+		}) as any;
+
+		expect(result.status).to.equal('failed');
+		expect(result.resolvedAddress).to.equal('93.184.216.34');
+		expect(result.timings).to.deep.equal({ total: 30, dns: 5, tcp: 10, tls: null, firstByte: null, download: null });
+		expect(result.tls).to.equal(null);
+	});
+
+	for (const failure of [ 'reset', 'decompression' ]) {
+		it(`should preserve only the resolved IP and timings after a response ${failure} error`, async () => {
+			const { tlsSocket } = mockHttpsResponse([
+				'HTTP/1.1 200 OK',
+				'Content-Length: 10',
+				...(failure === 'decompression' ? [ 'Content-Encoding: gzip' ] : []),
+				'',
+				'bad body',
+			], { endResponse: false });
+
+			const promise = new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+				type: 'http',
+				timeout: 5,
+				target: 'example.com',
+				inProgressUpdates: false,
+				protocol: 'HTTPS',
+				request: { method: 'GET', path: '/', query: '' },
+				ipVersion: 4,
+			});
+
+			if (failure === 'reset') {
+				await new Promise(resolve => process.nextTick(resolve));
+				await new Promise(resolve => process.nextTick(resolve));
+				await new Promise(resolve => process.nextTick(resolve));
+				tlsSocket.destroy(Object.assign(new Error('Connection reset'), { code: 'ECONNRESET' }));
+			}
+
+			const result = await promise as any;
+
+			expect(result.status).to.equal('failed');
+			expect(result.failureSource).to.equal('target');
+			expect(result.resolvedAddress).to.equal('93.184.216.34');
+			expect(result.timings).to.deep.equal({ total: 35, dns: 0, tcp: 10, tls: 20, firstByte: 5, download: null });
+			expect(result.headers).to.deep.equal({});
+			expect(result.rawHeaders).to.equal(null);
+			expect(result.rawBody).to.equal(null);
+			expect(result.statusCode).to.equal(null);
+			expect(result.statusCodeName).to.equal(null);
+			expect(result.tls).to.equal(null);
+		});
+	}
 
 	it('should classify a resolved private target as target', async () => {
 		const fakeSocket = new Duplex({ read () {}, write (_chunk, _encoding, callback) { callback(); } });
@@ -909,6 +1053,7 @@ describe(`.run() method`, () => {
 		expect(result.status).to.equal('failed');
 		expect(result.failureSource).to.equal('target');
 		expect(result.rawOutput).to.equal('Private IP ranges are not allowed.');
+		expect(result.resolvedAddress).to.equal(null);
 	});
 
 	for (const { failureSource, message } of [
@@ -1181,6 +1326,7 @@ describe(`.run() method`, () => {
 		expect(result.status).to.equal('failed');
 		expect(result.failureSource).to.equal('target');
 		expect(result.rawOutput).to.equal('Request timed out while establishing the TCP connection.');
+		expect(result.resolvedAddress).to.equal('93.184.216.34');
 
 		expect(result.timings).to.deep.equal({
 			total: 5000,
