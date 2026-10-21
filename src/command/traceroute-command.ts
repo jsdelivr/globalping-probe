@@ -73,6 +73,7 @@ type FailedTracerouteResult = {
 	status: 'failed';
 	failureSource: FailureSource;
 	rawOutput: string;
+	resolvedAddress?: string;
 };
 
 type TracerouteResult = FinishedTracerouteResult | FailedTracerouteResult;
@@ -334,6 +335,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 				status: 'failed',
 				failureSource,
 				rawOutput: output || 'Test failed. Please try again.',
+				...(target && { resolvedAddress: target.address }),
 			};
 		}
 

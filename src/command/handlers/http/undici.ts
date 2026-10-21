@@ -12,7 +12,7 @@ import { dnsLookup, type IpFamily } from '../../../lib/dns.js';
 import { getFailureSource, InternalError } from '../../../lib/internal-error.js';
 import type { FailureSource, TestStatus } from '../../../types.js';
 import { callbackify } from '../../../lib/util.js';
-import { isIpPrivate } from '../../../lib/ip.js';
+import { isIpPrivate, normalizeIp } from '../../../lib/ip.js';
 import { getErrorCode } from '../../../lib/error-code.js';
 import { createMeasurementDeadline, getHttpDnsTimeout, MEASUREMENT_DNS_RESOLUTION_TIMEOUT_MESSAGE } from '../../../helper/timeout.js';
 import { truncateHeaderPairs } from './truncate-headers.js';
@@ -349,7 +349,8 @@ export class HttpHandler {
 		private readonly options: HttpOptions,
 		private readonly buffer: ProgressBuffer,
 	) {
-		this.result = this.getInitialResult();
+		const targetAddress = isIP(options.target) ? normalizeIp(options.target) : null;
+		this.result = this.getInitialResult(targetAddress && !isIpPrivate(targetAddress) ? targetAddress : null);
 		this.port = options.port ? options.port : (options.protocol === 'HTTP' ? 80 : 443);
 		this.isHttps = options.protocol !== 'HTTP';
 		this.origin = `${this.isHttps ? 'https' : 'http'}://${isIPv6(options.target) ? `[${options.target}]` : options.target}:${this.port}`;
@@ -522,10 +523,10 @@ export class HttpHandler {
 		});
 	}
 
-	private getInitialResult () {
+	private getInitialResult (resolvedAddress: string | null) {
 		return {
 			status: 'finished' as 'finished' | 'failed',
-			resolvedAddress: null,
+			resolvedAddress,
 			httpVersion: null,
 			headers: {} as Record<string, string>,
 			rawHeaders: '',
@@ -584,7 +585,7 @@ export class HttpHandler {
 		if (preserveCompletedState) {
 			this.result.rawBody = '';
 		} else {
-			Object.assign(this.result, this.getInitialResult());
+			Object.assign(this.result, this.getInitialResult(this.result.resolvedAddress));
 		}
 
 		this.result.status = 'failed';
@@ -597,12 +598,8 @@ export class HttpHandler {
 		this.result.failureSource = failureSource;
 		this.result.rawOutput = message;
 
-		if (preserveCompletedState && this.timings.start !== null) {
+		if (this.timings.start !== null) {
 			this.timings.total = Date.now() - this.timings.start;
-		} else {
-			for (const key of Object.keys(this.timings) as (keyof Timings)[]) {
-				this.timings[key] = null;
-			}
 		}
 
 		this.cleanup();

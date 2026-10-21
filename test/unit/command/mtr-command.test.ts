@@ -331,6 +331,16 @@ describe('mtr command executor', () => {
 			clock.restore();
 		});
 
+		it('preserves the resolved IP when MTR setup throws', async () => {
+			const command = new MtrCommand(() => { throw new Error('Command setup failed'); }, dnsResolver('1.1.1.1'));
+			const result = await command.run(mockedSocket as any, 'measurement', 'test', {
+				type: 'mtr', timeout: 5, target: 'example.com', protocol: 'icmp', port: 80, packets: 3, inProgressUpdates: false, ipVersion: 4,
+			}) as any;
+
+			expect(result.status).to.equal('failed');
+			expect(result.resolvedAddress).to.equal('1.1.1.1');
+		});
+
 		it('should enrich progress with ready values without waiting and wait for final enrichment', async () => {
 			const rawOutput = getCmdMock('mtr-success-raw').split('\n').filter(line => !line.startsWith('d ')).join('\n');
 			const mockCmd = getExecaMock();
@@ -801,7 +811,7 @@ describe('mtr command executor', () => {
 							+ 'p 2 10000 33002\n'
 							+ '\n'
 							+ 'The measurement command timed out.',
-						resolvedAddress: null,
+						resolvedAddress: '1.1.1.1',
 						resolvedHostname: null,
 						hops: [],
 					},

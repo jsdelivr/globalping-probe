@@ -105,6 +105,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 
 		try {
 			target = await resolveCommandTarget(cmdOptions.target, cmdOptions.ipVersion as IpFamily, deadline.signalFor(dnsHeadroom), this.lookup);
+			result.resolvedAddress = target.address;
 			const resolvedTarget = target;
 			const enrichment = new MtrHopEnrichment(this.lookup, resolvedTarget, deadline.signal());
 			const runningCommand = this.cmd({ ...cmdOptions, target: resolvedTarget.address }, deadline.processTimeout());

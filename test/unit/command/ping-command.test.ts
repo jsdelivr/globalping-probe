@@ -287,6 +287,22 @@ describe('ping command executor', () => {
 			expect(result).to.deep.equal({ target: '1.1.1.1', hostname: 'example.com' });
 		});
 
+		it('preserves the resolved IP after an unexpected ICMP command rejection', async () => {
+			const mockedCmd = getExecaMock();
+			const command = new PingCommand((): any => mockedCmd, sandbox.stub().resolves('1.1.1.1'));
+			const promise = command.run(mockedSocket as any, 'measurement', 'test', {
+				type: 'ping', timeout: 5, target: 'example.com', packets: 3, protocol: 'ICMP', port: 80, inProgressUpdates: false, ipVersion: 4,
+			});
+			await new Promise(resolve => setImmediate(resolve));
+			mockedCmd.reject(new Error('Unexpected failure'));
+
+			const result = await promise as any;
+
+			expect(result.status).to.equal('failed');
+			expect(result.failureSource).to.equal('internal');
+			expect(result.resolvedAddress).to.equal('1.1.1.1');
+		});
+
 		it('uses a best-effort PTR hostname when dispatching a TCP IP target', async () => {
 			const lookup = sandbox.stub().resolves('one.one.one.one');
 			const command = new PingCommand(sandbox.stub(), lookup);
