@@ -1,4 +1,4 @@
-FROM node:22.22.3-bookworm-slim AS builder
+FROM node:22.23.4-bookworm-slim AS builder
 
 WORKDIR /app
 
@@ -9,7 +9,7 @@ COPY config /app/config
 COPY @types /app/@types
 RUN npm run build
 
-FROM node:22.22.3-bookworm-slim
+FROM node:22.23.4-bookworm-slim
 
 ARG node_env=production
 ENV NODE_ENV=$node_env
