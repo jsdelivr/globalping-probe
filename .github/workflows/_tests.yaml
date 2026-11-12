@@ -130,6 +130,7 @@ jobs:
       - name: Set up Redis
         env:
           CURRENT_BRANCH: ${{ github.head_ref || github.ref_name }}
+          BASE_BRANCH: ${{ github.base_ref }}
         run: |
           echo "Current branch: $CURRENT_BRANCH."
           npm run test:e2e:clone
