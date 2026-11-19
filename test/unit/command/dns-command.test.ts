@@ -1145,6 +1145,35 @@ describe('dns command', () => {
 				},
 			]);
 		});
+
+		it('should keep one blank line before the timeout message', async () => {
+			const options = {
+				type: 'dns' as const,
+				timeout: 7,
+				target: 'google.com',
+				trace: true,
+				query: {
+					type: 'A',
+				},
+				protocol: 'UDP',
+				port: 53,
+				inProgressUpdates: false,
+				ipVersion: 4,
+			};
+			const mockCmd = getExecaMock();
+			const dns = new DnsCommand((): any => mockCmd);
+			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+
+			const timeoutError = new Error('Timeout') as ExecaError;
+			timeoutError.stderr = '';
+			timeoutError.timedOut = true;
+			timeoutError.stdout = '.\t\t\t518400\tIN\tNS\ta.root-servers.net.\n;; Received 239 bytes from 1.1.1.1#53(1.1.1.1) in 20 ms\n\n';
+			mockCmd.reject(timeoutError);
+
+			await runPromise;
+
+			expect((mockSocket.emit.firstCall.args[1] as any).result.rawOutput).to.equal('.\t\t\t518400\tIN\tNS\ta.root-servers.net.\n;; Received 239 bytes from 1.1.1.1#53(1.1.1.1) in 20 ms\n\nThe measurement command timed out.');
+		});
 	});
 
 	describe('snapshots', function () {
