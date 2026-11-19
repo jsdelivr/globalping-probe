@@ -10,6 +10,7 @@ import {
 	getExecaMock,
 	makeSnapshotTests,
 	setupSnapshots,
+	trimChunks,
 	wrapIt,
 } from '../../utils.js';
 import {
@@ -329,17 +330,56 @@ describe('dns command', () => {
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
 
-			const { emitChunks, verifyChunks } = chunkOutput(rawOutput);
+			const { lines, emitChunks, verifyChunks } = chunkOutput(rawOutput);
 
 			await emitChunks(mockCmd.stdout);
 
 			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
-			verifyChunks(mockSocket);
+			verifyChunks(mockSocket, trimChunks(lines));
 
 			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
+
+		for (const testCase of [ 'dns-success-linux', 'dns-trace-success' ]) {
+			it(`should remove blank lines around the output - ${testCase}`, async () => {
+				const options = {
+					type: 'dns' as const,
+					timeout: 7,
+					target: 'google.com',
+					trace: testCase.includes('trace'),
+					query: {
+						type: 'TXT',
+					},
+					protocol: 'UDP',
+					port: 53,
+					inProgressUpdates: true,
+					ipVersion: 4,
+				};
+
+				const rawOutput = `\n${getCmdMock(testCase)}`;
+				const expectedResult = getCmdMockResult(testCase) as any;
+
+				const mockCmd = getExecaMock();
+
+				const dns = new DnsCommand((): any => mockCmd);
+				const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
+
+				const { emitChunks } = chunkOutput(rawOutput);
+				await emitChunks(mockCmd.stdout);
+
+				mockCmd.resolve({ stdout: rawOutput });
+				await runPromise;
+
+				const progress = mockSocket.emit.args.slice(0, -1).map(args => (args[1] as any).result.rawOutput as string).join('');
+				const expectedOutput = expectedResult.result.rawOutput as string;
+
+				expect(expectedOutput).to.equal(expectedOutput.trim());
+				expect(progress).to.equal(expectedOutput);
+				expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
+			});
+		}
 
 		it('should parse dns - dns-success-linux', async () => {
 			const testCase = 'dns-success-linux';
@@ -485,7 +525,7 @@ describe('dns command', () => {
 			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
-			verifyChunks(mockSocket, lines.map(line => line.replaceAll('192.168.0.49', 'x.x.x.x')));
+			verifyChunks(mockSocket, trimChunks(lines.map(line => line.replaceAll('192.168.0.49', 'x.x.x.x'))));
 
 			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
@@ -592,7 +632,7 @@ describe('dns command', () => {
 			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
-			verifyChunks(mockSocket, lines.map(line => line.replaceAll('127.0.0.53', 'x.x.x.x')));
+			verifyChunks(mockSocket, trimChunks(lines.map(line => line.replaceAll('127.0.0.53', 'x.x.x.x'))));
 
 			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
@@ -662,7 +702,7 @@ describe('dns command', () => {
 			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
-			verifyChunks(mockSocket, lines.map(line => line.replaceAll('fd00::2', 'x.x.x.x')));
+			verifyChunks(mockSocket, trimChunks(lines.map(line => line.replaceAll('fd00::2', 'x.x.x.x'))));
 
 			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
@@ -691,14 +731,14 @@ describe('dns command', () => {
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
 
-			const { emitChunks, verifyChunks } = chunkOutput(rawOutput);
+			const { lines, emitChunks, verifyChunks } = chunkOutput(rawOutput);
 
 			await emitChunks(mockCmd.stdout);
 
 			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
-			verifyChunks(mockSocket);
+			verifyChunks(mockSocket, trimChunks(lines));
 
 			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
@@ -907,14 +947,14 @@ describe('dns command', () => {
 			const dns = new DnsCommand((): any => mockCmd);
 			const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options);
 
-			const { emitChunks, verifyChunks } = chunkOutput(rawOutput);
+			const { lines, emitChunks, verifyChunks } = chunkOutput(rawOutput);
 
 			await emitChunks(mockCmd.stdout);
 
 			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
-			verifyChunks(mockSocket);
+			verifyChunks(mockSocket, trimChunks(lines));
 
 			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
@@ -984,7 +1024,7 @@ describe('dns command', () => {
 			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
-			verifyChunks(mockSocket, lines.map(line => line.replaceAll('192.168.0.49', 'x.x.x.x')));
+			verifyChunks(mockSocket, trimChunks(lines.map(line => line.replaceAll('192.168.0.49', 'x.x.x.x'))));
 
 			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});
@@ -1054,7 +1094,7 @@ describe('dns command', () => {
 			mockCmd.resolve({ stdout: rawOutput });
 			await runPromise;
 
-			verifyChunks(mockSocket, lines.map(line => line.replaceAll('fd00::2', 'x.x.x.x')));
+			verifyChunks(mockSocket, trimChunks(lines.map(line => line.replaceAll('fd00::2', 'x.x.x.x'))));
 
 			expect(mockSocket.emit.lastCall.args).to.deep.equal([ 'probe:measurement:result', expectedResult ]);
 		});

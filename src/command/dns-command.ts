@@ -151,7 +151,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 					}
 				}
 
-				buffer.pushProgress({ rawOutput: output });
+				buffer.pushProgress({ rawOutput: output.trim() });
 			});
 		}
 
@@ -178,7 +178,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			if (isExposed(error)) {
 				output = error.message;
 			} else if (isExecaError(error) && error.timedOut) {
-				output = this.rewrite(error.stdout.toString(), cmdOptions.trace);
+				output = this.rewrite(error.stdout.toString(), cmdOptions.trace).trim();
 				output += `${output ? '\n\n' : ''}The measurement command timed out.`;
 			} else if (isExecaError(error) && error.stdout.toString().length > 0) {
 				output = this.rewrite(error.stdout.toString(), cmdOptions.trace);
@@ -204,6 +204,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 			};
 		}
 
+		result.rawOutput = result.rawOutput!.trim();
 		const out = this.toJsonOutput(result, cmdOptions.trace);
 		buffer.pushResult(out);
 		return out;

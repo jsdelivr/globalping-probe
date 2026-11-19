@@ -82,7 +82,6 @@ export const MtrParser = {
 			withSpacing('Avg', spacings.avg, true),
 			withSpacing('StDev', spacings.stDev, true),
 			withSpacing('Javg', spacings.jAvg, true),
-			'\n',
 		];
 
 		rawOutput.push(header.join(' '));
@@ -111,12 +110,10 @@ export const MtrParser = {
 				line += `${loss}% ${drop} ${rcv} ${avg} ${stDev} ${jAvg}`;
 			}
 
-			line += '\n';
-
-			rawOutput.push(line);
+			rawOutput.push(line.trimEnd());
 		}
 
-		return rawOutput.join('');
+		return rawOutput.join('\n');
 	},
 
 	rawParse (data: string, isFinalResult?: boolean, target?: string): HopType[] {

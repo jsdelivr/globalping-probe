@@ -190,6 +190,11 @@ export const chunkOutput = (rawOutput: string) => {
 	};
 };
 
+export const trimChunks = (chunks: string[]): string[] => chunks.map((_chunk, i) => {
+	const sentLength = chunks.slice(0, i).join('').trim().length;
+	return chunks.slice(0, i + 1).join('').trim().slice(sentLength);
+});
+
 export const chunkObjectStream = (rawOutput: string) => {
 	const lines: string[] = rawOutput.trimEnd().match(/.*?\n|.+$/g) || [];
 
