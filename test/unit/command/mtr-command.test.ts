@@ -466,7 +466,7 @@ describe('mtr command executor', () => {
 			expect(mockedSocket.emit.args[0][1]).to.deep.include({
 				overwrite: true,
 				result: {
-					rawOutput: 'Host                           Loss% Drop Rcv Avg  StDev  Javg \n1. AS??? (waiting for reply) \n',
+					rawOutput: 'Host                           Loss% Drop Rcv Avg  StDev  Javg\n1. AS??? (waiting for reply)',
 				},
 			});
 
