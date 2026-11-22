@@ -86,7 +86,7 @@ export type OutputJson = {
 
 type Decompressor = zlib.Gunzip | zlib.Inflate | zlib.BrotliDecompress;
 type RequestPhase = 'dns' | 'tcp' | 'tls' | 'firstByte' | 'download';
-type RequestState = { phase: RequestPhase };
+type RequestState = { phase: RequestPhase; pendingSocket: net.Socket | null };
 
 const lowerCaseKeys = (obj: Record<string, string>) => _.mapKeys(obj, (_value, key) => _.toLower(key)) as Record<string, string>;
 
@@ -202,6 +202,8 @@ function getConnector (
 			lookup: dnsResolver,
 		});
 
+		requestState.pendingSocket = tcpSocket;
+
 		tcpSocket.on('lookup', (error, address) => {
 			onDnsLookupComplete();
 
@@ -260,6 +262,7 @@ function getConnector (
 				};
 
 				tcpSocket.prependListener('data', onFirstData);
+				requestState.pendingSocket = null;
 				callback(null, tcpSocket);
 				return;
 			}
@@ -270,6 +273,8 @@ function getConnector (
 				rejectUnauthorized: false,
 				ALPNProtocols: options.protocol === 'HTTP2' ? [ 'h2' ] : [ 'http/1.1' ],
 			});
+
+			requestState.pendingSocket = tlsSocket;
 
 			tlsSocket.on('error', (err: Error) => {
 				callback(err, null);
@@ -312,6 +317,7 @@ function getConnector (
 					publicKey: cert.pubkey?.toString('hex').toUpperCase().match(/.{2}/g)?.join(':') ?? null,
 				};
 
+				requestState.pendingSocket = null;
 				callback(null, tlsSocket);
 			});
 		});
@@ -327,6 +333,7 @@ export class HttpHandler {
 	private readonly port: number;
 	private readonly isHttps: boolean;
 	private undiciClient!: Client;
+	private requestState!: RequestState;
 	private readonly result: Omit<Result, 'timings'>;
 	private readonly timings: Timings = {
 		start: null,
@@ -376,7 +383,8 @@ export class HttpHandler {
 			...(this.dnsTimeoutSignal ? { signal: this.dnsTimeoutSignal } : {}),
 		}), true);
 		const allowH2 = this.options.protocol === 'HTTP2';
-		const requestState: RequestState = { phase: targetIsHostname ? 'dns' : 'tcp' };
+		const requestState: RequestState = { phase: targetIsHostname ? 'dns' : 'tcp', pendingSocket: null };
+		this.requestState = requestState;
 		const connector = getConnector(this.options, this.port, this.isHttps, dnsResolver, this.result, this.timings, requestState, this.clearDnsTimeout);
 		this.undiciClient = new Client(this.origin, { connect: connector, allowH2 });
 
@@ -544,6 +552,9 @@ export class HttpHandler {
 		this.clearDnsTimeout();
 		this.decompressor?.destroy();
 		this.undiciClient.destroy().catch((error: Error) => logger.error(error));
+		// Undici only receives the socket once the connector succeeds.
+		this.requestState.pendingSocket?.destroy(new Error('Measurement ended before the connection was established.'));
+		this.requestState.pendingSocket = null;
 	}
 
 	private clearDnsTimeout = () => {
