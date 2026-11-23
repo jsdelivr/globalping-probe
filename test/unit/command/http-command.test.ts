@@ -1326,6 +1326,7 @@ describe(`.run() method`, () => {
 		expect(result.status).to.equal('failed');
 		expect(result.failureSource).to.equal('target');
 		expect(result.rawOutput).to.equal('Request timed out while establishing the TCP connection.');
+		expect(fakeSocket.destroyed).to.be.true;
 		expect(result.resolvedAddress).to.equal('93.184.216.34');
 
 		expect(result.timings).to.deep.equal({
@@ -1363,6 +1364,8 @@ describe(`.run() method`, () => {
 				callback();
 			},
 		});
+		const onSocketError = sandbox.spy();
+		tlsSocket.on('error', onSocketError);
 		sandbox.stub(tls, 'connect').returns(tlsSocket as any);
 
 		const promise = new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
@@ -1379,12 +1382,15 @@ describe(`.run() method`, () => {
 		sandbox.clock.tick(5_001);
 
 		await promise;
+		await new Promise(resolve => process.nextTick(resolve));
 
 		const result = mockedSocket.emit.firstCall.args[1].result;
 
 		expect(result.status).to.equal('failed');
 		expect(result.failureSource).to.equal('target');
 		expect(result.rawOutput).to.equal('Request timed out during the TLS handshake.');
+		expect(tlsSocket.destroyed).to.be.true;
+		sinon.assert.calledOnceWithMatch(onSocketError, sinon.match.instanceOf(Error));
 
 		expect(result.timings).to.deep.equal({
 			total: 5000,
