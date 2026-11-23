@@ -9,7 +9,7 @@ export class FakeMtrCommand implements CommandInterface<object> {
 				measurementId,
 				overwrite: true,
 				result: {
-					rawOutput: 'This is a fake mtr response for testing purposes\nHost          Loss% Drop Rcv Avg  StDev  Javg \n',
+					rawOutput: 'This is a fake mtr response for testing purposes\nHost          Loss% Drop Rcv Avg  StDev  Javg',
 				},
 			});
 		}, 1000);
@@ -20,7 +20,7 @@ export class FakeMtrCommand implements CommandInterface<object> {
 				measurementId,
 				overwrite: true,
 				result: {
-					rawOutput: 'This is a fake mtr response for testing purposes\nHost                    Loss% Drop Rcv Avg  StDev  Javg \n1. AS??? _gateway (172.17.0.1)    0.0%    0   0 0.6    0.0   0.6\n2. AS??? 192.168.0.1 (192.168.0.1)    0.0%    0   0 5.5    0.0   5.5\n3. AS??? (waiting for reply) \n',
+					rawOutput: 'This is a fake mtr response for testing purposes\nHost                    Loss% Drop Rcv Avg  StDev  Javg\n1. AS??? _gateway (172.17.0.1)    0.0%    0   0 0.6    0.0   0.6\n2. AS??? 192.168.0.1 (192.168.0.1)    0.0%    0   0 5.5    0.0   5.5\n3. AS??? (waiting for reply)',
 				},
 			});
 		}, 2000);
@@ -31,7 +31,7 @@ export class FakeMtrCommand implements CommandInterface<object> {
 				measurementId,
 				overwrite: true,
 				result: {
-					rawOutput: 'This is a fake mtr response for testing purposes\nHost                                                           Loss% Drop Rcv  Avg  StDev  Javg \n1. AS???   _gateway (172.17.0.1)                                0.0%    0   2  0.3    0.2   0.2\n2. AS???   192.168.0.1 (192.168.0.1)                            0.0%    0   1  5.1    0.4   0.7\n3. AS6830  84.116.254.17 (84.116.254.17)                        0.0%    0   1 15.0    0.0  15.0\n4. AS6830  pl-waw26b-rc1-ae-18-0.aorta.net (84.116.253.141)     0.0%    0   1 14.6    1.2   2.4\n5. AS6830  pl-waw26b-ri1-ae-24-0.aorta.net (84.116.138.73)      0.0%    0   1 14.4    0.5   0.9\n6. AS15169 72.14.203.234 (72.14.203.234)                        0.0%    0   1 15.5    0.2   0.4\n7. AS15169 142.250.227.13 (142.250.227.13)                      0.0%    0   1 14.0    0.3   0.6\n8. AS15169 209.85.253.225 (209.85.253.225)                      0.0%    0   1 14.0    0.2   0.3\n9. AS15169 waw07s06-in-f14.1e100.net (142.250.203.142)          0.0%    0   1 16.7    1.6   3.3\n',
+					rawOutput: 'This is a fake mtr response for testing purposes\nHost                                                           Loss% Drop Rcv  Avg  StDev  Javg\n1. AS???   _gateway (172.17.0.1)                                0.0%    0   2  0.3    0.2   0.2\n2. AS???   192.168.0.1 (192.168.0.1)                            0.0%    0   1  5.1    0.4   0.7\n3. AS6830  84.116.254.17 (84.116.254.17)                        0.0%    0   1 15.0    0.0  15.0\n4. AS6830  pl-waw26b-rc1-ae-18-0.aorta.net (84.116.253.141)     0.0%    0   1 14.6    1.2   2.4\n5. AS6830  pl-waw26b-ri1-ae-24-0.aorta.net (84.116.138.73)      0.0%    0   1 14.4    0.5   0.9\n6. AS15169 72.14.203.234 (72.14.203.234)                        0.0%    0   1 15.5    0.2   0.4\n7. AS15169 142.250.227.13 (142.250.227.13)                      0.0%    0   1 14.0    0.3   0.6\n8. AS15169 209.85.253.225 (209.85.253.225)                      0.0%    0   1 14.0    0.2   0.3\n9. AS15169 waw07s06-in-f14.1e100.net (142.250.203.142)          0.0%    0   1 16.7    1.6   3.3',
 				},
 			});
 		}, 3000);
@@ -42,7 +42,7 @@ export class FakeMtrCommand implements CommandInterface<object> {
 				measurementId,
 				overwrite: true,
 				result: {
-					rawOutput: 'This is a fake mtr response for testing purposes\nHost                                                           Loss% Drop Rcv  Avg  StDev  Javg \n1. AS???   _gateway (172.17.0.1)                                0.0%    0   2  0.3    0.2   0.2\n2. AS???   192.168.0.1 (192.168.0.1)                            0.0%    0   2  5.2    0.3   3.0\n3. AS6830  pl-waw26b-rt1.aorta.net (84.116.254.17)             33.3%    1   1 14.8    0.2   0.4\n4. AS6830  pl-waw26b-rc1-ae-18-0.aorta.net (84.116.253.141)     0.0%    0   2 14.6    1.0   8.5\n5. AS6830  pl-waw26b-ri1-ae-24-0.aorta.net (84.116.138.73)      0.0%    0   2 14.2    0.5   7.3\n6. AS15169 72.14.203.234 (72.14.203.234)                        0.0%    0   2 15.5    0.2   7.9\n7. AS15169 142.250.227.13 (142.250.227.13)                      0.0%    0   2 19.7    8.1  15.9\n8. AS15169 209.85.253.225 (209.85.253.225)                      0.0%    0   2 15.2    1.6   8.9\n9. AS15169 waw07s06-in-f14.1e100.net (142.250.203.142)          0.0%    0   2 16.3    1.4   9.5\n',
+					rawOutput: 'This is a fake mtr response for testing purposes\nHost                                                           Loss% Drop Rcv  Avg  StDev  Javg\n1. AS???   _gateway (172.17.0.1)                                0.0%    0   2  0.3    0.2   0.2\n2. AS???   192.168.0.1 (192.168.0.1)                            0.0%    0   2  5.2    0.3   3.0\n3. AS6830  pl-waw26b-rt1.aorta.net (84.116.254.17)             33.3%    1   1 14.8    0.2   0.4\n4. AS6830  pl-waw26b-rc1-ae-18-0.aorta.net (84.116.253.141)     0.0%    0   2 14.6    1.0   8.5\n5. AS6830  pl-waw26b-ri1-ae-24-0.aorta.net (84.116.138.73)      0.0%    0   2 14.2    0.5   7.3\n6. AS15169 72.14.203.234 (72.14.203.234)                        0.0%    0   2 15.5    0.2   7.9\n7. AS15169 142.250.227.13 (142.250.227.13)                      0.0%    0   2 19.7    8.1  15.9\n8. AS15169 209.85.253.225 (209.85.253.225)                      0.0%    0   2 15.2    1.6   8.9\n9. AS15169 waw07s06-in-f14.1e100.net (142.250.203.142)          0.0%    0   2 16.3    1.4   9.5',
 				},
 			});
 		}, 4000);
@@ -53,7 +53,7 @@ export class FakeMtrCommand implements CommandInterface<object> {
 				measurementId,
 				result: {
 					status: 'finished',
-					rawOutput: 'This is a fake mtr response for testing purposes\nHost                                                           Loss% Drop Rcv  Avg  StDev  Javg \n1. AS???   _gateway (172.17.0.1)                                0.0%    0   3  0.3    0.2   0.2\n2. AS???   192.168.0.1 (192.168.0.1)                            0.0%    0   3  5.2    0.3   3.0\n3. AS6830  pl-waw26b-rt1.aorta.net (84.116.254.17)             33.3%    1   2 14.8    0.2   0.4\n4. AS6830  pl-waw26b-rc1-ae-18-0.aorta.net (84.116.253.141)     0.0%    0   3 14.6    1.0   8.5\n5. AS6830  pl-waw26b-ri1-ae-24-0.aorta.net (84.116.138.73)      0.0%    0   3 14.2    0.5   7.3\n6. AS15169 72.14.203.234 (72.14.203.234)                        0.0%    0   3 15.5    0.2   7.9\n7. AS15169 142.250.227.13 (142.250.227.13)                      0.0%    0   3 19.7    8.1  15.9\n8. AS15169 209.85.253.225 (209.85.253.225)                      0.0%    0   3 15.2    1.6   8.9\n9. AS15169 waw07s06-in-f14.1e100.net (142.250.203.142)          0.0%    0   3 16.3    1.4   9.5\n',
+					rawOutput: 'This is a fake mtr response for testing purposes\nHost                                                           Loss% Drop Rcv  Avg  StDev  Javg\n1. AS???   _gateway (172.17.0.1)                                0.0%    0   3  0.3    0.2   0.2\n2. AS???   192.168.0.1 (192.168.0.1)                            0.0%    0   3  5.2    0.3   3.0\n3. AS6830  pl-waw26b-rt1.aorta.net (84.116.254.17)             33.3%    1   2 14.8    0.2   0.4\n4. AS6830  pl-waw26b-rc1-ae-18-0.aorta.net (84.116.253.141)     0.0%    0   3 14.6    1.0   8.5\n5. AS6830  pl-waw26b-ri1-ae-24-0.aorta.net (84.116.138.73)      0.0%    0   3 14.2    0.5   7.3\n6. AS15169 72.14.203.234 (72.14.203.234)                        0.0%    0   3 15.5    0.2   7.9\n7. AS15169 142.250.227.13 (142.250.227.13)                      0.0%    0   3 19.7    8.1  15.9\n8. AS15169 209.85.253.225 (209.85.253.225)                      0.0%    0   3 15.2    1.6   8.9\n9. AS15169 waw07s06-in-f14.1e100.net (142.250.203.142)          0.0%    0   3 16.3    1.4   9.5',
 					resolvedAddress: '142.250.203.142',
 					resolvedHostname: 'waw07s06-in-f14.1e100.net',
 					hops: [
