@@ -174,7 +174,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			result.failureSource = getFailureSource(error, failureSourceFallback);
 
 			if (isExecaError(error)) {
-				result.rawOutput = error.stdout.toString();
+				result.rawOutput = error.stdout.toString().trim();
 
 				if (error.timedOut) {
 					result.rawOutput += `${result.rawOutput ? '\n\n' : ''}The measurement command timed out.`;
