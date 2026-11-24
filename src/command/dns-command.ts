@@ -51,18 +51,20 @@ const classifyDnsFailure = (error: unknown, output: string): FailureSource => {
 	return (isExecaError(error) && error.timedOut) || resolverFailurePattern.test(output) ? 'resolver' : 'internal';
 };
 
-const failedResolverPattern = /^;; (?:Connection to|communications error to) ([^#\s]+)#/gm;
+const failedResolverPattern = /^;; (?:Connection to|communications error to|UDP setup with) ([^#\s]+)#/gm;
 
 // dig may try several resolvers; the last one it reports is the one that failed last.
 const getFailedResolver = (output: string, options: DnsOptions): string | undefined => {
 	const reportedResolver = [ ...output.matchAll(failedResolverPattern) ].at(-1)?.[1];
 
 	if (reportedResolver) {
-		return reportedResolver === 'x.x.x.x' || isIpPrivate(reportedResolver) ? 'private' : normalizeIp(reportedResolver);
+		const resolver = normalizeIp(reportedResolver);
+		return reportedResolver === 'x.x.x.x' || isIpPrivate(resolver) ? 'private' : resolver;
 	}
 
-	if (options.resolver && isIP(options.resolver) && !isIpPrivate(options.resolver)) {
-		return normalizeIp(options.resolver);
+	if (options.resolver && isIP(options.resolver)) {
+		const resolver = normalizeIp(options.resolver);
+		return isIpPrivate(resolver) ? undefined : resolver;
 	}
 
 	return undefined;

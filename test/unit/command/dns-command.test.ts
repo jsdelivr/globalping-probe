@@ -1210,18 +1210,23 @@ describe('dns command', () => {
 				expect(await runFailed(';; communications error to 1.1.1.1#53: timed out\n;; communications error to 2001:4860:4860:0:0:0:0:8888#53: timed out\n;; no servers could be reached\n')).to.equal('2001:4860:4860::8888');
 			});
 
+			it('should report the resolver from a UDP setup error', async () => {
+				expect(await runFailed(';; communications error to 8.8.8.8#53: timed out\n;; UDP setup with 2001:4860:4860::8888#53(2001:4860:4860::8888) for abc.com failed: network unreachable.\n;; no servers could be reached\n', 'dns.google')).to.equal('2001:4860:4860::8888');
+			});
+
 			it('should redact a private resolver from the error output', async () => {
 				expect(await runFailed(';; communications error to 10.0.0.1#53: timed out\n;; communications error to 192.168.0.1#53: timed out\n;; no servers could be reached\n')).to.equal('private');
+				expect(await runFailed(';; UDP setup with ::127.0.0.1#53(::127.0.0.1) for abc.com failed: network unreachable.\n;; no servers could be reached\n')).to.equal('private');
 			});
 
 			it('should fall back to a public IP resolver option', async () => {
 				expect(await runFailed('', '1.1.1.1', true)).to.equal('1.1.1.1');
-				expect(await runFailed(';; no servers could be reached\n', '::ffff:1.1.1.1')).to.equal('::ffff:1.1.1.1');
+				expect(await runFailed(';; no servers could be reached\n', '2001:4860:4860:0:0:0:0:8888')).to.equal('2001:4860:4860::8888');
 			});
 
-			it('should omit the resolver if it is unknown', async () => {
-				expect(await runFailed('', undefined, true)).to.equal(null);
-				expect(await runFailed('dig: couldn\'t get address for \'sdsa\': not found\n', 'sdsa')).to.equal(null);
+			it('should omit a private IP resolver option', async () => {
+				expect(await runFailed('', '10.0.0.1', true)).to.equal(null);
+				expect(await runFailed(';; no servers could be reached\n', '::10.0.0.1')).to.equal(null);
 			});
 		});
 	});
