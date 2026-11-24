@@ -55,19 +55,18 @@ const failedResolverPattern = /^;; (?:Connection to|communications error to|UDP 
 
 // dig may try several resolvers; the last one it reports is the one that failed last.
 const getFailedResolver = (output: string, options: DnsOptions): string | undefined => {
-	const reportedResolver = [ ...output.matchAll(failedResolverPattern) ].at(-1)?.[1];
+	const reported = [ ...output.matchAll(failedResolverPattern) ].at(-1)?.[1] ?? options.resolver ?? '';
 
-	if (reportedResolver) {
-		const resolver = normalizeIp(reportedResolver);
-		return reportedResolver === 'x.x.x.x' || isIpPrivate(resolver) ? 'private' : resolver;
+	if (reported === 'x.x.x.x') {
+		return 'private';
 	}
 
-	if (options.resolver && isIP(options.resolver)) {
-		const resolver = normalizeIp(options.resolver);
-		return isIpPrivate(resolver) ? undefined : resolver;
+	if (!isIP(reported)) {
+		return undefined;
 	}
 
-	return undefined;
+	const resolver = normalizeIp(reported);
+	return isIpPrivate(resolver) ? 'private' : resolver;
 };
 
 const isTrace = (output: unknown): output is DnsParseResponseTrace => Array.isArray((output as DnsParseResponseTrace).hops);

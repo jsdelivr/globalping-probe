@@ -1224,9 +1224,9 @@ describe('dns command', () => {
 				expect(await runFailed(';; no servers could be reached\n', '2001:4860:4860:0:0:0:0:8888')).to.equal('2001:4860:4860::8888');
 			});
 
-			it('should omit a private IP resolver option', async () => {
-				expect(await runFailed('', '10.0.0.1', true)).to.equal(null);
-				expect(await runFailed(';; no servers could be reached\n', '::10.0.0.1')).to.equal(null);
+			it('should report a private IP resolver option as private', async () => {
+				expect(await runFailed('', '10.0.0.1', true)).to.equal('private');
+				expect(await runFailed(';; no servers could be reached\n', '::10.0.0.1')).to.equal('private');
 			});
 		});
 	});
