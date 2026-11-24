@@ -8,7 +8,7 @@
 		"statusCode": null,
 		"rawOutput": ";; Connection to x.x.x.x#212(x.x.x.x) for abc.com failed: connection refused.",
 		"answers": [],
-		"resolver": null,
+		"resolver": "private",
 		"timings": {
 			"total": 0
 		}
