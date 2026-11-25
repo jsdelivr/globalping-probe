@@ -1174,6 +1174,61 @@ describe('dns command', () => {
 
 			expect((mockSocket.emit.firstCall.args[1] as any).result.rawOutput).to.equal('.\t\t\t518400\tIN\tNS\ta.root-servers.net.\n;; Received 239 bytes from 1.1.1.1#53(1.1.1.1) in 20 ms\n\nThe measurement command timed out.');
 		});
+
+		describe('failed resolver', () => {
+			const runFailed = async (stdout: string, resolver?: string, timedOut = false) => {
+				const options = {
+					type: 'dns' as const,
+					timeout: 7,
+					target: 'abc.com',
+					...(resolver ? { resolver } : {}),
+					trace: false,
+					query: { type: 'A' },
+					protocol: 'UDP',
+					port: 53,
+					inProgressUpdates: false,
+				};
+				const mockCmd = getExecaMock();
+				const dns = new DnsCommand((): any => mockCmd);
+				const runPromise = dns.run(mockSocket as any, 'measurement', 'test', options as DnsOptions);
+
+				const error = new Error('Failed') as ExecaError;
+				error.stderr = '';
+				error.timedOut = timedOut;
+				error.stdout = stdout;
+				mockCmd.reject(error);
+
+				await runPromise;
+				return (mockSocket.emit.lastCall.args[1] as any).result.resolver;
+			};
+
+			it('should report the resolver from a communications error', async () => {
+				expect(await runFailed(';; communications error to 8.8.8.8#53: timed out\n;; no servers could be reached\n')).to.equal('8.8.8.8');
+			});
+
+			it('should report the last resolver dig tried', async () => {
+				expect(await runFailed(';; communications error to 1.1.1.1#53: timed out\n;; communications error to 2001:4860:4860:0:0:0:0:8888#53: timed out\n;; no servers could be reached\n')).to.equal('2001:4860:4860::8888');
+			});
+
+			it('should report the resolver from a UDP setup error', async () => {
+				expect(await runFailed(';; communications error to 8.8.8.8#53: timed out\n;; UDP setup with 2001:4860:4860::8888#53(2001:4860:4860::8888) for abc.com failed: network unreachable.\n;; no servers could be reached\n', 'dns.google')).to.equal('2001:4860:4860::8888');
+			});
+
+			it('should redact a private resolver from the error output', async () => {
+				expect(await runFailed(';; communications error to 10.0.0.1#53: timed out\n;; communications error to 192.168.0.1#53: timed out\n;; no servers could be reached\n')).to.equal('private');
+				expect(await runFailed(';; UDP setup with ::127.0.0.1#53(::127.0.0.1) for abc.com failed: network unreachable.\n;; no servers could be reached\n')).to.equal('private');
+			});
+
+			it('should fall back to a public IP resolver option', async () => {
+				expect(await runFailed('', '1.1.1.1', true)).to.equal('1.1.1.1');
+				expect(await runFailed(';; no servers could be reached\n', '2001:4860:4860:0:0:0:0:8888')).to.equal('2001:4860:4860::8888');
+			});
+
+			it('should report a private IP resolver option as private', async () => {
+				expect(await runFailed('', '10.0.0.1', true)).to.equal('private');
+				expect(await runFailed(';; no servers could be reached\n', '::10.0.0.1')).to.equal('private');
+			});
+		});
 	});
 
 	describe('snapshots', function () {
