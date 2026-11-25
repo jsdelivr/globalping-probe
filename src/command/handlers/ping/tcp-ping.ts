@@ -128,7 +128,7 @@ export async function tcpPing (
 	const startTime = performance.now();
 	const results: Array<TcpPingData> = [];
 	const successTimings: Array<TcpPingSuccessProbeData> = [];
-	const deadline = Date.now() + timeout;
+	const deadline = performance.now() + timeout;
 	const signal = AbortSignal.timeout(timeout);
 
 	const start = { type: 'start' as const, address, hostname, port };
@@ -141,7 +141,7 @@ export async function tcpPing (
 	const pingPromises = Array.from({ length: packets }, async (_, i): Promise<TcpPingProbeData | TcpPingErrorData> => {
 		try {
 			await delay(i * interval, undefined, { signal });
-			const remaining = Math.max(0, deadline - Date.now());
+			const remaining = Math.max(0, deadline - performance.now());
 			return await tcpPingSingle(hostname, address, port, ipVersion, remaining, signal);
 		} catch {
 			return { type: 'probe', address, hostname, port, success: false };

@@ -1,4 +1,5 @@
 import config from 'config';
+import { performance } from 'node:perf_hooks';
 
 export const MEASUREMENT_DNS_RESOLUTION_TIMEOUT_MESSAGE = 'The measurement timed out during DNS resolution.';
 
@@ -121,8 +122,8 @@ export const getProcessTimeout = (timeoutSeconds: number, graceSeconds = process
 };
 
 export const createMeasurementDeadline = (timeoutSeconds: number) => {
-	const deadline = Date.now() + timeoutSeconds * 1000;
-	const remainingMs = () => Math.max(deadline - Date.now(), 0);
+	const deadline = performance.now() + timeoutSeconds * 1000;
+	const remainingMs = () => Math.max(Math.round(deadline - performance.now()), 0);
 
 	return {
 		remainingMs,

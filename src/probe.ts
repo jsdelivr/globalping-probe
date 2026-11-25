@@ -2,6 +2,7 @@ import config from 'config';
 import os from 'node:os';
 import net from 'node:net';
 import dns from 'node:dns';
+import { performance } from 'node:perf_hooks';
 import { randomUUID } from 'node:crypto';
 import process from 'node:process';
 import throng from 'throng';
@@ -80,7 +81,7 @@ function connect (workerId?: number) {
 		jobs: new Map<string, number>(),
 		jobsInterval: setInterval(() => {
 			for (const [ key, value ] of worker.jobs) {
-				if (Date.now() >= (value + 40_000)) {
+				if (performance.now() >= (value + 40_000)) {
 					worker.jobs.delete(key);
 				}
 			}
@@ -188,7 +189,7 @@ function connect (workerId?: number) {
 				return;
 			}
 
-			worker.jobs.set(measurementId, Date.now());
+			worker.jobs.set(measurementId, performance.now());
 
 			try {
 				const out = await handler.run(socket, measurementId, testId, measurement);
