@@ -1,3 +1,4 @@
+import { isIP } from 'node:net';
 import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
 import { execa, type ExecaChildProcess } from 'execa';
@@ -213,7 +214,7 @@ export class MtrCommand implements CommandInterface<MtrOptions> {
 			resolvedHostname: input.resolvedHostname ? String(input.resolvedHostname) : null,
 			hops: input.hops ? input.hops.map(h => ({
 				asn: h.asn,
-				resolvedAddress: h.resolvedAddress ? h.resolvedAddress : null,
+				resolvedAddress: h.resolvedAddress && isIP(h.resolvedAddress) ? h.resolvedAddress : null,
 				resolvedHostname: h.resolvedHostname ? h.resolvedHostname : null,
 				stats: h.stats,
 				timings: h.timings,

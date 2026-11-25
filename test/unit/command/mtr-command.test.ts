@@ -264,6 +264,24 @@ describe('mtr command executor', () => {
 			clearDnsCache();
 		});
 
+		it('keeps malformed responder addresses out of structured hop addresses', async () => {
+			const mockCmd = getExecaMock();
+			const mtr = new MtrCommand((): any => mockCmd, dnsResolver('1.1.1.1'));
+			const runPromise = mtr.run(mockedSocket as any, 'measurement', 'test', {
+				type: 'mtr', timeout: 5, target: 'jsdelivr.net', protocol: 'icmp', port: 80, packets: 3, inProgressUpdates: false, ipVersion: 4,
+			});
+
+			await new Promise(resolve => setImmediate(resolve));
+			const rawOutput = 'h 0 ::::\nx 0 33000\np 0 10000 33000\n';
+			mockCmd.stdout.end(rawOutput);
+			mockCmd.resolve({ stdout: rawOutput });
+			const result = await runPromise as any;
+
+			expect(result.status).to.equal('finished');
+			expect(result.rawOutput).to.include('_gateway (::::)');
+			expect(result.hops[0].resolvedAddress).to.be.null;
+		});
+
 		it('should stop target lookup at the static DNS deadline', async () => {
 			const clock = sandbox.useFakeTimers();
 			const lookupController = new AbortController();

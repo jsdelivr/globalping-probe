@@ -1,3 +1,4 @@
+import { isIP } from 'node:net';
 import _ from 'lodash';
 import Joi from 'joi';
 import type { Socket } from 'socket.io-client';
@@ -370,7 +371,7 @@ export class TracerouteCommand implements CommandInterface<TraceOptions> {
 			resolvedAddress: toJsonHost(input.resolvedAddress),
 			resolvedHostname: toJsonHost(input.resolvedHostname),
 			hops: input.hops.map(hop => ({
-				resolvedAddress: toJsonHost(hop.resolvedAddress),
+				resolvedAddress: isIP(hop.resolvedAddress) ? hop.resolvedAddress : null,
 				resolvedHostname: toJsonHost(hop.resolvedHostname),
 				timings: hop.timings,
 			})),

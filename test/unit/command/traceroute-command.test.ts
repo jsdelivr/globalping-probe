@@ -315,7 +315,7 @@ describe('trace command', () => {
 			expect(result.hops[1].resolvedAddress).to.equal(routerAddress);
 		});
 
-		it('keeps malformed responder addresses without failing the measurement', async () => {
+		it('keeps malformed responder addresses out of structured hop addresses', async () => {
 			const mockCmd = getExecaMock();
 			const command = new TracerouteCommand((): any => mockCmd, dnsResolver('1.1.1.1'));
 			const runPromise = command.run(mockSocket as any, 'measurement', 'test', {
@@ -328,7 +328,8 @@ describe('trace command', () => {
 			const result = await runPromise as any;
 
 			expect(result.status).to.equal('finished');
-			expect(result.hops[0].resolvedAddress).to.equal('::::');
+			expect(result.rawOutput).to.include('_gateway (::::)');
+			expect(result.hops[0].resolvedAddress).to.be.null;
 		});
 
 		it('starts hop lookups during execution without progress updates', async () => {
