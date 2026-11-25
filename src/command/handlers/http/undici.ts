@@ -396,13 +396,15 @@ export class HttpHandler {
 		this.undiciClient.dispatch({
 			path: this.requestTarget,
 			method: this.options.request.method as Dispatcher.HttpMethod,
-			headers: lowerCaseKeys({
-				'Accept-Encoding': `gzip, deflate, br`,
-				...this.options.request.headers,
-				'User-Agent': 'globalping probe (https://github.com/jsdelivr/globalping)',
-				'Host': this.options.request.host ?? this.options.target,
-				'Connection': 'close',
-			}),
+			headers: {
+				...lowerCaseKeys({
+					'Accept-Encoding': `gzip, deflate, br`,
+					...this.options.request.headers,
+				}),
+				'user-agent': 'globalping probe (https://github.com/jsdelivr/globalping)',
+				'host': this.options.request.host ?? this.options.target,
+				'connection': 'close',
+			},
 		}, {
 			onConnect: () => {},
 			onError: (err: Error) => this.handleError(err, 'target'),
