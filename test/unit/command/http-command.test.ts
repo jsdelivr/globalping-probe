@@ -4,6 +4,7 @@ import net from 'node:net';
 import tls from 'node:tls';
 import zlib from 'node:zlib';
 import * as sinon from 'sinon';
+import _ from 'lodash';
 import { Socket } from 'socket.io-client';
 import { Client } from 'undici';
 import { HttpCommand } from '../../../src/command/http-command.js';
@@ -647,6 +648,44 @@ describe(`.run() method`, () => {
 
 		expect(result.rawHeaders).to.include('Content-Type: text/html');
 		expect(result.rawHeaders).to.include('X-Custom: value');
+	});
+
+	it('should apply managed request headers after normalization', async () => {
+		sandbox.stub(_, 'mapKeys').returns({
+			'user-agent': 'custom-agent',
+			'host': 'header.example.com',
+			'connection': 'keep-alive',
+		});
+
+		const mock = mockHttpResponse([
+			'HTTP/1.1 200 OK',
+			'Content-Length: 0',
+			'',
+			'',
+		]);
+
+		await new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http' as const,
+			timeout: 5,
+			target: 'google.com',
+			inProgressUpdates: false,
+			protocol: 'HTTP',
+			request: {
+				method: 'GET',
+				host: 'virtual.example.com',
+				path: '/',
+				query: '',
+			},
+			ipVersion: 4,
+		});
+
+		const headers = mock.getRequest().split('\r\n').filter(line => /^(user-agent|host|connection):/i.test(line));
+
+		expect(headers).to.have.members([
+			'user-agent: globalping probe (https://github.com/jsdelivr/globalping)',
+			'host: virtual.example.com',
+			'connection: close',
+		]);
 	});
 
 	it('should send custom headers', async () => {
