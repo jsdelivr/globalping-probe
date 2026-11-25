@@ -38,38 +38,22 @@ const STATUS_CODE_NAME_REG_EXP = /status:\s*([A-Z]+)/;
 export const ClassicDigParser = {
 	rewrite (rawOutput: string): string {
 		const lines = rawOutput.split('\n');
+		const isShort = lines.length <= 2;
 
-		let output = rawOutput;
+		// In a long output only the ";; " lines are from dig itself. The other lines are DNS records and must stay as they are.
+		return lines.map((line) => {
+			if (!isShort && !line.startsWith(';; ')) {
+				return line;
+			}
 
-		if (lines.length <= 2) {
-			const ipMatchList = rawOutput.match(IP_REG_EXP) ?? [];
-
-			for (const ip of ipMatchList) {
+			for (const ip of line.match(IP_REG_EXP) ?? []) {
 				if (isIpPrivate(ip)) {
-					output = output.replaceAll(ip, 'x.x.x.x');
+					line = line.replaceAll(ip, 'x.x.x.x');
 				}
 			}
-		} else {
-			output = lines.map((line) => {
-				if (line.includes('trying next server')) {
-					for (const ip of line.match(IP_REG_EXP) ?? []) {
-						if (isIpPrivate(ip)) {
-							line = line.replaceAll(ip, 'x.x.x.x');
-						}
-					}
-				}
 
-				const serverMatch = ClassicDigParser.getResolverServer(line);
-
-				if (serverMatch && isIpPrivate(serverMatch)) {
-					return line.replaceAll(serverMatch, 'x.x.x.x');
-				}
-
-				return line;
-			}).join('\n');
-		}
-
-		return output;
+			return line;
+		}).join('\n');
 	},
 
 	parse (rawOutput: string): Error | DnsParseResponse {

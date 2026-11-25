@@ -5,7 +5,8 @@ import tldts from 'tldts';
 import type { CommandInterface, FailureSource } from '../types.js';
 import { isExecaError } from '../helper/execa-error-check.js';
 import { byLine } from '../lib/by-line.js';
-import { isIpPrivate } from '../lib/ip.js';
+import { isIP } from 'node:net';
+import { isIpPrivate, normalizeIp } from '../lib/ip.js';
 import { isExposed } from '../lib/internal-error.js';
 import { ProgressBuffer } from '../helper/progress-buffer.js';
 import { scopedLogger } from '../lib/logger.js';
@@ -48,6 +49,24 @@ const resolverFailurePattern = /couldn't get address for|got bad packet:|connect
 
 const classifyDnsFailure = (error: unknown, output: string): FailureSource => {
 	return (isExecaError(error) && error.timedOut) || resolverFailurePattern.test(output) ? 'resolver' : 'internal';
+};
+
+const failedResolverPattern = /^;; (?:Connection to|communications error to|UDP setup with) ([^#\s]+)#/gm;
+
+// dig may try several resolvers; the last one it reports is the one that failed last.
+const getFailedResolver = (output: string, options: DnsOptions): string | undefined => {
+	const reported = [ ...output.matchAll(failedResolverPattern) ].at(-1)?.[1] ?? options.resolver ?? '';
+
+	if (reported === 'x.x.x.x') {
+		return 'private';
+	}
+
+	if (!isIP(reported)) {
+		return undefined;
+	}
+
+	const resolver = normalizeIp(reported);
+	return isIpPrivate(resolver) ? 'private' : resolver;
 };
 
 const isTrace = (output: unknown): output is DnsParseResponseTrace => Array.isArray((output as DnsParseResponseTrace).hops);
@@ -192,6 +211,7 @@ export class DnsCommand implements CommandInterface<DnsOptions> {
 				status: 'failed',
 				failureSource: classifyDnsFailure(error, output),
 				rawOutput: output,
+				...(!cmdOptions.trace ? { resolver: getFailedResolver(output, cmdOptions) } : {}),
 			};
 		}
 
