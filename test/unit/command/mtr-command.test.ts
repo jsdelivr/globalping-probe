@@ -259,10 +259,15 @@ describe('mtr command executor', () => {
 	describe('command handler', () => {
 		const sandbox = sinon.createSandbox();
 		const mockedSocket = sandbox.createStubInstance(Socket);
+		const timersSandbox = sinon.createSandbox();
 
 		beforeEach(() => {
 			sandbox.reset();
 			clearDnsCache();
+		});
+
+		afterEach(() => {
+			timersSandbox.restore();
 		});
 
 		it('keeps malformed responder addresses out of structured hop addresses', async () => {
@@ -318,8 +323,8 @@ describe('mtr command executor', () => {
 		});
 
 		it('should preserve static MTR arguments after target lookup', async () => {
-			const clock = sandbox.useFakeTimers();
-			const now = sandbox.stub(performance, 'now').callsFake(() => clock.performance.now());
+			const clock = timersSandbox.useFakeTimers();
+			timersSandbox.stub(performance, 'now').callsFake(() => clock.performance.now());
 			const mockCmd = getExecaMock();
 			let passedArgs: string[] = [];
 			let passedProcessTimeout: number | undefined;
@@ -348,8 +353,6 @@ describe('mtr command executor', () => {
 
 			mockCmd.resolve({ stdout: '' });
 			await runPromise;
-			now.restore();
-			clock.restore();
 		});
 
 		it('preserves the resolved IP when MTR setup throws', async () => {
@@ -756,8 +759,8 @@ describe('mtr command executor', () => {
 		});
 
 		it('should pass the first resolved ip to mtr as the target', async () => {
-			const clock = sandbox.useFakeTimers();
-			const now = sandbox.stub(performance, 'now').callsFake(() => clock.performance.now());
+			const clock = timersSandbox.useFakeTimers();
+			timersSandbox.stub(performance, 'now').callsFake(() => clock.performance.now());
 			const options = {
 				type: 'mtr' as const,
 				timeout: 5,
@@ -783,8 +786,6 @@ describe('mtr command executor', () => {
 			expect(passedTarget).to.equal('1.1.1.1');
 			expect(passedProcessTimeout).to.equal(7000);
 			expect(mockCmd.kill.notCalled).to.be.true;
-			now.restore();
-			clock.restore();
 		});
 
 		it('should trim output from an execa timeout', async () => {

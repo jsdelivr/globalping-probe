@@ -1583,8 +1583,8 @@ describe(`.run() method`, () => {
 
 		await new Promise(resolve => process.nextTick(resolve));
 		await new Promise(resolve => process.nextTick(resolve));
-		sandbox.clock.tick(20);
 		sandbox.clock.setSystemTime(Date.now() - 47 * 60_000);
+		sandbox.clock.tick(20.6);
 		fakeSocket.push('ok');
 		fakeSocket.push(null);
 
@@ -1595,8 +1595,8 @@ describe(`.run() method`, () => {
 		expect(result.status).to.equal('finished');
 
 		expect(result.timings).to.deep.equal({
-			total: 50,
-			download: 20,
+			total: 51,
+			download: 21,
 			firstByte: 15,
 			dns: 5,
 			tls: null,
