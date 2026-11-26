@@ -3,6 +3,7 @@ import { Duplex } from 'node:stream';
 import net from 'node:net';
 import tls from 'node:tls';
 import zlib from 'node:zlib';
+import { performance } from 'node:perf_hooks';
 import * as sinon from 'sinon';
 import _ from 'lodash';
 import { Socket } from 'socket.io-client';
@@ -380,6 +381,8 @@ describe(`.run() method`, () => {
 
 	beforeEach(() => {
 		sandbox = useSandboxWithFakeTimers({ useFakeTimers: { now: 0, shouldAdvanceTime: false } });
+		// The shared fake timers leave performance unfaked; use the clock's monotonic time, which setSystemTime() does not move.
+		sandbox.stub(performance, 'now').callsFake(() => sandbox.clock.performance.now());
 
 		sandbox.stub(AbortSignal, 'timeout').callsFake((milliseconds) => {
 			const controller = new AbortController();
@@ -1538,6 +1541,64 @@ describe(`.run() method`, () => {
 			download: null,
 			firstByte: 15,
 			dns: 0,
+			tls: null,
+			tcp: 10,
+		});
+	});
+
+	it('should measure timings with a monotonic clock when the wall clock steps', async () => {
+		const fakeSocket = new Duplex({
+			read () {},
+			write (_chunk, _encoding, callback) {
+				callback();
+			},
+		});
+		(fakeSocket as any).remoteAddress = '93.184.216.34';
+
+		netConnectStub.callsFake(() => {
+			process.nextTick(() => {
+				sandbox.clock.tick(5);
+				sandbox.clock.setSystemTime(Date.now() - 60_000);
+				fakeSocket.emit('lookup', null, '93.184.216.34', 4, 'google.com');
+				sandbox.clock.tick(10);
+				sandbox.clock.setSystemTime(Date.now() + 16_000);
+				fakeSocket.emit('connect');
+				sandbox.clock.tick(15);
+				sandbox.clock.setSystemTime(Date.now() - 2_000);
+				fakeSocket.push('HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n');
+			});
+
+			return fakeSocket as any;
+		});
+
+		const promise = new HttpCommand().run(mockedSocket as any, 'measurement', 'test', {
+			type: 'http' as const,
+			timeout: 5,
+			target: 'google.com',
+			inProgressUpdates: false,
+			protocol: 'HTTP',
+			request: { method: 'GET', path: '/', query: '' },
+			ipVersion: 4,
+		});
+
+		await new Promise(resolve => process.nextTick(resolve));
+		await new Promise(resolve => process.nextTick(resolve));
+		sandbox.clock.setSystemTime(Date.now() - 47 * 60_000);
+		sandbox.clock.tick(20.6);
+		fakeSocket.push('ok');
+		fakeSocket.push(null);
+
+		await promise;
+
+		const result = mockedSocket.emit.firstCall.args[1].result;
+
+		expect(result.status).to.equal('finished');
+
+		expect(result.timings).to.deep.equal({
+			total: 51,
+			download: 21,
+			firstByte: 15,
+			dns: 5,
 			tls: null,
 			tcp: 10,
 		});

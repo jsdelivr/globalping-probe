@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import * as sinon from 'sinon';
+import { performance } from 'node:perf_hooks';
 import {
 	createMeasurementDeadline,
 	getHttpDnsTimeout,
@@ -13,9 +14,11 @@ describe('command timeout helpers', () => {
 	describe('measurement deadline', () => {
 		it('should track the remaining measurement and process time', () => {
 			const clock = sinon.useFakeTimers();
+			const now = sinon.stub(performance, 'now').callsFake(() => clock.performance.now());
 
 			try {
 				const deadline = createMeasurementDeadline(10);
+				clock.setSystemTime(Date.now() + 60_000);
 
 				expect(deadline.remainingMs()).to.equal(10_000);
 				expect(deadline.processTimeout()).to.equal(12_000);
@@ -30,12 +33,14 @@ describe('command timeout helpers', () => {
 				expect(deadline.remainingMs()).to.equal(0);
 				expect(deadline.processTimeout()).to.equal(2000);
 			} finally {
+				now.restore();
 				clock.restore();
 			}
 		});
 
 		it('should create signals for a fixed interval and the remaining deadline', () => {
 			const clock = sinon.useFakeTimers();
+			const now = sinon.stub(performance, 'now').callsFake(() => clock.performance.now());
 			const fixedSignal = new AbortController().signal;
 			const deadlineSignal = new AbortController().signal;
 			const timeout = sinon.stub(AbortSignal, 'timeout');
@@ -52,6 +57,7 @@ describe('command timeout helpers', () => {
 				expect(timeout.secondCall.args).to.deep.equal([ 7000 ]);
 			} finally {
 				timeout.restore();
+				now.restore();
 				clock.restore();
 			}
 		});

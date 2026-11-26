@@ -1,5 +1,6 @@
 import config from 'config';
 import process from 'node:process';
+import { performance } from 'node:perf_hooks';
 import _ from 'lodash';
 import got, { HTTPError, RequestError, TimeoutError } from 'got';
 import { VERSION } from '../constants.js';
@@ -12,13 +13,13 @@ type ReleaseInfo = {
 const logger = scopedLogger('probe-self-update');
 const updateConfig = config.get<{ releaseUrl: string; interval: number; maxDeviation: number }>('update');
 const updateInterval = updateConfig.interval + _.random(0, updateConfig.maxDeviation);
-let lastSuccessfulCheck = Date.now();
+let lastSuccessfulCheck = performance.now();
 
 const checkForUpdates = () => {
 	got(updateConfig.releaseUrl, { timeout: { request: 15_000 } }).json<ReleaseInfo>().then((releaseInfo) => {
 		const latestVersion = releaseInfo.version.replace(/^v/, '');
 		const isUpdateAvailable = latestVersion.localeCompare(VERSION, undefined, { numeric: true, sensitivity: 'base' }) > 0;
-		lastSuccessfulCheck = Date.now();
+		lastSuccessfulCheck = performance.now();
 
 		if (!isUpdateAvailable) {
 			return;
@@ -31,7 +32,7 @@ const checkForUpdates = () => {
 
 		process.kill(process.pid, 'SIGTERM');
 	}).catch((error: unknown) => {
-		const oneHourAgo = Date.now() - 60 * 60 * 1000;
+		const oneHourAgo = performance.now() - 60 * 60 * 1000;
 
 		if (lastSuccessfulCheck < oneHourAgo) {
 			logger.warn('No successful update check in the last hour. Restarting the process.');

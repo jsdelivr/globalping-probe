@@ -2,6 +2,7 @@ import net, { isIP, isIPv6 } from 'node:net';
 import type { LookupFunction } from 'node:net';
 import tls from 'node:tls';
 import zlib from 'node:zlib';
+import { performance } from 'node:perf_hooks';
 import type { Dispatcher } from 'undici';
 import { Client } from 'undici';
 import type { buildConnector } from 'undici';
@@ -179,6 +180,8 @@ const decompressors = Object.assign(Object.create(null), {
 	'x-compress': zlib.createInflate,
 }) as Record<string, () => Decompressor>;
 
+const elapsedSince = (start: number) => Math.round(performance.now() - start);
+
 // This function shouldn't be part of the class to avoid memory leaks.
 function getConnector (
 	options: HttpOptions,
@@ -191,7 +194,7 @@ function getConnector (
 	onDnsLookupComplete: () => void,
 ): buildConnector.connector {
 	return (connectorOptions, callback) => {
-		timings.start = Date.now();
+		timings.start = performance.now();
 		requestState.phase = isIP(connectorOptions.hostname) === 0 ? 'dns' : 'tcp';
 
 		const tcpSocket = net.connect({
@@ -220,7 +223,7 @@ function getConnector (
 				return;
 			}
 
-			timings.dns = Date.now() - timings.start!;
+			timings.dns = elapsedSince(timings.start!);
 			result.resolvedAddress = address;
 		});
 
@@ -239,7 +242,7 @@ function getConnector (
 				return;
 			}
 
-			timings.tcp = Date.now() - timings.start! - (timings.dns ?? 0);
+			timings.tcp = elapsedSince(timings.start!) - (timings.dns ?? 0);
 			requestState.phase = isHttps ? 'tls' : 'firstByte';
 
 			if (!result.resolvedAddress && tcpSocket.remoteAddress) {
@@ -281,7 +284,7 @@ function getConnector (
 			});
 
 			tlsSocket.on('secureConnect', () => {
-				timings.tls = Date.now() - timings.start! - (timings.dns ?? 0) - (timings.tcp ?? 0);
+				timings.tls = elapsedSince(timings.start!) - (timings.dns ?? 0) - (timings.tcp ?? 0);
 				requestState.phase = 'firstByte';
 				const cert = tlsSocket.getPeerCertificate();
 				const alpn = tlsSocket.alpnProtocol;
@@ -409,7 +412,7 @@ export class HttpHandler {
 			onConnect: () => {},
 			onError: (err: Error) => this.handleError(err, 'target'),
 			onHeaders: (statusCode, headers, _resume, statusText) => {
-				this.timings.firstByte = Date.now() - this.timings.start! - (this.timings.dns ?? 0) - (this.timings.tcp ?? 0) - (this.timings.tls ?? 0);
+				this.timings.firstByte = elapsedSince(this.timings.start!) - (this.timings.dns ?? 0) - (this.timings.tcp ?? 0) - (this.timings.tls ?? 0);
 				this.result.statusCode = statusCode;
 				this.result.statusCodeName = statusText;
 				requestState.phase = 'download';
@@ -574,9 +577,9 @@ export class HttpHandler {
 		}
 
 		this.done = true;
-		const now = Date.now();
-		this.timings.download = now - this.timings.start! - (this.timings.dns ?? 0) - (this.timings.tcp ?? 0) - (this.timings.tls ?? 0) - (this.timings.firstByte ?? 0);
-		this.timings.total = now - this.timings.start!;
+		const elapsed = elapsedSince(this.timings.start!);
+		this.timings.download = elapsed - (this.timings.dns ?? 0) - (this.timings.tcp ?? 0) - (this.timings.tls ?? 0) - (this.timings.firstByte ?? 0);
+		this.timings.total = elapsed;
 
 		if (this.options.request.method === 'HEAD' || !this.result.rawBody) {
 			this.result.rawOutput = `HTTP/${this.result.httpVersion} ${this.result.statusCode}\n${this.result.rawHeaders}`;
@@ -612,7 +615,7 @@ export class HttpHandler {
 		this.result.rawOutput = message;
 
 		if (this.timings.start !== null) {
-			this.timings.total = Date.now() - this.timings.start;
+			this.timings.total = elapsedSince(this.timings.start);
 		}
 
 		this.cleanup();
