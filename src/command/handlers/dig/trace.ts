@@ -5,6 +5,8 @@ import {
 	type DnsParseLoopResponse,
 	type DnsParseLoopResponseJson,
 } from './shared.js';
+import ClassicDigParser from './classic.js';
+import { statusNameToStatusCodeMap } from './dig-status-code-map.js';
 import type { FailureSource, TestStatus } from '../../../types.js';
 
 export type DnsParseResponse = {
@@ -46,6 +48,8 @@ export const TraceDigParser = {
 
 	parseLoop (lines: string[]): DnsParseLoopResponse[] {
 		const groups: Array<{
+			statusCodeName: string | null;
+			statusCode: number | null;
 			answers: DnsSection[];
 			timings: { total: number };
 			resolver: string;
@@ -53,6 +57,8 @@ export const TraceDigParser = {
 
 		const pushNewHop = () => {
 			groups.push({
+				statusCodeName: null,
+				statusCode: null,
 				answers: [],
 				timings: { total: 0 },
 				resolver: '',
@@ -66,11 +72,22 @@ export const TraceDigParser = {
 			const line = lines[i];
 
 			if (!line) {
-				pushNewHop();
+				// The empty line after the "Received" line ends the hop.
+				if (groups[groupIndex]!.resolver) {
+					pushNewHop();
+				}
+
 				continue;
 			}
 
 			if (line.startsWith(';;')) {
+				const statusCodeName = ClassicDigParser.getStatusCodeName(line);
+
+				if (statusCodeName) {
+					groups[groupIndex]!.statusCodeName = statusCodeName;
+					groups[groupIndex]!.statusCode = statusNameToStatusCodeMap[statusCodeName.toLowerCase()] ?? null;
+				}
+
 				const resolver = RESOLVER_REG_EXP.exec(line);
 				const queryTime = QUERY_TIME_REG_EXP.exec(line);
 
@@ -99,6 +116,8 @@ export const TraceDigParser = {
 			...(result.status === 'failed' && { failureSource: result.failureSource }),
 			rawOutput: result.rawOutput!,
 			hops: (result.hops ?? []).map(h => ({
+				statusCodeName: h.statusCodeName ?? null,
+				statusCode: h.statusCode ?? null,
 				answers: h.answers ?? [],
 				timings: {
 					...(h.timings ?? { total: 0 }),

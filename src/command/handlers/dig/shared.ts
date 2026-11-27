@@ -13,12 +13,16 @@ export type DnsSection = Record<string, never> | {
 export type DnsParseLoopResponse = {
 	[key: string]: unknown;
 	header?: string[];
+	statusCodeName: string | null;
+	statusCode: number | null;
 	answers: DnsSection[];
 	timings: { total: number };
 	resolver: string | null;
 };
 
 export type DnsParseLoopResponseJson = {
+	statusCodeName: string | null;
+	statusCode: number | null;
 	answers: DnsSection[];
 	timings: { total: number | null };
 	resolver: string | null;

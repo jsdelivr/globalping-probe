@@ -101,7 +101,7 @@ const dnsOptionsSchema = Joi.object<DnsOptions>({
 export const argBuilder = (options: DnsOptions): string[] => {
 	const protocolArg = options.protocol.toLowerCase() === 'tcp' ? '+tcp' : [];
 	const resolverArg = options.resolver ? `@${options.resolver}` : [];
-	const traceArg = options.trace ? '+trace' : [];
+	const traceArg = options.trace ? [ '+trace', '+comments' ] : [];
 	const queryArg = options.query.type === 'PTR' ? '-x' : [ '-t', options.query.type ];
 
 	const args = [

@@ -140,6 +140,7 @@ describe('dns command', () => {
 
 				const args = argBuilder(options);
 				expect(args).to.not.include('+trace');
+				expect(args).to.not.include('+comments');
 			});
 
 			it('should add the flag', () => {
@@ -160,6 +161,7 @@ describe('dns command', () => {
 
 				const args = argBuilder(options);
 				expect(args).to.include('+trace');
+				expect(args).to.include('+comments');
 			});
 		});
 

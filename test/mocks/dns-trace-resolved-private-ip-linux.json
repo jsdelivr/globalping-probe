@@ -97,6 +97,8 @@
 					}
 				],
 				"resolver": "127.0.0.53",
+				"statusCode": null,
+				"statusCodeName": null,
 				"timings": {
 					"total": 0
 				}
@@ -210,6 +212,8 @@
 					}
 				],
 				"resolver": "f.root-servers.net",
+				"statusCode": null,
+				"statusCodeName": null,
 				"timings": {
 					"total": 12
 				}
@@ -267,6 +271,8 @@
 					}
 				],
 				"resolver": "f.gtld-servers.net",
+				"statusCode": null,
+				"statusCodeName": null,
 				"timings": {
 					"total": 28
 				}
@@ -303,6 +309,8 @@
 					}
 				],
 				"resolver": "ns3.hosting.com",
+				"statusCode": null,
+				"statusCodeName": null,
 				"timings": {
 					"total": 156
 				}

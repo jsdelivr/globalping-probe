@@ -125,9 +125,13 @@ describe('dig compatibility', () => {
 		const targetHop = result.hops.find((hop: { answers: Array<{ name: string; type: string }> }) => hop.answers.some(answer => answer.name === 'trace.compat.test.' && answer.type === 'A'));
 
 		expect(rootHop, 'root referral').to.not.equal(undefined);
+		expect(rootHop.statusCodeName).to.equal('NOERROR');
+		expect(rootHop.statusCode).to.equal(0);
 		expect(rootHop.resolver).to.be.oneOf([ ipv4Server!.host, 'localhost' ]);
 		expect(rootHop.timings.total).to.be.a('number').and.at.least(0);
 		expect(targetHop, 'authoritative target answer').to.not.equal(undefined);
+		expect(targetHop.statusCodeName).to.equal('NOERROR');
+		expect(targetHop.statusCode).to.equal(0);
 		expect(targetHop.resolver).to.be.oneOf([ ipv4Server!.host, 'localhost' ]);
 		expect(targetHop.timings.total).to.be.a('number').and.at.least(0);
 

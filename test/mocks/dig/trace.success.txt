@@ -1,50 +1,87 @@
-; <<>> DiG 9.18.1-1ubuntu1-Ubuntu <<>> +trace +nocookie +tries +timeout cdn.jsdelivr.net
-;; global options: +cmd
-.			6593	IN	NS	j.root-servers.net.
-.			6593	IN	NS	c.root-servers.net.
-.			6593	IN	NS	g.root-servers.net.
-.			6593	IN	NS	b.root-servers.net.
-.			6593	IN	NS	i.root-servers.net.
-.			6593	IN	NS	a.root-servers.net.
-.			6593	IN	NS	e.root-servers.net.
-.			6593	IN	NS	l.root-servers.net.
-.			6593	IN	NS	k.root-servers.net.
-.			6593	IN	NS	f.root-servers.net.
-.			6593	IN	NS	m.root-servers.net.
-.			6593	IN	NS	d.root-servers.net.
-.			6593	IN	NS	h.root-servers.net.
-;; Received 811 bytes from 127.0.0.53#53(127.0.0.53) in 4 ms
 
-net.			172800	IN	NS	a.gtld-servers.net.
+; <<>> DiG 9.18.49-1~deb12u3-Debian <<>> -t A cdn.jsdelivr.net -p 53 -4 +timeout=3 +tries=2 +nofail +nocookie +nosplit +nsid +trace +comments
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 22125
+;; flags: qr rd ra ad; QUERY: 1, ANSWER: 14, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags: do; udp: 1232
+; NSID: 77 61 77 30 32 ("waw02")
+;; ANSWER SECTION:
+.			518271	IN	NS	a.root-servers.net.
+.			518271	IN	NS	b.root-servers.net.
+.			518271	IN	NS	c.root-servers.net.
+.			518271	IN	NS	d.root-servers.net.
+.			518271	IN	NS	e.root-servers.net.
+.			518271	IN	NS	f.root-servers.net.
+.			518271	IN	NS	g.root-servers.net.
+.			518271	IN	NS	h.root-servers.net.
+.			518271	IN	NS	i.root-servers.net.
+.			518271	IN	NS	j.root-servers.net.
+.			518271	IN	NS	k.root-servers.net.
+.			518271	IN	NS	l.root-servers.net.
+.			518271	IN	NS	m.root-servers.net.
+.			518271	IN	RRSIG	NS 8 0 518400 20261210050000 20261127040000 8763 . fF9TxEoL4axAY5zjnjYWbSeKvJCceihj0U/h8QebQ6gqbfoIJDEDWqCJAhuY9SXhIjJq0qXBjFDaqDHhl4zTAFwOCFb7ooY0OT7uwEqp52xDNdHyMAkawkcJ3/3+PWN0EvheATmkWLhpuL/kn6RqRPN5QVr8/i13qvTv8YMiWo0P8UCluOWNAxtP+lTnp9j1Wr2QnphRJXv2/PG1mv5HMfOSVJxuT6DQFDVmfr86PNFMl2ydBa91ltpzKtpqurJ/1RrGV6GGvRC/wWvcmqik6yB+B3HPUJSR4wSccckBwD2HSQViTn+FPrhD0eclWrQmBu5auCpWgOh3EZJ1+jGmNA==
+
+;; Received 534 bytes from 1.1.1.1#53(1.1.1.1) in 8 ms
+
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 51543
+;; flags: qr; QUERY: 1, ANSWER: 0, AUTHORITY: 15, ADDITIONAL: 27
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags: do; udp: 1232
+; NSID: 67 72 6f 6f 74 2d 65 75 72 31 2d 33 ("groot-eur1-3")
+; COOKIE: 59a16ddc8c2492f2010000006b0978ad382ab732b01bf443 (good)
+;; AUTHORITY SECTION:
 net.			172800	IN	NS	b.gtld-servers.net.
-net.			172800	IN	NS	c.gtld-servers.net.
-net.			172800	IN	NS	d.gtld-servers.net.
+net.			172800	IN	NS	a.gtld-servers.net.
+net.			172800	IN	NS	h.gtld-servers.net.
+net.			172800	IN	NS	j.gtld-servers.net.
 net.			172800	IN	NS	e.gtld-servers.net.
 net.			172800	IN	NS	f.gtld-servers.net.
-net.			172800	IN	NS	g.gtld-servers.net.
-net.			172800	IN	NS	h.gtld-servers.net.
-net.			172800	IN	NS	i.gtld-servers.net.
-net.			172800	IN	NS	j.gtld-servers.net.
 net.			172800	IN	NS	k.gtld-servers.net.
+net.			172800	IN	NS	c.gtld-servers.net.
+net.			172800	IN	NS	d.gtld-servers.net.
+net.			172800	IN	NS	i.gtld-servers.net.
+net.			172800	IN	NS	g.gtld-servers.net.
 net.			172800	IN	NS	l.gtld-servers.net.
 net.			172800	IN	NS	m.gtld-servers.net.
-net.			86400	IN	DS	35886 8 2 7862B27F5F516EBE19680444D4CE5E762981931842C465F00236401D 8BD973EE
-net.			86400	IN	RRSIG	DS 8 1 86400 20220509170000 20220426160000 47671 . IbbmgURsOFU02lEF33VZIt90+xd+DSAy6n+LowQlVMbxAxB6BsF5nNi1 n0Xsfixgxk06JOsQOLeMnTSX6xGZ5baCHa8pWGlS2CZ3wpmWt9Fg5Y/r Vqpneq9sBXuvcyLZ4OOzxqY8Xvqnj5EBqx2wegOxqOzbw4I2MLPeFWS4 hRvHcodnVkAHaWbDWLi3olY+8nIdWMLRdMxA1VkzliQn0MOPNn6mhKeG HTh3uOo7FSm+adbefRhC6X8QDoSFQ6VKYhd3mVJ7HGJ2JsvpVsJlG5Ff WNBztAw7W5Tg9aIVxPwfl3tNvlkpyvDqgurJLXVqmB7F+t3f3+8QKDMb nStNJg==
-;; Received 1173 bytes from 199.7.91.13#53(d.root-servers.net) in 24 ms
+net.			86400	IN	DS	37331 13 2 2F0BEC2D6F79DFBD1D08FD21A3AF92D0E39A4B9EF1E3F4111FFF282490DA453B
+net.			86400	IN	RRSIG	DS 8 1 86400 20261210050000 20261127040000 8763 . QZmOGjPO1C/l9m9eUqMr7q/tD27cN6RhDU2Q6f0ayOoCRvBNJRzdfZQPjWogFQ2BY/i5z+xgLvO4fR42ZlyYYE2tMcvWLdO6S75J2+EpBV9Z9tyC167ghKajb74VjGzcmZf9VQoYnC9PwMNFmwkARomYiapCdntqeAgRMW2dUUex2/vOokggWrPj6MvDnz3u+FOH0cJzK4oCZFw8nJnPosjWDLurOgbxEsqB+309LaXOt8nTGlZVh+PbizzfVzNOgNI8xRJKNTZL8a+10ScWbj9qQioTo78oQ5mtQDNWX+gMtRlPY5GUS4I3Wn7WJLQi0DDNEpQumXFnsMvEqpMx0g==
 
-jsdelivr.net.		172800	IN	NS	dns1.p03.nsone.net.
-jsdelivr.net.		172800	IN	NS	dns2.p03.nsone.net.
-jsdelivr.net.		172800	IN	NS	dns3.p03.nsone.net.
-jsdelivr.net.		172800	IN	NS	dns4.p03.nsone.net.
+;; Received 1217 bytes from 192.112.36.4#53(g.root-servers.net) in 33 ms
+
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 62645
+;; flags: qr; QUERY: 1, ANSWER: 0, AUTHORITY: 9, ADDITIONAL: 10
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags: do; udp: 4096
+; NSID: 6e 6e 6e 31 2d 75 73 69 61 64 2d 31 ("nnn1-usiad-1")
+;; AUTHORITY SECTION:
+jsdelivr.net.		172800	IN	NS	dns1.p08.nsone.net.
 jsdelivr.net.		172800	IN	NS	gns1.cloudns.net.
 jsdelivr.net.		172800	IN	NS	gns2.cloudns.net.
-jsdelivr.net.		172800	IN	NS	gns3.cloudns.net.
-jsdelivr.net.		172800	IN	NS	gns4.cloudns.net.
-A1RT98BS5QGC9NFI51S9HCI47ULJG6JH.net. 86400 IN NSEC3 1 1 0 - A1RTLNPGULOGN7B9A62SHJE1U3TTP8DR NS SOA RRSIG DNSKEY NSEC3PARAM
-A1RT98BS5QGC9NFI51S9HCI47ULJG6JH.net. 86400 IN RRSIG NSEC3 8 2 86400 20220503055829 20220426044829 45728 net. kqtegTsTwSJ9OJ/4UpoKnOzaSfaEaSxd03SERi2nhwhL1Dd/xjXF+Oy+ gB2NxI8IHBdT0Za1PadKRYefjjI+phvYB2Z2s7LqLE5iLju+2R6mVMQu TfkTO8GJWxBDMcXdcX2cjTxSan7y8m4kbzeGvqFHwiWtodDnT2lFQBvg QKqFhOv3D/NZtRua5mWeuy78rB3MIZQmGQ7rwapaz4h4eg==
-GBMGFDMMHIENHS2RNSDAQ541H88GB5IO.net. 86400 IN NSEC3 1 1 0 - GBMKRB78QIII3C3NIFGFSK27G1IBHMM0 NS DS RRSIG
-GBMGFDMMHIENHS2RNSDAQ541H88GB5IO.net. 86400 IN RRSIG NSEC3 8 2 86400 20220430055643 20220423044643 45728 net. JIFFMnHeaG97gcZYao5JGWkTJ4zGKDAKrfLOi9KrKVmBroFmnjfOytBo NgTxIl17GlLW2kaq1doKHpDHUu8y4u/56OdJmeBgL+OYqGbQjmICztpK dU+p9eoXUPLMkDFTqrwFhN1dm51Q9sle4MiDHMeLHBrs76jlpBcR+PQn NO9LoUolBGhvxHSQfhwCyAi0slPURsAkC4DBUS1WrpipCQ==
-;; Received 1116 bytes from 192.26.92.30#53(c.gtld-servers.net) in 32 ms
+jsdelivr.net.		172800	IN	NS	ns1.gcorelabs.net.
+jsdelivr.net.		172800	IN	NS	ns2.gcdn.services.
+A1RT98BS5QGC9NFI51S9HCI47ULJG6JH.net. 900 IN NSEC3 1 1 0 - A1RTLNPGULOGN7B9A62SHJE1U3TTP8DR NS SOA RRSIG DNSKEY NSEC3PARAM
+A1RT98BS5QGC9NFI51S9HCI47ULJG6JH.net. 900 IN RRSIG NSEC3 13 2 900 20261204041609 20261127030609 3840 net. jm+bEZTtrh164sbMVe78CGy9BIhZf6PdABhHy/EHqgrs40MmCOxwdOkzkLDxzVMkCgCEFUg4MEYNG8BWeBFTGg==
+GBMIPEL3DPQ9HFCSF3OLP2L0I7LPQOOE.net. 900 IN NSEC3 1 1 0 - GBMJBHH7RI93BGE36NCOVJ8DNUEECIPM NS DS RRSIG
+GBMIPEL3DPQ9HFCSF3OLP2L0I7LPQOOE.net. 900 IN RRSIG NSEC3 13 2 900 20261202041023 20261125030023 3840 net. yAj6dvJ4r+orWvBXP6zzGjx0APHvMhq0/TpEz4nVst16a4NDowLwvLm+OM/e7RZFLyn0JHUWgwyNWzwnCYicUw==
 
-cdn.jsdelivr.net.	900	IN	CNAME	jsdelivr.map.fastly.net.
-;; Received 79 bytes from 185.136.98.122#53(gns3.cloudns.net) in 28 ms
+;; Received 744 bytes from 192.5.6.30#53(a.gtld-servers.net) in 121 ms
+
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 17566
+;; flags: qr aa; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags: do; udp: 1232
+; NSID: 77 61 32 2d 68 77 2d 65 64 67 65 2d 67 63 39 ("wa2-hw-edge-gc9")
+;; ANSWER SECTION:
+cdn.jsdelivr.net.	180	IN	CNAME	cdn.jsdelivr.net.cdn.cloudflare.net.
+
+;; Received 129 bytes from 92.223.77.53#53(ns2.gcdn.services) in 7 ms
+
