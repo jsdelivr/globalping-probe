@@ -12,12 +12,7 @@ import {
 import { statusNameToStatusCodeMap } from './dig-status-code-map.js';
 import type { FailureSource, TestStatus } from '../../../types.js';
 
-type DnsParseLoopResponseClassic = DnsParseLoopResponse & {
-	statusCodeName: string | null;
-	statusCode: number | null;
-};
-
-export type DnsParseResponse = DnsParseLoopResponseClassic & {
+export type DnsParseResponse = DnsParseLoopResponse & {
 	status: TestStatus;
 	failureSource?: FailureSource;
 	rawOutput: string;
@@ -26,8 +21,6 @@ export type DnsParseResponse = DnsParseLoopResponseClassic & {
 export type DnsParseResponseJson = DnsParseLoopResponseJson & {
 	status: TestStatus;
 	failureSource?: FailureSource;
-	statusCodeName: string | null;
-	statusCode: number | null;
 	rawOutput: string;
 };
 
@@ -85,8 +78,8 @@ export const ClassicDigParser = {
 		};
 	},
 
-	parseLoop (lines: string[]): DnsParseLoopResponseClassic {
-		const result: DnsParseLoopResponseClassic = {
+	parseLoop (lines: string[]): DnsParseLoopResponse {
+		const result: DnsParseLoopResponse = {
 			statusCodeName: null,
 			statusCode: null,
 			header: [],

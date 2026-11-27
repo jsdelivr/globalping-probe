@@ -5,113 +5,117 @@
 		"status": "finished",
 		"hops": [
 			{
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
 				"answers": [
 					{
 						"name": ".",
 						"type": "NS",
-						"ttl": 6593,
-						"class": "IN",
-						"value": "j.root-servers.net."
-					},
-					{
-						"name": ".",
-						"type": "NS",
-						"ttl": 6593,
-						"class": "IN",
-						"value": "c.root-servers.net."
-					},
-					{
-						"name": ".",
-						"type": "NS",
-						"ttl": 6593,
-						"class": "IN",
-						"value": "g.root-servers.net."
-					},
-					{
-						"name": ".",
-						"type": "NS",
-						"ttl": 6593,
-						"class": "IN",
-						"value": "b.root-servers.net."
-					},
-					{
-						"name": ".",
-						"type": "NS",
-						"ttl": 6593,
-						"class": "IN",
-						"value": "i.root-servers.net."
-					},
-					{
-						"name": ".",
-						"type": "NS",
-						"ttl": 6593,
+						"ttl": 518271,
 						"class": "IN",
 						"value": "a.root-servers.net."
 					},
 					{
 						"name": ".",
 						"type": "NS",
-						"ttl": 6593,
+						"ttl": 518271,
 						"class": "IN",
-						"value": "e.root-servers.net."
+						"value": "b.root-servers.net."
 					},
 					{
 						"name": ".",
 						"type": "NS",
-						"ttl": 6593,
+						"ttl": 518271,
 						"class": "IN",
-						"value": "l.root-servers.net."
+						"value": "c.root-servers.net."
 					},
 					{
 						"name": ".",
 						"type": "NS",
-						"ttl": 6593,
-						"class": "IN",
-						"value": "k.root-servers.net."
-					},
-					{
-						"name": ".",
-						"type": "NS",
-						"ttl": 6593,
-						"class": "IN",
-						"value": "f.root-servers.net."
-					},
-					{
-						"name": ".",
-						"type": "NS",
-						"ttl": 6593,
-						"class": "IN",
-						"value": "m.root-servers.net."
-					},
-					{
-						"name": ".",
-						"type": "NS",
-						"ttl": 6593,
+						"ttl": 518271,
 						"class": "IN",
 						"value": "d.root-servers.net."
 					},
 					{
 						"name": ".",
 						"type": "NS",
-						"ttl": 6593,
+						"ttl": 518271,
+						"class": "IN",
+						"value": "e.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 518271,
+						"class": "IN",
+						"value": "f.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 518271,
+						"class": "IN",
+						"value": "g.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 518271,
 						"class": "IN",
 						"value": "h.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 518271,
+						"class": "IN",
+						"value": "i.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 518271,
+						"class": "IN",
+						"value": "j.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 518271,
+						"class": "IN",
+						"value": "k.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 518271,
+						"class": "IN",
+						"value": "l.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "NS",
+						"ttl": 518271,
+						"class": "IN",
+						"value": "m.root-servers.net."
+					},
+					{
+						"name": ".",
+						"type": "RRSIG",
+						"ttl": 518271,
+						"class": "IN",
+						"value": "NS 8 0 518400 20261210050000 20261127040000 8763 . fF9TxEoL4axAY5zjnjYWbSeKvJCceihj0U/h8QebQ6gqbfoIJDEDWqCJAhuY9SXhIjJq0qXBjFDaqDHhl4zTAFwOCFb7ooY0OT7uwEqp52xDNdHyMAkawkcJ3/3+PWN0EvheATmkWLhpuL/kn6RqRPN5QVr8/i13qvTv8YMiWo0P8UCluOWNAxtP+lTnp9j1Wr2QnphRJXv2/PG1mv5HMfOSVJxuT6DQFDVmfr86PNFMl2ydBa91ltpzKtpqurJ/1RrGV6GGvRC/wWvcmqik6yB+B3HPUJSR4wSccckBwD2HSQViTn+FPrhD0eclWrQmBu5auCpWgOh3EZJ1+jGmNA=="
 					}
 				],
 				"timings": {
-					"total": 4
+					"total": 8
 				},
-				"resolver": "127.0.0.53"
+				"resolver": "1.1.1.1"
 			},
 			{
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
 				"answers": [
-					{
-						"name": "net.",
-						"type": "NS",
-						"ttl": 172800,
-						"class": "IN",
-						"value": "a.gtld-servers.net."
-					},
 					{
 						"name": "net.",
 						"type": "NS",
@@ -124,14 +128,21 @@
 						"type": "NS",
 						"ttl": 172800,
 						"class": "IN",
-						"value": "c.gtld-servers.net."
+						"value": "a.gtld-servers.net."
 					},
 					{
 						"name": "net.",
 						"type": "NS",
 						"ttl": 172800,
 						"class": "IN",
-						"value": "d.gtld-servers.net."
+						"value": "h.gtld-servers.net."
+					},
+					{
+						"name": "net.",
+						"type": "NS",
+						"ttl": 172800,
+						"class": "IN",
+						"value": "j.gtld-servers.net."
 					},
 					{
 						"name": "net.",
@@ -152,14 +163,21 @@
 						"type": "NS",
 						"ttl": 172800,
 						"class": "IN",
-						"value": "g.gtld-servers.net."
+						"value": "k.gtld-servers.net."
 					},
 					{
 						"name": "net.",
 						"type": "NS",
 						"ttl": 172800,
 						"class": "IN",
-						"value": "h.gtld-servers.net."
+						"value": "c.gtld-servers.net."
+					},
+					{
+						"name": "net.",
+						"type": "NS",
+						"ttl": 172800,
+						"class": "IN",
+						"value": "d.gtld-servers.net."
 					},
 					{
 						"name": "net.",
@@ -173,14 +191,7 @@
 						"type": "NS",
 						"ttl": 172800,
 						"class": "IN",
-						"value": "j.gtld-servers.net."
-					},
-					{
-						"name": "net.",
-						"type": "NS",
-						"ttl": 172800,
-						"class": "IN",
-						"value": "k.gtld-servers.net."
+						"value": "g.gtld-servers.net."
 					},
 					{
 						"name": "net.",
@@ -201,50 +212,31 @@
 						"type": "DS",
 						"ttl": 86400,
 						"class": "IN",
-						"value": "35886 8 2 7862B27F5F516EBE19680444D4CE5E762981931842C465F00236401D 8BD973EE"
+						"value": "37331 13 2 2F0BEC2D6F79DFBD1D08FD21A3AF92D0E39A4B9EF1E3F4111FFF282490DA453B"
 					},
 					{
 						"name": "net.",
 						"type": "RRSIG",
 						"ttl": 86400,
 						"class": "IN",
-						"value": "DS 8 1 86400 20220509170000 20220426160000 47671 . IbbmgURsOFU02lEF33VZIt90+xd+DSAy6n+LowQlVMbxAxB6BsF5nNi1 n0Xsfixgxk06JOsQOLeMnTSX6xGZ5baCHa8pWGlS2CZ3wpmWt9Fg5Y/r Vqpneq9sBXuvcyLZ4OOzxqY8Xvqnj5EBqx2wegOxqOzbw4I2MLPeFWS4 hRvHcodnVkAHaWbDWLi3olY+8nIdWMLRdMxA1VkzliQn0MOPNn6mhKeG HTh3uOo7FSm+adbefRhC6X8QDoSFQ6VKYhd3mVJ7HGJ2JsvpVsJlG5Ff WNBztAw7W5Tg9aIVxPwfl3tNvlkpyvDqgurJLXVqmB7F+t3f3+8QKDMb nStNJg=="
+						"value": "DS 8 1 86400 20261210050000 20261127040000 8763 . QZmOGjPO1C/l9m9eUqMr7q/tD27cN6RhDU2Q6f0ayOoCRvBNJRzdfZQPjWogFQ2BY/i5z+xgLvO4fR42ZlyYYE2tMcvWLdO6S75J2+EpBV9Z9tyC167ghKajb74VjGzcmZf9VQoYnC9PwMNFmwkARomYiapCdntqeAgRMW2dUUex2/vOokggWrPj6MvDnz3u+FOH0cJzK4oCZFw8nJnPosjWDLurOgbxEsqB+309LaXOt8nTGlZVh+PbizzfVzNOgNI8xRJKNTZL8a+10ScWbj9qQioTo78oQ5mtQDNWX+gMtRlPY5GUS4I3Wn7WJLQi0DDNEpQumXFnsMvEqpMx0g=="
 					}
 				],
 				"timings": {
-					"total": 24
+					"total": 33
 				},
-				"resolver": "d.root-servers.net"
+				"resolver": "g.root-servers.net"
 			},
 			{
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
 				"answers": [
 					{
 						"name": "jsdelivr.net.",
 						"type": "NS",
 						"ttl": 172800,
 						"class": "IN",
-						"value": "dns1.p03.nsone.net."
-					},
-					{
-						"name": "jsdelivr.net.",
-						"type": "NS",
-						"ttl": 172800,
-						"class": "IN",
-						"value": "dns2.p03.nsone.net."
-					},
-					{
-						"name": "jsdelivr.net.",
-						"type": "NS",
-						"ttl": 172800,
-						"class": "IN",
-						"value": "dns3.p03.nsone.net."
-					},
-					{
-						"name": "jsdelivr.net.",
-						"type": "NS",
-						"ttl": 172800,
-						"class": "IN",
-						"value": "dns4.p03.nsone.net."
+						"value": "dns1.p08.nsone.net."
 					},
 					{
 						"name": "jsdelivr.net.",
@@ -265,65 +257,67 @@
 						"type": "NS",
 						"ttl": 172800,
 						"class": "IN",
-						"value": "gns3.cloudns.net."
+						"value": "ns1.gcorelabs.net."
 					},
 					{
 						"name": "jsdelivr.net.",
 						"type": "NS",
 						"ttl": 172800,
 						"class": "IN",
-						"value": "gns4.cloudns.net."
+						"value": "ns2.gcdn.services."
 					},
 					{
 						"name": "A1RT98BS5QGC9NFI51S9HCI47ULJG6JH.net.",
 						"type": "NSEC3",
-						"ttl": 86400,
+						"ttl": 900,
 						"class": "IN",
 						"value": "1 1 0 - A1RTLNPGULOGN7B9A62SHJE1U3TTP8DR NS SOA RRSIG DNSKEY NSEC3PARAM"
 					},
 					{
 						"name": "A1RT98BS5QGC9NFI51S9HCI47ULJG6JH.net.",
 						"type": "RRSIG",
-						"ttl": 86400,
+						"ttl": 900,
 						"class": "IN",
-						"value": "NSEC3 8 2 86400 20220503055829 20220426044829 45728 net. kqtegTsTwSJ9OJ/4UpoKnOzaSfaEaSxd03SERi2nhwhL1Dd/xjXF+Oy+ gB2NxI8IHBdT0Za1PadKRYefjjI+phvYB2Z2s7LqLE5iLju+2R6mVMQu TfkTO8GJWxBDMcXdcX2cjTxSan7y8m4kbzeGvqFHwiWtodDnT2lFQBvg QKqFhOv3D/NZtRua5mWeuy78rB3MIZQmGQ7rwapaz4h4eg=="
+						"value": "NSEC3 13 2 900 20261204041609 20261127030609 3840 net. jm+bEZTtrh164sbMVe78CGy9BIhZf6PdABhHy/EHqgrs40MmCOxwdOkzkLDxzVMkCgCEFUg4MEYNG8BWeBFTGg=="
 					},
 					{
-						"name": "GBMGFDMMHIENHS2RNSDAQ541H88GB5IO.net.",
+						"name": "GBMIPEL3DPQ9HFCSF3OLP2L0I7LPQOOE.net.",
 						"type": "NSEC3",
-						"ttl": 86400,
+						"ttl": 900,
 						"class": "IN",
-						"value": "1 1 0 - GBMKRB78QIII3C3NIFGFSK27G1IBHMM0 NS DS RRSIG"
+						"value": "1 1 0 - GBMJBHH7RI93BGE36NCOVJ8DNUEECIPM NS DS RRSIG"
 					},
 					{
-						"name": "GBMGFDMMHIENHS2RNSDAQ541H88GB5IO.net.",
+						"name": "GBMIPEL3DPQ9HFCSF3OLP2L0I7LPQOOE.net.",
 						"type": "RRSIG",
-						"ttl": 86400,
+						"ttl": 900,
 						"class": "IN",
-						"value": "NSEC3 8 2 86400 20220430055643 20220423044643 45728 net. JIFFMnHeaG97gcZYao5JGWkTJ4zGKDAKrfLOi9KrKVmBroFmnjfOytBo NgTxIl17GlLW2kaq1doKHpDHUu8y4u/56OdJmeBgL+OYqGbQjmICztpK dU+p9eoXUPLMkDFTqrwFhN1dm51Q9sle4MiDHMeLHBrs76jlpBcR+PQn NO9LoUolBGhvxHSQfhwCyAi0slPURsAkC4DBUS1WrpipCQ=="
+						"value": "NSEC3 13 2 900 20261202041023 20261125030023 3840 net. yAj6dvJ4r+orWvBXP6zzGjx0APHvMhq0/TpEz4nVst16a4NDowLwvLm+OM/e7RZFLyn0JHUWgwyNWzwnCYicUw=="
 					}
 				],
 				"timings": {
-					"total": 32
+					"total": 121
 				},
-				"resolver": "c.gtld-servers.net"
+				"resolver": "a.gtld-servers.net"
 			},
 			{
+				"statusCodeName": "NOERROR",
+				"statusCode": 0,
 				"answers": [
 					{
 						"name": "cdn.jsdelivr.net.",
 						"type": "CNAME",
-						"ttl": 900,
+						"ttl": 180,
 						"class": "IN",
-						"value": "jsdelivr.map.fastly.net."
+						"value": "cdn.jsdelivr.net.cdn.cloudflare.net."
 					}
 				],
 				"timings": {
-					"total": 28
+					"total": 7
 				},
-				"resolver": "gns3.cloudns.net"
+				"resolver": "ns2.gcdn.services"
 			}
 		],
-		"rawOutput": "; <<>> DiG 9.18.1-1ubuntu1-Ubuntu <<>> +trace +nocookie +tries +timeout cdn.jsdelivr.net\n;; global options: +cmd\n.\t\t\t6593\tIN\tNS\tj.root-servers.net.\n.\t\t\t6593\tIN\tNS\tc.root-servers.net.\n.\t\t\t6593\tIN\tNS\tg.root-servers.net.\n.\t\t\t6593\tIN\tNS\tb.root-servers.net.\n.\t\t\t6593\tIN\tNS\ti.root-servers.net.\n.\t\t\t6593\tIN\tNS\ta.root-servers.net.\n.\t\t\t6593\tIN\tNS\te.root-servers.net.\n.\t\t\t6593\tIN\tNS\tl.root-servers.net.\n.\t\t\t6593\tIN\tNS\tk.root-servers.net.\n.\t\t\t6593\tIN\tNS\tf.root-servers.net.\n.\t\t\t6593\tIN\tNS\tm.root-servers.net.\n.\t\t\t6593\tIN\tNS\td.root-servers.net.\n.\t\t\t6593\tIN\tNS\th.root-servers.net.\n;; Received 811 bytes from 127.0.0.53#53(127.0.0.53) in 4 ms\n\nnet.\t\t\t172800\tIN\tNS\ta.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\tb.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\tc.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\td.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\te.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\tf.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\tg.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\th.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\ti.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\tj.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\tk.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\tl.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\tm.gtld-servers.net.\nnet.\t\t\t86400\tIN\tDS\t35886 8 2 7862B27F5F516EBE19680444D4CE5E762981931842C465F00236401D 8BD973EE\nnet.\t\t\t86400\tIN\tRRSIG\tDS 8 1 86400 20220509170000 20220426160000 47671 . IbbmgURsOFU02lEF33VZIt90+xd+DSAy6n+LowQlVMbxAxB6BsF5nNi1 n0Xsfixgxk06JOsQOLeMnTSX6xGZ5baCHa8pWGlS2CZ3wpmWt9Fg5Y/r Vqpneq9sBXuvcyLZ4OOzxqY8Xvqnj5EBqx2wegOxqOzbw4I2MLPeFWS4 hRvHcodnVkAHaWbDWLi3olY+8nIdWMLRdMxA1VkzliQn0MOPNn6mhKeG HTh3uOo7FSm+adbefRhC6X8QDoSFQ6VKYhd3mVJ7HGJ2JsvpVsJlG5Ff WNBztAw7W5Tg9aIVxPwfl3tNvlkpyvDqgurJLXVqmB7F+t3f3+8QKDMb nStNJg==\n;; Received 1173 bytes from 199.7.91.13#53(d.root-servers.net) in 24 ms\n\njsdelivr.net.\t\t172800\tIN\tNS\tdns1.p03.nsone.net.\njsdelivr.net.\t\t172800\tIN\tNS\tdns2.p03.nsone.net.\njsdelivr.net.\t\t172800\tIN\tNS\tdns3.p03.nsone.net.\njsdelivr.net.\t\t172800\tIN\tNS\tdns4.p03.nsone.net.\njsdelivr.net.\t\t172800\tIN\tNS\tgns1.cloudns.net.\njsdelivr.net.\t\t172800\tIN\tNS\tgns2.cloudns.net.\njsdelivr.net.\t\t172800\tIN\tNS\tgns3.cloudns.net.\njsdelivr.net.\t\t172800\tIN\tNS\tgns4.cloudns.net.\nA1RT98BS5QGC9NFI51S9HCI47ULJG6JH.net. 86400 IN NSEC3 1 1 0 - A1RTLNPGULOGN7B9A62SHJE1U3TTP8DR NS SOA RRSIG DNSKEY NSEC3PARAM\nA1RT98BS5QGC9NFI51S9HCI47ULJG6JH.net. 86400 IN RRSIG NSEC3 8 2 86400 20220503055829 20220426044829 45728 net. kqtegTsTwSJ9OJ/4UpoKnOzaSfaEaSxd03SERi2nhwhL1Dd/xjXF+Oy+ gB2NxI8IHBdT0Za1PadKRYefjjI+phvYB2Z2s7LqLE5iLju+2R6mVMQu TfkTO8GJWxBDMcXdcX2cjTxSan7y8m4kbzeGvqFHwiWtodDnT2lFQBvg QKqFhOv3D/NZtRua5mWeuy78rB3MIZQmGQ7rwapaz4h4eg==\nGBMGFDMMHIENHS2RNSDAQ541H88GB5IO.net. 86400 IN NSEC3 1 1 0 - GBMKRB78QIII3C3NIFGFSK27G1IBHMM0 NS DS RRSIG\nGBMGFDMMHIENHS2RNSDAQ541H88GB5IO.net. 86400 IN RRSIG NSEC3 8 2 86400 20220430055643 20220423044643 45728 net. JIFFMnHeaG97gcZYao5JGWkTJ4zGKDAKrfLOi9KrKVmBroFmnjfOytBo NgTxIl17GlLW2kaq1doKHpDHUu8y4u/56OdJmeBgL+OYqGbQjmICztpK dU+p9eoXUPLMkDFTqrwFhN1dm51Q9sle4MiDHMeLHBrs76jlpBcR+PQn NO9LoUolBGhvxHSQfhwCyAi0slPURsAkC4DBUS1WrpipCQ==\n;; Received 1116 bytes from 192.26.92.30#53(c.gtld-servers.net) in 32 ms\n\ncdn.jsdelivr.net.\t900\tIN\tCNAME\tjsdelivr.map.fastly.net.\n;; Received 79 bytes from 185.136.98.122#53(gns3.cloudns.net) in 28 ms"
+		"rawOutput": "; <<>> DiG 9.18.49-1~deb12u3-Debian <<>> -t A cdn.jsdelivr.net -p 53 -4 +timeout=3 +tries=2 +nofail +nocookie +nosplit +nsid +trace +comments\n;; global options: +cmd\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 22125\n;; flags: qr rd ra ad; QUERY: 1, ANSWER: 14, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags: do; udp: 1232\n; NSID: 77 61 77 30 32 (\"waw02\")\n;; ANSWER SECTION:\n.\t\t\t518271\tIN\tNS\ta.root-servers.net.\n.\t\t\t518271\tIN\tNS\tb.root-servers.net.\n.\t\t\t518271\tIN\tNS\tc.root-servers.net.\n.\t\t\t518271\tIN\tNS\td.root-servers.net.\n.\t\t\t518271\tIN\tNS\te.root-servers.net.\n.\t\t\t518271\tIN\tNS\tf.root-servers.net.\n.\t\t\t518271\tIN\tNS\tg.root-servers.net.\n.\t\t\t518271\tIN\tNS\th.root-servers.net.\n.\t\t\t518271\tIN\tNS\ti.root-servers.net.\n.\t\t\t518271\tIN\tNS\tj.root-servers.net.\n.\t\t\t518271\tIN\tNS\tk.root-servers.net.\n.\t\t\t518271\tIN\tNS\tl.root-servers.net.\n.\t\t\t518271\tIN\tNS\tm.root-servers.net.\n.\t\t\t518271\tIN\tRRSIG\tNS 8 0 518400 20261210050000 20261127040000 8763 . fF9TxEoL4axAY5zjnjYWbSeKvJCceihj0U/h8QebQ6gqbfoIJDEDWqCJAhuY9SXhIjJq0qXBjFDaqDHhl4zTAFwOCFb7ooY0OT7uwEqp52xDNdHyMAkawkcJ3/3+PWN0EvheATmkWLhpuL/kn6RqRPN5QVr8/i13qvTv8YMiWo0P8UCluOWNAxtP+lTnp9j1Wr2QnphRJXv2/PG1mv5HMfOSVJxuT6DQFDVmfr86PNFMl2ydBa91ltpzKtpqurJ/1RrGV6GGvRC/wWvcmqik6yB+B3HPUJSR4wSccckBwD2HSQViTn+FPrhD0eclWrQmBu5auCpWgOh3EZJ1+jGmNA==\n\n;; Received 534 bytes from 1.1.1.1#53(1.1.1.1) in 8 ms\n\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 51543\n;; flags: qr; QUERY: 1, ANSWER: 0, AUTHORITY: 15, ADDITIONAL: 27\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags: do; udp: 1232\n; NSID: 67 72 6f 6f 74 2d 65 75 72 31 2d 33 (\"groot-eur1-3\")\n; COOKIE: 59a16ddc8c2492f2010000006b0978ad382ab732b01bf443 (good)\n;; AUTHORITY SECTION:\nnet.\t\t\t172800\tIN\tNS\tb.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\ta.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\th.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\tj.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\te.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\tf.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\tk.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\tc.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\td.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\ti.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\tg.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\tl.gtld-servers.net.\nnet.\t\t\t172800\tIN\tNS\tm.gtld-servers.net.\nnet.\t\t\t86400\tIN\tDS\t37331 13 2 2F0BEC2D6F79DFBD1D08FD21A3AF92D0E39A4B9EF1E3F4111FFF282490DA453B\nnet.\t\t\t86400\tIN\tRRSIG\tDS 8 1 86400 20261210050000 20261127040000 8763 . QZmOGjPO1C/l9m9eUqMr7q/tD27cN6RhDU2Q6f0ayOoCRvBNJRzdfZQPjWogFQ2BY/i5z+xgLvO4fR42ZlyYYE2tMcvWLdO6S75J2+EpBV9Z9tyC167ghKajb74VjGzcmZf9VQoYnC9PwMNFmwkARomYiapCdntqeAgRMW2dUUex2/vOokggWrPj6MvDnz3u+FOH0cJzK4oCZFw8nJnPosjWDLurOgbxEsqB+309LaXOt8nTGlZVh+PbizzfVzNOgNI8xRJKNTZL8a+10ScWbj9qQioTo78oQ5mtQDNWX+gMtRlPY5GUS4I3Wn7WJLQi0DDNEpQumXFnsMvEqpMx0g==\n\n;; Received 1217 bytes from 192.112.36.4#53(g.root-servers.net) in 33 ms\n\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 62645\n;; flags: qr; QUERY: 1, ANSWER: 0, AUTHORITY: 9, ADDITIONAL: 10\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags: do; udp: 4096\n; NSID: 6e 6e 6e 31 2d 75 73 69 61 64 2d 31 (\"nnn1-usiad-1\")\n;; AUTHORITY SECTION:\njsdelivr.net.\t\t172800\tIN\tNS\tdns1.p08.nsone.net.\njsdelivr.net.\t\t172800\tIN\tNS\tgns1.cloudns.net.\njsdelivr.net.\t\t172800\tIN\tNS\tgns2.cloudns.net.\njsdelivr.net.\t\t172800\tIN\tNS\tns1.gcorelabs.net.\njsdelivr.net.\t\t172800\tIN\tNS\tns2.gcdn.services.\nA1RT98BS5QGC9NFI51S9HCI47ULJG6JH.net. 900 IN NSEC3 1 1 0 - A1RTLNPGULOGN7B9A62SHJE1U3TTP8DR NS SOA RRSIG DNSKEY NSEC3PARAM\nA1RT98BS5QGC9NFI51S9HCI47ULJG6JH.net. 900 IN RRSIG NSEC3 13 2 900 20261204041609 20261127030609 3840 net. jm+bEZTtrh164sbMVe78CGy9BIhZf6PdABhHy/EHqgrs40MmCOxwdOkzkLDxzVMkCgCEFUg4MEYNG8BWeBFTGg==\nGBMIPEL3DPQ9HFCSF3OLP2L0I7LPQOOE.net. 900 IN NSEC3 1 1 0 - GBMJBHH7RI93BGE36NCOVJ8DNUEECIPM NS DS RRSIG\nGBMIPEL3DPQ9HFCSF3OLP2L0I7LPQOOE.net. 900 IN RRSIG NSEC3 13 2 900 20261202041023 20261125030023 3840 net. yAj6dvJ4r+orWvBXP6zzGjx0APHvMhq0/TpEz4nVst16a4NDowLwvLm+OM/e7RZFLyn0JHUWgwyNWzwnCYicUw==\n\n;; Received 744 bytes from 192.5.6.30#53(a.gtld-servers.net) in 121 ms\n\n;; Got answer:\n;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 17566\n;; flags: qr aa; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1\n\n;; OPT PSEUDOSECTION:\n; EDNS: version: 0, flags: do; udp: 1232\n; NSID: 77 61 32 2d 68 77 2d 65 64 67 65 2d 67 63 39 (\"wa2-hw-edge-gc9\")\n;; ANSWER SECTION:\ncdn.jsdelivr.net.\t180\tIN\tCNAME\tcdn.jsdelivr.net.cdn.cloudflare.net.\n\n;; Received 129 bytes from 92.223.77.53#53(ns2.gcdn.services) in 7 ms"
 	}
 }

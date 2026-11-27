@@ -1,0 +1,84 @@
+
+; <<>> DiG 9.18.49-1~deb12u3-Debian <<>> -t A refused.test.dnscheck.tools -p 53 -4 +timeout=3 +tries=2 +nofail +nocookie +nosplit +nsid +trace +comments
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 30630
+;; flags: qr rd ra ad; QUERY: 1, ANSWER: 14, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags: do; udp: 1232
+; NSID: 77 61 77 30 33 ("waw03")
+;; ANSWER SECTION:
+.			511780	IN	NS	a.root-servers.net.
+.			511780	IN	NS	b.root-servers.net.
+.			511780	IN	NS	c.root-servers.net.
+.			511780	IN	NS	d.root-servers.net.
+.			511780	IN	NS	e.root-servers.net.
+.			511780	IN	NS	f.root-servers.net.
+.			511780	IN	NS	g.root-servers.net.
+.			511780	IN	NS	h.root-servers.net.
+.			511780	IN	NS	i.root-servers.net.
+.			511780	IN	NS	j.root-servers.net.
+.			511780	IN	NS	k.root-servers.net.
+.			511780	IN	NS	l.root-servers.net.
+.			511780	IN	NS	m.root-servers.net.
+.			511780	IN	RRSIG	NS 8 0 518400 20261210050000 20261127040000 8763 . fF9TxEoL4axAY5zjnjYWbSeKvJCceihj0U/h8QebQ6gqbfoIJDEDWqCJAhuY9SXhIjJq0qXBjFDaqDHhl4zTAFwOCFb7ooY0OT7uwEqp52xDNdHyMAkawkcJ3/3+PWN0EvheATmkWLhpuL/kn6RqRPN5QVr8/i13qvTv8YMiWo0P8UCluOWNAxtP+lTnp9j1Wr2QnphRJXv2/PG1mv5HMfOSVJxuT6DQFDVmfr86PNFMl2ydBa91ltpzKtpqurJ/1RrGV6GGvRC/wWvcmqik6yB+B3HPUJSR4wSccckBwD2HSQViTn+FPrhD0eclWrQmBu5auCpWgOh3EZJ1+jGmNA==
+
+;; Received 534 bytes from 1.1.1.1#53(1.1.1.1) in 9 ms
+
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 27806
+;; flags: qr; QUERY: 1, ANSWER: 0, AUTHORITY: 8, ADDITIONAL: 13
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags: do; udp: 1450
+; NSID: 77 61 70 6c 32 2e 64 72 6f 6f 74 2e 6d 61 78 67 69 67 61 70 6f 70 2e 6e 65 74 ("wapl2.droot.maxgigapop.net")
+;; AUTHORITY SECTION:
+tools.			172800	IN	NS	v0n0.nic.tools.
+tools.			172800	IN	NS	v0n1.nic.tools.
+tools.			172800	IN	NS	v0n2.nic.tools.
+tools.			172800	IN	NS	v0n3.nic.tools.
+tools.			172800	IN	NS	v2n0.nic.tools.
+tools.			172800	IN	NS	v2n1.nic.tools.
+tools.			86400	IN	DS	1547 8 2 C213BF66307BB131517DFF9B31F47F2A5A2F7B57C97F8C2B5E8A46B613C2773D
+tools.			86400	IN	RRSIG	DS 8 1 86400 20261210050000 20261127040000 8763 . GkagsKoPDdhqbeeIiZPflVMnNoms/0nw6rXSYc74n4afFfhTupHC1jAXpOMnC1jbKwWTkboo/WS8X3gIIjL+lOPNX016grSMJVPShWF93rTk4dlSrTZLJQF9gW79MHJ+tJ0n5HCRofol1yZ/Wu9AOPChcH88horcsn4Q9r5Vme2Ba72zl5XQFu/tN2KFVK3jWkpvWVZu9mRlNdJty8ABIHsGhfonx1L2X9CyH2q9zlBGLHR6RTONu3UqkLIb4cUiG4DYC2zkyNzmXqJ/wjGOCKYczfcYw77NrGgi5t4LZcWQ6yrUea5UWuZxYsV9Oy/QwDWHlx+9+sYD7NQI8rQXVQ==
+
+;; Received 803 bytes from 199.7.91.13#53(d.root-servers.net) in 7 ms
+
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 41133
+;; flags: qr; QUERY: 1, ANSWER: 0, AUTHORITY: 4, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags: do; udp: 1232
+; NSID: 4c 48 52 38 ("LHR8")
+;; AUTHORITY SECTION:
+dnscheck.tools.		3600	IN	NS	hope.ns.cloudflare.com.
+dnscheck.tools.		3600	IN	NS	chuck.ns.cloudflare.com.
+dnscheck.tools.		3600	IN	DS	2371 13 2 607D77710A6AF5B28007B0302665D57E21194FA8A9E2A0D3D085CA55D320665F
+dnscheck.tools.		3600	IN	RRSIG	DS 8 2 3600 20261213000731 20261121223731 15763 tools. NBGF38aUuZmB643JMk7uA4N7FALLInqsduRbzB86tw95rWWoK+l8NQWOtu09DOVTbyKkQpy63hnM4t/ZtRUmzMnQ1Ec3Ksmo8YF8QdEyrFyzgb47Y/aTvteMAyFjw65xySK9zu8qbWGIEYRtK2s5nJSJeGQkFiGNFr0zsfI6xZ8=
+
+;; Received 333 bytes from 65.22.31.44#53(v2n0.nic.tools) in 38 ms
+
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 24734
+;; flags: qr; QUERY: 1, ANSWER: 0, AUTHORITY: 3, ADDITIONAL: 3
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags: do; udp: 1232
+; NSID: 39 32 33 6d 39 30 ("923m90")
+;; AUTHORITY SECTION:
+test.dnscheck.tools.	300	IN	NS	dnscheck.tools.
+test.dnscheck.tools.	300	IN	DS	10210 13 2 81D27BE724218460A0DB9E11AE2A76BB5BD6867BB7236E25D843AF5F8A3C1C29
+test.dnscheck.tools.	300	IN	RRSIG	DS 13 3 300 20261128133409 20261126113409 34505 dnscheck.tools. VukS0y8Ng/V77DtHNiBHX/E3FNZlj2kteLXmAwITyDqPqt14HI2fOae/rYKDcxqZ5IL0z6YYs3trJZkAwK1OkA==
+
+;; Received 282 bytes from 173.245.58.163#53(hope.ns.cloudflare.com) in 13 ms
+
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: REFUSED, id: 47277
+;; flags: qr aa; QUERY: 1, ANSWER: 0, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags: do; udp: 1400
+;; Received 56 bytes from 116.203.95.251#53(dnscheck.tools) in 29 ms
+
